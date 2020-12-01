@@ -2,9 +2,9 @@ describe TariffClassification do
 
   describe "find_effective_tariff" do
     subject { described_class }
-    let (:country) { Factory(:country) }
-    let (:tariff) { Factory(:tariff_classification, country: country, tariff_number: "1234567890", effective_date_start: Date.new(2019, 1, 1))}
-    let! (:tariff_rate) { Factory(:tariff_classification_rate, tariff_classification: tariff)}
+    let (:country) { FactoryBot(:country) }
+    let (:tariff) { FactoryBot(:tariff_classification, country: country, tariff_number: "1234567890", effective_date_start: Date.new(2019, 1, 1))}
+    let! (:tariff_rate) { FactoryBot(:tariff_classification_rate, tariff_classification: tariff)}
 
     it "finds tariff and eager loads the rates" do
       t = subject.find_effective_tariff country, Date.new(2019, 1, 1), "1234567890"
@@ -32,7 +32,7 @@ describe TariffClassification do
     end
 
     it "returns the record with the effective date closest to the given date" do
-      another_tariff = Factory(:tariff_classification, country: country, tariff_number: "1234567890", effective_date_start: Date.new(2019, 1, 2))
+      another_tariff = FactoryBot(:tariff_classification, country: country, tariff_number: "1234567890", effective_date_start: Date.new(2019, 1, 2))
       expect(subject.find_effective_tariff country, Date.new(2019, 1, 10), "1234567890").to eq another_tariff
     end
 

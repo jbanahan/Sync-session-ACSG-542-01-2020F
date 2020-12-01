@@ -1,14 +1,14 @@
 describe Api::V1::ProductsController do
 
   before :each do
-    @user = Factory(:master_user, product_view: true, api_auth_token: "Token", time_zone: "Hawaii", product_edit: true)
+    @user = FactoryBot(:master_user, product_view: true, api_auth_token: "Token", time_zone: "Hawaii", product_edit: true)
   end
 
   describe "#show" do
     context "with valid token" do
       before :each do
         allow_api_access @user
-        @p = Factory(:product)
+        @p = FactoryBot(:product)
       end
 
       it "finds the product and returns it with the specified model fields" do
@@ -83,7 +83,7 @@ describe Api::V1::ProductsController do
 
   describe "by_uid" do
     before :each do
-      @p = Factory(:product)
+      @p = FactoryBot(:product)
       allow_api_access @user
     end
 
@@ -291,8 +291,8 @@ describe Api::V1::ProductsController do
   describe "index" do
     before :each do
       allow_api_access @user
-      @p1 = Factory(:product, unit_of_measure: "UOM")
-      @p2 = Factory(:product, unit_of_measure: "UOM")
+      @p1 = FactoryBot(:product, unit_of_measure: "UOM")
+      @p2 = FactoryBot(:product, unit_of_measure: "UOM")
 
     end
     it "renders a search result" do
@@ -331,7 +331,7 @@ describe Api::V1::ProductsController do
   describe "create" do
     before :each do
       allow_api_access @user
-      @country = Factory(:country)
+      @country = FactoryBot(:country)
     end
 
     it "creates a new product" do
@@ -356,7 +356,7 @@ describe Api::V1::ProductsController do
     end
 
     it "raises an error if product validation fails" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       # Try and create a non-unique product - which should always trip a failure
       params = {:prod_uid => p.unique_identifier}
 
@@ -385,8 +385,8 @@ describe Api::V1::ProductsController do
     end
 
     it "updates an existing product" do
-      country = Factory(:country)
-      p = Factory(:product)
+      country = FactoryBot(:country)
+      p = FactoryBot(:product)
 
       params = {
         :id => p.id,
@@ -425,7 +425,7 @@ describe Api::V1::ProductsController do
     it "raises an error if user doesn't have ability to edit product" do
       @user.update_attributes! product_edit: false
 
-      p = Factory(:product)
+      p = FactoryBot(:product)
       params = {
         :id => p.id,
         :prod_uom => "UOM"

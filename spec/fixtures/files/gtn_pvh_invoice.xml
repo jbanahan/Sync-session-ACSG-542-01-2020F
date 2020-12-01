@@ -209,7 +209,7 @@
         <value>145 GSM A/W</value>
       </reference>
       <reference>
-        <type>FactoryManagement</type>
+        <type>FactoryBotManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -237,7 +237,7 @@
         <type>DivisionDesc</type>
       </reference>
       <reference>
-        <type>FactoryShortName</type>
+        <type>FactoryBotShortName</type>
         <value>EAE-SMH</value>
       </reference>
       <reference>
@@ -257,7 +257,7 @@
         <value>23894</value>
       </reference>
       <reference>
-        <type>PVHFactoryCode</type>
+        <type>PVHFactoryBotCode</type>
         <value>23894509</value>
       </reference>
       <reference>
@@ -528,7 +528,7 @@
         <value>145 GSM A/W</value>
       </reference>
       <reference>
-        <type>FactoryManagement</type>
+        <type>FactoryBotManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -556,7 +556,7 @@
         <type>DivisionDesc</type>
       </reference>
       <reference>
-        <type>FactoryShortName</type>
+        <type>FactoryBotShortName</type>
         <value>EAE-SMH</value>
       </reference>
       <reference>
@@ -576,7 +576,7 @@
         <value>23894</value>
       </reference>
       <reference>
-        <type>PVHFactoryCode</type>
+        <type>PVHFactoryBotCode</type>
         <value>23894509</value>
       </reference>
       <reference>
@@ -847,7 +847,7 @@
         <value>145 GSM A/W</value>
       </reference>
       <reference>
-        <type>FactoryManagement</type>
+        <type>FactoryBotManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -875,7 +875,7 @@
         <type>DivisionDesc</type>
       </reference>
       <reference>
-        <type>FactoryShortName</type>
+        <type>FactoryBotShortName</type>
         <value>EAE-SMH</value>
       </reference>
       <reference>
@@ -895,7 +895,7 @@
         <value>23894</value>
       </reference>
       <reference>
-        <type>PVHFactoryCode</type>
+        <type>PVHFactoryBotCode</type>
         <value>23894509</value>
       </reference>
       <reference>
@@ -1166,7 +1166,7 @@
         <value>145 GSM A/W</value>
       </reference>
       <reference>
-        <type>FactoryManagement</type>
+        <type>FactoryBotManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -1194,7 +1194,7 @@
         <type>DivisionDesc</type>
       </reference>
       <reference>
-        <type>FactoryShortName</type>
+        <type>FactoryBotShortName</type>
         <value>EAE-SMH</value>
       </reference>
       <reference>
@@ -1214,7 +1214,7 @@
         <value>23894</value>
       </reference>
       <reference>
-        <type>PVHFactoryCode</type>
+        <type>PVHFactoryBotCode</type>
         <value>23894509</value>
       </reference>
       <reference>
@@ -1392,7 +1392,7 @@
         <invoiceDateValue>2018-08-06</invoiceDateValue>
       </invoiceDate>
       <invoiceDate>
-        <invoiceDateTypeCode>ExFactory</invoiceDateTypeCode>
+        <invoiceDateTypeCode>ExFactoryBot</invoiceDateTypeCode>
         <invoiceDateValue>2018-07-07</invoiceDateValue>
       </invoiceDate>
       <incotermCode>FOB</incotermCode>
@@ -1425,7 +1425,7 @@
         <type>SeasonYear</type>
       </reference>
       <reference>
-        <type>FactoryManagement</type>
+        <type>FactoryBotManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -1538,7 +1538,7 @@
         <type>LessMiddlemanCharge</type>
       </reference>
       <reference>
-        <type>FactoryFullGarmentCharge</type>
+        <type>FactoryBotFullGarmentCharge</type>
       </reference>
       <reference>
         <type>VendorComments</type>
@@ -3043,34 +3043,34 @@ ON BOARD DATE  :</notes>
           <value>M5V 3B1</value>
         </reference>
         <reference>
-          <type>FactoryCode</type>
+          <type>FactoryBotCode</type>
           <value>23894509</value>
         </reference>
         <reference>
-          <type>FactoryName</type>
+          <type>FactoryBotName</type>
           <value>RODAMINE APPAREL INDUSTRIES (P) LTD</value>
         </reference>
         <reference>
-          <type>FactoryAddressLine1</type>
+          <type>FactoryBotAddressLine1</type>
           <value>SHED NO H1 &#38; H2|NETHAJI APPAREL PARK</value>
         </reference>
         <reference>
-          <type>FactoryAddressLine2</type>
+          <type>FactoryBotAddressLine2</type>
           <value>EETTIVEERAMPALAYAM</value>
         </reference>
         <reference>
-          <type>FactoryCityName</type>
+          <type>FactoryBotCityName</type>
           <value>TIRUPPUR</value>
         </reference>
         <reference>
-          <type>FactoryState</type>
+          <type>FactoryBotState</type>
         </reference>
         <reference>
-          <type>FactoryCountryCode</type>
+          <type>FactoryBotCountryCode</type>
           <value>IN</value>
         </reference>
         <reference>
-          <type>FactoryPostalCode</type>
+          <type>FactoryBotPostalCode</type>
         </reference>
         <reference>
           <type>MIDNumber</type>
@@ -4121,34 +4121,34 @@ ON BOARD DATE  :</notes>
           <value>M5V 3B1</value>
         </reference>
         <reference>
-          <type>FactoryCode</type>
+          <type>FactoryBotCode</type>
           <value>23894509</value>
         </reference>
         <reference>
-          <type>FactoryName</type>
+          <type>FactoryBotName</type>
           <value>RODAMINE APPAREL INDUSTRIES (P) LTD</value>
         </reference>
         <reference>
-          <type>FactoryAddressLine1</type>
+          <type>FactoryBotAddressLine1</type>
           <value>SHED NO H1 &#38; H2|NETHAJI APPAREL PARK</value>
         </reference>
         <reference>
-          <type>FactoryAddressLine2</type>
+          <type>FactoryBotAddressLine2</type>
           <value>EETTIVEERAMPALAYAM</value>
         </reference>
         <reference>
-          <type>FactoryCityName</type>
+          <type>FactoryBotCityName</type>
           <value>TIRUPPUR</value>
         </reference>
         <reference>
-          <type>FactoryState</type>
+          <type>FactoryBotState</type>
         </reference>
         <reference>
-          <type>FactoryCountryCode</type>
+          <type>FactoryBotCountryCode</type>
           <value>IN</value>
         </reference>
         <reference>
-          <type>FactoryPostalCode</type>
+          <type>FactoryBotPostalCode</type>
         </reference>
         <reference>
           <type>MIDNumber</type>

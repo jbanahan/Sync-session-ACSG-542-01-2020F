@@ -1,17 +1,17 @@
 describe OpenChain::EntityCompare::OneTimeAlertsComparator do
   describe "compare" do
-    let(:ent) { Factory(:entry, gross_weight: 5, broker_reference: "BROKREF_ABC") }
+    let(:ent) { FactoryBot(:entry, gross_weight: 5, broker_reference: "BROKREF_ABC") }
 
     let!(:ota) do
-      Factory(:one_time_alert, module_type: "Entry", inactive: false, expire_date: nil,
-                               search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5)])
+      FactoryBot(:one_time_alert, module_type: "Entry", inactive: false, expire_date: nil,
+                               search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_gross_weight", value: 5)])
     end
 
     before do
-      Factory(:one_time_alert, module_type: "Entry", expire_date: Date.new(2018, 3, 15),
-                               search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5)])
-      Factory(:one_time_alert, module_type: "Entry", expire_date: Date.new(2018, 3, 22),
-                               search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 4)])
+      FactoryBot(:one_time_alert, module_type: "Entry", expire_date: Date.new(2018, 3, 15),
+                               search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_gross_weight", value: 5)])
+      FactoryBot(:one_time_alert, module_type: "Entry", expire_date: Date.new(2018, 3, 22),
+                               search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_gross_weight", value: 4)])
     end
 
     it "triggers enabled alerts and takes snapshot for object matching OTA's reference-field criteria" do

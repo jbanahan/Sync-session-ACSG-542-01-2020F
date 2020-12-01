@@ -1,6 +1,6 @@
 describe LinkableAttachmentImportRulesController do
-  let!(:rule) { Factory(:linkable_attachment_import_rule) }
-  let(:admin_user) { Factory(:user, admin: true) }
+  let!(:rule) { FactoryBot(:linkable_attachment_import_rule) }
+  let(:admin_user) { FactoryBot(:user, admin: true) }
 
   describe 'security' do
     context 'admins' do
@@ -45,7 +45,7 @@ describe LinkableAttachmentImportRulesController do
     end
 
     context 'non-admins' do
-      let(:base_user) { Factory(:user) }
+      let(:base_user) { FactoryBot(:user) }
 
       before do
         sign_in_as base_user

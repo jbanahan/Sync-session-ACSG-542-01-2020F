@@ -1,6 +1,6 @@
 describe Api::V1::FenixPostbacksController do
   before :each do
-    @user = Factory(:admin_user, api_auth_token: "Token")
+    @user = FactoryBot(:admin_user, api_auth_token: "Token")
     allow_api_access @user
   end
 
@@ -16,7 +16,7 @@ describe Api::V1::FenixPostbacksController do
     end
 
     it "fails if user is not admin" do
-      @user = Factory(:user, api_auth_token: "Token")
+      @user = FactoryBot(:user, api_auth_token: "Token")
       allow_api_access @user
 
       post :receive_lvs_results, results: [{"summary" => "12345"}], context: {}

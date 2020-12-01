@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHan
     }
 
     before :each do
-      Factory(:importer, fenix_customer_number: "101811057RM0001")
+      FactoryBot(:importer, fenix_customer_number: "101811057RM0001")
     end
 
 

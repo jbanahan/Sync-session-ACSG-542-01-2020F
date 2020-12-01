@@ -11,7 +11,7 @@ describe ValidatesFieldFormat do
     end
   end
 
-  let (:order_line) { Factory(:order_line, line_number: 1, hts: "foo", price_per_unit: 10, quantity: 1)}
+  let (:order_line) { FactoryBot(:order_line, line_number: 1, hts: "foo", price_per_unit: 10, quantity: 1)}
   let (:rule) { Rule.new('regex' => 'ABC', 'model_field_uid' => 'ordln_hts') }
   let (:block) { Proc.new {|mf, val, regex| "All #{mf.label} values do not match '#{regex}' format."} }
 
@@ -24,7 +24,7 @@ describe ValidatesFieldFormat do
 
     it 'handles \w with dates with dt_notregexp' do
       date_rule = Rule.new('operator' => 'notregexp', 'value' => '\w', 'model_field_uid' => 'ent_release_date')
-      entry = Factory(:entry, release_date: Time.zone.now)
+      entry = FactoryBot(:entry, release_date: Time.zone.now)
       expect(date_rule.validate_field_format(entry, &block)).to eql("All Release Date values do not match '\\w' format.")
       entry.update_attribute(:release_date, nil)
       entry.reload
@@ -33,7 +33,7 @@ describe ValidatesFieldFormat do
 
     it 'handles \w with dates' do
       date_rule = Rule.new('regex' => '\w', 'model_field_uid' => 'ent_release_date')
-      entry = Factory(:entry, release_date: Time.zone.now)
+      entry = FactoryBot(:entry, release_date: Time.zone.now)
       expect(date_rule.validate_field_format(entry, &block)).to be_nil
       entry.update_attribute(:release_date, nil)
       entry.reload
@@ -205,7 +205,7 @@ describe ValidatesFieldFormat do
     end
 
     context "with split field" do
-      let (:entry) { Factory(:entry, customer_references: "XabcY\n XdefY\n XghiY")}
+      let (:entry) { FactoryBot(:entry, customer_references: "XabcY\n XdefY\n XghiY")}
       let (:rule) { Rule.new({'model_field_uid' => 'ent_customer_references', 'regex' => '^X\w+Y$', 'split_field' => true}) }
       let (:block) { Proc.new { |mf, val, regex| "There is at least one value in #{mf.label} that doesn't match '#{regex}'." } }
 

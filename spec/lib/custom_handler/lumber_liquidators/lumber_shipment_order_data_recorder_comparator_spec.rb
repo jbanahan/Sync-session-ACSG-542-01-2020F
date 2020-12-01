@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRec
     }
 
     let! (:order) {
-      order = Order.create! order_number: "4500230506", importer_id: Factory(:importer).id
+      order = Order.create! order_number: "4500230506", importer_id: FactoryBot(:importer).id
       # Don't set anything that's not required, we want to ensure the data that's set comes from the
       # snapshot data.
       order.order_lines.create! line_number: 2, product_id: product.id

@@ -75,7 +75,7 @@ describe AuthTokenSupport, type: :model do
   end
 
   describe "user_from_cookie" do
-    let! (:user) { Factory(:user, username: "user", api_auth_token: "token") }
+    let! (:user) { FactoryBot(:user, username: "user", api_auth_token: "token") }
 
     it "finds user from auth-token cookie" do
       cookies["AUTH-TOKEN"] = "user:token"
@@ -89,7 +89,7 @@ describe AuthTokenSupport, type: :model do
   end
 
   describe "run_as_user_from_cookie" do
-    let! (:user) { Factory(:user, username: "user", api_auth_token: "token") }
+    let! (:user) { FactoryBot(:user, username: "user", api_auth_token: "token") }
 
     it "finds user from auth-token cookie" do
       cookies["RUN-AS-AUTH-TOKEN"] = "user:token"
@@ -104,7 +104,7 @@ describe AuthTokenSupport, type: :model do
   end
 
   describe "user_from_auth_token" do
-    let! (:user) { Factory(:user, username: "user", api_auth_token: "token") }
+    let! (:user) { FactoryBot(:user, username: "user", api_auth_token: "token") }
 
     it "finds a user given an authtoken" do
       u = subject.user_from_auth_token "user:token"

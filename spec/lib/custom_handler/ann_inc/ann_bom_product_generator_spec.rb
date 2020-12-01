@@ -2,23 +2,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   subject { described_class.new "gpg_secrets_key" => 'vfitrack_passphraseless' }
 
   let(:cdefs) { subject.cdefs }
-  let(:us) { Factory(:country, iso_code: "US") }
-  let(:ca) { Factory(:country, iso_code: "CA") }
+  let(:us) { FactoryBot(:country, iso_code: "US") }
+  let(:ca) { FactoryBot(:country, iso_code: "CA") }
   let(:product_1) do
-    prod = Factory(:product, unique_identifier: "uid 1")
+    prod = FactoryBot(:product, unique_identifier: "uid 1")
     prod.update_custom_value! cdefs[:related_styles], "uid 3\nuid 4"
     prod.save!
     prod
   end
   let(:classi_1_1) do
-    cl = Factory(:classification, product: product_1, country: us)
+    cl = FactoryBot(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.save!
     cl
   end
   let(:tariff_1_1_1) do
-    tr = Factory(:tariff_record, classification: classi_1_1, hts_1: "123456789", line_number: 1)
+    tr = FactoryBot(:tariff_record, classification: classi_1_1, hts_1: "123456789", line_number: 1)
     tr.find_and_set_custom_value cdefs[:set_qty], 10
     tr.find_and_set_custom_value cdefs[:percent_of_value], 15
     tr.find_and_set_custom_value cdefs[:key_description], "key descr\u00A0\r\n\"1\" |1 1\r"
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr
   end
   let(:tariff_1_1_2) do
-    tr = Factory(:tariff_record, classification: classi_1_1, hts_1: "912345678", line_number: 2)
+    tr = FactoryBot(:tariff_record, classification: classi_1_1, hts_1: "912345678", line_number: 2)
     tr.find_and_set_custom_value cdefs[:set_qty], 0
     tr.find_and_set_custom_value cdefs[:percent_of_value], 30
     tr.find_and_set_custom_value cdefs[:key_description], "key descr 1 1 2"
@@ -34,12 +34,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr
   end
   let(:classi_1_2) do
-    cl = Factory(:classification, product: product_1, country: ca)
+    cl = FactoryBot(:classification, product: product_1, country: ca)
     cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
     cl
   end
   let(:tariff_1_2_1) do
-    tr = Factory(:tariff_record, classification: classi_1_2, hts_1: "135791011", line_number: 1)
+    tr = FactoryBot(:tariff_record, classification: classi_1_2, hts_1: "135791011", line_number: 1)
     tr.find_and_set_custom_value cdefs[:set_qty], 30
     tr.find_and_set_custom_value cdefs[:percent_of_value], 35
     tr.find_and_set_custom_value cdefs[:key_description], "key descr 1 2 1"
@@ -47,19 +47,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr
   end
   let(:product_2) do
-    prod = Factory(:product, unique_identifier: "uid 2")
+    prod = FactoryBot(:product, unique_identifier: "uid 2")
     prod.update_custom_value! cdefs[:related_styles], "uid 5"
     prod
   end
   let(:classi_2_1) do
-    cl = Factory(:classification, product: product_2, country: us)
+    cl = FactoryBot(:classification, product: product_2, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
     cl.save!
     cl
   end
   let(:tariff_2_1_1) do
-    tr = Factory(:tariff_record, classification: classi_2_1, hts_1: "24681012", line_number: 1)
+    tr = FactoryBot(:tariff_record, classification: classi_2_1, hts_1: "24681012", line_number: 1)
     tr.find_and_set_custom_value cdefs[:set_qty], 40
     tr.find_and_set_custom_value cdefs[:percent_of_value], 45
     tr.find_and_set_custom_value cdefs[:key_description], "key descr 2 1 1"

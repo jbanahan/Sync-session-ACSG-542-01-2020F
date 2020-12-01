@@ -1,6 +1,6 @@
 describe RandomAudit do
-  let!(:u) { Factory(:user) }
-  let!(:ra) { Factory(:random_audit, user: u) }
+  let!(:u) { FactoryBot(:user) }
+  let!(:ra) { FactoryBot(:random_audit, user: u) }
 
   describe "can_view?" do
 
@@ -9,7 +9,7 @@ describe RandomAudit do
     end
 
     it "returns false otherwise" do
-      expect(ra.can_view? Factory(:user)).to eq false
+      expect(ra.can_view? FactoryBot(:user)).to eq false
     end
   end
 

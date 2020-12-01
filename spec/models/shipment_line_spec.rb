@@ -14,8 +14,8 @@ describe ShipmentLine do
       expect(line).to be_locked
     end
     it "should lock if on commercial invoice" do
-      s_line = Factory(:shipment_line)
-      c_line = Factory(:commercial_invoice_line)
+      s_line = FactoryBot(:shipment_line)
+      c_line = FactoryBot(:commercial_invoice_line)
       PieceSet.create!(:shipment_line_id=>s_line.id, :commercial_invoice_line_id=>c_line.id, :quantity=>1)
       s_line.reload
       expect(s_line).to be_locked
@@ -26,8 +26,8 @@ describe ShipmentLine do
   end
   describe "merge_piece_sets" do
     it "should merge piece sets on destroy" do
-      ol = Factory(:order_line)
-      sl = Factory(:shipment_line, product:ol.product)
+      ol = FactoryBot(:order_line)
+      sl = FactoryBot(:shipment_line, product:ol.product)
       ps1 = PieceSet.create!(order_line_id:ol.id, quantity:7)
       ps2 = PieceSet.create!(order_line_id:ol.id, quantity:3, shipment_line_id:sl.id)
       sl.reload
@@ -40,10 +40,10 @@ describe ShipmentLine do
   end
 
   describe "order_line" do
-    let (:order_line) { Factory(:order_line) }
+    let (:order_line) { FactoryBot(:order_line) }
 
     let (:shipment_line) {
-      s = Factory(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
+      s = FactoryBot(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
     }
 
     it "finds and caches order line lookup" do

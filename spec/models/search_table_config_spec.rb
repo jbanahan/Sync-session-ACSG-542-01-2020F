@@ -1,15 +1,15 @@
 describe SearchTableConfig do
   describe '#for_user' do
     it 'should find generic' do
-      u = Factory(:user)
-      generic = Factory(:search_table_config, page_uid:'abc')
-      for_me = Factory(:search_table_config, page_uid:'abc', user:u)
-      for_company = Factory(:search_table_config, page_uid:'abc', company:u.company)
+      u = FactoryBot(:user)
+      generic = FactoryBot(:search_table_config, page_uid:'abc')
+      for_me = FactoryBot(:search_table_config, page_uid:'abc', user:u)
+      for_company = FactoryBot(:search_table_config, page_uid:'abc', company:u.company)
 
       # don't find these
-      Factory(:search_table_config, page_uid:'other')
-      Factory(:search_table_config, page_uid:'abc', user:Factory(:user))
-      Factory(:search_table_config, page_uid:'abc', company:Factory(:company))
+      FactoryBot(:search_table_config, page_uid:'other')
+      FactoryBot(:search_table_config, page_uid:'abc', user:FactoryBot(:user))
+      FactoryBot(:search_table_config, page_uid:'abc', company:FactoryBot(:company))
       expect(SearchTableConfig.for_user(u, 'abc').to_a).to eq [generic, for_me, for_company]
     end
   end

@@ -3,10 +3,10 @@ describe OpenChain::Report::PvhContainerLogReport do
   describe "run_report" do
     before :each do
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
-      @port = Factory(:port)
-      @container1 = Factory(:container, container_number: "CONT1", quantity: 5, entry: Factory(:entry, broker_reference: "123", customer_number: "PVH", arrival_date: Time.zone.now, worksheet_date: Time.zone.parse("2014-10-01 00:00"), entry_port_code: @port.schedule_d_code, store_names: "A\n B", customer_references: "A123 10/1/14\n1234\nB123"))
+      @port = FactoryBot(:port)
+      @container1 = FactoryBot(:container, container_number: "CONT1", quantity: 5, entry: FactoryBot(:entry, broker_reference: "123", customer_number: "PVH", arrival_date: Time.zone.now, worksheet_date: Time.zone.parse("2014-10-01 00:00"), entry_port_code: @port.schedule_d_code, store_names: "A\n B", customer_references: "A123 10/1/14\n1234\nB123"))
       @entry = @container1.entry
-      @container2 = Factory(:container, container_number: "CONT1", quantity: 10, entry: @entry)
+      @container2 = FactoryBot(:container, container_number: "CONT1", quantity: 10, entry: @entry)
     end
 
     after :each do
@@ -96,25 +96,25 @@ describe OpenChain::Report::PvhContainerLogReport do
       }
 
       it "allows permission for master users on www-vfitrack-net" do
-        user = Factory(:master_user)
+        user = FactoryBot(:master_user)
         expect(user).to receive(:view_entries?).and_return true
         expect(described_class.permission? user).to eq true
       end
 
       it "denies permission for users that can't view entries" do
-        user = Factory(:master_user)
+        user = FactoryBot(:master_user)
         expect(user).to receive(:view_entries?).and_return false
         expect(described_class.permission? user).to eq false
       end
 
       context "with pvh company" do
         let (:user) {
-          user = Factory(:user)
+          user = FactoryBot(:user)
           allow(user).to receive(:view_entries?).and_return true
           user
         }
 
-        let! (:pvh) { Factory(:company, importer: true, system_code: "PVH") }
+        let! (:pvh) { FactoryBot(:company, importer: true, system_code: "PVH") }
 
         it "denies users that are not linked to pvh" do
           expect(described_class.permission? user).to eq false
@@ -128,7 +128,7 @@ describe OpenChain::Report::PvhContainerLogReport do
         end
 
         it "allows to users linked to pvh" do
-          company = Factory(:importer)
+          company = FactoryBot(:importer)
           company.linked_companies << pvh
           user.company = company
           user.save!
@@ -141,7 +141,7 @@ describe OpenChain::Report::PvhContainerLogReport do
     it "denies permission for non-vfitrack instance" do
       master_setup = stub_master_setup
       expect(master_setup).to receive(:system_code).and_return "blah"
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       allow(user).to receive(:view_entries?).and_return true
       expect(described_class.permission? user).to eq false
     end

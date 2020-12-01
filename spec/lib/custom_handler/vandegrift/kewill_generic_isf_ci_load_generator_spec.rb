@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   let (:importer) {
-    Factory(:importer, alliance_customer_number: "CUST")
+    FactoryBot(:importer, alliance_customer_number: "CUST")
   }
 
   let (:isf) {
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
     }
 
     let (:us) {
-      Factory(:country, iso_code: "US")
+      FactoryBot(:country, iso_code: "US")
     }
 
     context "with isf data only" do
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
 
     context "with shipment data" do
       let (:product) {
-        p = Factory(:product, unique_identifier: "UID", importer: importer)
+        p = FactoryBot(:product, unique_identifier: "UID", importer: importer)
         p.update_custom_value! cdefs[:prod_part_number], "PART"
         p.update_hts_for_country us, "1234567890"
 
@@ -55,18 +55,18 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
       }
 
       let (:factory) {
-        Factory(:company, factory:true, mid: "POMID")
+        FactoryBot(:company, factory:true, mid: "POMID")
       }
 
       let (:order) {
-        order = Factory(:order, order_number: "PO", customer_order_number: "PO", importer: importer, factory_id: factory.id)
+        order = FactoryBot(:order, order_number: "PO", customer_order_number: "PO", importer: importer, factory_id: factory.id)
         order.order_lines.create! product: product, price_per_unit: BigDecimal("1.50"), country_of_origin: "CA"
 
         order
       }
 
       let! (:shipment) {
-        shipment = Factory(:shipment, importer: importer, master_bill_of_lading: "MBOL")
+        shipment = FactoryBot(:shipment, importer: importer, master_bill_of_lading: "MBOL")
         line = shipment.shipment_lines.create! quantity: 10, linked_order_line_id: order.order_lines.first.id, product: product, carton_qty: 10, gross_kgs: BigDecimal("10.50")
         line = shipment.shipment_lines.create! quantity: 5, linked_order_line_id: order.order_lines.first.id, product: product, carton_qty: 5, gross_kgs: BigDecimal("5.5")
 

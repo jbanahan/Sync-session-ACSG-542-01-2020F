@@ -1,6 +1,6 @@
 describe OrdersController do
   let(:user) do
-    Factory(:master_user, order_view: true, company: Factory(:company, master: true, system_code: 'MSTR'))
+    FactoryBot(:master_user, order_view: true, company: FactoryBot(:company, master: true, system_code: 'MSTR'))
   end
 
   before do
@@ -13,7 +13,7 @@ describe OrdersController do
   describe '#show' do
     context 'order_view_template' do
       it 'renders default template' do
-        o = Factory(:order, importer: user.company)
+        o = FactoryBot(:order, importer: user.company)
         get :show, id: o.id
         expect(response).to render_template :show
       end
@@ -21,7 +21,7 @@ describe OrdersController do
       it 'renders custom template' do
         cvt = CustomViewTemplate.create!(template_identifier: 'order_view', template_path: 'custom_views/j_jill/orders/show', module_type: "Order")
         cvt.search_criterions.create!(model_field_uid: 'ord_imp_syscode', operator: 'eq', value: user.company.system_code)
-        o = Factory(:order, importer: user.company)
+        o = FactoryBot(:order, importer: user.company)
         get :show, id: o.id
         expect(response).to render_template 'custom_views/j_jill/orders/show'
       end
@@ -32,7 +32,7 @@ describe OrdersController do
     it "accepts if user has permission" do
       expect_any_instance_of(Order).to receive(:async_accept!).with(user)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
       expect(response).to redirect_to o
     end
@@ -40,7 +40,7 @@ describe OrdersController do
     it "errors if user does not have permission" do
       expect_any_instance_of(Order).not_to receive(:async_accept!)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return false
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
     end
 
@@ -48,7 +48,7 @@ describe OrdersController do
       expect_any_instance_of(Order).not_to receive(:async_accept!)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return false
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
     end
   end
@@ -57,7 +57,7 @@ describe OrdersController do
     it "unaccepts if user has permission" do
       expect_any_instance_of(Order).to receive(:async_unaccept!).with(user)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :unaccept, id: o.id
       expect(response).to redirect_to o
     end
@@ -65,7 +65,7 @@ describe OrdersController do
     it "errors if user does not have permission" do
       expect_any_instance_of(Order).not_to receive(:async_unaccept!)
       allow_any_instance_of(Order).to receive(:can_accept?).and_return false
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :unaccept, id: o.id
     end
   end
@@ -73,7 +73,7 @@ describe OrdersController do
   describe "close" do
     it "closes if user has permission" do
       allow_any_instance_of(Order).to receive(:can_close?).and_return true
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :close, id: o.id
       expect(response).to redirect_to o
       o.reload
@@ -83,7 +83,7 @@ describe OrdersController do
 
     it "errors if user cannot close" do
       allow_any_instance_of(Order).to receive(:can_close?).and_return false
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :close, id: o.id
       expect(response).to be_redirect
       o.reload
@@ -93,7 +93,7 @@ describe OrdersController do
   end
 
   describe "reopen" do
-    let(:order) { Factory(:order, closed_at: Time.zone.now) }
+    let(:order) { FactoryBot(:order, closed_at: Time.zone.now) }
 
     it "reopens if user can close" do
       allow_any_instance_of(Order).to receive(:can_close?).and_return true
@@ -113,8 +113,8 @@ describe OrdersController do
   end
 
   describe 'validation_results' do
-    let(:order) { Factory(:order, order_number: '123456') }
-    let(:rule_result) { Factory(:business_validation_rule_result) }
+    let(:order) { FactoryBot(:order, order_number: '123456') }
+    let(:rule_result) { FactoryBot(:business_validation_rule_result) }
 
     let(:bvr) do
       rule_result.business_validation_result

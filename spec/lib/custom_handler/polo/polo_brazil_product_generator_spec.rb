@@ -12,8 +12,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
     before :each do
       @countries = {}
-      ['US', 'IT', 'CA', 'TW'].each {|iso| @countries[iso] = Factory(:country, :iso_code=>iso)}
-      t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
+      ['US', 'IT', 'CA', 'TW'].each {|iso| @countries[iso] = FactoryBot(:country, :iso_code=>iso)}
+      t = FactoryBot(:tariff_record, classification: FactoryBot(:classification, country: @countries['IT']))
       @p = t.product
       expect_any_instance_of(described_class).to receive(:init_outbound_custom_definitions).and_call_original
     end
@@ -27,8 +27,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should not pull any countries other than IT" do
-      t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
-      t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['TW']))
+      t = FactoryBot(:tariff_record, classification: FactoryBot(:classification, country: @countries['IT']))
+      t2 = FactoryBot(:tariff_record, classification: FactoryBot(:classification, country: @countries['TW']))
       p1 = t.product
       p2 = t2.product
 
@@ -56,12 +56,12 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       CSV.parse(data, col_sep: "|")
     end
 
-    let (:eu) { Factory(:country, :iso_code=>"IT") }
+    let (:eu) { FactoryBot(:country, :iso_code=>"IT") }
 
     before :each do
       # This example group takes a long time to run just due to the sheer number of custom values
       # created in here.
-      @t = Factory(:tariff_record, hts_1: "1234567890", hts_2: "0123456789", hts_3: "98765432", classification: Factory(:classification, country: eu))
+      @t = FactoryBot(:tariff_record, hts_1: "1234567890", hts_2: "0123456789", hts_3: "98765432", classification: FactoryBot(:classification, country: eu))
 
       @c = @t.classification
       @p = @c.product
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should handle multiple products" do
-      tr2 = Factory(:tariff_record, :hts_1=>'123456')
+      tr2 = FactoryBot(:tariff_record, :hts_1=>'123456')
       @tmp = subject.generate_outbound_sync_file [@p, tr2.product]
       r = parse_csv(@tmp)
       expect(r.size).to eq(3)
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should not send tariffs other than IT" do
-      Factory(:tariff_record, :classification=>Factory(:classification, :country=>Factory(:country, iso_code: "US"), :product=>@p), :hts_1=>'654321')
+      FactoryBot(:tariff_record, :classification=>FactoryBot(:classification, :country=>FactoryBot(:country, iso_code: "US"), :product=>@p), :hts_1=>'654321')
       @p.reload
       expect(@p.classifications.count).to eq(2)
       @tmp = subject.generate_outbound_sync_file [@p]
@@ -179,7 +179,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "orders tariff records by line number" do
-      t2 = Factory(:tariff_record, hts_1: "987654321", classification: @c, line_number: 2)
+      t2 = FactoryBot(:tariff_record, hts_1: "987654321", classification: @c, line_number: 2)
       @t.update_attributes! line_number: 3
 
       @tmp = subject.generate_outbound_sync_file Product.where("1=1")

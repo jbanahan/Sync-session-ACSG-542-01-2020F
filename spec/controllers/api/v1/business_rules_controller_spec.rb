@@ -1,12 +1,12 @@
 describe Api::V1::BusinessRulesController do
   before :each do
-    @u = Factory(:master_user)
+    @u = FactoryBot(:master_user)
     allow_api_access @u
   end
   describe '#for_module' do
     it 'should return business rules hash' do
       h = {'a'=>'b'}
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return true
       expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u, ord).and_return h
@@ -18,7 +18,7 @@ describe Api::V1::BusinessRulesController do
       expect(JSON.parse(response.body)).to eq expected_response
     end
     it 'should return 404 for bad module type' do
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       get :for_module, module_type: 'BAD', id: ord.id.to_s
 
@@ -36,7 +36,7 @@ describe Api::V1::BusinessRulesController do
     end
     it 'should return 401 if user cannot view business rules' do
       h = {'a'=>'b'}
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return false
       expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u, ord).and_return h
@@ -50,7 +50,7 @@ describe Api::V1::BusinessRulesController do
   describe '#refresh' do
     it 'should update business rule and return result' do
       h = {'a'=>'b'}
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return true
       expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with(ord)
@@ -63,7 +63,7 @@ describe Api::V1::BusinessRulesController do
       expect(JSON.parse(response.body)).to eq expected_response
     end
     it 'should return 404 for bad module type' do
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       post :refresh, module_type: 'BAD', id: ord.id.to_s
 
@@ -80,7 +80,7 @@ describe Api::V1::BusinessRulesController do
       expect(response.status).to eq 404
     end
     it 'should return 401 if user cannot view business rules' do
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return false
 

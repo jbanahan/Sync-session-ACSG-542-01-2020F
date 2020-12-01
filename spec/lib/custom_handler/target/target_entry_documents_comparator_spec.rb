@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryDocumentsComparator do
     subject { described_class.new }
 
     let (:packet_generator) { instance_double(OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator) }
-    let (:entry) { Factory(:entry, customer_number: "TARGEN", broker_reference: "256") }
+    let (:entry) { FactoryBot(:entry, customer_number: "TARGEN", broker_reference: "256") }
     let (:invoice_attachment) { Attachment.create! attachable: entry, attached_file_name: "6789.pdf", attachment_type: "COMMERCIAL INVOICE"}
     let (:usc_doc_attachment) { Attachment.create! attachable: entry, attached_file_name: "12345.pdf", attachment_type: "OTHER USC DOCUMENTS"}
 

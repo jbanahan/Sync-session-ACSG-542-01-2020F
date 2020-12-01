@@ -1,5 +1,5 @@
 describe PasswordResetsHelper do
-  let!(:user) { Factory(:user) }
+  let!(:user) { FactoryBot(:user) }
   describe '#requires_old_password?' do
     it 'does not require the old password when neither password_locked nor password_expired are present' do
       user.update_attributes(password_locked: false, password_expired: false)

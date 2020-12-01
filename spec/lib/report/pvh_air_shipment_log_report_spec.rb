@@ -11,10 +11,10 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
     }
 
     # Container test data
-    let(:port) { Factory(:port) }
-    let(:container1) { Factory(:container, container_number: "CONT1", quantity: 5, entry: Factory(:entry, broker_reference: "123", customer_number: "PVH", master_bills_of_lading: "ABCD", house_bills_of_lading: "EFGH", transport_mode_code: 40, arrival_date: Time.zone.now, worksheet_date: Time.zone.parse("2014-10-01 00:00"), entry_port_code: port.schedule_d_code, store_names: "A\n B", customer_references: "A123 10/1/14\n1234\nB123")) }
+    let(:port) { FactoryBot(:port) }
+    let(:container1) { FactoryBot(:container, container_number: "CONT1", quantity: 5, entry: FactoryBot(:entry, broker_reference: "123", customer_number: "PVH", master_bills_of_lading: "ABCD", house_bills_of_lading: "EFGH", transport_mode_code: 40, arrival_date: Time.zone.now, worksheet_date: Time.zone.parse("2014-10-01 00:00"), entry_port_code: port.schedule_d_code, store_names: "A\n B", customer_references: "A123 10/1/14\n1234\nB123")) }
     let(:entry) { container1.entry }
-    let!(:container2) { Factory(:container, container_number: "CONT1", quantity: 10, entry: entry) }
+    let!(:container2) { FactoryBot(:container, container_number: "CONT1", quantity: 10, entry: entry) }
 
     let(:temp) { described_class.new.run_report Hash.new }
     let(:wb) { Spreadsheet.open temp.path }
@@ -107,25 +107,25 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
     context "set with custom feature WWW VFI Track Reports" do
 
       it "allows permission for master users with custom_feature WWW VFI Track Reports set" do
-        user = Factory(:master_user)
+        user = FactoryBot(:master_user)
         expect(user).to receive(:view_entries?).and_return true
         expect(described_class.permission? user).to eq true
       end
 
       it "denies permission for users that can't view entries" do
-        user = Factory(:master_user)
+        user = FactoryBot(:master_user)
         expect(user).to receive(:view_entries?).and_return false
         expect(described_class.permission? user).to eq false
       end
 
       context "with pvh company" do
         let (:user) {
-          user = Factory(:user)
+          user = FactoryBot(:user)
           allow(user).to receive(:view_entries?).and_return true
           user
         }
 
-        let! (:pvh) { Factory(:company, importer: true, system_code: "PVH") }
+        let! (:pvh) { FactoryBot(:company, importer: true, system_code: "PVH") }
 
         it "denies users that are not linked to pvh" do
           expect(described_class.permission? user).to eq false
@@ -139,7 +139,7 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
         end
 
         it "allows to users linked to pvh" do
-          company = Factory(:importer)
+          company = FactoryBot(:importer)
           company.linked_companies << pvh
           user.company = company
           user.save!
@@ -152,7 +152,7 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
     it "denies permission for non-WWW VFI Track Reports instance" do
       # Improper server setup
       allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       allow(user).to receive(:view_entries?).and_return true
       expect(described_class.permission? user).to eq false
     end

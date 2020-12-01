@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser do
 
-  let! (:us) { Factory(:country, iso_code: "US") }
+  let! (:us) { FactoryBot(:country, iso_code: "US") }
 
   let (:tariff_json) {
     [

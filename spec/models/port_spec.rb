@@ -139,7 +139,7 @@ describe Port do
       end
 
       it "loads UNLOC codes, not updating those that already exist, and creating non-1/4 ports that have IATA codes" do
-        Factory(:port, name: "Toronto, haha", unlocode: "CATOR")
+        FactoryBot(:port, name: "Toronto, haha", unlocode: "CATOR")
         described_class.load_unlocode data
         expect(described_class.count).to eq 4
         mon = described_class.where(unlocode: "CAMON").first
@@ -155,7 +155,7 @@ describe Port do
       end
 
       it "overwrites existing codes when indicated" do
-        Factory(:port, name: "Montreal, haha", unlocode: "CAMON")
+        FactoryBot(:port, name: "Montreal, haha", unlocode: "CAMON")
         described_class.load_unlocode data, true
         expect(described_class.count).to eq 4
         mon = described_class.where(unlocode: "CAMON").first

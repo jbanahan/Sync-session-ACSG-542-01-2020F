@@ -24,14 +24,14 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
      :duty_rate, :duty_rate_kg].collect {|k| h[k]}.to_csv(:quote_char=>"\007")
   end
 
-  let!(:us) { Factory(:country, iso_code: 'US')}
-  let!(:ca) { Factory(:country, iso_code: 'CA')}
+  let!(:us) { FactoryBot(:country, iso_code: 'US')}
+  let!(:ca) { FactoryBot(:country, iso_code: 'CA')}
 
   describe '#process_file' do
     let(:log) { InboundFile.new }
 
     before do
-      @company = with_customs_management_id(Factory(:company), 'FOOLO')
+      @company = with_customs_management_id(FactoryBot(:company), 'FOOLO')
       @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :prod_season]
     end
 

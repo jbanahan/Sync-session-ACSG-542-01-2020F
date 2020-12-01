@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   let (:xml_data) { IO.read xml_path }
   let (:est) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"] }
   let! (:customer) {
-    c = Factory(:company, :alliance_customer_number=>'EDDIE')
+    c = FactoryBot(:company, :alliance_customer_number=>'EDDIE')
     c.system_identifiers.create! system: "Customs Management", code: "EDDIE"
     c
   }
@@ -36,21 +36,21 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_id).to eq sf.id
     end
     it "should not replace entry numbers" do
-      sf = Factory(:security_filing, :entry_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = FactoryBot(:security_filing, :entry_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_numbers).to eql("123456")
     end
     it "should not replace entry reference numbers" do
-      sf = Factory(:security_filing, :entry_reference_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = FactoryBot(:security_filing, :entry_reference_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_reference_numbers).to eql("123456")
     end
     it "should not process files with outdated event times" do
-      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = FactoryBot(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
-      # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
+      # Just pick a piece of informaiton from the file that's not in the FactoryBot create and ensure it's not there
       sf = SecurityFiling.first
       expect(sf.transaction_number).to be_nil
 
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should update existing security filing and replace lines" do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
-      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
+      sf = FactoryBot(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
       sf.security_filing_lines.create!(:line_number=>7, :quantity=>1)
       subject.parse_file xml_data, log
       sf.reload
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 09:15 EST: Bill Nbr: KKLUXM02368200. Disposition Cd: S2",
         "2012-11-27 09:15 EST: NO BILL MATCH (NOT ON FILE)"
       ]
-      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"),
+      sf = FactoryBot(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"),
         :po_numbers=>"A\nB", countries_of_origin: "C\nD", notes: notes.join("\n"))
       sf.security_filing_lines.create!(:line_number=>7, :quantity=>1)
 
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   end
   describe "parse_dom" do
     let (:dom) { REXML::Document.new xml_data }
-    let (:security_filing) { Factory(:security_filing) }
+    let (:security_filing) { FactoryBot(:security_filing) }
 
     it "should create security filing" do
       sf = subject.parse_dom dom, security_filing, "bucket", "file.txt"

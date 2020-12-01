@@ -5,15 +5,15 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   context 'with valid data' do
-    let!(:importer) { FactoryGirl.create :company, importer:true, system_code:'SYSTEM'}
-    let!(:product) { FactoryGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
-    let!(:shipment) { FactoryGirl.create(:shipment, importer_id:importer.id) }
-    let!(:first_order) { FactoryGirl.create :order, order_number: 2502377, customer_order_number: 1502377, importer_id:importer.id, approval_status: "Accepted"}
-    let!(:second_order) { FactoryGirl.create :order, order_number: 2502396, customer_order_number: 1502396, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:third_order) { FactoryGirl.create :order, order_number: 2502397, customer_order_number: 1502397, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:fourth_order) { FactoryGirl.create :order, order_number: 2502398, customer_order_number: 1502398, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
-    let!(:user) { FactoryGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
+    let!(:importer) { FactoryBotGirl.create :company, importer:true, system_code:'SYSTEM'}
+    let!(:product) { FactoryBotGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
+    let!(:shipment) { FactoryBotGirl.create(:shipment, importer_id:importer.id) }
+    let!(:first_order) { FactoryBotGirl.create :order, order_number: 2502377, customer_order_number: 1502377, importer_id:importer.id, approval_status: "Accepted"}
+    let!(:second_order) { FactoryBotGirl.create :order, order_number: 2502396, customer_order_number: 1502396, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:third_order) { FactoryBotGirl.create :order, order_number: 2502397, customer_order_number: 1502397, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:fourth_order) { FactoryBotGirl.create :order, order_number: 2502398, customer_order_number: 1502398, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:order_lines) { [FactoryBotGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryBotGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryBotGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
+    let!(:user) { FactoryBotGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
     let(:form_data) { StandardBookingFormSpecData.form_lines }
 
     before do
@@ -113,14 +113,14 @@ describe OpenChain::CustomHandler::GenericBookingParser do
 
     it "raises error when order/booking check fails if enable_warnings provided in constructor options" do
       ol = first_order.order_lines.first
-      Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
+      FactoryBot(:booking_line, shipment: FactoryBot(:shipment, reference: "2nd shipment"), order_line: ol)
 
       expect {described_class.new(enable_warnings: true).process_rows shipment, form_data, user}.to raise_error 'The following purchase orders are assigned to other shipments: 1502377 (2nd shipment)'
     end
 
     it "assigns warning_overridden attribs when enable_warnings is absent" do
       ol = first_order.order_lines.first
-      Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
+      FactoryBot(:booking_line, shipment: FactoryBot(:shipment, reference: "2nd shipment"), order_line: ol)
 
       Timecop.freeze(DateTime.new(2018, 1, 1)) { described_class.new(enable_warnings: false).process_rows shipment, form_data, user }
       expect(shipment.warning_overridden_by).to eq user
@@ -136,15 +136,15 @@ describe OpenChain::CustomHandler::GenericBookingParser do
 
   context 'with incomplete data' do
     let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
-    let(:importer) { Factory(:importer) }
-    let(:shipment) { FactoryGirl.build :shipment, importer_id:importer.id }
+    let(:importer) { FactoryBot(:importer) }
+    let(:shipment) { FactoryBotGirl.build :shipment, importer_id:importer.id }
     let (:product) {
-      p = Factory(:product, importer: importer)
+      p = FactoryBot(:product, importer: importer)
       p.update_custom_value! cdefs[:prod_part_number], "WPT028531"
       p
     }
-    let!(:purchase_order) { FactoryGirl.create(:order, customer_order_number: 1502377, importer_id:importer.id)}
-    let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: purchase_order.id, sku: 32248678, product_id: product.id)]}
+    let!(:purchase_order) { FactoryBotGirl.create(:order, customer_order_number: 1502377, importer_id:importer.id)}
+    let!(:order_lines) { [FactoryBotGirl.create(:order_line, order_id: purchase_order.id, sku: 32248678, product_id: product.id)]}
     let(:row) { [nil, "LIGHT & EASY LINEN-STRETCH PANTS (53% LINEN / 45% VISCOSE / 2% SPANDEX)", 1502377.0, "WPT028531", 32248678.0, "6204.69.9044", 200.0, 5000.0, nil, 5.322, 2142.2, "PH"] }
 
     it 'does not add a line when PO Number is not provided' do

@@ -1,6 +1,6 @@
 describe ValidationRuleManifestDiscrepancies do
   let(:rule) { described_class.new }
-  let(:entry) { Factory(:entry) }
+  let(:entry) { FactoryBot(:entry) }
 
   describe 'run_validation' do
     it 'passes if both Qty and MnQty match' do

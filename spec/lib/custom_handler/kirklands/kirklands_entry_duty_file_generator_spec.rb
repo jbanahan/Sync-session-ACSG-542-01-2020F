@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyFileGenerator do
 
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
 
   let (:entry) {
-    e = Factory(:entry, entry_number: "316000001", entry_filed_date: Date.new(2019, 10, 1), vessel: "Vessel", voyage: "Voyage", export_date: Date.new(2019, 9, 1))
-    i = Factory(:commercial_invoice, entry: e)
-    line = Factory(:commercial_invoice_line, commercial_invoice: i, part_number: "PART1", po_number: "PO1", quantity: 10, prorated_mpf: 1, hmf: 2, cotton_fee: 3, add_duty_amount: 4, cvd_duty_amount: 5, other_fees: 6)
-    tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "1234567890", spi_primary: "SPI", duty_advalorem: 7, duty_specific: 8, duty_other: 9)
-    tariff_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "987654321", spi_primary: "SPI2", duty_advalorem: 1, duty_specific: 2, duty_other: 3)
+    e = FactoryBot(:entry, entry_number: "316000001", entry_filed_date: Date.new(2019, 10, 1), vessel: "Vessel", voyage: "Voyage", export_date: Date.new(2019, 9, 1))
+    i = FactoryBot(:commercial_invoice, entry: e)
+    line = FactoryBot(:commercial_invoice_line, commercial_invoice: i, part_number: "PART1", po_number: "PO1", quantity: 10, prorated_mpf: 1, hmf: 2, cotton_fee: 3, add_duty_amount: 4, cvd_duty_amount: 5, other_fees: 6)
+    tariff = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "1234567890", spi_primary: "SPI", duty_advalorem: 7, duty_specific: 8, duty_other: 9)
+    tariff_2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "987654321", spi_primary: "SPI2", duty_advalorem: 1, duty_specific: 2, duty_other: 3)
     e
   }
 

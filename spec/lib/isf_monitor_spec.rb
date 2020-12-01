@@ -58,11 +58,11 @@ describe OpenChain::IsfMonitor do
   describe "run" do
 
     let (:company) {
-      Factory(:company)
+      FactoryBot(:company)
     }
 
     let (:user) {
-      Factory(:user, company: company)
+      FactoryBot(:user, company: company)
     }
 
     it "finds backed up files and reports them" do

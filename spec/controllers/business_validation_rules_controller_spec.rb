@@ -1,10 +1,10 @@
 describe BusinessValidationRulesController do
   describe "create" do
-    let(:business_validation_rule) { Factory(:business_validation_rule) }
+    let(:business_validation_rule) { FactoryBot(:business_validation_rule) }
     let(:business_validation_template) { business_validation_rule.business_validation_template }
 
     it 'requires admin' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -15,8 +15,8 @@ describe BusinessValidationRulesController do
     end
 
     it "creates the correct rule and assign an override group if specified" do
-      group = Factory(:group)
-      u = Factory(:admin_user)
+      group = FactoryBot(:group)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -35,7 +35,7 @@ describe BusinessValidationRulesController do
     end
 
     it "onlies save for valid JSON" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -47,7 +47,7 @@ describe BusinessValidationRulesController do
     end
 
     it "only saves for valid bccs (when applicable)" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -61,7 +61,7 @@ describe BusinessValidationRulesController do
     end
 
     it "only saves for valid ccs (when applicable)" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -75,7 +75,7 @@ describe BusinessValidationRulesController do
     end
 
     it "only saves for valid email (when applicable)" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :create,
            business_validation_template_id: business_validation_template.id,
@@ -90,18 +90,18 @@ describe BusinessValidationRulesController do
   end
 
   describe "edit" do
-    let(:business_validation_rule) { Factory(:business_validation_rule) }
+    let(:business_validation_rule) { FactoryBot(:business_validation_rule) }
     let(:business_validation_template) { business_validation_rule.business_validation_template }
 
     it 'requires admin' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :edit, id: business_validation_rule.id, business_validation_template_id: business_validation_template.id
       expect(response).to be_redirect
     end
 
     it "loads the correct rule to edit" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :edit,
           id: business_validation_rule.id,
@@ -116,19 +116,19 @@ describe BusinessValidationRulesController do
   end
 
   describe "update" do
-    let(:business_validation_rule) { Factory(:business_validation_rule) }
+    let(:business_validation_rule) { FactoryBot(:business_validation_rule) }
     let(:business_validation_template) { business_validation_rule.business_validation_template }
 
     it 'requires admin' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       post :update, id: business_validation_rule.id, business_validation_template_id: business_validation_template.id
       expect(response).to be_redirect
     end
 
     it "updates the correct rule" do
-      u = Factory(:admin_user)
-      group_id = Factory(:group).id
+      u = FactoryBot(:admin_user)
+      group_id = FactoryBot(:group).id
       sign_in_as u
       post :update,
            id: business_validation_rule.id,
@@ -178,7 +178,7 @@ describe BusinessValidationRulesController do
     end
 
     it "errors if json is invalid" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :update,
            id: business_validation_rule.id,
@@ -198,7 +198,7 @@ describe BusinessValidationRulesController do
     end
 
     it "errors if email is invalid (when applicable)" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :update,
            id: business_validation_rule.id,
@@ -214,9 +214,9 @@ describe BusinessValidationRulesController do
   end
 
   describe "edit_angular" do
-    let!(:search_criterion) { Factory(:search_criterion) }
-    let!(:business_validation_template) { Factory(:business_validation_template) }
-    let!(:group) { Factory(:group) }
+    let!(:search_criterion) { FactoryBot(:search_criterion) }
+    let!(:business_validation_template) { FactoryBot(:business_validation_template) }
+    let!(:group) { FactoryBot(:group) }
 
     let!(:rule) do
       rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", disabled: false,
@@ -234,7 +234,7 @@ describe BusinessValidationRulesController do
     end
 
     it "renders the correct model_field and business_rule json" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :edit_angular, id: rule.id
       r = JSON.parse(response.body)
@@ -255,7 +255,7 @@ describe BusinessValidationRulesController do
     end
 
     it 'requires admin' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :edit_angular, id: rule.id
       expect(response).to be_redirect
@@ -263,9 +263,9 @@ describe BusinessValidationRulesController do
   end
 
   describe "destroy" do
-    let(:business_validation_rule) { Factory(:business_validation_rule) }
+    let(:business_validation_rule) { FactoryBot(:business_validation_rule) }
     let(:business_validation_template) { business_validation_rule.business_validation_template }
-    let(:user) { Factory(:admin_user) }
+    let(:user) { FactoryBot(:admin_user) }
 
     before do
       sign_in_as user
@@ -286,7 +286,7 @@ describe BusinessValidationRulesController do
   end
 
   describe "upload", :disable_delayed_jobs do
-    let(:user) { Factory(:admin_user) }
+    let(:user) { FactoryBot(:admin_user) }
     let(:file) { instance_double("file") }
     let(:cf) { instance_double("custom file") }
     let(:uploader) { OpenChain::BusinessRulesCopier::RuleUploader }
@@ -303,7 +303,7 @@ describe BusinessValidationRulesController do
     end
 
     it "only allows admin" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       sign_in_as user
       expect(CustomFile).not_to receive(:create!)
     end
@@ -316,9 +316,9 @@ describe BusinessValidationRulesController do
   end
 
   describe "copy", :disable_delayed_jobs do
-    let(:user) { Factory(:admin_user) }
-    let(:bvt) { Factory(:business_validation_template) }
-    let(:bvru) { Factory(:business_validation_rule) }
+    let(:user) { FactoryBot(:admin_user) }
+    let(:bvt) { FactoryBot(:business_validation_template) }
+    let(:bvru) { FactoryBot(:business_validation_rule) }
 
     before { sign_in_as user }
 
@@ -330,7 +330,7 @@ describe BusinessValidationRulesController do
     end
 
     it "requires admin" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       sign_in_as user
       expect(OpenChain::BusinessRulesCopier).not_to receive(:copy_rule)
       post :copy, business_validation_template_id: bvt.id, id: bvru.id, new_template_id: bvt.id

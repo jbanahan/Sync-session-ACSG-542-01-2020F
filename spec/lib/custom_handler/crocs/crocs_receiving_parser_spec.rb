@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
 
   describe "parse_shipment" do
     before :each do
-      @importer = with_customs_management_id(Factory(:company, importer:true), 'CROCS')
+      @importer = with_customs_management_id(FactoryBot(:company, importer:true), 'CROCS')
     end
     it "should create a new shipment" do
       rows = [

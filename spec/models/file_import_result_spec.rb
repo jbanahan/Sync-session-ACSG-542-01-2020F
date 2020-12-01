@@ -1,15 +1,15 @@
 describe FileImportResult do
 
   before :each do
-    @user = Factory(:master_user, :email=>'a@example.com')
+    @user = FactoryBot(:master_user, :email=>'a@example.com')
   end
 
   describe "collected_messages" do
     before :each do
-      @fir = Factory(:file_import_result)
-      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
-      @crm1 = Factory(:change_record_message, message: "INFO: Hello", change_record: @cr1)
-      @crm2 = Factory(:change_record_message, message: "ERROR: Hello", change_record: @cr1)
+      @fir = FactoryBot(:file_import_result)
+      @cr1 = FactoryBot(:change_record, failed: true, record_sequence_number: 1)
+      @crm1 = FactoryBot(:change_record_message, message: "INFO: Hello", change_record: @cr1)
+      @crm2 = FactoryBot(:change_record_message, message: "ERROR: Hello", change_record: @cr1)
     end
 
     it "should return the correct messages and count when including everything" do
@@ -23,12 +23,12 @@ describe FileImportResult do
 
   describe "create_excel_report" do
     before :each do
-      @imported_file = Factory(:imported_file, attached_file_name: "file name")
-      @fir = Factory(:file_import_result, imported_file: @imported_file)
+      @imported_file = FactoryBot(:imported_file, attached_file_name: "file name")
+      @fir = FactoryBot(:file_import_result, imported_file: @imported_file)
       @user.messages.delete_all
 
-      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1, unique_identifier: "foo")
-      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2, unique_identifier: "bar")
+      @cr1 = FactoryBot(:change_record, failed: true, record_sequence_number: 1, unique_identifier: "foo")
+      @cr2 = FactoryBot(:change_record, failed: false, record_sequence_number: 2, unique_identifier: "bar")
       @fir.change_records << @cr1
       @fir.change_records << @cr2
     end
@@ -67,12 +67,12 @@ describe FileImportResult do
 
   describe "download_results" do
     before :each do
-      @imported_file = Factory(:imported_file, attached_file_name: "file name")
-      @fir = Factory(:file_import_result, imported_file: @imported_file)
+      @imported_file = FactoryBot(:imported_file, attached_file_name: "file name")
+      @fir = FactoryBot(:file_import_result, imported_file: @imported_file)
       @user.messages.delete_all
 
-      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
-      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2)
+      @cr1 = FactoryBot(:change_record, failed: true, record_sequence_number: 1)
+      @cr2 = FactoryBot(:change_record, failed: false, record_sequence_number: 2)
       @fir.change_records << @cr1
       @fir.change_records << @cr2
     end
@@ -148,9 +148,9 @@ describe FileImportResult do
     expect(co.first).to eq(Product.where(:unique_identifier=>"1pid").first)
   end
   it 'should set changed_object_count on save' do
-    file_import_result = Factory(:file_import_result)
+    file_import_result = FactoryBot(:file_import_result)
     3.times do |i|
-      p = Factory(:product)
+      p = FactoryBot(:product)
       file_import_result.change_records.create!(:recordable => p)
     end
     file_import_result.finished_at = Time.now

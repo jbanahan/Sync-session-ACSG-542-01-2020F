@@ -1,11 +1,11 @@
 describe OpenChain::FiscalMonthAssigner do
-  let(:co) { Factory(:company, fiscal_reference: "ent_release_date") }
-  let(:ent) { Factory(:entry, entry_number: "entry num", importer: co, release_date: DateTime.new(2016, 3, 31, 12, 0),
+  let(:co) { FactoryBot(:company, fiscal_reference: "ent_release_date") }
+  let(:ent) { FactoryBot(:entry, entry_number: "entry num", importer: co, release_date: DateTime.new(2016, 3, 31, 12, 0),
                               arrival_date: Date.new(2016, 04, 15), fiscal_date: nil, fiscal_month: nil, fiscal_year: nil) }
-  let!(:brok_inv) { Factory(:broker_invoice, entry: ent, invoice_number: "inv num", invoice_date: Date.new(2016, 04, 15), fiscal_date: nil,
+  let!(:brok_inv) { FactoryBot(:broker_invoice, entry: ent, invoice_number: "inv num", invoice_date: Date.new(2016, 04, 15), fiscal_date: nil,
                                             fiscal_month: nil, fiscal_year: nil)}
-  let!(:fm1) { Factory(:fiscal_month, company: co, year: 2016, month_number: 3, start_date: Date.new(2016, 03, 01), end_date: Date.new(2016, 03, 31)) }
-  let!(:fm2) { Factory(:fiscal_month, company: co, year: 2016, month_number: 4, start_date: Date.new(2016, 04, 01), end_date: Date.new(2016, 04, 30)) }
+  let!(:fm1) { FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 3, start_date: Date.new(2016, 03, 01), end_date: Date.new(2016, 03, 31)) }
+  let!(:fm2) { FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 4, start_date: Date.new(2016, 04, 01), end_date: Date.new(2016, 04, 30)) }
 
   describe "assign" do
     it "assigns entry and invoice fiscal_date/month/year fields" do
@@ -76,12 +76,12 @@ describe OpenChain::FiscalMonthAssigner do
     end
 
     it "raises exception if more than one fiscal month is found for an entry" do
-      Factory(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016, 3, 2), end_date: Date.new(2016, 4, 20))
+      FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016, 3, 2), end_date: Date.new(2016, 4, 20))
       expect {described_class.assign ent}.to raise_error DuplicateFiscalDateError, "More than one fiscal month found for Entry #entry num with Release Date 2016-03-31."
     end
 
     it "raises exception if more than one fiscal month is found for a broker invoice" do
-      Factory(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016, 4, 2), end_date: Date.new(2016, 4, 20))
+      FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016, 4, 2), end_date: Date.new(2016, 4, 20))
       expect {described_class.assign ent}.to raise_error DuplicateFiscalDateError, "More than one fiscal month found for Broker Invoice #inv num with Invoice Date 2016-04-15."
     end
   end

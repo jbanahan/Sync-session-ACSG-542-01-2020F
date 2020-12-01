@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
 
   let (:importer) {
-    with_customs_management_id(Factory(:company), "CUST")
+    with_customs_management_id(FactoryBot(:company), "CUST")
   }
 
   let (:invoice) {

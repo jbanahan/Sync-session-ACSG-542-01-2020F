@@ -1,14 +1,14 @@
 describe OneTimeAlert do
-  let(:ent) { Factory(:entry, broker_reference: "BROKREF_ABC") }
+  let(:ent) { FactoryBot(:entry, broker_reference: "BROKREF_ABC") }
   let(:ota) do
-    Factory(:one_time_alert, user: Factory(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz",
+    FactoryBot(:one_time_alert, user: FactoryBot(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz",
                              email_subject: "alert", email_body: "Watch out!", module_type: "Entry", blind_copy_me: true,
-                             search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5),
-                                                           Factory(:search_criterion, model_field_uid: "ent_vessel", value: "HMS Pinafore")])
+                             search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_gross_weight", value: 5),
+                                                           FactoryBot(:search_criterion, model_field_uid: "ent_vessel", value: "HMS Pinafore")])
   end
 
   context "permissions" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     describe "can_edit?" do
       it "allows alert's creator" do
@@ -22,7 +22,7 @@ describe OneTimeAlert do
       end
 
       it "block anyone else" do
-        expect(ota.can_edit?(Factory(:user))).to eq false
+        expect(ota.can_edit?(FactoryBot(:user))).to eq false
       end
     end
 
@@ -38,7 +38,7 @@ describe OneTimeAlert do
       end
 
       it "block anyone else" do
-        expect(ota.can_view?(Factory(:user))).to eq false
+        expect(ota.can_view?(FactoryBot(:user))).to eq false
       end
     end
   end
@@ -75,7 +75,7 @@ describe OneTimeAlert do
   end
 
   describe "recipients_and_mailing_lists" do
-    let(:ml) { Factory(:mailing_list, email_addresses: "sthubbins@hellhole.co.uk, smalls@sharksandwich.net")}
+    let(:ml) { FactoryBot(:mailing_list, email_addresses: "sthubbins@hellhole.co.uk, smalls@sharksandwich.net")}
 
     it "returns addresses in mailing list" do
       ota.update(email_addresses: nil, mailing_list: ml)

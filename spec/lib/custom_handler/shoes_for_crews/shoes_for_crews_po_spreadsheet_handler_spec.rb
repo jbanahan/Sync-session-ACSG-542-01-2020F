@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       payment_terms: "PAYMENT Terms",
       vendor_id: "123123",
       vendor_address: "Vendor Name\r\nAddress1\r\nAddress 2",
-      factory_address: "Factory Name\r\nAddress1\r\nAddress 2",
+      factory_address: "FactoryBot Name\r\nAddress1\r\nAddress 2",
       forwarder_address: "Forwarder Name\r\nAddress1\r\nAddress 2",
       consignee_address: "Consignee Name\r\nAddress1\r\nAddress 2",
       final_dest_address: "Final Dest Name\r\nAddress1\r\nAddress 2",
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     row[9] = data[:order_date]
     row = sht.row 6
     row[1] = "Vendor:"
-    row[5] = "Factory"
+    row[5] = "FactoryBot"
     row = sht.row 7
     row[1] = data[:vendor_address]
     row[5] = data[:factory_address]
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     out.string
   end
 
-  let (:importer) { Factory(:importer, system_code: "SHOES") }
+  let (:importer) { FactoryBot(:importer, system_code: "SHOES") }
   before :each do
     importer
   end
@@ -174,7 +174,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(s[:vendor][:name]).to eq d[:vendor_address].split("\r\n")[0]
       expect(s[:vendor][:address]).to eq d[:vendor_address].split("\r\n")[1..-1].join("\n")
 
-      expect(s[:factory][:type]).to eq "Factory"
+      expect(s[:factory][:type]).to eq "FactoryBot"
       expect(s[:factory][:name]).to eq d[:factory_address].split("\r\n")[0]
       expect(s[:factory][:address]).to eq d[:factory_address].split("\r\n")[1..-1].join("\n")
 
@@ -234,8 +234,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Name").text).to eq s[:forwarder][:name]
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Address").cdatas[0].value).to eq s[:forwarder][:address]
 
-      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Name").text).to eq s[:factory][:name]
-      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Address").cdatas[0].value).to eq s[:factory][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'FactoryBot']/Name").text).to eq s[:factory][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'FactoryBot']/Address").cdatas[0].value).to eq s[:factory][:address]
 
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Name").text).to eq s[:consignee][:name]
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Address").cdatas[0].value).to eq s[:consignee][:address]
@@ -371,7 +371,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "updates a PO" do
-      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
+      order = FactoryBot(:order, order_number: "SHOES-ORDER#", importer: importer)
       expect_any_instance_of(Order).to receive(:post_update_logic!)
 
       subject.process_po data, log, "bucket", "key"
@@ -388,7 +388,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "does not update an order if the order is shipping" do
-      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
+      order = FactoryBot(:order, order_number: "SHOES-ORDER#", importer: importer)
 
       # mock the find_order so we can provide our own order to make sure that when an order is
       # said to be shipping that it's not updated.
@@ -408,7 +408,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "does not update an order if the order is booked" do
-      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
+      order = FactoryBot(:order, order_number: "SHOES-ORDER#", importer: importer)
 
       # mock the find_order so we can provide our own order to make sure that when an order is
       # said to be booked that it's not updated.

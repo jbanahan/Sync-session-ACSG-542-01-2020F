@@ -1,8 +1,8 @@
 describe OpenChain::Report::LandedCostReport do
   before :each do
-    @user = Factory :master_user
-    @entry1 = Factory(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 1", :release_date=>(Time.zone.now - 1.day), :entry_number=>"1", :transport_mode_code=>"2", :customer_references=>"3\n4")
-    @entry2 = Factory(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 2", :release_date=>Time.zone.now, :entry_number=>"5", :transport_mode_code=>"6", :customer_references=>"7\n8")
+    @user = FactoryBot :master_user
+    @entry1 = FactoryBot(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 1", :release_date=>(Time.zone.now - 1.day), :entry_number=>"1", :transport_mode_code=>"2", :customer_references=>"3\n4")
+    @entry2 = FactoryBot(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 2", :release_date=>Time.zone.now, :entry_number=>"5", :transport_mode_code=>"6", :customer_references=>"7\n8")
   end
 
   after :each do
@@ -100,7 +100,7 @@ describe OpenChain::Report::LandedCostReport do
 
     it "should not find entries a user can't view" do
       # We didn't set importer_id in the entries, so none should match
-      user = Factory(:importer_user)
+      user = FactoryBot(:importer_user)
 
       start_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now + 1.day).strftime("%Y-%m-%d")

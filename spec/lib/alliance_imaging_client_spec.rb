@@ -5,9 +5,9 @@ describe OpenChain::AllianceImagingClient do
   let! (:master_setup) { stub_master_setup }
 
   describe "bulk_request_images" do
-    let (:entry_1) { Factory(:entry, broker_reference: '123456', source_system: 'Alliance') }
-    let (:entry_2) { Factory(:entry, broker_reference: '654321', source_system: 'Alliance') }
-    let (:entry_3) { Factory(:entry, broker_reference: '777777', source_system: 'Fenix') }
+    let (:entry_1) { FactoryBot(:entry, broker_reference: '123456', source_system: 'Alliance') }
+    let (:entry_2) { FactoryBot(:entry, broker_reference: '654321', source_system: 'Alliance') }
+    let (:entry_3) { FactoryBot(:entry, broker_reference: '777777', source_system: 'Fenix') }
 
     it 'requests based on primary keys' do
       expect(subject).to receive(:request_images).with('123456')
@@ -37,7 +37,7 @@ describe OpenChain::AllianceImagingClient do
       allow(s3_obj).to receive(:bucket).and_return "bucket"
       s3_obj
     end
-    let (:search_run) { SearchRun.create! search_setup_id: Factory(:search_setup).id }
+    let (:search_run) { SearchRun.create! search_setup_id: FactoryBot(:search_setup).id }
 
     it "proxies requests with search runs in them" do
       expect(OpenChain::S3).to receive(:create_s3_tempfile).and_return s3_obj
@@ -55,8 +55,8 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "process_image_file" do
-    let (:user) { Factory(:user) }
-    let! (:entry_1) { Factory(:entry, broker_reference: '123456', source_system: 'Alliance') }
+    let (:user) { FactoryBot(:user) }
+    let! (:entry_1) { FactoryBot(:entry, broker_reference: '123456', source_system: 'Alliance') }
     let (:tempfile) do
       tempfile = Tempfile.new ["file", ".pdf"]
       tempfile.binmode
@@ -573,7 +573,7 @@ describe OpenChain::AllianceImagingClient do
       tempfile
     end
 
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     after do
       tempfile&.close!
@@ -608,7 +608,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "adds attachment to an existing entry" do
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
 
       subject.process_fenix_nd_image_file tempfile, message, user
       e.reload
@@ -617,7 +617,7 @@ describe OpenChain::AllianceImagingClient do
 
     it "adds attachment to an existing entry even if the name and type are the same" do
       message["doc_desc"] = "Type"
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "Type", attached_file_name: "11981001795105 _B3_01092015 14.24.42 PM.pdf", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
       r = subject.process_fenix_nd_image_file tempfile, message, user
@@ -627,7 +627,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "replaces previous versions of B3 attachment" do
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T04:30:35-10:00"
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T03:30:35-10:00"
 
@@ -639,7 +639,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "does not save files that have newer versions attached to the entry" do
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-05T04:30:35-10:00", attached_file_name: "file.pdf"
 
       r = subject.process_fenix_nd_image_file tempfile, message, user
@@ -652,7 +652,7 @@ describe OpenChain::AllianceImagingClient do
 
     it "replaces previous versions of RNS attachment" do
       message['doc_desc'] = "RNS"
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "RNS", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
       r = subject.process_fenix_nd_image_file tempfile, message, user
@@ -664,7 +664,7 @@ describe OpenChain::AllianceImagingClient do
 
     it "replaces previous versions of B3 Recap attachment" do
       message['doc_desc'] = "B3 Recap"
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3 Recap", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
       r = subject.process_fenix_nd_image_file tempfile, message, user
@@ -677,7 +677,7 @@ describe OpenChain::AllianceImagingClient do
     it 'replaces previous versions of billing invoices' do
       message['doc_desc'] = "Invoice"
       message['file_name'] = "invoice 123.pdf"
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       a1 = e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 123.pdf"
       e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 345.pdf"
 
@@ -692,7 +692,7 @@ describe OpenChain::AllianceImagingClient do
 
     it "replaces previous versions of Cartage Slip attachment" do
       message['doc_desc'] = "Cartage Slip"
-      e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
+      e = FactoryBot(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "Cartage Slip", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
       r = subject.process_fenix_nd_image_file tempfile, message, user
@@ -718,7 +718,7 @@ describe OpenChain::AllianceImagingClient do
       # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the
       # DB index on broker_reference / entry_number isn't utilized.
       # This test ensures there's a check to make sure the file number is stringified.
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       mock_relation = instance_double(ActiveRecord::Relation)
       expect(mock_relation).to receive(:first_or_create!).and_return entry
       expect(Entry).to receive(:where).with({source_system: "Fenix", entry_number: "11981001795105"}).and_return mock_relation

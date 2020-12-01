@@ -1,7 +1,7 @@
 describe AttachmentArchiveSetupsController do
-  let(:admin) { Factory(:admin_user) }
-  let(:user) { Factory(:user) }
-  let(:company) { Factory(:company) }
+  let(:admin) { FactoryBot(:admin_user) }
+  let(:user) { FactoryBot(:user) }
+  let(:company) { FactoryBot(:company) }
 
   describe "generate_packets" do
     it "fails if user not admin" do

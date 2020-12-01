@@ -2,12 +2,12 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
 
   before :each do
     # UNDER ARMOUR IS DESIGNED TO RUN IN THEIR OWN DATABASE AND USES THE FIRST IMPORTER IN THE DB
-    @importer = Factory(:company, :importer=>true)
+    @importer = FactoryBot(:company, :importer=>true)
   end
   context "AAFES Exports" do
     before :each do
-      DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN", :import_date=>"2011-10-01", :quantity=>10, :product_id=>Factory(:product, :unique_identifier=>'1000375-609').id)
-      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+TW", :import_date=>"2011-10-01", :quantity=>10, :product_id=>Factory(:product, :unique_identifier=>'1000377-001').id)
+      DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN", :import_date=>"2011-10-01", :quantity=>10, :product_id=>FactoryBot(:product, :unique_identifier=>'1000375-609').id)
+      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+TW", :import_date=>"2011-10-01", :quantity=>10, :product_id=>FactoryBot(:product, :unique_identifier=>'1000377-001').id)
       DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+MY", :import_date=>"2011-11-01", :quantity=>10, :product_id=>Product.find_by(unique_identifier: '1000377-001').id)
       @lines = [
 "Style,Color,UPC,PO Number,PO Line Number,Export Date,TCMD CONTAINER,VAN TCN,PO Received Date,Vendor,VENDOR NAME,Facility,ISO,FACNAME,Item,DESC,CRC,STYLE2,Units Received,Cost,Recd $",

@@ -19,61 +19,61 @@ describe OpenChain::PurgeEntry do
 
   describe "run_schedulable" do
 
+    let(:drawback_customer) {FactoryBot.create(:company, drawback_customer: true)}
+    let(:non_drawback_customer) {FactoryBot.create(:company, drawback_customer: false)}
+
+  describe "purge" do
+
+  end
+    end
+      end
+        subject.run_schedulable({"years_old" => 10})
+      Timecop.freeze(now) do
+
+      expect(subject).to receive(:purge).with(older_than: start_date)
+      start_date = now.in_time_zone("America/New_York").beginning_of_day - 10.years
+    it "uses alternate years_old value" do
     let (:now) { Time.zone.now }
 
     it "executes the purge function" do
       start_date = now.in_time_zone("America/New_York").beginning_of_day - 5.years
       expect(subject).to receive(:purge).with(older_than: start_date)
 
-      Timecop.freeze(now) do
         subject.run_schedulable({})
-      end
     end
-
-    it "uses alternate years_old value" do
-      start_date = now.in_time_zone("America/New_York").beginning_of_day - 10.years
-      expect(subject).to receive(:purge).with(older_than: start_date)
 
       Timecop.freeze(now) do
-        subject.run_schedulable({"years_old" => 10})
       end
-    end
-  end
 
-  describe "purge" do
-
-    let(:drawback_customer) {Factory.create(:company, drawback_customer: true)}
-    let(:non_drawback_customer) {Factory.create(:company, drawback_customer: false)}
-
-    it "executes the purge function with entry IDs which are older than 8 years for drawback customers" do
-      e = Factory.create(:entry, release_date: (8.years.ago - 1.day), importer: drawback_customer)
-      expect(subject).to receive(:purge_entry_ids).with [e.id]
-      subject.purge older_than: 5.years.ago
+    it "executes the purge function with entry IDs which are older than 8 years" do
+      e = FactoryBot.create(:entry, release_date: 8.years.ago, importer: drawback_customer)
+      expect(subject).to receive(:purge).with [e.id]
+      subject.run_schedulable
     end
 
     it "executes the purge function with entry IDs which are older than 5 years for non drawback customers" do
-      e = Factory.create(:entry, release_date: (5.years.ago - 1.day), importer: non_drawback_customer)
-      expect(subject).to receive(:purge_entry_ids).with [e.id]
-      subject.purge older_than: 5.years.ago
+      e = FactoryBot.create(:entry, release_date: 5.years.ago, importer: non_drawback_customer)
+      expect(subject).to receive(:purge).with [e.id]
+      subject.run_schedulable
     end
 
     it "executes the purge function with entry IDs which are older than 5.5 years if release date is missing for non drawback customers" do
-      e = Factory.create(:entry, import_date: 6.years.ago, importer: non_drawback_customer)
-      expect(subject).to receive(:purge_entry_ids).with [e.id]
-      subject.purge older_than: 5.years.ago
+      e = FactoryBot.create(:entry, import_date: 6.years.ago, importer: non_drawback_customer)
+      expect(subject).to receive(:purge).with [e.id]
+      subject.run_schedulable
     end
 
     it "does not execute the purge function with entry IDs for drawback customers which aren't over 8 years" do
-      Factory.create(:entry, import_date: (8.years.ago + 1.day), importer: drawback_customer)
-      expect(subject).to receive(:purge_entry_ids).with []
-      subject.purge older_than: 5.years.ago
+      FactoryBot.create(:entry, import_date: 7.years.ago, importer: drawback_customer)
+      expect(subject).to receive(:purge).with []
+      subject.run_schedulable
     end
   end
 
   describe "delete_s3_imaging_files" do
     it "removes files associated with an entry" do
-      e = Factory.create(:entry, source_system: "Alliance", broker_reference: "1234asdf")
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf", list_versions: true)
+      e = FactoryBot.create(:entry, source_system: "Alliance", broker_reference: "1234asdf")
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf")
                                                             .and_yield "KewillImaging/1234asdf/1234zxcv.pdf", "ver"
 
       expect(OpenChain::S3).to receive(:delete).with("bucket", "KewillImaging/1234asdf/1234zxcv.pdf", "ver")
@@ -82,7 +82,7 @@ describe OpenChain::PurgeEntry do
     end
 
     it "does not remove anything if the prefix is empty" do
-      e = Factory.create(:entry, source_system: nil, broker_reference: "1234asdf")
+      e = FactoryBot.create(:entry, source_system: nil, broker_reference: "1234asdf")
       expect(OpenChain::S3).not_to receive(:each_file_in_bucket)
 
       expect(OpenChain::S3).not_to receive(:delete).with("bucket", "KewillImaging/1234asdf/1234zxcv.pdf", "ver")
@@ -93,8 +93,8 @@ describe OpenChain::PurgeEntry do
 
   describe "purge_entry_ids" do
 
-    let(:e1) { Factory.create(:entry, source_system: "Alliance", broker_reference: "1234asdf") }
-    let(:e2) { Factory.create(:entry, source_system: "Alliance", broker_reference: "1234asdf") }
+    let(:e1) { FactoryBot.create(:entry, source_system: "Alliance", broker_reference: "1234asdf") }
+    let(:e2) { FactoryBot.create(:entry, source_system: "Alliance", broker_reference: "1234asdf") }
 
     it "does not call delete_s3_imaging_files if no bucket is present" do
       allow(MasterSetup).to receive(:secrets).and_return "kewill_imaging"

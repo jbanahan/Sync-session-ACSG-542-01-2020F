@@ -350,7 +350,7 @@
           <Type>RetailCostPrice</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryPostalCode</Type>
+          <Type>FactoryBotPostalCode</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BillToCountryCode</Type>
@@ -381,7 +381,7 @@
           <Value>001</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCode</Type>
+          <Type>FactoryBotCode</Type>
           <Value>23894509</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -455,7 +455,7 @@
           <Value>1892.16</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryName</Type>
+          <Type>FactoryBotName</Type>
           <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -463,15 +463,15 @@
           <Value>FOB</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryAddressLine2</Type>
+          <Type>FactoryBotAddressLine2</Type>
           <Value>EETTIVEERAMPALAYAM</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryAddressLine1</Type>
+          <Type>FactoryBotAddressLine1</Type>
           <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCountryCode</Type>
+          <Type>FactoryBotCountryCode</Type>
           <Value>IN</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -487,14 +487,14 @@
           <Value>52% COTTON 48% MODAL</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCityName</Type>
+          <Type>FactoryBotCityName</Type>
           <Value>TIRUPPUR</Value>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BoxEndCode</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryState</Type>
+          <Type>FactoryBotState</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>PaymentTerms</Type>
@@ -1187,7 +1187,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Type>RetailCostPrice</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryPostalCode</Type>
+          <Type>FactoryBotPostalCode</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BillToCountryCode</Type>
@@ -1218,7 +1218,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>004</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCode</Type>
+          <Type>FactoryBotCode</Type>
           <Value>23894509</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1292,7 +1292,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>1681.92</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryName</Type>
+          <Type>FactoryBotName</Type>
           <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1300,15 +1300,15 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>FOB</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryAddressLine2</Type>
+          <Type>FactoryBotAddressLine2</Type>
           <Value>EETTIVEERAMPALAYAM</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryAddressLine1</Type>
+          <Type>FactoryBotAddressLine1</Type>
           <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCountryCode</Type>
+          <Type>FactoryBotCountryCode</Type>
           <Value>IN</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1324,14 +1324,14 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>52% COTTON 48% MODAL</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryCityName</Type>
+          <Type>FactoryBotCityName</Type>
           <Value>TIRUPPUR</Value>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BoxEndCode</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>FactoryState</Type>
+          <Type>FactoryBotState</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>PaymentTerms</Type>

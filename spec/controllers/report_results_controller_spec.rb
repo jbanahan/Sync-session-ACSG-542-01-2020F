@@ -2,8 +2,8 @@ describe ReportResultsController do
 
   before(:each) do
     c = Company.create!(:name=>'btestc')
-    @base_user = Factory(:user)
-    @admin_user = Factory(:sys_admin_user)
+    @base_user = FactoryBot(:user)
+    @admin_user = FactoryBot(:sys_admin_user)
     2.times do |i|
       @base_report = ReportResult.create!(:name=>'base_report', :run_by_id=>@base_user.id)
       @admin_report = ReportResult.create!(:name=>'admin_report', :run_by_id=>@admin_user.id)

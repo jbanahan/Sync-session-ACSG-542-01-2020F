@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Hm::HmI2DrawbackParser do
 
   describe "parse_file" do
     let(:log) { InboundFile.new }
-    let!(:importer) { Factory(:importer, system_code:'HENNE') }
+    let!(:importer) { FactoryBot(:importer, system_code:'HENNE') }
     before(:each) {
       allow(subject).to receive(:inbound_file).and_return log
     }

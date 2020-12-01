@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::CustomerInvoiceHandler do
   let!(:parser) { described_class.new cf }
 
   describe "can_view" do
-    let(:u) { Factory(:master_user) }
+    let(:u) { FactoryBot(:master_user) }
     let!(:ms) do
       ms = stub_master_setup
       allow(MasterSetup).to receive(:get).and_return ms
@@ -28,16 +28,16 @@ describe OpenChain::CustomHandler::CustomerInvoiceHandler do
   end
 
   describe "process" do
-    let!(:imp) { Factory(:importer, system_code: "ACME")}
-    let(:user) { Factory(:user, email: "tufnel@stonehenge.biz") }
-    let!(:china) { Factory(:country, iso_code: "CN") }
-    let!(:pakistan) { Factory(:country, iso_code: "PK") }
-    let!(:indonesia) { Factory(:country, iso_code: "ID") }
-    let(:header) {["Invoice Number", "Vendor Name ", "Factory Name", "Invoice Total - Foreign ", "Currency", "Invoice Line - PO Number", "Invoice Line - Middleman Charge", "Invoice Line - Discount - Air/Sea", "Invoice Line - Discount - Early Payment", "Invoice Line - Discount - Trade", "Invoice Line - Part Number", "Invoice Line - Part Description ", "Invoice Date", "Customer Reference Number", "Description of Goods", "Invoice Total - Domestic", "Total Discounts", "Total Charges", "Exchange Rate", "Net Invoice", "Total Net Weight", "Net Weight UOM", "Origin Country ISO Code", "Payment Terms", "Sale Terms", "Ship Mode", "Total Gross Weight", "Total Gross Weight UOM", "Total Volume", "Total Volume UOM", "Invoice Line - Department", "Invoice Line - Export Country ISO Code", "Invoice Line - First Sale", "Invoice Line - Fish and Wildlife", "Invoice Line - Gross Weight", "Invoice Line - Gross Weight UOM ", "Invoice Line - HTS Number ", "Invoice Line - Line Number", "Invoice Line - Mid", "Invoice Line - Net Weight ", "Invoice Line - Net Weight UOM", "Invoice Line - Origin Country ISO Code", "Invoice Line - Pieces", "Invoice Line - Quantity", "Invoice Line - Quantity UOM", "Invoice Line - Unit Price", "Invoice Line - Value - Domestic", "Invoice Line - Value - Foreign", "Invoice Line - Volume", "Invoice Line - Volume UOM"]}
+    let!(:imp) { FactoryBot(:importer, system_code: "ACME")}
+    let(:user) { FactoryBot(:user, email: "tufnel@stonehenge.biz") }
+    let!(:china) { FactoryBot(:country, iso_code: "CN") }
+    let!(:pakistan) { FactoryBot(:country, iso_code: "PK") }
+    let!(:indonesia) { FactoryBot(:country, iso_code: "ID") }
+    let(:header) {["Invoice Number", "Vendor Name ", "FactoryBot Name", "Invoice Total - Foreign ", "Currency", "Invoice Line - PO Number", "Invoice Line - Middleman Charge", "Invoice Line - Discount - Air/Sea", "Invoice Line - Discount - Early Payment", "Invoice Line - Discount - Trade", "Invoice Line - Part Number", "Invoice Line - Part Description ", "Invoice Date", "Customer Reference Number", "Description of Goods", "Invoice Total - Domestic", "Total Discounts", "Total Charges", "Exchange Rate", "Net Invoice", "Total Net Weight", "Net Weight UOM", "Origin Country ISO Code", "Payment Terms", "Sale Terms", "Ship Mode", "Total Gross Weight", "Total Gross Weight UOM", "Total Volume", "Total Volume UOM", "Invoice Line - Department", "Invoice Line - Export Country ISO Code", "Invoice Line - First Sale", "Invoice Line - Fish and Wildlife", "Invoice Line - Gross Weight", "Invoice Line - Gross Weight UOM ", "Invoice Line - HTS Number ", "Invoice Line - Line Number", "Invoice Line - Mid", "Invoice Line - Net Weight ", "Invoice Line - Net Weight UOM", "Invoice Line - Origin Country ISO Code", "Invoice Line - Pieces", "Invoice Line - Quantity", "Invoice Line - Quantity UOM", "Invoice Line - Unit Price", "Invoice Line - Value - Domestic", "Invoice Line - Value - Foreign", "Invoice Line - Volume", "Invoice Line - Volume UOM"]}
     #                 0            1           2          3      4        5        6      7     8     9         10            11             12            13            14           15     16     17     18    19    20       21          22        23             24             25         26           27               28          29             30      31    32    33   34       35            36   37    38     39         40         41    42  43      44       45    46     47    48      49
-    let(:row_1) {["inv num 1", "Vendor 1", "Factory 1", 23.50, "EUR", "PO num 1", 1.25, 2.25, 3.25, 4.25, "part num 1", "part descr 1", "2018-01-01", "cust ref 1", "goods descr 1", 51.10, 21.10, 25.10, 0.50, 61.1, 2.1, "net wt uom 1", "CN", "pay terms 1", "sale terms 1", "ship mode 1", 7.1, "total gross wt uom 1", 5.1, "total vol uom 1", "dept 1", "PK", false, true, 7, "gross wt uom 1", "1111", 1, "MID 1", 8.1, "net wt uom 1", "ID", 101,  3, "qty uom 1", 10.1, 20.1, 25.1, 15.1, "vol uom 1"]}
-    let(:row_2) {["inv num 1", "Vendor 1", "Factory 1", 23.50, "EUR", "PO num 2", 1.26, 2.26, 3.26, 4.26, "part num 2", "part descr 2", "2018-01-01", "cust ref 1", "goods descr 1", 51.10, 21.10, 25.10, 0.50, 61.1, 2.1, "net wt uom 1", "CN", "pay terms 1", "sale terms 1", "ship mode 1", 7.1, "total gross wt uom 1", 5.1, "total vol uom 1", "dept 2", "ID", true, false, 8, "gross wt uom 2", "2222", 2, "MID 2", 8.2, "net wt uom 2", "PK", 102, 4, "qty uom 2", 10.2, 20.2, 25.2, 15.2, "vol uom 2"]}
-    let(:row_3) {["inv num 2", "Vendor 2", "Factory 2", 23.50, "GBP", "PO num 3", 1.27, 2.27, 3.27, 4.27, "part num 3", "part descr 3", "2018-01-02", "cust ref 2", "goods descr 2", 51.11, 21.11, 25.11, 0.51, 61.2, 2.2, "net wt uom 2", "PK", "pay terms 2", "sale terms 2", "ship mode 2", 7.2, "total gross wt uom 2", 5.2, "total vol uom 2", "dept 3", "CN", false, true, 9, "gross wt uom 3", "3333", 3, "MID 2", 8.3, "net wt uom 3", "CN", 103, 4, "qty uom 3",  10.3, 20.3, 25.3, 15.3, "vol uom 3"]}
+    let(:row_1) {["inv num 1", "Vendor 1", "FactoryBot 1", 23.50, "EUR", "PO num 1", 1.25, 2.25, 3.25, 4.25, "part num 1", "part descr 1", "2018-01-01", "cust ref 1", "goods descr 1", 51.10, 21.10, 25.10, 0.50, 61.1, 2.1, "net wt uom 1", "CN", "pay terms 1", "sale terms 1", "ship mode 1", 7.1, "total gross wt uom 1", 5.1, "total vol uom 1", "dept 1", "PK", false, true, 7, "gross wt uom 1", "1111", 1, "MID 1", 8.1, "net wt uom 1", "ID", 101,  3, "qty uom 1", 10.1, 20.1, 25.1, 15.1, "vol uom 1"]}
+    let(:row_2) {["inv num 1", "Vendor 1", "FactoryBot 1", 23.50, "EUR", "PO num 2", 1.26, 2.26, 3.26, 4.26, "part num 2", "part descr 2", "2018-01-01", "cust ref 1", "goods descr 1", 51.10, 21.10, 25.10, 0.50, 61.1, 2.1, "net wt uom 1", "CN", "pay terms 1", "sale terms 1", "ship mode 1", 7.1, "total gross wt uom 1", 5.1, "total vol uom 1", "dept 2", "ID", true, false, 8, "gross wt uom 2", "2222", 2, "MID 2", 8.2, "net wt uom 2", "PK", 102, 4, "qty uom 2", 10.2, 20.2, 25.2, 15.2, "vol uom 2"]}
+    let(:row_3) {["inv num 2", "Vendor 2", "FactoryBot 2", 23.50, "GBP", "PO num 3", 1.27, 2.27, 3.27, 4.27, "part num 3", "part descr 3", "2018-01-02", "cust ref 2", "goods descr 2", 51.11, 21.11, 25.11, 0.51, 61.2, 2.2, "net wt uom 2", "PK", "pay terms 2", "sale terms 2", "ship mode 2", 7.2, "total gross wt uom 2", 5.2, "total vol uom 2", "dept 3", "CN", false, true, 9, "gross wt uom 3", "3333", 3, "MID 2", 8.3, "net wt uom 3", "CN", 103, 4, "qty uom 3",  10.3, 20.3, 25.3, 15.3, "vol uom 3"]}
 
     before do
       allow(cf).to receive(:path).and_return "/path/to/file.xlsx"
@@ -56,8 +56,8 @@ describe OpenChain::CustomHandler::CustomerInvoiceHandler do
       expect(inv.invoice_number).to eq "inv num 1"
       expect(inv.vendor.name).to eq "Vendor 1"
       expect(inv.vendor.system_code).to eq "ACME-VENDOR-Vendor 1"
-      expect(inv.factory.name).to eq "Factory 1"
-      expect(inv.factory.system_code).to eq "ACME-FACTORY-Factory 1"
+      expect(inv.factory.name).to eq "FactoryBot 1"
+      expect(inv.factory.system_code).to eq "ACME-FACTORY-FactoryBot 1"
       expect(inv.invoice_total_foreign).to eq 23.50
       expect(inv.currency).to eq "EUR"
       expect(line.po_number).to eq "PO num 1"

@@ -1,6 +1,6 @@
 describe CustomReportsController do
   let! (:user) do
-    u = Factory(:master_user)
+    u = FactoryBot(:master_user)
     sign_in_as u
     u
   end
@@ -14,7 +14,7 @@ describe CustomReportsController do
 
     it "does not run if report user does not match current_user" do
       expect(ReportResult).not_to receive(:run_report!)
-      report.update!(user_id: Factory(:user).id)
+      report.update!(user_id: FactoryBot(:user).id)
       get :run, id: report.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
@@ -65,7 +65,7 @@ describe CustomReportsController do
 
   describe "show" do
     it "errors if user doesn't match current_user" do
-      rpt = CustomReportEntryInvoiceBreakdown.create!(user_id: Factory(:user).id)
+      rpt = CustomReportEntryInvoiceBreakdown.create!(user_id: FactoryBot(:user).id)
       get :show, id: rpt.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
@@ -83,7 +83,7 @@ describe CustomReportsController do
     let! (:report) { CustomReportEntryInvoiceBreakdown.create!(user_id: user.id) }
 
     it "does not destroy if user_id doesn't match current user" do
-      report.update!(user_id: Factory(:user).id)
+      report.update!(user_id: FactoryBot(:user).id)
       delete :destroy, id: report.id
       expect(response).to be_redirect
       expect(CustomReport.find_by(id: report.id)).not_to be_nil
@@ -128,7 +128,7 @@ describe CustomReportsController do
     end
 
     it "errors if user_id does not match current user" do
-      report.update!(user_id: Factory(:user).id)
+      report.update!(user_id: FactoryBot(:user).id)
       put :update, {id: report.id, custom_report:         {name: 'ABC', type: 'CustomReportEntryInvoiceBreakdown',
                                                            search_columns_attributes: {'0' => {rank: '0', model_field_uid: 'bi_brok_ref'},
                                                                                        '1' => {rank: '1', model_field_uid: 'bi_entry_num'}},
@@ -197,7 +197,7 @@ describe CustomReportsController do
     let! (:report) { CustomReportEntryInvoiceBreakdown.create!(user_id: user.id) }
 
     it "writes error message text if user does not equal current user" do
-      report.update!(user_id: Factory(:user).id)
+      report.update!(user_id: FactoryBot(:user).id)
       get :preview, id: report.id
       expect(response.body).to eq("You cannot preview another user&#39;s report.")
     end

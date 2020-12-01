@@ -27,9 +27,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   end
   describe '#open_closed_orders' do
     it 'should open closed orders' do
-      o = Factory(:order, order_number:'12345', closed_at:Time.now)
-      keep_closed = Factory(:order, closed_at:Time.now)
-      expect(described_class.open_closed_orders ['12345'], Factory(:user)).to eq 1
+      o = FactoryBot(:order, order_number:'12345', closed_at:Time.now)
+      keep_closed = FactoryBot(:order, closed_at:Time.now)
+      expect(described_class.open_closed_orders ['12345'], FactoryBot(:user)).to eq 1
 
       o.reload
       expect(o.closed_at).to be_nil
@@ -41,12 +41,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   describe '#close_orders' do
     before :each do
       @effective_date = Date.today - 1
-      @keep_open = Factory(:order, order_number:'12345', order_date: @effective_date)
-      @close = Factory(:order, order_date: @effective_date - 1)
+      @keep_open = FactoryBot(:order, order_number:'12345', order_date: @effective_date)
+      @close = FactoryBot(:order, order_date: @effective_date - 1)
     end
 
     it 'should close open orders not on list' do
-      expect(described_class.close_orders ['12345'], @effective_date, Factory(:user)).to eq 1
+      expect(described_class.close_orders ['12345'], @effective_date, FactoryBot(:user)).to eq 1
 
       @keep_open.reload
       expect(@keep_open.closed_at).to be_nil
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
 
     it 'skips unlisted orders on/after effective_date' do
       @close.update_attributes(order_date: @effective_date)
-      described_class.close_orders ['12345'], @effective_date, Factory(:user)
+      described_class.close_orders ['12345'], @effective_date, FactoryBot(:user)
 
       @keep_open.reload
       expect(@keep_open.closed_at).to be_nil

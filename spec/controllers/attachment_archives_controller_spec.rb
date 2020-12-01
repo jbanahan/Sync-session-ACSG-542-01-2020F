@@ -1,7 +1,7 @@
 describe AttachmentArchivesController do
   before :each do
     allow_any_instance_of(User).to receive(:edit_attachment_archives?).and_return true
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
 
     sign_in_as @u
   end
@@ -16,7 +16,7 @@ describe AttachmentArchivesController do
         allow_any_instance_of(Company).to receive(:attachment_archive_setup).and_return(aas)
       end
       it "should make new archive if files are available" do
-        c = Factory(:company, :name=>'XYZ')
+        c = FactoryBot(:company, :name=>'XYZ')
         post :create, :company_id=>c.id.to_s, :max_bytes=>'100'
         expect(response).to be_success
         expect(response.body).to eq('y')
@@ -29,7 +29,7 @@ describe AttachmentArchivesController do
         expect(JSON.parse(response.body)).to eq({'errors'=>[message]})
       end
       before :each do
-        @c = Factory(:company)
+        @c = FactoryBot(:company)
       end
       it "no files are available" do
         @c.create_attachment_archive_setup(:start_date=>Time.now)
@@ -51,7 +51,7 @@ describe AttachmentArchivesController do
 
   describe "complete" do
     before :each do
-      @c = Factory(:company)
+      @c = FactoryBot(:company)
       @arch = @c.attachment_archives.create!(:name=>'xyz', :start_at=>Time.now)
     end
     it "should mark finished date" do
@@ -71,7 +71,7 @@ describe AttachmentArchivesController do
 
   describe "show" do
     before :each do
-      @c = Factory(:company)
+      @c = FactoryBot(:company)
       @arch = @c.attachment_archives.create!(:name=>'xyz', :start_at=>Time.now)
     end
 

@@ -2,7 +2,7 @@ describe OpenChain::Report::CompanyYearOverYearReport do
 
   describe "permission?" do
     let(:ms) { stub_master_setup }
-    let (:u) { Factory(:user) }
+    let (:u) { FactoryBot(:user) }
     let (:group) { Group.use_system_group 'company_yoy_report', create: true }
 
     it "allows access for users who can view entries, are subscribed to YoY report custom feature and are in YoY group" do
@@ -32,14 +32,14 @@ describe OpenChain::Report::CompanyYearOverYearReport do
   end
 
   describe "run_report" do
-    let (:u) { Factory(:user) }
-    let(:importer) { Factory(:company, name:'Crudco Consumables and Poisons, Inc.', system_code:'CRUDCO') }
+    let (:u) { FactoryBot(:user) }
+    let(:importer) { FactoryBot(:company, name:'Crudco Consumables and Poisons, Inc.', system_code:'CRUDCO') }
     let!(:xref_div_1) { DataCrossReference.create key:'0001', value:'Division A', cross_reference_type: DataCrossReference::VFI_DIVISION }
 
     after { @temp.close if @temp }
 
     def make_entry division, date_range_field, date_range_field_val, customer_number:'ANYCUST', invoice_line_count:2, entry_number:'123doesntmatter'
-      entry = Factory(:entry, importer_id:importer.id, division_number:division, summary_line_count:10,
+      entry = FactoryBot(:entry, importer_id:importer.id, division_number:division, summary_line_count:10,
                       broker_invoice_total:12.34, customer_number:customer_number, entry_number:entry_number)
       entry.update_attributes date_range_field => date_range_field_val
       inv = entry.commercial_invoices.create! invoice_number:"inv-#{entry.id}"
@@ -76,7 +76,7 @@ describe OpenChain::Report::CompanyYearOverYearReport do
 
       # All importers are included on this report.
       ent_2016_Feb_different_importer = make_entry '0001', :release_date, make_utc_date(2016, 2, 11)
-      importer_2 = Factory(:company, name:'Crudco Bitter Rival')
+      importer_2 = FactoryBot(:company, name:'Crudco Bitter Rival')
       ent_2016_Feb_different_importer.update_attributes :importer_id => importer_2.id
 
       # Eddie Bauer FTZ entries don't have release set.  They work off arrival date.  Beyond that, they're
@@ -297,9 +297,9 @@ describe OpenChain::Report::CompanyYearOverYearReport do
     end
 
     it "appropriate handles null number values" do
-      ent_2016_Jan_1 = Factory(:entry, importer_id:importer.id, broker_invoice_total: nil, division_number:'0001', customer_number:'ANYCUST', release_date:make_utc_date(2016, 1, 16), summary_line_count:7)
+      ent_2016_Jan_1 = FactoryBot(:entry, importer_id:importer.id, broker_invoice_total: nil, division_number:'0001', customer_number:'ANYCUST', release_date:make_utc_date(2016, 1, 16), summary_line_count:7)
       ent_2016_Jan_2 = make_entry '0001', :release_date, make_utc_date(2016, 1, 17)
-      ent_2017_Jan = Factory(:entry, importer_id:importer.id, broker_invoice_total: nil, division_number:'0001', customer_number:'ANYCUST', release_date:make_utc_date(2017, 1, 1), summary_line_count:8)
+      ent_2017_Jan = FactoryBot(:entry, importer_id:importer.id, broker_invoice_total: nil, division_number:'0001', customer_number:'ANYCUST', release_date:make_utc_date(2017, 1, 1), summary_line_count:8)
 
       Timecop.freeze(make_eastern_date(2017, 5, 28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017'})

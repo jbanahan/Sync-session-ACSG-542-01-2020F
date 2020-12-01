@@ -4,18 +4,18 @@ describe PlantVariantAssignment do
   # same rules at object & db level
   describe '#search_where / can_view?' do
     before :each do
-      @vendor = Factory(:vendor)
-      @plant = Factory(:plant, company:@vendor)
-      @pva = Factory(:plant_variant_assignment, plant:@plant)
-      @other_pva = Factory(:plant_variant_assignment)
+      @vendor = FactoryBot(:vendor)
+      @plant = FactoryBot(:plant, company:@vendor)
+      @pva = FactoryBot(:plant_variant_assignment, plant:@plant)
+      @other_pva = FactoryBot(:plant_variant_assignment)
     end
     it "should find when user can view plant" do
-      u = Factory(:user, company:@vendor)
+      u = FactoryBot(:user, company:@vendor)
       expect(described_class.where(described_class.search_where(u)).to_a).to eq [@pva]
       expect(@pva.can_view?(u)).to be_truthy
     end
     it "should not find when user cannot view plant" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(described_class.where(described_class.search_where(u)).to_a).to eq []
       expect(@pva.can_view?(u)).to be_falsey
     end

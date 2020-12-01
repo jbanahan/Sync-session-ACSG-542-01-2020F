@@ -1,7 +1,7 @@
 describe Api::V1::Admin::EventSubscriptionsController do
   describe "show_by_event_type_object_id_and_subscription_type" do
     it "returns subscription users" do
-      allow_api_access Factory(:admin_user)
+      allow_api_access FactoryBot(:admin_user)
       u = User.new(email: 'a@sample.com', first_name: 'Joe', last_name: 'Smith', id: 5)
       sub = EventSubscription.new
       sub.user = u

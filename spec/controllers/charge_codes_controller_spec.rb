@@ -1,5 +1,5 @@
 describe ChargeCodesController do
-  let(:user) { Factory(:user, admin: true, company: Factory(:company, master: true)) }
+  let(:user) { FactoryBot(:user, admin: true, company: FactoryBot(:company, master: true)) }
 
   before do
     sign_in_as user

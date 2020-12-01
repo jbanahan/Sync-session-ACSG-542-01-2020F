@@ -1,7 +1,7 @@
 describe Api::V1::SchedulableJobsController do
   describe "run_jobs" do
     context "admin user" do
-      let(:user) { Factory(:admin_user) }
+      let(:user) { FactoryBot(:admin_user) }
 
       before do
         allow_api_access user
@@ -14,7 +14,7 @@ describe Api::V1::SchedulableJobsController do
         expect_any_instance_of(SchedulableJob).to receive(:delay).and_return sj
         expect(sj).to receive(:run_if_needed)
 
-        ss = Factory(:search_schedule, run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true,
+        ss = FactoryBot(:search_schedule, run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true,
                                        run_friday: true, run_saturday: true, run_sunday: true, run_hour: 0,
                                        last_start_time: 1.year.ago)
         expect_any_instance_of(SearchSchedule).to receive(:delay).with(priority: -1).and_return ss
@@ -38,7 +38,7 @@ describe Api::V1::SchedulableJobsController do
 
       it "does not run jobs that are not ready to run" do
         SchedulableJob.create!
-        Factory(:search_schedule)
+        FactoryBot(:search_schedule)
 
         post "run_jobs", {}
         expect(response.body).to eq ({"OK" => "", "jobs_run" => 0}.to_json)
@@ -47,7 +47,7 @@ describe Api::V1::SchedulableJobsController do
 
     context "non-admin user" do
       it "does not allow non-admin users to connect" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         allow_api_access u
 
         post "run_jobs", {}

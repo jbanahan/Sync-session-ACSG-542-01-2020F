@@ -9,12 +9,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   end
 
   let :base_order do
-    Factory(:order, order_number:'4700000325')
+    FactoryBot(:order, order_number:'4700000325')
   end
   let :booked_order do
     subject.parse_dom(REXML::Document.new(IO.read('spec/fixtures/files/ll_sap_order.xml')), InboundFile.new)
     o = Order.first
-    s = Factory(:shipment, vendor: o.vendor)
+    s = FactoryBot(:shipment, vendor: o.vendor)
     o.order_lines.each do |ol|
       bl = s.booking_lines.build(quantity: ol.quantity, order_line: ol, line_number: ol.line_number)
       bl.save!
@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   let :shipped_order do
     subject.parse_dom(REXML::Document.new(IO.read('spec/fixtures/files/ll_sap_order.xml')), InboundFile.new)
     o = Order.first
-    s = Factory(:shipment, vendor: o.vendor)
+    s = FactoryBot(:shipment, vendor: o.vendor)
     o.order_lines.each do |ol|
       bl = s.shipment_lines.build(quantity: ol.quantity, product: ol.product, line_number: ol.line_number)
       bl.linked_order_line_id = ol.id
@@ -37,14 +37,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   describe "parse_dom" do
 
     before :each do
-      @usa = Factory(:country, iso_code:'US')
+      @usa = FactoryBot(:country, iso_code:'US')
       @test_data = IO.read('spec/fixtures/files/ll_sap_order.xml')
       # Something is creating a master company prior to this setup...so just use it if it's there
-      @importer = Company.where(master: true).first.presence || Factory(:master_company)
-      @vendor = Factory(:company, vendor:true, system_code:'0000100131')
+      @importer = Company.where(master: true).first.presence || FactoryBot(:master_company)
+      @vendor = FactoryBot(:company, vendor:true, system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME', system_code:'123-CORP', line_1:'ln1', line_2:'l2', city:'New York', state:'NY', postal_code:'10001', country_id:@usa.id)
       @cdefs = subject.send(:cdefs)
-      @product1= Factory(:product, name: 'Widgets', unique_identifier:'000000000010001547')
+      @product1= FactoryBot(:product, name: 'Widgets', unique_identifier:'000000000010001547')
       @product_vendor_assignment = ProductVendorAssignment.create! product: @product1, vendor: @vendor
       @product_vendor_assignment.constant_texts.create! constant_text: "CARB", text_type: "CARB Statement", effective_date_start: Date.new(2000, 1, 1)
       @product_vendor_assignment.constant_texts.create! constant_text: "Patent", text_type: "Patent Statement", effective_date_start: Date.new(2000, 1, 1)
@@ -392,12 +392,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     end
     context 'assigned agent' do
       let :gelowell do
-        gelowell = Factory(:company, system_code:'GELOWELL')
+        gelowell = FactoryBot(:company, system_code:'GELOWELL')
         gelowell.linked_companies << @vendor
         gelowell
       end
       let :ro do
-        ro = Factory(:company, system_code:'RO')
+        ro = FactoryBot(:company, system_code:'RO')
         ro.linked_companies << @vendor
         ro
       end
@@ -425,7 +425,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       end
     end
     it "should not update order if previous extract time is newer than this doc" do
-      existing_order = Factory(:order, order_number:'4700000325')
+      existing_order = FactoryBot(:order, order_number:'4700000325')
       # update sap extract to future date so this doc shouldn't update it
       existing_order.update_custom_value!(@cdefs[:ord_sap_extract], 1.day.from_now)
 
@@ -698,7 +698,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   end
 
   describe "setup_folders" do
-    let!(:ord) { Factory(:order) }
+    let!(:ord) { FactoryBot(:order) }
     let!(:user) { User.integration }
 
     it "creates folders for order" do
@@ -709,7 +709,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     end
 
     it "skips creating folders that already exist" do
-      Factory(:folder, base_object: ord, created_by: user, name: 'Quality')
+      FactoryBot(:folder, base_object: ord, created_by: user, name: 'Quality')
       subject.setup_folders ord
       expect(ord.folders.where(name: "Quality").count).to eq 1
     end

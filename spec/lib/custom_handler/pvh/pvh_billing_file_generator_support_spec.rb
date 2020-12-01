@@ -11,13 +11,13 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
 
 
   let! (:pvh) {
-    Factory(:importer, system_code: "PVH")
+    FactoryBot(:importer, system_code: "PVH")
   }
 
-  let (:us) { Factory(:country, iso_code: "US") }
+  let (:us) { FactoryBot(:country, iso_code: "US") }
 
   let (:entry) {
-    e = Factory(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", import_country: us, one_usg_date: Date.new(2018, 11, 6))
+    e = FactoryBot(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", import_country: us, one_usg_date: Date.new(2018, 11, 6))
     i = e.commercial_invoices.create! invoice_number: "INV"
     i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", quantity: 1, unit_price: 1
 
@@ -25,13 +25,13 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
   }
 
   let (:broker_invoice_1) {
-    i = Factory(:broker_invoice, entry: entry, customer_number: "PVH", invoice_total: BigDecimal("200"), invoice_date: Date.new(2018, 11, 7), bill_to_name: "PVH CORP")
-    l = Factory(:broker_invoice_line, broker_invoice: i, charge_amount: BigDecimal("200"), charge_code: "0100", charge_description: "CHARGE")
+    i = FactoryBot(:broker_invoice, entry: entry, customer_number: "PVH", invoice_total: BigDecimal("200"), invoice_date: Date.new(2018, 11, 7), bill_to_name: "PVH CORP")
+    l = FactoryBot(:broker_invoice_line, broker_invoice: i, charge_amount: BigDecimal("200"), charge_code: "0100", charge_description: "CHARGE")
     i
   }
 
   let (:broker_invoice_2) {
-    Factory(:broker_invoice, entry: entry, customer_number: "PVH", bill_to_name: "PVH CORP")
+    FactoryBot(:broker_invoice, entry: entry, customer_number: "PVH", bill_to_name: "PVH CORP")
   }
 
   let (:entry_snapshot) {
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     end
 
     it "sends for Canada if One USG is not present" do
-      entry.update! one_usg_date: nil, import_country: Factory(:country, iso_code: "CA")
+      entry.update! one_usg_date: nil, import_country: FactoryBot(:country, iso_code: "CA")
       expect(subject).to receive(:generate_and_send_invoice_files).exactly(2).times
 
       subject.generate_and_send(entry_snapshot)
@@ -158,7 +158,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     end
 
     it "accepts all Canadian invoices" do
-      ca = Factory(:country, iso_code: "CA")
+      ca = FactoryBot(:country, iso_code: "CA")
       entry.update! import_country: ca
       broker_invoice_2.update! bill_to_name: "PVH Non-Corp"
 
@@ -230,8 +230,8 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     let (:existing_xml_data) { IO.read existing_xml_path }
 
     let (:new_invoice) {
-      i = Factory(:broker_invoice, entry: entry, invoice_total: BigDecimal("-200"), invoice_date: Date.new(2018, 11, 7), currency: "USD")
-      l = Factory(:broker_invoice_line, broker_invoice: i, charge_amount: BigDecimal("-200"), charge_code: "0100", charge_description: "CHARGE")
+      i = FactoryBot(:broker_invoice, entry: entry, invoice_total: BigDecimal("-200"), invoice_date: Date.new(2018, 11, 7), currency: "USD")
+      l = FactoryBot(:broker_invoice_line, broker_invoice: i, charge_amount: BigDecimal("-200"), charge_code: "0100", charge_description: "CHARGE")
       i
     }
 

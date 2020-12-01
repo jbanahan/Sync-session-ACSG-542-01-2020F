@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
   let(:cdefs) { subject.instance_variable_get("@cdefs") }
 
   describe '#create!' do
-    let(:order) { Factory(:order, order_number:'ABC', vendor: Factory(:vendor), order_date: Date.new(2016, 3, 15)) }
+    let(:order) { FactoryBot(:order, order_number:'ABC', vendor: FactoryBot(:vendor), order_date: Date.new(2016, 3, 15)) }
     let(:purchasing_contact) {
       order.vendor.update_custom_value! cdefs[:cmp_purchasing_contact_email], "me@there.com"
       "me@there.com"
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
 
     it 'should create pdf and attach to order' do
       Timecop.freeze(Time.now) do
-        described_class.create! order, Factory(:master_user)
+        described_class.create! order, FactoryBot(:master_user)
         order.reload
         expect(order.attachments.size).to eq 1
 
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
 
     it "sends email to Purchasing Contact Email" do
       contact = purchasing_contact
-      described_class.create! order, Factory(:master_user)
+      described_class.create! order, FactoryBot(:master_user)
 
       expect(ActionMailer::Base.deliveries.size).to eq 1
       m = ActionMailer::Base.deliveries.first
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
     it "sends email to Purchasing Content email notifying of updated po" do
       contact = purchasing_contact
       order.attachments.create! attachment_type: 'Order Printout'
-      described_class.create! order, Factory(:master_user)
+      described_class.create! order, FactoryBot(:master_user)
 
       expect(ActionMailer::Base.deliveries.size).to eq 1
       m = ActionMailer::Base.deliveries.first
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
   end
 
   describe "carb_statement" do
-    let(:ord) { Factory(:order, order_date: Date.new(2017, 8, 31)) }
+    let(:ord) { FactoryBot(:order, order_date: Date.new(2017, 8, 31)) }
 
     it "returns pre-8/31/17 (inclusive) message" do
       expect(described_class.carb_statement ord).to eq "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
   end
 
   describe "lacey_statement" do
-    let(:ord) { Factory(:order, order_date: Date.new(2018, 7, 30)) }
+    let(:ord) { FactoryBot(:order, order_date: Date.new(2018, 7, 30)) }
     let(:statement) { "All U.S. Domestic and Imported products must be compliant with all applicable laws, including, without limitation and to the extent applicable, the U.S. Lacey Act (16 U.S.C. §§ 3371–3378)" }
 
     it "returns nil if order is before 8/1/18" do

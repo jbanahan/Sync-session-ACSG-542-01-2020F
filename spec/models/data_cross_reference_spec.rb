@@ -104,7 +104,7 @@ describe DataCrossReference do
 
   context "find_rl_profit_center" do
     it "finds an rl profit center from the brand code" do
-      company = Factory(:importer)
+      company = FactoryBot(:importer)
       described_class.create! key: "brand", value: "profit center", cross_reference_type: DataCrossReference::RL_BRAND_TO_PROFIT_CENTER, company_id: company.id
 
       expect(described_class.find_rl_profit_center_by_brand(company.id, 'brand')).to eq "profit center"
@@ -180,14 +180,14 @@ describe DataCrossReference do
 
   describe "find_us_hts_to_ca" do
     it "finds" do
-      c = Factory(:company, alliance_customer_number: "ACME")
+      c = FactoryBot(:company, alliance_customer_number: "ACME")
       described_class.create!(key: '1111111111', value: '2222222222', cross_reference_type: described_class::US_HTS_TO_CA, company: c)
       expect(described_class.find_us_hts_to_ca('1111111111', c.id)).to eq '2222222222'
     end
   end
 
   describe "create_us_hts_to_ca!" do
-    let(:co) { Factory(:company, alliance_customer_number: "ACME") }
+    let(:co) { FactoryBot(:company, alliance_customer_number: "ACME") }
 
     it "creates" do
       described_class.create_us_hts_to_ca! '1111111111', '2222222222', co.id
@@ -208,14 +208,14 @@ describe DataCrossReference do
 
   describe "find_ca_hts_to_descr" do
     it "finds" do
-      c = Factory(:company, alliance_customer_number: "ACME")
+      c = FactoryBot(:company, alliance_customer_number: "ACME")
       described_class.create!(key: '1111111111', value: 'asbestos car', cross_reference_type: described_class::CA_HTS_TO_DESCR, company: c)
       expect(described_class.find_ca_hts_to_descr('1111111111', c.id)).to eq 'asbestos car'
     end
   end
 
   describe "create_ca_hts_to_descr" do
-    let(:co) { Factory(:company, alliance_customer_number: "ACME") }
+    let(:co) { FactoryBot(:company, alliance_customer_number: "ACME") }
 
     it "creates" do
       described_class.create_ca_hts_to_descr! '1111111111', 'asbestos car', co.id
@@ -266,19 +266,19 @@ describe DataCrossReference do
     let!(:xref_edit_hash) { {key_label: "key", value_label: "value", company: {system_code: "ACME"}} }
 
     it "returns company associated with xref_edit_hash, looking-up by system_code" do
-      co = Factory(:company, system_code: "ACME")
+      co = FactoryBot(:company, system_code: "ACME")
       expect(described_class.company_for_xref(xref_edit_hash)).to eq co
     end
 
     it "returns company associated with xref_edit_hash, looking-up by alliance_customer_number" do
-      co = Factory(:company, alliance_customer_number: "ACME")
+      co = FactoryBot(:company, alliance_customer_number: "ACME")
       xref_edit_hash[:company] = {alliance_customer_number: "ACME"}
 
       expect(described_class.company_for_xref(xref_edit_hash)).to eq co
     end
 
     it "returns company associated with xref_edit_hash, looking-up by fenix_customer_number" do
-      co = Factory(:company, fenix_customer_number: "ACME")
+      co = FactoryBot(:company, fenix_customer_number: "ACME")
       xref_edit_hash[:company] = {fenix_customer_number: "ACME"}
 
       expect(described_class.company_for_xref(xref_edit_hash)).to eq co
@@ -421,7 +421,7 @@ describe DataCrossReference do
       end
 
       it "returns information about xref screens sys-admin user has access to" do
-        xrefs = described_class.xref_edit_hash(Factory(:sys_admin_user))
+        xrefs = described_class.xref_edit_hash(FactoryBot(:sys_admin_user))
 
         expect(xrefs.size).to eq 5
         # rubocop:disable Layout/LineLength
@@ -447,7 +447,7 @@ describe DataCrossReference do
         val_selector = instance_double(milestone_config::DataCrossReferenceValueSelector)
         expect(milestone_config::DataCrossReferenceValueSelector).to receive(:new).with("Entry").and_return val_selector
 
-        xrefs = described_class.xref_edit_hash(Factory(:sys_admin_user))
+        xrefs = described_class.xref_edit_hash(FactoryBot(:sys_admin_user))
 
         # rubocop:disable Layout/LineLength
         expect(xrefs.size).to eq 13
@@ -461,15 +461,15 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['inv_ci_load_cust'])).to eq title: "Invoice CI Load Customers", description: "Enter the customer number to enable sending Invoice CI Load data to Kewill.", identifier: "inv_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
-        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
+        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the FactoryBot Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with FactoryBot Code in column A and MID in column B."
         expect(strip_preproc(xrefs['tradelens_entry_milestone_fields'])).to eq title: "TradeLens Entry Milestone Fields", description: "Assign entry fields to TradeLens API endpoint.", key_label: "Field", allowed_keys: key_selector, value_label: "Endpoint", allowed_values: val_selector, allow_blank_value: false, show_value_column: true, allow_duplicate_keys: false, identifier: "tradelens_entry_milestone_fields", require_company: false
         expect(strip_preproc(xrefs['part_xref'])).to eq allow_blank_value: false, allow_duplicate_keys: false, description: "Enter the Part Number in the Part field and true or false in the active field", value_label: "Active", upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.", title: "Part Cross Reference", show_value_column: true, require_company: true, key_label: "Part", identifier: "part_xref"
         # rubocop:enable Layout/LineLength
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
-        g = Factory(:group, system_code: "xref-maintenance")
-        u = Factory(:user, groups: [g])
+        g = FactoryBot(:group, system_code: "xref-maintenance")
+        u = FactoryBot(:user, groups: [g])
 
         # rubocop:disable Layout/LineLength
         xrefs = described_class.xref_edit_hash(u)
@@ -483,7 +483,7 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['inv_ci_load_cust'])).to eq title: "Invoice CI Load Customers", description: "Enter the customer number to enable sending Invoice CI Load data to Kewill.", identifier: "inv_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
-        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
+        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the FactoryBot Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with FactoryBot Code in column A and MID in column B."
         expect(strip_preproc(xrefs['ca_hts_to_descr'])).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         # rubocop:enable Layout/LineLength
       end
@@ -550,7 +550,7 @@ describe DataCrossReference do
 
       context "us_hts_to_ca" do
         it "allows access to US-to-CA xref for sys admins" do
-          expect(described_class.can_view?('us_hts_to_ca', Factory(:sys_admin_user))).to eq true
+          expect(described_class.can_view?('us_hts_to_ca', FactoryBot(:sys_admin_user))).to eq true
         end
 
         it "prevents access for anyone else" do
@@ -560,7 +560,7 @@ describe DataCrossReference do
 
       context "asce_mid" do
         it "allows access to ASCE MID xref for sys admins" do
-          expect(described_class.can_view?('asce_mid', Factory(:sys_admin_user))).to eq true
+          expect(described_class.can_view?('asce_mid', FactoryBot(:sys_admin_user))).to eq true
         end
 
         it "prevents access for anyone else" do
@@ -569,10 +569,10 @@ describe DataCrossReference do
       end
 
       context "ca_hts_to_descr" do
-        let(:user) { Factory(:user) }
+        let(:user) { FactoryBot(:user) }
 
         it "allows access for members of group 'Cross Reference Maintenance'" do
-          group = Factory(:group, system_code: "xref-maintenance")
+          group = FactoryBot(:group, system_code: "xref-maintenance")
           user.groups << group
           expect(described_class.can_view?('ca_hts_to_descr', user)).to eq true
         end
@@ -584,12 +584,12 @@ describe DataCrossReference do
 
       context "one-time-alert reference fields" do
         it "allows access for administrators" do
-          user = Factory(:admin_user)
+          user = FactoryBot(:admin_user)
           expect(described_class.can_view?("ota_reference_fields", user)).to eq true
         end
 
         it "prevents access for anyone else" do
-          user = Factory(:user)
+          user = FactoryBot(:user)
           expect(described_class.can_view?("ota_reference_fields", user)).to eq false
         end
       end
@@ -630,8 +630,8 @@ describe DataCrossReference do
   end
 
   describe "generate_csv" do
-    let(:u) { Factory(:sys_admin_user) }
-    let!(:co) { Factory(:company, name: "ACME", system_code: "AC") }
+    let(:u) { FactoryBot(:sys_admin_user) }
+    let!(:co) { FactoryBot(:company, name: "ACME", system_code: "AC") }
     let!(:dcr_1) { described_class.create!(key: "1111111111", value: "2222222222", cross_reference_type: "xref_name", company: co) }
     let!(:dcr_2) { described_class.create!(key: "3333333333", value: "4444444444", cross_reference_type: "xref_name", company: co) }
 
@@ -735,7 +735,7 @@ describe DataCrossReference do
   end
 
   context "UN Locodes" do
-    let (:importer) { Factory(:importer) }
+    let (:importer) { FactoryBot(:importer) }
     let! (:importer_locode) { described_class.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USLAX", value: "LAX", company_id: importer.id }
     let! (:locode) { described_class.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USORD", value: "ORD" }
 
@@ -761,7 +761,7 @@ describe DataCrossReference do
   end
 
   describe "find_mid" do
-    let (:company) { Factory(:importer) }
+    let (:company) { FactoryBot(:importer) }
     let! (:mid) {  described_class.create! key: "key", value: "MID1", company: company, cross_reference_type: DataCrossReference::MID_XREF}
 
     it "finds an mid record" do

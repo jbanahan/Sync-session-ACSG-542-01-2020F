@@ -57,31 +57,31 @@ describe OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser do
     REXML::XPath.first(xml_error, "/Invoice/invoiceDetail")
   }
 
-  let (:taiwan) { Factory(:country, iso_code: "TW") }
-  let (:china) { Factory(:country, iso_code: "CN") }
-  let (:biot) { Factory(:country, iso_code: "IO") }
-  let (:vietnam) { Factory(:country, iso_code: "VN") }
+  let (:taiwan) { FactoryBot(:country, iso_code: "TW") }
+  let (:china) { FactoryBot(:country, iso_code: "CN") }
+  let (:biot) { FactoryBot(:country, iso_code: "IO") }
+  let (:vietnam) { FactoryBot(:country, iso_code: "VN") }
 
   let (:theroc) {
-    ro = Factory(:importer, system_code: "THEROC")
+    ro = FactoryBot(:importer, system_code: "THEROC")
     ro.set_system_identifier "GT Nexus Invoice Consignee", "106320777927"
     ro
   }
 
   let (:reef) {
-    re = Factory(:importer, system_code: "REEF")
+    re = FactoryBot(:importer, system_code: "REEF")
     re.set_system_identifier "GT Nexus Invoice Consignee", "117965977957"
     re
   }
 
   let! (:someother) {
-    re = Factory(:importer, system_code: "OTHER")
+    re = FactoryBot(:importer, system_code: "OTHER")
     re.set_system_identifier "GT Nexus Invoice Consignee", "0987654321"
     re
   }
 
   let (:sys1) { }
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
   let (:inbound_file) { InboundFile.new }
 
   describe "process_invoice" do

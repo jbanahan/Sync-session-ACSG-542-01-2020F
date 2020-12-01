@@ -1,7 +1,7 @@
 describe OpenChain::Api::DescriptorBasedApiEntityJsonizer do
 
-  let (:order) { Factory(:order) }
-  let (:user) { Factory(:user) }
+  let (:order) { FactoryBot(:order) }
+  let (:user) { FactoryBot(:user) }
 
   let (:folder) {
     # Use folder since it's a small object that is snapshot descriptor based

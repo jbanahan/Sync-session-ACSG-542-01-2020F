@@ -2,15 +2,15 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
 
   describe "permission?" do
     it "uses permission logic from the US version of the report" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(OpenChain::Report::PvhDutyDiscountReport).to receive(:permission?).with(u).and_return(true)
       expect(described_class.permission?(u)).to eq true
     end
   end
 
   describe "run_report" do
-    let (:u) { Factory(:user) }
-    let!(:pvh) { Factory(:company, name: 'PVH Canada', system_code: 'PVHCANADA') }
+    let (:u) { FactoryBot(:user) }
+    let!(:pvh) { FactoryBot(:company, name: 'PVH Canada', system_code: 'PVHCANADA') }
     let! (:temp_files) { [] }
 
     after { temp_files.each(&:close) }
@@ -18,7 +18,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
     it "generates spreadsheet" do
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 1, start_date: Date.new(2018, 12, 15), end_date: Date.new(2019, 1, 14))
 
-      entry_1 = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
+      entry_1 = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
                                 fiscal_date: Date.new(2018, 12, 15), transport_mode_code: '9', master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD",
                                 fcl_lcl: 'LCL', release_date: Date.new(2019, 8, 23))
       inv_1 = entry_1.commercial_invoices.create! invoice_number: "inv-1", currency: "USD", exchange_rate: 1.78
@@ -38,10 +38,10 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                              adjustments_amount: BigDecimal("1.21"), miscellaneous_discount: nil, add_to_make_amount: ".65",
                                              unit_price: BigDecimal("6.78")
 
-      factory_1 = Factory(:factory, name: "factory-1")
-      ord_1 = Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
-      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: Factory(:product, importer_id: pvh.id).id
-      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: Factory(:product, importer_id: pvh.id).id
+      factory_1 = FactoryBot(:factory, name: "factory-1")
+      ord_1 = FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
+      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: FactoryBot(:product, importer_id: pvh.id).id
+      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: FactoryBot(:product, importer_id: pvh.id).id
 
       shipments = instance_double("shipments")
       expect_any_instance_of(described_class).to receive(:find_shipments).with("9", ["A", "B"], ["C", "D"], force_lookup: true).and_return(shipments)
@@ -56,7 +56,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       expect(shipment_line_2).to receive(:order_line).and_return(ord_1_line_2)
       expect(shipment_line_2).to receive(:container).and_return(cont_1)
 
-      entry_2 = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-2", arrival_date: Date.new(2019, 1, 12),
+      entry_2 = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-2", arrival_date: Date.new(2019, 1, 12),
                                 fiscal_date: Date.new(2019, 1, 14), transport_mode_code: '1', master_bills_of_lading: 'C', house_bills_of_lading: 'D',
                                 fcl_lcl: 'FCL', release_date: Date.new(2019, 8, 24))
       inv_2 = entry_2.commercial_invoices.create! invoice_number: "inv-2", currency: "CAD", exchange_rate: 1.5
@@ -65,9 +65,9 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                                           add_to_make_amount: ".75", unit_price: BigDecimal("7.89")
       inv_2_line.commercial_invoice_tariffs.create! hts_code: "567901234", duty_rate: BigDecimal(".5"), entered_value: BigDecimal("5.43")
 
-      factory_2 = Factory(:factory, name: "factory-2")
-      ord_2 = Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-C", factory_id: factory_2.id)
-      ord_2_line = ord_2.order_lines.create! line_number: 5, product_id: Factory(:product, importer_id: pvh.id).id
+      factory_2 = FactoryBot(:factory, name: "factory-2")
+      ord_2 = FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-C", factory_id: factory_2.id)
+      ord_2_line = ord_2.order_lines.create! line_number: 5, product_id: FactoryBot(:product, importer_id: pvh.id).id
 
       shipments_2 = instance_double("shipments_2")
       expect_any_instance_of(described_class).to receive(:find_shipments).with("1", ["C"], ["D"], force_lookup: true).and_return(shipments_2)
@@ -79,10 +79,10 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       expect(shipment_line_3).to receive(:container).and_return(cont_2)
 
       # Wrong customer number.
-      Factory(:entry, customer_number: "PVH", entry_number: "entry-3", fiscal_date: Date.new(2018, 12, 25), transport_mode_code: '9')
+      FactoryBot(:entry, customer_number: "PVH", entry_number: "entry-3", fiscal_date: Date.new(2018, 12, 25), transport_mode_code: '9')
       # These should be excluded based on date.
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2018, 12, 14), transport_mode_code: '9')
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-5", fiscal_date: Date.new(2019, 1, 15), transport_mode_code: '9')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2018, 12, 14), transport_mode_code: '9')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-5", fiscal_date: Date.new(2019, 1, 15), transport_mode_code: '9')
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         temp_files << described_class.run_report(u, {'fiscal_month' => '2019-01'})
@@ -134,7 +134,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 9, start_date: Date.new(2019, 8, 15), end_date: Date.new(2019, 9, 14))
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 10, start_date: Date.new(2019, 9, 15), end_date: Date.new(2019, 10, 14))
 
-      entry = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2019, 8, 13),
+      entry = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2019, 8, 13),
                               fiscal_date: Date.new(2019, 8, 22), transport_mode_code: '1', master_bills_of_lading: 'MBOL_X', release_date: Date.new(2019, 8, 23))
       inv = entry.commercial_invoices.create! invoice_number: "inv-1", currency: "CAD", exchange_rate: 1.5
       inv_line = inv.commercial_invoice_lines.create! po_number: "PO-A", quantity: 10, value: BigDecimal("20.20"), part_number: "part-A",
@@ -142,14 +142,14 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                                       add_to_make_amount: ".55", unit_price: BigDecimal("5.67")
       inv_line.commercial_invoice_tariffs.create! hts_code: "235679012", duty_rate: BigDecimal(".333"), entered_value: 33
 
-      factory = Factory(:factory, name: "factory-1")
-      Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory.id)
+      factory = FactoryBot(:factory, name: "factory-1")
+      FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory.id)
 
       expect_any_instance_of(described_class).to receive(:get_po_line_values).and_return([14, nil])
 
       # These should be excluded based on date.
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2019, 8, 14), transport_mode_code: '1')
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-5", fiscal_date: Date.new(2019, 9, 16), transport_mode_code: '1')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2019, 8, 14), transport_mode_code: '1')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-5", fiscal_date: Date.new(2019, 9, 16), transport_mode_code: '1')
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         temp_files << described_class.run_report(u, {})
@@ -188,7 +188,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 9, start_date: Date.new(2019, 8, 15), end_date: Date.new(2019, 9, 14))
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 10, start_date: Date.new(2019, 9, 15), end_date: Date.new(2019, 10, 14))
 
-      entry_1 = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
+      entry_1 = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
                                 fiscal_date: Date.new(2019, 6, 16), transport_mode_code: '9', master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD",
                                 fcl_lcl: 'LCL', release_date: Date.new(2019, 8, 23))
       inv_1 = entry_1.commercial_invoices.create! invoice_number: "inv-1", currency: "USD", exchange_rate: 1.78
@@ -201,10 +201,10 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                                             add_to_make_amount: ".65", unit_price: BigDecimal("6.78")
       inv_1_line_2.commercial_invoice_tariffs.create! hts_code: "356790123", duty_rate: BigDecimal(".667"), entered_value: BigDecimal("4.32")
 
-      factory_1 = Factory(:factory, name: "factory-1")
-      ord_1 = Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
-      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: Factory(:product, importer_id: pvh.id).id
-      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: Factory(:product, importer_id: pvh.id).id
+      factory_1 = FactoryBot(:factory, name: "factory-1")
+      ord_1 = FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
+      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: FactoryBot(:product, importer_id: pvh.id).id
+      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: FactoryBot(:product, importer_id: pvh.id).id
 
       shipments = instance_double("shipments")
       expect_any_instance_of(described_class).to receive(:find_shipments).with("9", ["A", "B"], ["C", "D"], force_lookup: true).and_return(shipments)
@@ -219,7 +219,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       expect(shipment_line_2).to receive(:order_line).and_return(ord_1_line_2)
       expect(shipment_line_2).to receive(:container).and_return(cont_1)
 
-      entry_2 = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-2", arrival_date: Date.new(2019, 1, 12),
+      entry_2 = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-2", arrival_date: Date.new(2019, 1, 12),
                                 fiscal_date: Date.new(2019, 9, 13), transport_mode_code: '1', master_bills_of_lading: 'C', house_bills_of_lading: 'D',
                                 fcl_lcl: 'FCL', release_date: Date.new(2019, 8, 24))
       inv_2 = entry_2.commercial_invoices.create! invoice_number: "inv-2", currency: "CAD", exchange_rate: 1.5
@@ -228,9 +228,9 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                                           add_to_make_amount: ".75", unit_price: BigDecimal("7.89")
       inv_2_line.commercial_invoice_tariffs.create! hts_code: "567901234", duty_rate: BigDecimal(".5"), entered_value: BigDecimal("5.43")
 
-      factory_2 = Factory(:factory, name: "factory-2")
-      ord_2 = Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-C", factory_id: factory_2.id)
-      ord_2_line = ord_2.order_lines.create! line_number: 5, product_id: Factory(:product, importer_id: pvh.id).id
+      factory_2 = FactoryBot(:factory, name: "factory-2")
+      ord_2 = FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-C", factory_id: factory_2.id)
+      ord_2_line = ord_2.order_lines.create! line_number: 5, product_id: FactoryBot(:product, importer_id: pvh.id).id
 
       shipments_2 = instance_double("shipments_2")
       expect_any_instance_of(described_class).to receive(:find_shipments).with("1", ["C"], ["D"], force_lookup: true).and_return(shipments_2)
@@ -242,8 +242,8 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
       expect(shipment_line_3).to receive(:container).and_return(cont_2)
 
       # These should be excluded based on date.
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-3", fiscal_date: Date.new(2019, 6, 13), transport_mode_code: '9')
-      Factory(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2019, 9, 15), transport_mode_code: '9')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-3", fiscal_date: Date.new(2019, 6, 13), transport_mode_code: '9')
+      FactoryBot(:entry, customer_number: "PVHCANADA", entry_number: "entry-4", fiscal_date: Date.new(2019, 9, 15), transport_mode_code: '9')
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         temp_files << described_class.run_report(u, {'quarterly' => 'true'})
@@ -328,7 +328,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
     it "appropriately handles null number values" do
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 1, start_date: Date.new(2018, 12, 15), end_date: Date.new(2019, 1, 14))
 
-      entry = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
+      entry = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
                               fiscal_date: Date.new(2018, 12, 22), transport_mode_code: "2")
       inv = entry.commercial_invoices.create! invoice_number: "inv-1"
       inv_line = inv.commercial_invoice_lines.create! po_number: "PO-A", quantity: nil, value: nil, part_number: "part-A", adjustments_amount: nil,
@@ -401,7 +401,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
     it "zeroes duty savings when duty deductions is more than 25% of the vendor invoice value" do
       FiscalMonth.create!(company_id: pvh.id, year: 2019, month_number: 1, start_date: Date.new(2018, 12, 15), end_date: Date.new(2019, 1, 14))
 
-      entry_1 = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
+      entry_1 = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", arrival_date: Date.new(2018, 12, 13),
                                 fiscal_date: Date.new(2018, 12, 15), transport_mode_code: '9', master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD",
                                 fcl_lcl: 'LCL', release_date: Date.new(2019, 8, 23))
       inv_1 = entry_1.commercial_invoices.create! invoice_number: "inv-1", currency: "USD", exchange_rate: 1.78
@@ -416,10 +416,10 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
                                                             add_to_make_amount: ".65", unit_price: BigDecimal("6.78")
       inv_1_line_2.commercial_invoice_tariffs.create! hts_code: "356790123", duty_rate: BigDecimal(".667"), entered_value: BigDecimal("4.32")
 
-      factory_1 = Factory(:factory, name: "factory-1")
-      ord_1 = Factory(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
-      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: Factory(:product, importer_id: pvh.id).id
-      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: Factory(:product, importer_id: pvh.id).id
+      factory_1 = FactoryBot(:factory, name: "factory-1")
+      ord_1 = FactoryBot(:order, importer_id: pvh.id, order_number: "PVHCANADA-PO-A", factory_id: factory_1.id)
+      ord_1_line_1 = ord_1.order_lines.create! line_number: 1, product_id: FactoryBot(:product, importer_id: pvh.id).id
+      ord_1_line_2 = ord_1.order_lines.create! line_number: 3, product_id: FactoryBot(:product, importer_id: pvh.id).id
 
       shipments = instance_double("shipments")
       expect_any_instance_of(described_class).to receive(:find_shipments).with("9", ["A", "B"], ["C", "D"], force_lookup: true).and_return(shipments)
@@ -485,7 +485,7 @@ describe OpenChain::Report::PvhCanadaDutyDiscountReport do
     end
 
     it "handles quarterly, biannual variations" do
-      entry = Factory(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", fiscal_date: Date.new(2018, 12, 15), transport_mode_code: '9')
+      entry = FactoryBot(:entry, importer_id: pvh.id, customer_number: "PVHCANADA", entry_number: "entry-1", fiscal_date: Date.new(2018, 12, 15), transport_mode_code: '9')
       inv = entry.commercial_invoices.create!
       inv.commercial_invoice_lines.create! miscellaneous_discount: "10.05"
       expect_any_instance_of(described_class).to receive(:find_shipments).with("9", [], [], force_lookup: true).and_return([])

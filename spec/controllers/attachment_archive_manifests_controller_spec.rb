@@ -1,6 +1,6 @@
 describe AttachmentArchiveManifestsController do
   before :each do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     allow_any_instance_of(User).to receive(:view_attachment_archives?).and_return(true)
 
     sign_in_as @u

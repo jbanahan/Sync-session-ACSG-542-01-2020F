@@ -81,16 +81,16 @@ angular.mock = {};
  */
 angular.mock.$BrowserProvider = function() {
   this.$get = [
-    '$log', '$$taskTrackerFactory',
-    function($log, $$taskTrackerFactory) {
-      return new angular.mock.$Browser($log, $$taskTrackerFactory);
+    '$log', '$$taskTrackerFactoryBot',
+    function($log, $$taskTrackerFactoryBot) {
+      return new angular.mock.$Browser($log, $$taskTrackerFactoryBot);
     }
   ];
 };
 
-angular.mock.$Browser = function($log, $$taskTrackerFactory) {
+angular.mock.$Browser = function($log, $$taskTrackerFactoryBot) {
   var self = this;
-  var taskTracker = $$taskTrackerFactory($log);
+  var taskTracker = $$taskTrackerFactoryBot($log);
 
   this.isMock = true;
   self.$$url = 'http://server/';
@@ -638,8 +638,8 @@ angular.mock.$LogProvider = function() {
  * @returns {promise} A promise which will be notified on each iteration.
  */
 angular.mock.$IntervalProvider = function() {
-  this.$get = ['$browser', '$$intervalFactory',
-       function($browser,   $$intervalFactory) {
+  this.$get = ['$browser', '$$intervalFactoryBot',
+       function($browser,   $$intervalFactoryBot) {
     var repeatFns = [],
         nextRepeatId = 0,
         now = 0,
@@ -670,7 +670,7 @@ angular.mock.$IntervalProvider = function() {
           }
         };
 
-    var $interval = $$intervalFactory(setIntervalFn, clearIntervalFn);
+    var $interval = $$intervalFactoryBot(setIntervalFn, clearIntervalFn);
 
     /**
      * @ngdoc method

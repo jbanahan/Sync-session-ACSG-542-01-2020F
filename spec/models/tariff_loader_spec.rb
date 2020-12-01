@@ -4,7 +4,7 @@ describe TariffLoader do
 
   describe 'process' do
     it 'creates a tariff set object' do
-      country = Factory(:country, iso_code:"AU")
+      country = FactoryBot(:country, iso_code:"AU")
       time = Time.zone.now.strftime("%Y-%m-%d")
       tl = TariffLoader.new(country, xls_path, time)
 
@@ -14,9 +14,9 @@ describe TariffLoader do
 
   describe 'parse_spc_rates' do
 
-    let(:china) {Factory(:country, iso_code:"CN")}
+    let(:china) {FactoryBot(:country, iso_code:"CN")}
     let(:tariff_loader) { TariffLoader.new(china, xls_path, Time.zone.now.strftime("%Y-%m-%d")) }
-    let(:official_tariff) { Factory(:official_tariff, country: china) }
+    let(:official_tariff) { FactoryBot(:official_tariff, country: china) }
 
     it 'sets the special_rates on a given official tariff and a value' do
       expect(official_tariff.special_rates).to be_nil
@@ -40,7 +40,7 @@ describe TariffLoader do
       before {described_class.instance_variable_set(:@do_mfn_parse, false)}
 
       it 'does not set the most_favored_nation_rate' do
-        country = Factory(:country, iso_code:"AU")
+        country = FactoryBot(:country, iso_code:"AU")
         time = Time.zone.now.strftime("%Y-%m-%d")
         tl = TariffLoader.new(country, xls_path, time)
 
@@ -54,7 +54,7 @@ describe TariffLoader do
     let (:log) { InboundFile.new }
 
     it 'processes a file' do
-      country = Factory(:country, iso_code:"AU")
+      country = FactoryBot(:country, iso_code:"AU")
 
       now = Date.new(2017, 8, 9)
 
@@ -116,7 +116,7 @@ describe TariffLoader do
 
     it 'processes and activates a file from S3' do
       country = instance_double(Country)
-      user = Factory(:user)
+      user = FactoryBot(:user)
 
       loader = instance_double(TariffLoader)
       expect(described_class).to receive(:new).with(country, "/path/to/file.zip", "AU-2017-08-09").and_return loader
@@ -135,7 +135,7 @@ describe TariffLoader do
 
     it 'processes a file from S3 but does not activate' do
       country = instance_double(Country)
-      user = Factory(:user)
+      user = FactoryBot(:user)
 
       loader = instance_double(TariffLoader)
       expect(described_class).to receive(:new).with(country, "/path/to/file.zip", "AU-2017-08-09").and_return loader

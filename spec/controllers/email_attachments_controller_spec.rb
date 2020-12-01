@@ -1,5 +1,5 @@
 describe EmailAttachmentsController do
-  let(:email_attachment) { Factory(:email_attachment) }
+  let(:email_attachment) { FactoryBot(:email_attachment) }
 
   describe "GET 'show'" do
     it "is successful" do

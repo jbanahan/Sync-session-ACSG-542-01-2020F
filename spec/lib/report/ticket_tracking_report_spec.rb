@@ -1,5 +1,5 @@
 describe OpenChain::Report::TicketTrackingReport do
-  let!(:us) { Factory(:country, iso_code: "US")}
+  let!(:us) { FactoryBot(:country, iso_code: "US")}
   let!(:report) { described_class.new }
   let(:now) { ActiveSupport::TimeZone["UTC"].local(2016, 5, 15) }
   let(:tomorrow) { now + 1.day }
@@ -62,7 +62,7 @@ describe OpenChain::Report::TicketTrackingReport do
   end
 
   describe "run_report" do
-    let(:u) { Factory(:user, time_zone: "Eastern Time (US & Canada)", company: Factory(:company, ticketing_system_code: "CODE")) }
+    let(:u) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)", company: FactoryBot(:company, ticketing_system_code: "CODE")) }
 
     let(:temp) { nil }
 
@@ -97,11 +97,11 @@ describe OpenChain::Report::TicketTrackingReport do
   end
 
   describe "get_project_keys" do
-    let(:linked) { Factory(:company, ticketing_system_code: "FOO") }
-    let(:co) { Factory(:company, ticketing_system_code: "BAR", linked_companies: [linked]) }
-    let(:user) { Factory(:user, company: co)}
+    let(:linked) { FactoryBot(:company, ticketing_system_code: "FOO") }
+    let(:co) { FactoryBot(:company, ticketing_system_code: "BAR", linked_companies: [linked]) }
+    let(:user) { FactoryBot(:user, company: co)}
 
-    before { Factory(:company, ticketing_system_code: "BAZ") }
+    before { FactoryBot(:company, ticketing_system_code: "BAZ") }
 
     it "returns codes of all companies as well as default list for master user" do
       co.update!(master: true)
@@ -138,7 +138,7 @@ describe OpenChain::Report::TicketTrackingReport do
 
   describe "vfi_query" do
     let!(:ent) do
-      Factory(:entry, entry_number: "ent num", broker_reference: "brok ref", po_numbers: "po nums", part_numbers: "part nums",
+      FactoryBot(:entry, entry_number: "ent num", broker_reference: "brok ref", po_numbers: "po nums", part_numbers: "part nums",
                       product_lines: "prod lines", vendor_names: "vend names", mfids: "mfids", origin_country_codes: "coo",
                       master_bills_of_lading: "mbols", house_bills_of_lading: "hbols", container_numbers: "container nums",
                       release_date: now, import_country_id: us.id)

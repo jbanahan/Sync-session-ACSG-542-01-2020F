@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourBusinessLogic do
     end
 
     it "sums variant units per inner pack" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       v = p.variants.create! variant_identifier: '1'
       v.update_custom_value! cdefs[:var_units_per_inner_pack], BigDecimal('2.51')
       v2 = p.variants.create! variant_identifier: '2'
@@ -29,8 +29,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourBusinessLogic do
 
   describe "exploded_quantity" do
     it "uses prepack inner quantities to determine an exploded quantity" do
-      p = Factory(:product)
-      ship_line = Factory(:shipment_line, product: p, quantity: BigDecimal("2"))
+      p = FactoryBot(:product)
+      ship_line = FactoryBot(:shipment_line, product: p, quantity: BigDecimal("2"))
 
       expect(subject).to receive(:total_units_per_inner_pack).with(p).and_return BigDecimal('5')
 
@@ -38,8 +38,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourBusinessLogic do
     end
 
     it "returns zero when shipment line quantity not set" do
-      p = Factory(:product)
-      ship_line = Factory(:shipment_line, product: p, quantity: nil)
+      p = FactoryBot(:product)
+      ship_line = FactoryBot(:shipment_line, product: p, quantity: nil)
 
       expect(subject).to receive(:total_units_per_inner_pack).with(p).and_return BigDecimal('5')
 

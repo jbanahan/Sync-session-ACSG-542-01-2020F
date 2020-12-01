@@ -1,19 +1,19 @@
 describe Api::V1::Admin::AnnouncementsController do
   let!(:user) do
-    u = Factory(:admin_user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel", email: "tufnel@stonehenge.biz",
-                             time_zone: "Eastern Time (US & Canada)", company: Factory(:company, name: "ACME", system_code: "AC"))
+    u = FactoryBot(:admin_user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel", email: "tufnel@stonehenge.biz",
+                             time_zone: "Eastern Time (US & Canada)", company: FactoryBot(:company, name: "ACME", system_code: "AC"))
     allow_api_access u
     u
   end
 
   let(:user2) do
-    Factory(:user, username: "dsthubbins", first_name: "David", last_name: "St. Hubbins", email: "st-hubbins@hellhole.co.uk",
-                   time_zone: "Eastern Time (US & Canada)", company: Factory(:company, name: "Konvenientz", system_code: "KON"))
+    FactoryBot(:user, username: "dsthubbins", first_name: "David", last_name: "St. Hubbins", email: "st-hubbins@hellhole.co.uk",
+                   time_zone: "Eastern Time (US & Canada)", company: FactoryBot(:company, name: "Konvenientz", system_code: "KON"))
   end
 
   let(:user3) do
-    Factory(:user, username: "dsmalls", first_name: "Derek", last_name: "Smalls", email: "smalls@sharksandwich.net",
-                   time_zone: "Pacific Time (US & Canada)", company: Factory(:company, name: "Walshop", system_code: "WAL"))
+    FactoryBot(:user, username: "dsmalls", first_name: "Derek", last_name: "Smalls", email: "smalls@sharksandwich.net",
+                   time_zone: "Pacific Time (US & Canada)", company: FactoryBot(:company, name: "Walshop", system_code: "WAL"))
   end
 
   let(:now) { Time.zone.now }
@@ -21,9 +21,9 @@ describe Api::V1::Admin::AnnouncementsController do
   describe "index" do
 
     before do
-      Factory(:announcement, title: "title 1", created_at: now - 5.days)
-      Factory(:announcement, title: "title 2", created_at: now - 4.days)
-      Factory(:announcement, title: "title 3", created_at: now - 3.days)
+      FactoryBot(:announcement, title: "title 1", created_at: now - 5.days)
+      FactoryBot(:announcement, title: "title 2", created_at: now - 4.days)
+      FactoryBot(:announcement, title: "title 3", created_at: now - 3.days)
       now
     end
 
@@ -38,7 +38,7 @@ describe Api::V1::Admin::AnnouncementsController do
     end
 
     it "prevents access by non-admins" do
-      allow_api_access Factory(:user)
+      allow_api_access FactoryBot(:user)
       get :index
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
@@ -70,7 +70,7 @@ describe Api::V1::Admin::AnnouncementsController do
     let(:start_at) { DateTime.new(2020, 3, 15).in_time_zone(user.time_zone).to_s(:iso8601) }
     let(:end_at) { DateTime.new(2020, 3, 20).in_time_zone(user.time_zone).to_s(:iso8601) }
     let(:anc) do
-      Factory(:announcement, title: "title", start_at: start_at, end_at: end_at, category: "users",
+      FactoryBot(:announcement, title: "title", start_at: start_at, end_at: end_at, category: "users",
                              text: "message", comments: "comments")
     end
 
@@ -184,7 +184,7 @@ describe Api::V1::Admin::AnnouncementsController do
     let(:start_at) { ActiveSupport::TimeZone["UTC"].local(2020, 3, 15) }
     let(:end_at) { ActiveSupport::TimeZone["UTC"].local(2020, 3, 20) }
     let(:anc) do
-      a = Factory(:announcement, title: "old title", start_at: start_at, end_at: end_at, category: "users",
+      a = FactoryBot(:announcement, title: "old title", start_at: start_at, end_at: end_at, category: "users",
                                  text: "<p>old message</p>", comments: "old comments")
       a.selected_users << user
       a
@@ -241,7 +241,7 @@ describe Api::V1::Admin::AnnouncementsController do
   end
 
   describe "destroy" do
-    let!(:anc) { Factory(:announcement) }
+    let!(:anc) { FactoryBot(:announcement) }
 
     it "destroys record for admin" do
       expect { delete :destroy, id: anc.id }.to change(Announcement, :count).from(1).to 0
@@ -252,7 +252,7 @@ describe Api::V1::Admin::AnnouncementsController do
     let(:start_date) { ActiveSupport::TimeZone["UTC"].local(2020, 3, 15) }
     let(:end_date) { ActiveSupport::TimeZone["UTC"].local(2020, 3, 20) }
     let!(:anc) do
-      Factory(:announcement, start_at: start_date,
+      FactoryBot(:announcement, start_at: start_date,
                              end_at: end_date,
                              category: "all",
                              selected_users: [],

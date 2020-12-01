@@ -43,7 +43,7 @@ describe ReportResult do
 
   class TestReport; end
 
-  let (:user) { Factory(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii') }
+  let (:user) { FactoryBot(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii') }
   let! (:master_setup) { stub_master_setup }
 
   describe 'friendly settings' do

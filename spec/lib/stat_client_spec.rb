@@ -21,23 +21,23 @@ describe OpenChain::StatClient do
       subject.run
     end
     it "should call products if there are products" do
-      Factory(:product)
+      FactoryBot(:product)
       expect(subject).to receive(:collect_total_products)
       subject.run
     end
     it "should call entries if there are entries" do
-      Factory(:entry)
+      FactoryBot(:entry)
       expect(subject).to receive(:collect_total_entries)
       subject.run
     end
     it "should call surveys & survey_responses if there are surveys" do
-      Factory(:survey)
+      FactoryBot(:survey)
       expect(subject).to receive(:collect_total_surveys)
       expect(subject).to receive(:collect_total_survey_responses)
       subject.run
     end
     it "should call report_recipients if there are search_schedules" do
-      Factory(:search_schedule)
+      FactoryBot(:search_schedule)
       expect(subject).to receive(:collect_report_recipients)
       subject.run
     end
@@ -51,31 +51,31 @@ describe OpenChain::StatClient do
   end
   describe "collect_report_recipients" do
     it "should only report unique addresses" do
-      Factory(:search_schedule, email_addresses:'joe@sample.com, jim@sample.com; mary@sample.com')
-      Factory(:search_schedule, email_addresses:'fred@sample.com,joe@sample.com')
+      FactoryBot(:search_schedule, email_addresses:'joe@sample.com, jim@sample.com; mary@sample.com')
+      FactoryBot(:search_schedule, email_addresses:'fred@sample.com,joe@sample.com')
       expect(subject).to receive(:add_numeric).with('rep_recipients', 4, prep_time)
       subject.collect_report_recipients
     end
     it "should not include vandegriftinc.com addresses" do
-      Factory(:search_schedule, email_addresses:'joe@sample.com, mary@vandegriftinc.com')
+      FactoryBot(:search_schedule, email_addresses:'joe@sample.com, mary@vandegriftinc.com')
       expect(subject).to receive(:add_numeric).with('rep_recipients', 1, prep_time)
       subject.collect_report_recipients
     end
   end
   describe "collect_active_users" do
     it "should call add_numeric with appropriate params" do
-      Factory(:user, username:'ca2', last_request_at:Time.zone.now)
-      Factory(:user, username:'ca1', last_request_at:8.days.ago) # too old
-      Factory(:user, username:'ca3', last_request_at:5.days.ago)
-      Factory(:user, username:'ca4', last_request_at:nil) # never requested
+      FactoryBot(:user, username:'ca2', last_request_at:Time.zone.now)
+      FactoryBot(:user, username:'ca1', last_request_at:8.days.ago) # too old
+      FactoryBot(:user, username:'ca3', last_request_at:5.days.ago)
+      FactoryBot(:user, username:'ca4', last_request_at:nil) # never requested
       expect(subject).to receive(:add_numeric).with('u_act_7', 2, prep_time)
       subject.collect_active_users
     end
   end
   describe "collect_total_survey_responses" do
     before :each do
-      Factory(:survey_response)
-      Factory(:survey_response)
+      FactoryBot(:survey_response)
+      FactoryBot(:survey_response)
     end
 
     it "should call add_numeric with appropriate params" do
@@ -85,8 +85,8 @@ describe OpenChain::StatClient do
   end
   describe "collect_total_surveys" do
     before :each do
-      Factory(:survey)
-      Factory(:survey)
+      FactoryBot(:survey)
+      FactoryBot(:survey)
     end
 
     it "should call add_numeric with appropriate params" do
@@ -96,8 +96,8 @@ describe OpenChain::StatClient do
   end
   describe "collect_total_entries" do
     before :each do
-      Factory(:entry)
-      Factory(:entry)
+      FactoryBot(:entry)
+      FactoryBot(:entry)
     end
 
     it "should call add_numeric with appropriate params" do
@@ -107,8 +107,8 @@ describe OpenChain::StatClient do
   end
   describe "collect_total_products" do
     before :each do
-      Factory(:product)
-      Factory(:product)
+      FactoryBot(:product)
+      FactoryBot(:product)
     end
 
     it "should call add_numeric with appropriate params" do

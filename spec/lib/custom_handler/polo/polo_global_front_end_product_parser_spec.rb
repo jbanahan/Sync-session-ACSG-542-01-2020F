@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
       ]
     }
 
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let (:cdefs) { subject.cdefs }
 
     it "parses a product from a CSV'ized row" do

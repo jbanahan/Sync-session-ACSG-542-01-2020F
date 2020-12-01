@@ -13,9 +13,9 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser do
     allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
     custom_file
   }
-  let! (:master_company) {Factory(:importer, name: "Kirklands", master: true, system_code: "KLANDS")}
-  let (:user) { Factory(:user) }
-  let (:countries) { [Factory(:country, iso_code: "US", import_location: true), Factory(:country, iso_code: "CN", import_location: true)] }
+  let! (:master_company) {FactoryBot(:importer, name: "Kirklands", master: true, system_code: "KLANDS")}
+  let (:user) { FactoryBot(:user) }
+  let (:countries) { [FactoryBot(:country, iso_code: "US", import_location: true), FactoryBot(:country, iso_code: "CN", import_location: true)] }
 
   subject {described_class.new custom_file }
 
@@ -103,7 +103,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Kirklands").and_return true
 
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       expect(user).to receive(:edit_products?).and_return true
 
       expect(described_class.can_view? user).to be_truthy
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Kirklands").and_return true
 
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       expect(user).to receive(:edit_products?).and_return false
 
       expect(described_class.can_view? user).to be_falsey
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Kirklands").and_return false
 
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       allow(user).to receive(:edit_products?).and_return true
       expect(described_class.can_view? user).to be_falsey
     end

@@ -1,7 +1,7 @@
 describe Api::V1::FoldersController do
 
-  let (:user) { Factory(:user) }
-  let (:base_object) { Factory(:order) }
+  let (:user) { FactoryBot(:user) }
+  let (:base_object) { FactoryBot(:order) }
   let (:folder) {
     base_object.folders.create! name: "Folder Name", created_by_id: user.id
   }

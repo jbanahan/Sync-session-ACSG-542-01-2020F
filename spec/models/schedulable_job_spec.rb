@@ -24,7 +24,7 @@ describe SchedulableJob do
   end
 
   describe "run" do
-    let(:sj) {Factory(:schedulable_job, run_class: "TestSchedulable", log_runtime: false)}
+    let(:sj) {FactoryBot(:schedulable_job, run_class: "TestSchedulable", log_runtime: false)}
 
     it "does not save a runtime by default" do
       sj.run

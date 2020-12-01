@@ -2,9 +2,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSuppor
 
   subject { Class.new { include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport }.new }
   let (:sheet) { wb, sheet = XlsMaker.create_workbook_and_sheet "Sheet", []; sheet }
-  let (:entry) { Factory(:entry) }
-  let (:broker_invoice) { Factory(:broker_invoice, invoice_total: BigDecimal("100"), invoice_date: Date.new(2016, 4, 1), entry: entry) }
-  let (:broker_invoice_2) { Factory(:broker_invoice, invoice_total: BigDecimal("10"), invoice_date: Date.new(2016, 3, 1), entry: entry) }
+  let (:entry) { FactoryBot(:entry) }
+  let (:broker_invoice) { FactoryBot(:broker_invoice, invoice_total: BigDecimal("100"), invoice_date: Date.new(2016, 4, 1), entry: entry) }
+  let (:broker_invoice_2) { FactoryBot(:broker_invoice, invoice_total: BigDecimal("10"), invoice_date: Date.new(2016, 3, 1), entry: entry) }
   before :each do
     ms = double("MasterSetup")
     allow(ms).to receive(:request_host).and_return "http://localhost"

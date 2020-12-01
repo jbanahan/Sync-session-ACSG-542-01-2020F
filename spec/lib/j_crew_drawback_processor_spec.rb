@@ -9,9 +9,9 @@ describe OpenChain::JCrewDrawbackProcessor do
       @cd_del = cdefs[:shp_delivery_date]
       @cd_size = cdefs[:shpln_size]
       @cd_color = cdefs[:shpln_color]
-      @product = Factory(:product, unique_identifier:'JCREW-12345', name:'12345')
-      @importer = with_customs_management_id(Factory(:company, :importer=>true), "JCREW")
-      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>'12345', :po_number=>'12345', :country_origin_code=>'CN')
+      @product = FactoryBot(:product, unique_identifier:'JCREW-12345', name:'12345')
+      @importer = with_customs_management_id(FactoryBot(:company, :importer=>true), "JCREW")
+      @c_line = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>'12345', :po_number=>'12345', :country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -32,7 +32,7 @@ describe OpenChain::JCrewDrawbackProcessor do
         :classification_qty_1 => 10,
         :classification_uom_1 => "PCS"
       )
-      @s_line = Factory(:shipment_line, :quantity=>10, :product=>@product)
+      @s_line = FactoryBot(:shipment_line, :quantity=>10, :product=>@product)
       @shipment = @s_line.shipment
       @shipment.update_custom_value! @cd_del, 1.days.from_now
       @shipment.update_attributes(:importer_id=>@importer.id, :reference=>@entry.entry_number)

@@ -1,6 +1,6 @@
 describe ValidationRuleInvoiceLineMidFirstSale do
-  let! (:company) { Factory(:company, system_code: 'ACOMPANY') }
-  let! (:entry) { Factory(:entry) }
+  let! (:company) { FactoryBot(:company, system_code: 'ACOMPANY') }
+  let! (:entry) { FactoryBot(:entry) }
 
   subject { ValidationRuleInvoiceLineMidFirstSale.new(rule_attributes_json: {importer: 'ACOMPANY'}.to_json) }
 
@@ -25,34 +25,34 @@ describe ValidationRuleInvoiceLineMidFirstSale do
   end
 
   it 'passes if all invoice lines that have a mid are marked first_sale (handling nil as first_sale)' do
-    invoice = Factory(:commercial_invoice, entry: entry)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, mid: '123456789', first_sale: nil)
+    invoice = FactoryBot(:commercial_invoice, entry: entry)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, mid: '123456789', first_sale: nil)
     xref = DataCrossReference.create!(company_id: company.id, cross_reference_type: DataCrossReference::ENTRY_MID_VALIDATIONS, key: 123456789)
 
     expect(subject.run_validation(entry)).to be_empty
   end
 
   it 'passes if all invoice lines that have a mid are marked first_sale' do
-    invoice = Factory(:commercial_invoice, entry: entry)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, mid: '123456789', first_sale: true)
+    invoice = FactoryBot(:commercial_invoice, entry: entry)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, mid: '123456789', first_sale: true)
     xref = DataCrossReference.create!(company_id: company.id, cross_reference_type: DataCrossReference::ENTRY_MID_VALIDATIONS, key: 123456789)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, first_sale: true)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, first_sale: true)
 
     expect(subject.run_validation(entry)).to be_empty
   end
 
   it 'fails if any invoice lines have a mid not marked first_sale' do
-    invoice = Factory(:commercial_invoice, entry: entry)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
+    invoice = FactoryBot(:commercial_invoice, entry: entry)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
     xref = DataCrossReference.create!(company_id: company.id, cross_reference_type: DataCrossReference::ENTRY_MID_VALIDATIONS, key: 123456789)
 
     expect(subject.run_validation(entry)).to eql(["PO 12345 and MID # 123456789 should have first sale data."])
   end
 
   it 'provides a proper error message if multiple invoice_lines fail.' do
-    invoice = Factory(:commercial_invoice, entry: entry)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
-    invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
+    invoice = FactoryBot(:commercial_invoice, entry: entry)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
+    invoice_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, po_number: "12345", mid: '123456789', first_sale: false)
     xref = DataCrossReference.create!(company_id: company.id, cross_reference_type: DataCrossReference::ENTRY_MID_VALIDATIONS, key: 123456789)
 
     expect(subject.run_validation(entry)).to eql(["PO 12345 and MID # 123456789 should have first sale data.", "PO 12345 and MID # 123456789 should have first sale data."])

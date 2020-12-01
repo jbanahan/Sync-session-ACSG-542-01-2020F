@@ -1,15 +1,15 @@
 describe OpenChain::UserSupport::CreateUserFromTemplate do
-  let!(:current_user) { Factory(:user, email: "some@thing.xyz") }
+  let!(:current_user) { FactoryBot(:user, email: "some@thing.xyz") }
   subject { OpenChain::UserSupport::CreateUserFromTemplate }
 
   describe 'transactional_user_creation' do
     it "creates a user safely and returns true if completed" do
-      new_user = Factory(:user)
+      new_user = FactoryBot(:user)
       expect(subject.transactional_user_creation new_user, current_user, nil, nil).to eq true
     end
 
     it "rollsback change on failure" do
-      expect {subject.transactional_user_creation(Factory(:user, email: current_user.email),
+      expect {subject.transactional_user_creation(FactoryBot(:user, email: current_user.email),
         current_user, nil, nil)}.to raise_exception(ActiveRecord::RecordInvalid, "Validation failed: Email has already been taken")
         .and change {User.count}.by(0)
     end
@@ -21,9 +21,9 @@ describe OpenChain::UserSupport::CreateUserFromTemplate do
         homepage:'/something',
         department:'blah'
       }
-      t = Factory(:user_template, template_json: template_json.to_json)
+      t = FactoryBot(:user_template, template_json: template_json.to_json)
 
-      c = Factory(:company)
+      c = FactoryBot(:company)
       first_name = "Joe"
       last_name = "Smith"
       email = "jsmith@domain.tld"

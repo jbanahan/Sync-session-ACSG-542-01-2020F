@@ -1,20 +1,20 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerator do
   before do
-    co = Factory(:company, system_code: "sys code")
-    @ord = Factory(:order, order_number: "order num", order_date: Date.new(2016, 1, 1), vendor: co,
+    co = FactoryBot(:company, system_code: "sys code")
+    @ord = FactoryBot(:order, order_number: "order num", order_date: Date.new(2016, 1, 1), vendor: co,
                  ship_window_start: Date.new(2016, 1, 2), ship_window_end: Date.new(2016, 1, 3),
                  terms_of_sale: "FOB", currency: "USD")
-    country = Factory(:country)
+    country = FactoryBot(:country)
 
-    addr = Factory(:address, country: country, system_code: "addr sys code")
-    classi = Factory(:classification, country: country, tariff_records: [Factory(:tariff_record, hts_1: "HTS")])
-    prod = Factory(:product, unique_identifier: "unique id", classifications: [classi], name: "product name")
-    ordln = Factory(:order_line, order: @ord, product: prod, line_number: 1, quantity: 2, unit_of_measure: "FT2", price_per_unit: 3, ship_to: addr)
+    addr = FactoryBot(:address, country: country, system_code: "addr sys code")
+    classi = FactoryBot(:classification, country: country, tariff_records: [FactoryBot(:tariff_record, hts_1: "HTS")])
+    prod = FactoryBot(:product, unique_identifier: "unique id", classifications: [classi], name: "product name")
+    ordln = FactoryBot(:order_line, order: @ord, product: prod, line_number: 1, quantity: 2, unit_of_measure: "FT2", price_per_unit: 3, ship_to: addr)
 
-    addr2 = Factory(:address, country: country, system_code: "addr sys code 2")
-    classi2 = Factory(:classification, country: country, tariff_records: [Factory(:tariff_record, hts_1: "HTS2")])
-    prod2 = Factory(:product, unique_identifier: "unique id 2", classifications: [classi2], name: "product name 2")
-    ordln2 = Factory(:order_line, order: @ord, product: prod2, line_number: 2, quantity: 4, unit_of_measure: "FOT", price_per_unit: 5, ship_to: addr2)
+    addr2 = FactoryBot(:address, country: country, system_code: "addr sys code 2")
+    classi2 = FactoryBot(:classification, country: country, tariff_records: [FactoryBot(:tariff_record, hts_1: "HTS2")])
+    prod2 = FactoryBot(:product, unique_identifier: "unique id 2", classifications: [classi2], name: "product name 2")
+    ordln2 = FactoryBot(:order_line, order: @ord, product: prod2, line_number: 2, quantity: 4, unit_of_measure: "FOT", price_per_unit: 5, ship_to: addr2)
 
     cdefs = described_class.prep_custom_definitions [:ord_country_of_origin, :ord_assigned_agent, :prod_merch_cat, :prod_merch_cat_desc, :ordln_old_art_number]
     @ord.update_custom_value! cdefs[:ord_country_of_origin], "US"

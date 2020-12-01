@@ -70,8 +70,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
   describe '#update_merch_cat_description' do
     it 'should update merch description on products with different description and same category' do
       cdefs = described_class.my_custom_definitions
-      base_p = Factory(:product)
-      other_p = Factory(:product)
+      base_p = FactoryBot(:product)
+      other_p = FactoryBot(:product)
       [base_p, other_p].each_with_index do |p, i|
         p.update_custom_value!(cdefs[:prod_merch_cat], '123')
         p.update_custom_value!(cdefs[:prod_merch_cat_desc], "MCD#{i}")
@@ -86,8 +86,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeCompara
     end
     it 'should do nothing if other products have same description' do
       cdefs = described_class.my_custom_definitions
-      base_p = Factory(:product)
-      other_p = Factory(:product)
+      base_p = FactoryBot(:product)
+      other_p = FactoryBot(:product)
       [base_p, other_p].each do |p|
         p.update_custom_value!(cdefs[:prod_merch_cat], '123')
         p.update_custom_value!(cdefs[:prod_merch_cat_desc], "MCD0")

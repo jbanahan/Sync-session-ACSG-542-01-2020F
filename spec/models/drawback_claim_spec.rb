@@ -1,7 +1,7 @@
 describe DrawbackClaim do
   context "callbacks" do
     before :each do
-      @imp = Factory(:company, :importer=>true)
+      @imp = FactoryBot(:company, :importer=>true)
     end
     it "should set total claim amount" do
       expect(DrawbackClaim.
@@ -31,15 +31,15 @@ describe DrawbackClaim do
       expect(d.errors[:importer_id].size).to eq(1)
     end
     it "should require name" do
-      d = DrawbackClaim.new(:importer_id=>Factory(:company, :drawback=>true).id)
+      d = DrawbackClaim.new(:importer_id=>FactoryBot(:company, :drawback=>true).id)
       expect(d.save).to be_falsey
       expect(d.errors[:name].size).to eq(1)
     end
   end
   describe "can_attach?" do
     before :each do
-      @dbc = Factory(:drawback_claim)
-      @u = Factory(:user)
+      @dbc = FactoryBot(:drawback_claim)
+      @u = FactoryBot(:user)
     end
     it "should be true if can_edit? is true" do
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
@@ -88,27 +88,27 @@ describe DrawbackClaim do
       ms
     }
 
-    let! (:base_claim) {Factory(:drawback_claim)}
+    let! (:base_claim) {FactoryBot(:drawback_claim)}
 
     it "should not limit master user with permission" do
-      d = Factory(:drawback_claim)
-      u = Factory(:master_user, :drawback_view=>true)
+      d = FactoryBot(:drawback_claim)
+      u = FactoryBot(:master_user, :drawback_view=>true)
       expect(DrawbackClaim.viewable(u).to_a).to eq([base_claim, d])
     end
     it "should return nothing if user does not have permission" do
-      u = Factory(:master_user, :drawback_view=>false)
+      u = FactoryBot(:master_user, :drawback_view=>false)
       expect(DrawbackClaim.viewable(u)).to be_empty
     end
     it "should return claims for current company" do
-      d = Factory(:drawback_claim)
-      d2 = Factory(:drawback_claim)
-      u = Factory(:drawback_user, :company=>d.importer)
+      d = FactoryBot(:drawback_claim)
+      d2 = FactoryBot(:drawback_claim)
+      u = FactoryBot(:drawback_user, :company=>d.importer)
       expect(DrawbackClaim.viewable(u).to_a).to eq([d])
     end
     it "should return claims for linked company" do
-      d = Factory(:drawback_claim)
-      d2 = Factory(:drawback_claim)
-      u = Factory(:drawback_user, :company=>d.importer)
+      d = FactoryBot(:drawback_claim)
+      d2 = FactoryBot(:drawback_claim)
+      u = FactoryBot(:drawback_user, :company=>d.importer)
       u.company.linked_companies << d2.importer
       expect(DrawbackClaim.viewable(u).to_a).to eq([d, d2])
     end
@@ -116,32 +116,32 @@ describe DrawbackClaim do
 
   describe "can_view?" do
     before :each do
-      @d = Factory(:drawback_claim)
+      @d = FactoryBot(:drawback_claim)
     end
     context "with_permission" do
       before :each do
         allow_any_instance_of(User).to receive(:view_drawback?).and_return(true)
       end
       it "should allow user with permission and master company to view" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         expect(@d.can_view?(u)).to be_truthy
       end
       it "should allow user with permission and same company to view" do
-        u = Factory(:user, :company=>@d.importer)
+        u = FactoryBot(:user, :company=>@d.importer)
         expect(@d.can_view?(u)).to be_truthy
       end
       it "should allow user with permission and linked company to view" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         u.company.linked_companies << @d.importer
         expect(@d.can_view?(u)).to be_truthy
       end
       it "should not allow user from different company to view" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         expect(@d.can_view?(u)).to be_falsey
       end
     end
     it "should now allow user without permission to view" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       allow(u).to receive(:view_drawback?).and_return(false)
       expect(@d.can_view?(u)).to be_falsey
     end
@@ -149,8 +149,8 @@ describe DrawbackClaim do
 
   describe "can_comment?" do
     before :each do
-      @d = Factory(:drawback_claim)
-      @u = Factory(:user)
+      @d = FactoryBot(:drawback_claim)
+      @u = FactoryBot(:user)
     end
 
     it "should allow user with permissions to comment" do
@@ -166,10 +166,10 @@ describe DrawbackClaim do
 
   describe "can_edit" do
     before :each do
-      @d = Factory(:drawback_claim)
+      @d = FactoryBot(:drawback_claim)
     end
     it "should now allow user without permission to edit" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       allow(u).to receive(:edit_drawback?).and_return(false)
       expect(@d.can_edit?(u)).to be_falsey
     end
@@ -178,20 +178,20 @@ describe DrawbackClaim do
         allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
       end
       it "should allow user with permission and master company to edit" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         expect(@d.can_edit?(u)).to be_truthy
       end
       it "should allow user with permission and same company to edit" do
-        u = Factory(:user, :company=>@d.importer)
+        u = FactoryBot(:user, :company=>@d.importer)
         expect(@d.can_edit?(u)).to be_truthy
       end
       it "should allow user with permission and linked company to edit" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         u.company.linked_companies << @d.importer
         expect(@d.can_edit?(u)).to be_truthy
       end
       it "should not allow user from different company to edit" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         expect(@d.can_edit?(u)).to be_falsey
       end
     end
@@ -199,7 +199,7 @@ describe DrawbackClaim do
 
   describe "exports_not_in_import" do
     before :each do
-      @c = Factory(:drawback_claim)
+      @c = FactoryBot(:drawback_claim)
       @month_ago = DutyCalcExportFileLine.create!(:importer_id=>@c.importer_id, :part_number=>'ABC', :export_date=>1.month.ago)
       @year_ago = DutyCalcExportFileLine.create!(:importer_id=>@c.importer_id, :part_number=>'DEF', :export_date=>1.year.ago)
     end
@@ -214,11 +214,11 @@ describe DrawbackClaim do
       expect(@c.exports_not_in_import.to_a).to eq([@year_ago])
     end
     it "should not return lines for different importer than claim" do
-      @c.importer_id= Factory(:company).id
+      @c.importer_id= FactoryBot(:company).id
       expect(@c.exports_not_in_import).to be_empty
     end
     it "should not return lines that match imports" do
-      p = Factory(:product, :unique_identifier=>@month_ago.part_number)
+      p = FactoryBot(:product, :unique_identifier=>@month_ago.part_number)
       DrawbackImportLine.create!(:product_id=>p.id, :part_number=>p.unique_identifier, :import_date=>2.months.ago, :importer_id=>@c.importer_id)
       expect(@c.exports_not_in_import.to_a).to eq([@year_ago])
     end

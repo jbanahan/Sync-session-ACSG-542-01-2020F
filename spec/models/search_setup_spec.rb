@@ -9,7 +9,7 @@ describe SearchSetup do
   describe "uploadable?" do
     # there are quite a few tests for this in the old test unit structure
     it 'always rejects ENTRY' do
-      ss = Factory(:search_setup, module_type: 'Entry')
+      ss = FactoryBot(:search_setup, module_type: 'Entry')
       msgs = []
       expect(ss.uploadable?(msgs)).to be_falsey
       expect(msgs.size).to eq(1)
@@ -17,7 +17,7 @@ describe SearchSetup do
     end
 
     it 'always rejects BROKER_INVOICE' do
-      ss = Factory(:search_setup, module_type: 'BrokerInvoice')
+      ss = FactoryBot(:search_setup, module_type: 'BrokerInvoice')
       msgs = []
       expect(ss.uploadable?(msgs)).to be_falsey
       expect(msgs.size).to eq(1)
@@ -25,8 +25,8 @@ describe SearchSetup do
     end
 
     it "rejects PRODUCT for non-master" do
-      u = Factory(:importer_user, product_edit: true, product_view: true)
-      ss = Factory(:search_setup, module_type: "Product", user: u)
+      u = FactoryBot(:importer_user, product_edit: true, product_view: true)
+      ss = FactoryBot(:search_setup, module_type: "Product", user: u)
       msgs = []
       expect(ss.uploadable?(msgs)).to be_falsey
       expect(msgs.first.include?("Only users from the master company can upload products.")).to be_truthy
@@ -35,19 +35,19 @@ describe SearchSetup do
 
   describe "downloadable?" do
     it "is downloadable if there are search criterions" do
-      ss = Factory(:search_criterion, search_setup: Factory(:search_setup)).search_setup
+      ss = FactoryBot(:search_criterion, search_setup: FactoryBot(:search_setup)).search_setup
       expect(ss.downloadable?).to be_truthy
     end
 
     it "is not downloadable if there are no search criterions for multi-page searches" do
       errors = []
-      expect(Factory(:search_setup).downloadable?(errors)).to be_falsey
+      expect(FactoryBot(:search_setup).downloadable?(errors)).to be_falsey
       expect(errors).to eq ["You must add at least one Parameter to your search setup before downloading a search."]
     end
 
     it "is not downloadable if there are no search criterions for single page searches" do
       errors = []
-      expect(Factory(:search_setup).downloadable?(errors, true)).to be_truthy
+      expect(FactoryBot(:search_setup).downloadable?(errors, true)).to be_truthy
     end
   end
 
@@ -56,8 +56,8 @@ describe SearchSetup do
       stub_master_setup
     end
 
-    let(:user) { Factory(:user, first_name: "A", last_name: "B") }
-    let(:user2) { Factory(:user) }
+    let(:user) { FactoryBot(:user, first_name: "A", last_name: "B") }
+    let(:user2) { FactoryBot(:user) }
     let(:search_setup) { described_class.create!(name: "X", module_type: "Product", user_id: user.id) }
 
     it "copies to another user" do
@@ -101,7 +101,7 @@ describe SearchSetup do
   end
 
   describe "deep_copy" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     let(:search_setup) do
       described_class.create!(name: "ABC", module_type: "Order", user: user, simple: false, download_format: 'csv', include_links: true, include_rule_links: true)
@@ -167,7 +167,7 @@ describe SearchSetup do
   end
 
   describe "values" do
-    let (:user) { Factory(:admin_user) }
+    let (:user) { FactoryBot(:admin_user) }
 
     before do
       ModelField.reload true
@@ -176,8 +176,8 @@ describe SearchSetup do
     CoreModule.all.each do |cm|
       it "can utilize all '#{cm.label}' core module model fields in a SearchQuery" do
         if cm == CoreModule::PRODUCT
-          region = Factory(:region)
-          region.countries << Factory(:country)
+          region = FactoryBot(:region)
+          region.countries << FactoryBot(:country)
         end
 
         if cm.klass.respond_to?(:search_where)
@@ -202,7 +202,7 @@ describe SearchSetup do
   end
 
   context "last_accessed" do
-    let(:search_setup) { Factory :search_setup }
+    let(:search_setup) { FactoryBot :search_setup }
 
     it "returns the last_accessed time from an associated search run" do
       expect(search_setup.last_accessed).to be_nil

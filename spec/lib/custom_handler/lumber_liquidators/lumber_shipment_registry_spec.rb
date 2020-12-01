@@ -30,8 +30,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentRegistry do
 
   describe "cancel_shipment_hook" do
     it "deletes booking lines on cancel" do
-      s = Factory(:shipment)
-      Factory(:booking_line, shipment: s)
+      u = double(:user)
+      s = FactoryBot(:shipment)
+      bl = FactoryBot(:booking_line, shipment:s)
       expect(s.booking_lines.length).to eq(1)
 
       described_class.cancel_shipment_hook s, "user"
@@ -42,9 +43,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentRegistry do
   end
 
   describe "can_cancel?" do
-    let(:imp) { Factory(:company, system_code: "ACME", agent: true) }
-    let(:u) { Factory(:user, company: imp) }
-    let(:s) { Factory(:shipment, canceled_date: nil, importer: imp) }
+    let(:imp) { FactoryBot(:company, system_code: "ACME", agent: true) }
+    let(:u) { FactoryBot(:user, company: imp) }
+    let(:s) { FactoryBot(:shipment, canceled_date: nil, importer: imp) }
 
     before do
       allow(s).to receive(:can_edit?).with(u).and_return true
@@ -100,25 +101,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentRegistry do
         sl.update! linked_order_line_id: ol.id
       end
 
-      let!(:cdef) { Factory(:custom_definition, cdef_uid: "ord_assigned_agent", data_type: :string, module_type: "Order") }
-      let!(:o2) do
-        o = Factory(:order, order_lines: [Factory(:order_line)])
-        o.update_custom_value! cdef, "ACME"
-        ol = o.order_lines.first
-        ol.update! order: o
-        sl = Factory(:shipment_line, product: ol.product, shipment: s)
-        sl.update! linked_order_line_id: ol.id
-        o
-      end
-      let!(:o3) do
-        o = Factory(:order, booking_lines: [Factory(:booking_line, order_line: Factory(:order_line))])
-        o.update_custom_value! cdef, "ACME"
-        ol = o.booking_lines.first.order_line
-        ol.update! order: o
-        sl = Factory(:shipment_line, product: ol.product, shipment: s)
-        sl.update! linked_order_line_id: ol.id
-        o
-      end
+      let!(:cdef) { FactoryBot(:custom_definition, cdef_uid: "ord_assigned_agent", data_type: :string, module_type: "Order") }
+      let!(:agent_2) { FactoryBot(:company, agent: true, system_code: "Konvenientz") }
+      let!(:o1) { o = FactoryBot(:order, order_lines: [FactoryBot(:order_line)]); o.update_custom_value! cdef, "ACME"; o }
+      let!(:o2) { o = FactoryBot(:order, order_lines: [FactoryBot(:order_line)]); o.update_custom_value! cdef, "ACME"; o }
+      let!(:o3) { o = FactoryBot(:order, booking_lines: [FactoryBot(:booking_line, order_line: FactoryBot(:order_line))]); o.update_custom_value! cdef, "ACME"; o }
+      let!(:o4) { o = FactoryBot(:order, booking_lines: [FactoryBot(:booking_line, order_line: FactoryBot(:order_line))]); o.update_custom_value! cdef, "ACME"; o }
+      let!(:ol1) { ol = o1.order_lines.first; ol.update! order: o1; ol }
+      let!(:ol2) { ol = o2.order_lines.first; ol.update! order: o2; ol }
+      let!(:ol3) { ol = o3.booking_lines.first.order_line; ol.update! order: o3; ol }
+      let!(:ol4) { ol = o4.booking_lines.first.order_line; ol.update! order: o4; ol }
+      let!(:sl1) { sl = FactoryBot(:shipment_line, product: ol1.product, shipment: s); sl.update! linked_order_line_id: ol1.id; sl}
+      let!(:sl2) { sl = FactoryBot(:shipment_line, product: ol2.product, shipment: s); sl.update! linked_order_line_id: ol2.id; sl}
+      let!(:sl3) { sl = FactoryBot(:shipment_line, product: ol3.product, shipment: s); sl.update! linked_order_line_id: ol3.id; sl}
+      let!(:sl4) { sl = FactoryBot(:shipment_line, product: ol4.product, shipment: s); sl.update! linked_order_line_id: ol4.id; sl}
 
       it "returns 'true' if all manifested and booked orders match the agent" do
         expect(described_class.can_cancel?(s, u)).to eq true

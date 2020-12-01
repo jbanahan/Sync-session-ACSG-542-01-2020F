@@ -1,14 +1,14 @@
 describe Api::V1::AnnouncementsController do
   let!(:user) do
-    u = Factory(:user, email: "tufnel@stonehenge.biz")
+    u = FactoryBot(:user, email: "tufnel@stonehenge.biz")
     allow_api_access u
     u
   end
 
   describe "confirm" do
-    let!(:anc1) { Factory(:announcement) }
-    let!(:anc2) { Factory(:announcement, title: "hear, ye!", text: "This is important!") }
-    let!(:anc3) { Factory(:announcement) }
+    let!(:anc1) { FactoryBot(:announcement) }
+    let!(:anc2) { FactoryBot(:announcement, title: "hear, ye!", text: "This is important!") }
+    let!(:anc3) { FactoryBot(:announcement) }
 
     it "marks specified user_announcement_markers 'confirmed' for current user, sends email if indicated" do
       now = Time.zone.local(2020, 3, 15)
@@ -38,7 +38,7 @@ describe Api::V1::AnnouncementsController do
     it "ignores user_announcement_markers with a populated confirmed_at field" do
       now = Time.zone.local(2020, 3, 15)
       yesterday = now - 1.day
-      uam = Factory(:user_announcement_marker, announcement: anc1, user: user, confirmed_at: yesterday)
+      uam = FactoryBot(:user_announcement_marker, announcement: anc1, user: user, confirmed_at: yesterday)
       Timecop.freeze(now) { put :confirm, anc_ids: anc1.id.to_s }
       uam.reload
       expect(uam.confirmed_at).to eq yesterday
@@ -63,7 +63,7 @@ describe Api::V1::AnnouncementsController do
 
   describe "hide_from_user" do
     it "sets 'hidden' flag on user_announcement for specified announcement" do
-      anc = Factory(:announcement)
+      anc = FactoryBot(:announcement)
       user.marked_announcements << anc
       expect(user.user_announcement_markers.first.hidden).to be_falsy
 

@@ -44,10 +44,10 @@ describe OpenChain::CustomHandler::Generator315::Isf315Dispatcher do
 
       context "with linked importer company" do
 
-        let (:importer) { Factory(:importer) }
+        let (:importer) { FactoryBot(:importer) }
 
         let (:parent) do
-          imp = Factory(:importer, system_code: "PARENT")
+          imp = FactoryBot(:importer, system_code: "PARENT")
           imp.linked_companies << importer
           imp
         end
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::Generator315::Isf315Dispatcher do
 
   describe "receive" do
     let(:isf) do
-      Factory(:security_filing, host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",  transport_mode_code: "10",
+      FactoryBot(:security_filing, host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",  transport_mode_code: "10",
                                 scac: "SCAC", vessel: "VES", voyage: "VOY", entry_port_code: "ENT", lading_port_code: "LAD", master_bill_of_lading: "M\nB",
                                 house_bills_of_lading: "H\nB", container_numbers: "C\nN", po_numbers: "P\nO", first_accepted_date: "2015-03-01 08:00")
     end

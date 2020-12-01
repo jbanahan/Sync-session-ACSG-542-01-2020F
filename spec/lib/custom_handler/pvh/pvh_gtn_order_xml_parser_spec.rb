@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
     REXML::XPath.first(xml, "/Order/orderDetail")
   }
 
-  let! (:pvh) { Factory(:importer, system_code: "PVH") }
+  let! (:pvh) { FactoryBot(:importer, system_code: "PVH") }
 
   let (:cdefs) {
     subject.cdefs
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
   let (:integration) { User.integration }
 
   let (:product) {
-    p = Factory(:product, importer: pvh, unique_identifier: "PVH-6403", name: "MEN'S KNIT T SHIRT")
+    p = FactoryBot(:product, importer: pvh, unique_identifier: "PVH-6403", name: "MEN'S KNIT T SHIRT")
     p.update_hts_for_country us, "6109100012"
     p.update_custom_value! cdefs[:prod_fish_wildlife], true
     p.update_custom_value! cdefs[:prod_fabric_content], "100CTTN"
@@ -25,25 +25,25 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
   }
 
   let (:order) {
-    ol = Factory(:order_line, product: product, line_number: 100, order: Factory(:order, importer: pvh, vendor: vendor, factory: factory, order_number: "PVH-RTCO69258"))
+    ol = FactoryBot(:order_line, product: product, line_number: 100, order: FactoryBot(:order, importer: pvh, vendor: vendor, factory: factory, order_number: "PVH-RTCO69258"))
     ol.order
   }
 
   let (:factory) {
-    f = Factory(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, system_code: "PVH-Factory-21410002", mid: "INGUPEXI103FAR")
-    Factory(:address, company: f, system_code: f.system_code, name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
+    f = FactoryBot(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, system_code: "PVH-FactoryBot-21410002", mid: "INGUPEXI103FAR")
+    FactoryBot(:address, company: f, system_code: f.system_code, name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
     f
   }
 
   let (:vendor) {
-    v = Factory(:company, vendor: true, name: "GUPTA EXIM(INDIA) PVT LTD", system_code: "PVH-Vendor-21410")
-    Factory(:address, company: v, system_code: v.system_code, name: "GUPTA EXIM(INDIA) PVT LTD", country: india, line_1: "144 DLF INDUSTRIAL AREA", line_2: "|PHASE 1,FARIDABAD-121 003", city: "HARYANA", state: "07", postal_code: "122505")
+    v = FactoryBot(:company, vendor: true, name: "GUPTA EXIM(INDIA) PVT LTD", system_code: "PVH-Vendor-21410")
+    FactoryBot(:address, company: v, system_code: v.system_code, name: "GUPTA EXIM(INDIA) PVT LTD", country: india, line_1: "144 DLF INDUSTRIAL AREA", line_2: "|PHASE 1,FARIDABAD-121 003", city: "HARYANA", state: "07", postal_code: "122505")
     v
   }
 
   let (:inbound_file) { InboundFile.new }
-  let (:india) { Factory(:country, iso_code: "IN") }
-  let (:us) { Factory(:country, iso_code: "US")}
+  let (:india) { FactoryBot(:country, iso_code: "IN") }
+  let (:us) { FactoryBot(:country, iso_code: "US")}
 
   describe "process_order_update" do
     before :each do
@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
 
       f = o.factory
       expect(f).not_to be_nil
-      expect(f).to have_system_identifier("PVH-GTN Factory", "21410002")
+      expect(f).to have_system_identifier("PVH-GTN FactoryBot", "21410002")
       expect(f.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(f.factory?).to eq true
       expect(o.importer.linked_companies).to include f
@@ -117,7 +117,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
 
       a = f.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "PVH-GTN Factory-21410002"
+      expect(a.system_code).to eq "PVH-GTN FactoryBot-21410002"
       expect(a.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(a.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
       expect(a.city).to eq "FARIDABAD"

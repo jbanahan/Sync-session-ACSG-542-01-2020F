@@ -175,7 +175,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe '#set_price_revised_dates' do
     let (:order) {
-      order = Factory(:order_line, line_number:1).order
+      order = FactoryBot(:order_line, line_number:1).order
       expect(order).not_to receive(:create_snapshot)
       order
     }
@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe '#clear_planned_handover_date' do
     let (:order) {
-      order = Factory(:order)
+      order = FactoryBot(:order)
       order.update_custom_value!(cdefs[:ord_planned_handover_date], Date.new(2016, 10, 1))
       expect(order).not_to receive(:create_snapshot)
       order
@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     # PER SOW 1100 (2016-11-04), Forecasted Handover Date is being relabelled as Forecasted Ship Window End, but we're leaving the variables in the code alone
     # all tests also confirm that forecasted ship window start is set to forecasted handover date
     let (:cdefs) { described_class.prep_custom_definitions([:ord_forecasted_handover_date, :ord_planned_handover_date, :ord_forecasted_ship_window_start]) }
-    let (:order) { Factory(:order, ship_window_end:Date.new(2016, 5, 10)) }
+    let (:order) { FactoryBot(:order, ship_window_end:Date.new(2016, 5, 10)) }
 
     it "should set forecasted handover date to planned_handover_date if planned_handover_date is not blank" do
       order.update_custom_value!(cdefs[:ord_planned_handover_date], Date.new(2016, 5, 15))
@@ -346,13 +346,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe 'reset_po_cancellation' do
     let (:cdef) { described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date] }
     let (:order) {
-      order = Factory(:order, closed_at: nil)
+      order = FactoryBot(:order, closed_at: nil)
       order.update_custom_value! cdef, nil
       order
     }
 
     it "reopens and uncancels order if it has lines and a cancel date, returns 'true'" do
-      Factory(:order_line, order: order)
+      FactoryBot(:order_line, order: order)
       order.update_custom_value! cdef, Date.today
       order.update_attributes(closed_at: DateTime.now)
 
@@ -372,7 +372,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it "makes no change if order has lines but no cancel date, returns 'false'" do
       closed = DateTime.now - 10
       order.update_attributes(closed_at: closed)
-      Factory(:order_line, order: order)
+      FactoryBot(:order_line, order: order)
       expect(described_class.reset_po_cancellation order).to eq false
       cancel_date = order.get_custom_value cdef
       expect(cancel_date.value).to be_nil
@@ -434,11 +434,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe '#reset_product_compliance_approvals' do
     let (:nd) { instance_double(described_class::OrderData) }
     let (:od) { instance_double(described_class::OrderData) }
-    let! (:order) { Factory(:order) }
-    let! (:line1) { Factory(:order_line, order:order, line_number:'1') }
-    let! (:line2) { Factory(:order_line, order:order, line_number:'2') }
+    let! (:order) { FactoryBot(:order) }
+    let! (:line1) { FactoryBot(:order_line, order:order, line_number:'1') }
+    let! (:line2) { FactoryBot(:order_line, order:order, line_number:'2') }
     let (:user) {
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow(User).to receive(:integration).and_return u
       u
     }
@@ -536,7 +536,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     let (:od) { instance_double(described_class::OrderData) }
     let (:order) { instance_double(Order) }
     let (:user) {
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow(User).to receive(:integration).and_return u
       u
     }
@@ -712,10 +712,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       Time.now.utc
     end
     let :base_order do
-      p = Factory(:product, unique_identifier:'px')
-      variant = Factory(:variant, product:p, variant_identifier:'VIDX')
-      ol = Factory(:order_line, line_number:1, product:p, variant:variant, quantity:10, unit_of_measure:'EA', price_per_unit:5)
-      ol2 = Factory(:order_line, order:ol.order, line_number:2, product:p, quantity:50, unit_of_measure:'FT', price_per_unit:7)
+      p = FactoryBot(:product, unique_identifier:'px')
+      variant = FactoryBot(:variant, product:p, variant_identifier:'VIDX')
+      ol = FactoryBot(:order_line, line_number:1, product:p, variant:variant, quantity:10, unit_of_measure:'EA', price_per_unit:5)
+      ol2 = FactoryBot(:order_line, order:ol.order, line_number:2, product:p, quantity:50, unit_of_measure:'FT', price_per_unit:7)
       o = ol.order
       o.update_attributes(order_number:'ON1',
       ship_window_start:Date.new(2015, 1, 1),
@@ -887,7 +887,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         r
       end
       let (:order) {
-        order = Factory(:order, approval_status: "")
+        order = FactoryBot(:order, approval_status: "")
         order.update_custom_value! cdefs[:ord_planned_handover_date], Date.new(2017, 1, 2)
         order.update_custom_value! cdefs[:ord_shipment_booking_requested_date], Date.new(2018, 1, 1)
         order.update_custom_value! cdefs[:ord_shipment_booking_confirmed_date], Date.new(2018, 1, 2)

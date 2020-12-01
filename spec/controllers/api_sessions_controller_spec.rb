@@ -1,6 +1,6 @@
 describe ApiSessionsController do
-  let(:user) { Factory(:user, admin: true, sys_admin: true, company: Factory(:company, master: true)) }
-  let(:api) { Factory(:api_session) }
+  let(:user) { FactoryBot(:user, admin: true, sys_admin: true, company: FactoryBot(:company, master: true)) }
+  let(:api) { FactoryBot(:api_session) }
 
   before { sign_in_as user }
 

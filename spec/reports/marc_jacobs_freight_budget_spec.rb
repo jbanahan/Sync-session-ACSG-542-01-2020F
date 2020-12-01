@@ -1,9 +1,9 @@
 describe OpenChain::Report::MarcJacobsFreightBudget do
   before :each do
-    @u = Factory(:user)
-    @good_entry = Factory(:entry, :release_date=>0.seconds.ago, :house_bills_of_lading=>'HBOL',
+    @u = FactoryBot(:user)
+    @good_entry = FactoryBot(:entry, :release_date=>0.seconds.ago, :house_bills_of_lading=>'HBOL',
       :broker_invoice_total=>90, :total_duty=>80, :total_fees=>50, :master_bills_of_lading=>'MBOL',
-      :importer=>with_customs_management_id(Factory(:company), "MARJAC"))
+      :importer=>with_customs_management_id(FactoryBot(:company), "MARJAC"))
     allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
   end
   after :each do

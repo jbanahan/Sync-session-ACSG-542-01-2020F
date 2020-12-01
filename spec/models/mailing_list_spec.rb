@@ -1,8 +1,8 @@
 describe MailingList do
   describe 'mailing_lists_for_user' do
-    let (:company) { Factory(:company) }
-    let (:user) { Factory(:user, company: company) }
-    let! (:mailing_list) { Factory(:mailing_list, name: 'blah', user: user, email_addresses: 'test@domain.com', company: company) }
+    let (:company) { FactoryBot(:company) }
+    let (:user) { FactoryBot(:user, company: company) }
+    let! (:mailing_list) { FactoryBot(:mailing_list, name: 'blah', user: user, email_addresses: 'test@domain.com', company: company) }
 
     it 'finds mailing lists for a user' do
       expect(described_class.mailing_lists_for_user(user)).to eq [mailing_list]
@@ -15,7 +15,7 @@ describe MailingList do
 
     it "returns hidden mailing lists to sys admins" do
       mailing_list.update! hidden: true
-      expect(described_class.mailing_lists_for_user(Factory(:sys_admin_user, company: company))).to include mailing_list
+      expect(described_class.mailing_lists_for_user(FactoryBot(:sys_admin_user, company: company))).to include mailing_list
     end
   end
 
@@ -29,15 +29,15 @@ describe MailingList do
 
   describe "validate_email_addresses" do
     it 'sets non_vfi_addresses to true if a non_vfi_address is present' do
-      vfi_user = Factory(:user)
-      mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, unknown@domain.com")
+      vfi_user = FactoryBot(:user)
+      mailing_list = FactoryBot(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, unknown@domain.com")
       mailing_list.reload
       expect(mailing_list.non_vfi_addresses).to be_truthy
     end
 
     it 'handles non-vfitrack emails at the beginning of the list' do
-      vfi_user = Factory(:user)
-      mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: vfi_user.email.to_s)
+      vfi_user = FactoryBot(:user)
+      mailing_list = FactoryBot(:mailing_list, name: 'blah', email_addresses: vfi_user.email.to_s)
       mailing_list.reload
       expect(mailing_list.non_vfi_addresses).to be_falsey
       mailing_list.email_addresses = "nonuser@domain.com, #{vfi_user.email}"
@@ -47,21 +47,21 @@ describe MailingList do
     end
 
     it 'handles duplicate vfitrack email addresses' do
-      vfi_user = Factory(:user)
-      mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, #{vfi_user.email}")
+      vfi_user = FactoryBot(:user)
+      mailing_list = FactoryBot(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, #{vfi_user.email}")
       mailing_list.reload
       expect(mailing_list.non_vfi_addresses).to be_falsey
     end
 
     it 'sets non_vfi_email_addresses when non-vfitrack email addresses are present' do
-      vfi_user = Factory(:user)
-      mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, unknown@domain.com")
+      vfi_user = FactoryBot(:user)
+      mailing_list = FactoryBot(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, unknown@domain.com")
       expect(mailing_list.non_vfi_email_addresses).to eql('unknown@domain.com')
     end
 
     it 'sets non_vfi_addresses to false if no non_vfi_address is present' do
-      vfi_user = Factory(:user)
-      mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: vfi_user.email.to_s)
+      vfi_user = FactoryBot(:user)
+      mailing_list = FactoryBot(:mailing_list, name: 'blah', email_addresses: vfi_user.email.to_s)
       mailing_list.reload
       expect(mailing_list.non_vfi_addresses).to be_falsey
     end

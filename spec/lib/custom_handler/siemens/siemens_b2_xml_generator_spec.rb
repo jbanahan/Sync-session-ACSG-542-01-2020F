@@ -177,7 +177,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
     end
 
     it "writes error message to user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow(OpenChain::XLClient).to receive(:new_from_attachable).and_return(instance_double('x'))
       expect(described_class).to receive(:can_view?).and_return true
       expect_any_instance_of(described_class).to receive(:parse).and_raise "some error"
@@ -192,12 +192,12 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
     end
 
     it "is false if user is not an admin" do
-      u = Factory(:user, admin: false)
+      u = FactoryBot(:user, admin: false)
       expect(described_class.new(cf).can_view?(u)).to eq false
     end
 
     it "is true if user is an admin" do
-      u = Factory(:user, admin: true)
+      u = FactoryBot(:user, admin: true)
       expect(described_class.new(cf).can_view?(u)).to eq true
     end
   end

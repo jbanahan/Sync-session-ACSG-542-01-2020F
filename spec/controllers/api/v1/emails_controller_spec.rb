@@ -1,7 +1,7 @@
 describe Api::V1::EmailsController do
   describe "#validate_email_list" do
     before do
-      @u = Factory(:user)
+      @u = FactoryBot(:user)
       allow_api_access @u
     end
 

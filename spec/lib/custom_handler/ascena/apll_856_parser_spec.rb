@@ -49,18 +49,18 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
 
   describe '#process_shipment' do
     let :ascena do
-      Factory(:company, system_code:'ASCENA')
+      FactoryBot(:company, system_code:'ASCENA')
     end
     let :product do
-      Factory(:product, unique_identifier:'ASCENA-415012')
+      FactoryBot(:product, unique_identifier:'ASCENA-415012')
     end
     let :order do
-      Factory(:order_line, line_number:1, product:product, quantity:8771, order:Factory(:order, importer:ascena, order_number:'ASCENA-BRAND-6225694', customer_order_number: "6225694")).order
+      FactoryBot(:order_line, line_number:1, product:product, quantity:8771, order:FactoryBot(:order, importer:ascena, order_number:'ASCENA-BRAND-6225694', customer_order_number: "6225694")).order
     end
     let :ports do
       {
-        cnxmn:Factory(:port, unlocode:'CNXMN', schedule_k_code:'12345'),
-        uslgb:Factory(:port, unlocode:'USLGB', schedule_d_code:'4601')
+        cnxmn:FactoryBot(:port, unlocode:'CNXMN', schedule_k_code:'12345'),
+        uslgb:FactoryBot(:port, unlocode:'USLGB', schedule_d_code:'4601')
       }
     end
     before :each do
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
     end
     it "should not update existing shipments" do
       ascena
-      s = Factory(:shipment, reference:'ASCENA-XM1007980-HK956641')
+      s = FactoryBot(:shipment, reference:'ASCENA-XM1007980-HK956641')
       expect(subject.process_shipment(first_shipment_array, log)).to be_nil
 
       expect(log.company).to eq ascena

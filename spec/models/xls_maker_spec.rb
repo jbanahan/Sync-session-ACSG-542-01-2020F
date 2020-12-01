@@ -2,8 +2,8 @@ describe XlsMaker do
 
   describe "make_from_search_query" do
     before :each do
-      @u = Factory(:master_user, :entry_view=>true)
-      @c = Factory(:company, system_code: 'TEST')
+      @u = FactoryBot(:master_user, :entry_view=>true)
+      @c = FactoryBot(:company, system_code: 'TEST')
       @c.users << @u
       @search = SearchSetup.create!(:name=>'t', :user=>@u, :module_type=>'Entry')
       @search.search_columns.create!(:model_field_uid=>'ent_brok_ref', :rank=>1)
@@ -66,8 +66,8 @@ describe XlsMaker do
       expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_FORMAT)
     end
     it "should add web links" do
-      e1 = Factory(:entry)
-      e2 = Factory(:entry)
+      e1 = FactoryBot(:entry)
+      e2 = FactoryBot(:entry)
       stub_master_setup
       allow_any_instance_of(Entry).to receive(:excel_url).and_return("abc")
       # It isn't important that the entries don't match the id; we just care that they're persisted.

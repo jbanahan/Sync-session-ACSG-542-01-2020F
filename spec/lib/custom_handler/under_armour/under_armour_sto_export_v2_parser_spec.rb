@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
   describe "parse" do
     before :each do
       @imp = Company.where(master:true).first_or_create!(name:'ua')
-      Factory(:country, iso_code:'CA')
+      FactoryBot(:country, iso_code:'CA')
       @a1_value = '05/01/2015'
       @a2_value = 'REFNUM'
       @a3_value = 'CA' # export country

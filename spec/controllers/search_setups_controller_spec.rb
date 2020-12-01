@@ -2,7 +2,7 @@ describe SearchSetupsController do
   let!(:master_setup) { stub_master_setup }
 
   before(:each) do
-    @u = Factory(:user, :time_zone=>"Hawaii")
+    @u = FactoryBot(:user, :time_zone=>"Hawaii")
 
     sign_in_as @u
     @ss = SearchSetup.create!(:name=>"Test", :user=>@u, :module_type=>'Entry')
@@ -45,13 +45,13 @@ describe SearchSetupsController do
   end
   describe 'give' do
     it "should give and redirect" do
-      u2 = Factory(:user, :company=>@u.company)
+      u2 = FactoryBot(:user, :company=>@u.company)
       get :give, :id=>@ss.id, :other_user_id=>u2.id
       expect(response).to redirect_to '/entries'
       expect(u2.search_setups.first.name).to eq("Test (From #{@u.full_name})")
     end
     it "should give and return ok for json" do
-      u2 = Factory(:user, :company=>@u.company)
+      u2 = FactoryBot(:user, :company=>@u.company)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
       expect(response).to be_success
       r = JSON.parse(response.body)
@@ -59,12 +59,12 @@ describe SearchSetupsController do
       expect(r["given_to"]).to eq(u2.full_name)
     end
     it "should 404 if search not found" do
-      u2 = Factory(:user, :company=>@u.company)
+      u2 = FactoryBot(:user, :company=>@u.company)
       expect {post :give, :id=>(@ss.id+1), :other_user_id=>u2.id}.to raise_error ActionController::RoutingError
       expect(SearchSetup.count).to eq(1)
     end
     it "should error if user cannot give report to other user" do
-      u2 = Factory(:user)
+      u2 = FactoryBot(:user)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
       expect(response.status).to eq(422)
       r = JSON.parse(response.body)

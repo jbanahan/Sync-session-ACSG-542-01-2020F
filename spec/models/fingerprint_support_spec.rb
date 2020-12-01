@@ -1,7 +1,7 @@
 describe FingerprintSupport do
 
   describe "generate_fingerprint" do
-    let (:product) { Factory(:tariff_record, hts_1: "9876543210", hts_2: "1234567890").product }
+    let (:product) { FactoryBot(:tariff_record, hts_1: "9876543210", hts_2: "1234567890").product }
 
     let (:fingerprint_definition) {
       {model_fields: [:prod_uid],
@@ -14,7 +14,7 @@ describe FingerprintSupport do
       }
     }
 
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     it "generates a SHA-1 hexdigest fingerprint based on the given data fields for a CoreModule object" do
       fingerprint = product.generate_fingerprint fingerprint_definition, user
@@ -35,7 +35,7 @@ describe FingerprintSupport do
 
     it "generates different fingerprints if a fingerprinted child record has been changed" do
       fingerprint = product.generate_fingerprint fingerprint_definition, user
-      product.classifications.first.country = Factory(:country)
+      product.classifications.first.country = FactoryBot(:country)
       expect(product.generate_fingerprint fingerprint_definition, user).not_to eq fingerprint
     end
 
@@ -47,7 +47,7 @@ describe FingerprintSupport do
 
     it "generates different fingerprints if a new child record is added" do
       fingerprint = product.generate_fingerprint fingerprint_definition, user
-      product.classifications << Factory(:classification)
+      product.classifications << FactoryBot(:classification)
       expect(product.generate_fingerprint fingerprint_definition, user).not_to eq fingerprint
     end
 

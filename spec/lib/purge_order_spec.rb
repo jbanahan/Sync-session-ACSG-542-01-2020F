@@ -2,8 +2,8 @@ describe OpenChain::PurgeOrder do
 
   subject { described_class }
 
-  let(:commercial_invoice_line) {Factory(:commercial_invoice_line)}
-  let(:some_product) {Factory(:product)}
+  let(:commercial_invoice_line) {FactoryBot(:commercial_invoice_line)}
+  let(:some_product) {FactoryBot(:product)}
 
   describe "run_schedulable" do
 
@@ -30,11 +30,10 @@ describe OpenChain::PurgeOrder do
 
   describe "purge" do
     it "removes orders which are older than given date and is not booked or attached to shipment lines" do
-      date = 2.years.ago
-      order = Factory(:order, created_at: (date - 1.minute))
-      order_line = Factory(:order_line, order: order, product: some_product)
+      order = FactoryBot(:order, created_at: 2.years.ago)
+      order_line = FactoryBot(:order_line, order: order, product: some_product)
 
-      Factory(:piece_set, order_line: order_line,
+      FactoryBot(:piece_set, order_line: order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -43,10 +42,10 @@ describe OpenChain::PurgeOrder do
     end
 
     it "removes order of a given age" do
-      young_order = Factory(:order, created_at: (1.year.ago - 1.minute))
-      young_order_line = Factory(:order_line, order: young_order, product: some_product)
+      young_order = FactoryBot(:order, created_at: 1.year.ago)
+      young_order_line = FactoryBot(:order_line, order: young_order, product: some_product)
 
-      Factory(:piece_set, order_line: young_order_line,
+      FactoryBot(:piece_set, order_line: young_order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -55,14 +54,14 @@ describe OpenChain::PurgeOrder do
     end
 
     it "does not remove if order has connected shipment lines" do
-      commercial_invoice_line = Factory(:commercial_invoice_line)
-      some_product = Factory(:product)
+      commercial_invoice_line = FactoryBot(:commercial_invoice_line)
+      some_product = FactoryBot(:product)
 
-      order = Factory(:order, created_at: (2.years.ago - 1.minute))
-      order_line = Factory(:order_line, order: order, product: some_product)
+      order = FactoryBot(:order, created_at: 2.years.ago)
+      order_line = FactoryBot(:order_line, order: order, product: some_product)
 
-      shipment_line = Factory(:shipment_line, product: some_product)
-      Factory(:piece_set, shipment_line: shipment_line, order_line: order_line,
+      shipment_line = FactoryBot(:shipment_line, product: some_product)
+      FactoryBot(:piece_set, shipment_line: shipment_line, order_line: order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -71,14 +70,14 @@ describe OpenChain::PurgeOrder do
     end
 
     it "does not remove if booked" do
-      booked_order = Factory(:order, created_at: (2.years.ago - 1.minute))
-      booked_order_line = Factory(:order_line, order: booked_order, product: some_product)
+      booked_order = FactoryBot(:order)
+      booked_order_line = FactoryBot(:order_line, order: booked_order, product: some_product)
 
-      Factory(:piece_set, order_line: booked_order_line,
+      FactoryBot(:piece_set, order_line: booked_order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
-      Factory(:booking_line, order: booked_order)
+      FactoryBot(:booking_line, order: booked_order)
 
       subject.purge older_than: 2.years.ago
       expect(Order.where(id: booked_order.id)).to exist

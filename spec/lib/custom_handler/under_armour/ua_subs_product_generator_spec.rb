@@ -1,10 +1,10 @@
 describe OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:prod_site_codes]
-    @p = Factory(:product, unique_identifier: "123-456-7890")
+    @p = FactoryBot(:product, unique_identifier: "123-456-7890")
     @p.update_custom_value! @cdefs[:prod_site_codes], "123"
-    cl = Factory(:classification, product: @p, country: Factory(:country, iso_code: "CN"))
-    @t = Factory(:tariff_record, classification: cl, hts_1: "1234.56.7890")
+    cl = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "CN"))
+    @t = FactoryBot(:tariff_record, classification: cl, hts_1: "1234.56.7890")
   end
 
   describe "sync_csv" do
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator do
 
     it "generates a csv file without site data" do
       DataCrossReference.create!(key: "123", value: "US", cross_reference_type: "ua_site")
-      site = Factory(:classification, product: @p, country: Factory(:country, iso_code: "US"))
-      Factory(:tariff_record, classification: site, hts_1: "0987.65.4321")
+      site = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "US"))
+      FactoryBot(:tariff_record, classification: site, hts_1: "0987.65.4321")
 
       g = described_class.new
       @f = g.sync_csv
@@ -36,8 +36,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator do
     end
 
     it "excludes subs lacking a tariff" do
-      sub = Factory(:classification, product: @p, country: Factory(:country, iso_code: "PK"))
-      Factory(:tariff_record, classification: sub, hts_1: "")
+      sub = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "PK"))
+      FactoryBot(:tariff_record, classification: sub, hts_1: "")
 
       g = described_class.new
       @f = g.sync_csv

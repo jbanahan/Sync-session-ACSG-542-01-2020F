@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet do
-  let(:prod) { Factory(:product) }
-  let!(:us) { Factory(:country, iso_code: "US") }
+  let(:prod) { FactoryBot(:product) }
+  let!(:us) { FactoryBot(:country, iso_code: "US") }
   let(:classi) do
-    cl = Factory(:classification, product: prod, country: us)
+    cl = FactoryBot(:classification, product: prod, country: us)
     cl.find_and_set_custom_value cdefs[:manual_flag], true
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.save!

@@ -22,7 +22,7 @@ describe OpenChain::Report::InboundFileReport do
       {email_to: "me@there.com"}
     }
 
-    let (:company) { Factory(:company, name: "Company", system_code: "CODE") }
+    let (:company) { FactoryBot(:company, name: "Company", system_code: "CODE") }
     let! (:rejected_log) { InboundFile.create! company_id: company.id, file_name: "rejected.txt", parser_name: "OpenChain::RejectedParser", process_start_date: Time.zone.parse("2018-11-02 12:00"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Rejected"}
     let! (:error_log) { InboundFile.create! company_id: company.id, file_name: "error.txt", parser_name: "OpenChain::ErrorParser", process_start_date: Time.zone.parse("2018-11-02 12:01"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Error"}
     let! (:warning_log) { InboundFile.create! company_id: company.id, file_name: "warning.txt", parser_name: "OpenChain::WarningParser", process_start_date: Time.zone.parse("2018-11-02 12:02"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Warning"}
@@ -56,7 +56,7 @@ describe OpenChain::Report::InboundFileReport do
       it "emails to mailing list" do
         settings["email_to"] = nil
         settings["mailing_list"] = "list"
-        MailingList.create! company_id: company.id, user_id: Factory(:user).id, system_code: "list", name: "List", email_addresses: "you@there.com"
+        MailingList.create! company_id: company.id, user_id: FactoryBot(:user).id, system_code: "list", name: "List", email_addresses: "you@there.com"
 
         subject.run Time.zone.parse("2018-11-02 12:04"), Time.zone.parse("2018-11-02 12:06"), settings
 
@@ -67,7 +67,7 @@ describe OpenChain::Report::InboundFileReport do
     end
 
     it "restricts by system codes" do
-      company = Factory(:company, system_code: "TEST")
+      company = FactoryBot(:company, system_code: "TEST")
       settings["company_system_codes"] = ["TEST"]
 
       subject.run Time.zone.parse("2018-11-02 12:04"), Time.zone.parse("2018-11-02 12:06"), settings

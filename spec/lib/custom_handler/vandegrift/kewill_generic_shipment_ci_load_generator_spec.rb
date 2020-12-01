@@ -4,10 +4,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
     subject.cdefs
   }
 
-  let (:us) { Factory(:country, iso_code: "US") }
+  let (:us) { FactoryBot(:country, iso_code: "US") }
 
   let (:product) {
-    product = Factory(:product)
+    product = FactoryBot(:product)
     product.update_custom_value! cdefs[:prod_part_number], "PARTNO"
     product.update_hts_for_country(us, "1234567890")
 
@@ -15,15 +15,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
   }
 
   let (:order) {
-    order = Factory(:order, customer_order_number: "PO", factory: Factory(:company, factory: true, mid: "MID"))
-    order_line = Factory(:order_line, order: order, country_of_origin: "CN", price_per_unit: BigDecimal("12.99"), product: product)
+    order = FactoryBot(:order, customer_order_number: "PO", factory: FactoryBot(:company, factory: true, mid: "MID"))
+    order_line = FactoryBot(:order_line, order: order, country_of_origin: "CN", price_per_unit: BigDecimal("12.99"), product: product)
 
     order.reload
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, master_bill_of_lading: "MBOL", importer: with_customs_management_id(Factory(:importer), "CUSTNO"))
-    shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id, net_weight: BigDecimal("100"), net_weight_uom: "KG")
+    shipment = FactoryBot(:shipment, master_bill_of_lading: "MBOL", importer: with_customs_management_id(FactoryBot(:importer), "CUSTNO"))
+    shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id, net_weight: BigDecimal("100"), net_weight_uom: "KG")
     shipment_line.update_custom_value! cdefs[:shpln_invoice_number], "INVOICE"
 
     shipment.reload
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
   end
 
   describe "drive_path" do
-    let (:importer) { with_customs_management_id(Factory(:company), "IMP") }
+    let (:importer) { with_customs_management_id(FactoryBot(:company), "IMP") }
     let (:shipment) { Shipment.new master_bill_of_lading: "MBOL", importer_reference: "IMPREF", reference: "REF", importer: importer }
 
     it "uses master bill to name the file by default" do

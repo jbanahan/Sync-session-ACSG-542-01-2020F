@@ -8,15 +8,15 @@ describe Api::V1::OrdersController do
   end
 
   let! (:user) do
-    u = Factory(:master_user, order_edit: true, order_view: true, product_view: true)
+    u = FactoryBot(:master_user, order_edit: true, order_view: true, product_view: true)
     allow_api_access u
     u
   end
 
   describe "index" do
     it 'lists orders' do
-      Factory(:order, order_number: '123')
-      Factory(:order, order_number: 'ABC')
+      FactoryBot(:order, order_number: '123')
+      FactoryBot(:order, order_number: 'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
@@ -24,8 +24,8 @@ describe Api::V1::OrdersController do
     end
 
     it 'counts orders' do
-      Factory(:order, order_number: '123')
-      Factory(:order, order_number: 'ABC')
+      FactoryBot(:order, order_number: '123')
+      FactoryBot(:order, order_number: 'ABC')
       get :index, count_only: 'true'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -36,7 +36,7 @@ describe Api::V1::OrdersController do
   describe "get" do
     it "appends custom_view to order if not nil" do
       allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:order_view).and_return 'abc'
-      o = Factory(:order)
+      o = FactoryBot(:order)
       get :show, id: o.id
       expect(response).to be_success
       j = JSON.parse response.body
@@ -56,7 +56,7 @@ describe Api::V1::OrdersController do
         {'id' => 1, 'long_name' => 'abc'},
         {'id' => 2, 'long_name' => 'def'}
       ]
-      o = Factory(:order)
+      o = FactoryBot(:order)
       get :show, id: o.id
       expect(response).to be_success
       j = JSON.parse response.body
@@ -64,7 +64,7 @@ describe Api::V1::OrdersController do
     end
 
     it "sets permission hash" do
-      o = Factory(:order)
+      o = FactoryBot(:order)
       expect_any_instance_of(Order).to receive(:can_view?).at_least(:once).and_return true
       expect_any_instance_of(Order).to receive(:can_edit?).and_return true
       expect_any_instance_of(Order).to receive(:can_accept?).and_return false
@@ -91,7 +91,7 @@ describe Api::V1::OrdersController do
   end
 
   describe "update" do
-    let(:order) { Factory(:order, order_number: 'oldordnum') }
+    let(:order) { FactoryBot(:order, order_number: 'oldordnum') }
 
     it 'fails if user cannot edit' do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return false
@@ -115,7 +115,7 @@ describe Api::V1::OrdersController do
     it "accepts order if user has permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       expect_any_instance_of(Order).to receive(:async_accept!)
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
       expect(response).to redirect_to "/api/v1/orders/#{o.id}"
     end
@@ -123,7 +123,7 @@ describe Api::V1::OrdersController do
     it "fails if user does not have permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return false
       expect_any_instance_of(Order).not_to receive(:async_accept!)
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
       expect(response.status).to eq 401
     end
@@ -132,7 +132,7 @@ describe Api::V1::OrdersController do
       allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return false
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       expect_any_instance_of(Order).not_to receive(:async_accept!)
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :accept, id: o.id
       expect(response.status).to eq 403
     end
@@ -142,7 +142,7 @@ describe Api::V1::OrdersController do
     it "unaccepts order if user has permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return true
       expect_any_instance_of(Order).to receive(:async_unaccept!)
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :unaccept, id: o.id
       expect(response).to redirect_to "/api/v1/orders/#{o.id}"
     end
@@ -150,7 +150,7 @@ describe Api::V1::OrdersController do
     it "fails if user does not have permission" do
       allow_any_instance_of(Order).to receive(:can_accept?).and_return false
       expect_any_instance_of(Order).not_to receive(:async_unaccept!)
-      o = Factory(:order)
+      o = FactoryBot(:order)
       post :unaccept, id: o.id
       expect(response.status).to eq 401
     end
@@ -158,7 +158,7 @@ describe Api::V1::OrdersController do
 
   describe "by_order_number" do
     it "gets order by order_number" do
-      o = Factory(:order)
+      o = FactoryBot(:order)
       get :by_order_number, order_number: o.order_number
       expect(response).to be_success
       j = JSON.parse response.body

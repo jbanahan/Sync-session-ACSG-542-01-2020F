@@ -1,64 +1,64 @@
 describe OfficialTariff do
   context 'callbacks' do
     it 'should set common_rate_decimal on save if numeric' do
-      c = Factory(:country)
+      c = FactoryBot(:country)
       t = OfficialTariff.create!(country_id:c.id, hts_code:'1234567890', general_rate:' 3.2% ')
       expect(t.common_rate_decimal).to eq BigDecimal('0.032')
     end
     it 'should not set common_rate_decimal on save if not numeric' do
-      c = Factory(:country)
+      c = FactoryBot(:country)
       t = OfficialTariff.create!(country_id:c.id, hts_code:'1234567890', general_rate:'10.2% plus 93.1 EUR per 100 KILOGRAMS')
       expect(t.common_rate_decimal).to be_nil
     end
     it 'should set common_rate_decimal to 0 for Free' do
-      c = Factory(:country)
+      c = FactoryBot(:country)
       t = OfficialTariff.create!(country_id:c.id, hts_code:'1234567890', general_rate:'Free')
       expect(t.common_rate_decimal).to eq 0
     end
     it 'should set special_rate_key on save' do
       special_rates = 'ABC12345'
-      t = Factory(:official_tariff, special_rates:special_rates)
+      t = FactoryBot(:official_tariff, special_rates:special_rates)
       expect(t.special_rate_key).to eq Digest::MD5.hexdigest(special_rates)
     end
   end
   describe "lacey_act" do
     it "should return false if the country's ISO code is not US" do
-      c = Factory(:country, iso_code: "VN")
-      t = Factory(:official_tariff, country: c)
+      c = FactoryBot(:country, iso_code: "VN")
+      t = FactoryBot(:official_tariff, country: c)
       expect(t.lacey_act?).to eq(false)
     end
     it "should return true if the tariff's HTS code starts with any of the Lacey Act codes" do
       sample_lacey_codes = ["4401", "4402", "4403", "4404", "940169", "950420", "9703"]
-      c = Factory(:country, iso_code: "US")
+      c = FactoryBot(:country, iso_code: "US")
       sample_lacey_codes.each do |sample|
-        t = Factory(:official_tariff, hts_code: sample + "55555", country: c)
+        t = FactoryBot(:official_tariff, hts_code: sample + "55555", country: c)
         expect(t.lacey_act?).to eq(true)
       end
     end
     it "should return false if the country's ISO is US but the HTS code doesn't match any Lacey Act Codes" do
-      c = Factory(:country, iso_code: "US")
-      t = Factory(:official_tariff, hts_code: "4405155555", country: c)
+      c = FactoryBot(:country, iso_code: "US")
+      t = FactoryBot(:official_tariff, hts_code: "4405155555", country: c)
       expect(t.lacey_act?).to eq(false)
     end
   end
   describe "taric_url" do
     it "should return nil if country is nil" do
-      t = Factory(:official_tariff, hts_code: "ABCD")
+      t = FactoryBot(:official_tariff, hts_code: "ABCD")
 
       expect(t.taric_url).to be nil
     end
 
     it "should return nil if country is not in the EU" do
-      c = Factory(:country)
-      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c = FactoryBot(:country)
+      t = FactoryBot(:official_tariff, country: c, hts_code: "ABCD")
       allow(c).to receive(:european_union?).and_return false
 
       expect(t.taric_url).to be nil
     end
 
     it "should return a url if country is in the EU" do
-      c = Factory(:country)
-      t = Factory(:official_tariff, country: c, hts_code: "ABCD")
+      c = FactoryBot(:country)
+      t = FactoryBot(:official_tariff, country: c, hts_code: "ABCD")
       allow(c).to receive(:european_union?).and_return true
 
       expect(t.taric_url).to eq "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=ABCD&LangDescr=en"
@@ -70,19 +70,19 @@ describe OfficialTariff do
       allow(OpenChain::StatClient).to receive(:wall_time).and_yield
     end
     it "should update with counts from all 3 hts code locations for the right country" do
-      c = Factory(:country)
-      Factory(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'1111111',
-        :classification=>Factory(:classification, :country=>c)
+      c = FactoryBot(:country)
+      FactoryBot(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'1111111',
+        :classification=>FactoryBot(:classification, :country=>c)
         )
-      Factory(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'123456',
-        :classification=>Factory(:classification, :country=>c)
+      FactoryBot(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'123456',
+        :classification=>FactoryBot(:classification, :country=>c)
         )
-      Factory(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'123456',
-        :classification=>Factory(:classification, :country=>Factory(:country)) # don't match this
+      FactoryBot(:tariff_record, :hts_1=>'123456', :hts_2=>'123456', :hts_3=>'123456',
+        :classification=>FactoryBot(:classification, :country=>FactoryBot(:country)) # don't match this
         )
-      ot1 = Factory(:official_tariff, :hts_code=>'123456', :country=>c)
-      ot2 = Factory(:official_tariff, :hts_code=>'1111111', :country=>c)
-      ot3 = Factory(:official_tariff, :hts_code=>'1111117', :country=>c)
+      ot1 = FactoryBot(:official_tariff, :hts_code=>'123456', :country=>c)
+      ot2 = FactoryBot(:official_tariff, :hts_code=>'1111111', :country=>c)
+      ot3 = FactoryBot(:official_tariff, :hts_code=>'1111117', :country=>c)
       OfficialTariff.update_use_count
       [ot1, ot2, ot3].each {|o| o.reload}
       expect(ot1.use_count).to eq(5)
@@ -90,10 +90,10 @@ describe OfficialTariff do
       expect(ot3.use_count).to eq(0)
     end
     it "should clear use count for unused tariff" do
-      ot = Factory(:official_tariff, hts_code:'21345', use_count:10, updated_at:1.day.ago)
+      ot = FactoryBot(:official_tariff, hts_code:'21345', use_count:10, updated_at:1.day.ago)
       # we need to have a classificaiton against the country
-      Factory(:tariff_record, :hts_1=>'9999999',
-        :classification=>Factory(:classification, :country=>ot.country)
+      FactoryBot(:tariff_record, :hts_1=>'9999999',
+        :classification=>FactoryBot(:classification, :country=>ot.country)
         )
       OfficialTariff.update_use_count
       ot.reload
@@ -133,17 +133,17 @@ describe OfficialTariff do
   end
   describe "auto_classify" do
     before :each do
-      @us = Factory(:country, :iso_code=>'US', :import_location=>true)
-      @ca = Factory(:country, :iso_code=>'CA', :import_location=>true)
-      @de = Factory(:country, :iso_code=>'DE', :import_location=>true)
-      @gb = Factory(:country, :iso_code=>'GB', :import_location=>false)
-      @us_hts_2 = Factory(:official_tariff, :country=>@us, :hts_code=>'5555550001', :use_count=>300)
-      @us_hts = Factory(:official_tariff, :country=>@us, :hts_code=>'5555550000', :use_count=>10)
-      @us_hts_3 = Factory(:official_tariff, :country=>@us, :hts_code=>'4444440000', :use_count=>20)
-      @ca_hts = Factory(:official_tariff, :country=>@ca, :hts_code=>'5555559999', :use_count=>4)
-      @ca_hts_2 = Factory(:official_tariff, :country=>@ca, :hts_code=>'5555559998', :use_count=>7)
-      @de_hts = Factory(:official_tariff, :country=>@de, :hts_code=>'5555554444', :use_count=>2)
-      @gb_hts = Factory(:official_tariff, :country=>@gb, :hts_code=>'5555553333', :use_count=>5) # shouldn't be returned because country isn't import location
+      @us = FactoryBot(:country, :iso_code=>'US', :import_location=>true)
+      @ca = FactoryBot(:country, :iso_code=>'CA', :import_location=>true)
+      @de = FactoryBot(:country, :iso_code=>'DE', :import_location=>true)
+      @gb = FactoryBot(:country, :iso_code=>'GB', :import_location=>false)
+      @us_hts_2 = FactoryBot(:official_tariff, :country=>@us, :hts_code=>'5555550001', :use_count=>300)
+      @us_hts = FactoryBot(:official_tariff, :country=>@us, :hts_code=>'5555550000', :use_count=>10)
+      @us_hts_3 = FactoryBot(:official_tariff, :country=>@us, :hts_code=>'4444440000', :use_count=>20)
+      @ca_hts = FactoryBot(:official_tariff, :country=>@ca, :hts_code=>'5555559999', :use_count=>4)
+      @ca_hts_2 = FactoryBot(:official_tariff, :country=>@ca, :hts_code=>'5555559998', :use_count=>7)
+      @de_hts = FactoryBot(:official_tariff, :country=>@de, :hts_code=>'5555554444', :use_count=>2)
+      @gb_hts = FactoryBot(:official_tariff, :country=>@gb, :hts_code=>'5555553333', :use_count=>5) # shouldn't be returned because country isn't import location
     end
     it "should match by 6 digit for active import locations" do
       r = OfficialTariff.auto_classify "5555556666"
@@ -162,7 +162,7 @@ describe OfficialTariff do
   end
 
   describe "valid_hts?" do
-    let (:country) { Factory(:country) }
+    let (:country) { FactoryBot(:country) }
     let (:official_tariff) { OfficialTariff.create! country_id: country.id, hts_code: "1234567890" }
 
     it "returns true if given country + hts is valid" do

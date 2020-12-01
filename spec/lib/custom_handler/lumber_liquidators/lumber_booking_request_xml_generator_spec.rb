@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_party_1.elements['AddressLine1']).to be_nil
 
         elem_party_2 = elem_party_arr[1]
-        expect(elem_party_2.text('Type')).to eq('Factory')
+        expect(elem_party_2.text('Type')).to eq('FactoryBot')
         expect(elem_party_2.text('Code')).to eq(ship_from.id.to_s)
         expect(elem_party_2.text('Name')).to eq('SFName')
         expect(elem_party_2.text('AddressLine1')).to eq('SFA')

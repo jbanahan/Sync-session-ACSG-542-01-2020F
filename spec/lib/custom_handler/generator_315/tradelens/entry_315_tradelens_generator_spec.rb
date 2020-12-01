@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::Generator315::Tradelens::Entry315TradelensGen
   end
 
   describe "generate_and_send_document" do
-    let(:session) { Factory(:api_session) }
+    let(:session) { FactoryBot(:api_session) }
 
     before do
       data.event_code = "one_usg_date"
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::Generator315::Tradelens::Entry315TradelensGen
 
   describe "split_entry_data_identifiers" do
     let(:entry) do
-      Factory(:entry, transport_mode_code: "10", master_bills_of_lading: "mbol1\nmbol2", container_numbers: "ctainr1\nctainr2",
+      FactoryBot(:entry, transport_mode_code: "10", master_bills_of_lading: "mbol1\nmbol2", container_numbers: "ctainr1\nctainr2",
                       house_bills_of_lading: "hbol1\nhbol2", cargo_control_number: "ccn1\nccn2")
     end
 

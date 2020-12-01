@@ -181,12 +181,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
     }
 
     let! (:product) {
-      p = Factory(:product, unique_identifier: "UID")
-      c = p.classifications.create! country: Factory(:country, iso_code: "US")
+      p = FactoryBot(:product, unique_identifier: "UID")
+      c = p.classifications.create! country: FactoryBot(:country, iso_code: "US")
       c.update_custom_value! cdefs[:manual_flag], false
       t = c.tariff_records.create! line_number: 1, hts_1: "1234567890", hts_2: "2468101214", hts_3: "1357911131"
 
-      c2 = p.classifications.create! country: Factory(:country, iso_code: "CA")
+      c2 = p.classifications.create! country: FactoryBot(:country, iso_code: "CA")
       c2.update_custom_value! cdefs[:manual_flag], true
       t2 = c2.tariff_records.create! line_number: 1, hts_1: "9876543210"
 

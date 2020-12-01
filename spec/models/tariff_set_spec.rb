@@ -1,8 +1,8 @@
 describe TariffSet do
   describe 'activate' do
     before :each do
-      @c1 = Factory(:country)
-      @c2 = Factory(:country)
+      @c1 = FactoryBot(:country)
+      @c2 = FactoryBot(:country)
     end
 
     it "replaces official tariff" do
@@ -36,7 +36,7 @@ describe TariffSet do
     end
 
     it 'queues jobs to notify users of update' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(u).not_to be_nil
       c = @c1
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
@@ -50,7 +50,7 @@ describe TariffSet do
 
   describe 'compare' do
     it "returns array of results" do
-      c = Factory(:country, :iso_code=>'US')
+      c = FactoryBot(:country, :iso_code=>'US')
       old = TariffSet.create!(:country_id => c.id, :label => "old")
       new_ts = TariffSet.create!(:country_id => c.id, :label => "new")
 
@@ -83,8 +83,8 @@ describe TariffSet do
   end
 
   describe "notify_of_tariff_set_update" do
-    let! (:user) { Factory(:user, email: "me@there.com", tariff_subscribed: true) }
-    let! (:tariff_set) { TariffSet.create! country: Factory(:country), label: "TariffSet" }
+    let! (:user) { FactoryBot(:user, email: "me@there.com", tariff_subscribed: true) }
+    let! (:tariff_set) { TariffSet.create! country: FactoryBot(:country), label: "TariffSet" }
     subject { described_class }
 
     it "notifies subscribed users of tariff set updates" do
@@ -110,8 +110,8 @@ describe TariffSet do
   end
 
   describe "notify_user_of_tariff_set_update" do
-    let! (:user) { Factory(:user, email: "me@there.com", tariff_subscribed: true) }
-    let! (:tariff_set) { TariffSet.create! country: Factory(:country), label: "TariffSet" }
+    let! (:user) { FactoryBot(:user, email: "me@there.com", tariff_subscribed: true) }
+    let! (:tariff_set) { TariffSet.create! country: FactoryBot(:country), label: "TariffSet" }
     subject { described_class }
 
     it "sends system message to user about tariff set update" do

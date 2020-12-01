@@ -1,7 +1,7 @@
 describe OpenChain::Report::HmCanadaDrawbackReport do
 
   describe "permission?" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     it "allows access to group members" do
       group = Group.use_system_group described_class::HM_CANADA_DRAWBACK_USERS, create: true
@@ -26,14 +26,14 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
   end
 
   describe "generate_and_send_report" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     after :each do
       @tf.close! if @tf
     end
 
     it "generates report" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us_1 = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
       invoice_line_us_2 = invoice_us.commercial_invoice_lines.create!(customs_line_number:24, part_number:"5678902", unit_price:BigDecimal.new("1.53"))
@@ -45,7 +45,7 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
       i2_export_1 = HmI2DrawbackLine.create!(invoice_number:"66555", shipment_type:"export", part_number:"567890133333", customer_order_reference:"A01")
       i2_export_2 = HmI2DrawbackLine.create!(invoice_number:"66555", shipment_type:"export", part_number:"567890144444", customer_order_reference:"B02")
       i2_export_3 = HmI2DrawbackLine.create!(invoice_number:"66555", shipment_type:"export", part_number:"567890244444", customer_order_reference:"C03")
-      entry_ca = Factory(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
+      entry_ca = FactoryBot(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
       invoice_ca = entry_ca.commercial_invoices.create!(invoice_number:"66555-03")
       invoice_line_ca_1 = invoice_ca.commercial_invoice_lines.create!(customs_line_number:34, part_number:"5678901", unit_price:BigDecimal.new("5.55"), quantity:43, subheader_number:39)
       invoice_line_ca_1.commercial_invoice_tariffs.create!(tariff_description:"described")
@@ -67,12 +67,12 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
     end
 
     it "excludes entry with release date before range" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 2, 28))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 2, 28))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
       i2_return = HmI2DrawbackLine.create!(invoice_number:"55666", shipment_type:"returns", part_number:"567890133333", customer_order_reference:"A01", part_description:"part-AB", quantity:5, shipment_date:Date.new(2017, 3, 7))
       i2_export = HmI2DrawbackLine.create!(invoice_number:"66555", shipment_type:"export", part_number:"567890133333", customer_order_reference:"A01")
-      entry_ca = Factory(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
+      entry_ca = FactoryBot(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
       invoice_ca = entry_ca.commercial_invoices.create!(invoice_number:"66555-03")
       invoice_line_ca = invoice_ca.commercial_invoice_lines.create!(customs_line_number:34, part_number:"5678901", unit_price:BigDecimal.new("5.55"), quantity:43, subheader_number:39)
 
@@ -84,12 +84,12 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
     end
 
     it "excludes entry with release date after range" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 5, 1))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 5, 1))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
       i2_return = HmI2DrawbackLine.create!(invoice_number:"55666", shipment_type:"returns", part_number:"567890133333", customer_order_reference:"A01", part_description:"part-AB", quantity:5, shipment_date:Date.new(2017, 3, 7))
       i2_export = HmI2DrawbackLine.create!(invoice_number:"66555", shipment_type:"export", part_number:"567890133333", customer_order_reference:"A01")
-      entry_ca = Factory(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
+      entry_ca = FactoryBot(:entry, entry_number:"CA-entry-Y", customer_number:"HMCAD", import_date:Date.new(2017, 3, 8))
       invoice_ca = entry_ca.commercial_invoices.create!(invoice_number:"66555-03")
       invoice_line_ca = invoice_ca.commercial_invoice_lines.create!(customs_line_number:34, part_number:"5678901", unit_price:BigDecimal.new("5.55"), quantity:43, subheader_number:39)
 
@@ -101,7 +101,7 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
     end
 
     it "excludes line with no matching Canada invoice line" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
       i2_return = HmI2DrawbackLine.create!(invoice_number:"55666", shipment_type:"returns", part_number:"567890133333", customer_order_reference:"A01", part_description:"part-AB", quantity:5, shipment_date:Date.new(2017, 3, 7))
@@ -115,7 +115,7 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
     end
 
     it "excludes line with no matching export I2" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
       i2_return = HmI2DrawbackLine.create!(invoice_number:"55666", shipment_type:"returns", part_number:"567890133333", customer_order_reference:"A01", part_description:"part-AB", quantity:5, shipment_date:Date.new(2017, 3, 7))
@@ -128,7 +128,7 @@ describe OpenChain::Report::HmCanadaDrawbackReport do
     end
 
     it "excludes line with no matching returns I2" do
-      entry_us = Factory(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
+      entry_us = FactoryBot(:entry, entry_number:"entry-X", customer_number:"HENNE", release_date:Date.new(2017, 3, 5))
       invoice_us = entry_us.commercial_invoices.create!(invoice_number:"55666-01")
       invoice_line_us = invoice_us.commercial_invoice_lines.create!(customs_line_number:23, part_number:"5678901", unit_price:BigDecimal.new("2.34"))
 

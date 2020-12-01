@@ -40,10 +40,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   end
   describe "query" do
     before :each do
-      @us = Factory(:country, :iso_code=>'US')
+      @us = FactoryBot(:country, :iso_code=>'US')
     end
     it "should split mulitple countries of origin into separate rows" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
       p.update_custom_value! @cdefs[:approved_long], 'LD'
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r.last).to eq([p.unique_identifier, 'US', 'LD', 'CN', '1234567890'])
     end
     it "should only return one hts" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], "MX"
       p.update_custom_value! @cdefs[:approved_long], 'LD'
@@ -69,14 +69,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r.first).to eq([p.unique_identifier, 'US', 'LD', 'MX', '1234567890'])
     end
     it "should not output style without ZSCR article type" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p2 = Factory(:product)
+      p2 = FactoryBot(:product)
       p2.update_custom_value! @cdefs[:article], 'ZSCR-X'
       p2.update_custom_value! @cdefs[:origin], 'MX'
       p2.update_custom_value! @cdefs[:approved_long], 'LD'
@@ -88,11 +88,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should only output US" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
-      [@us, Factory(:country, :iso_code=>'CN')].each do |c|
+      [@us, FactoryBot(:country, :iso_code=>'CN')].each do |c|
         cls = p.classifications.create!(:country_id=>c.id)
         cls.tariff_records.create!(:hts_1=>'1234567890')
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -102,12 +102,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r.first).to eq([p.unique_identifier, 'US', 'LD', 'MX', '1234567890'])
     end
     it "should only output records that need sync" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include = Factory(:product)
+      dont_include = FactoryBot(:product)
       d_cls = dont_include.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -119,19 +119,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should only output approved products" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include = Factory(:product)
+      dont_include = FactoryBot(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should use long description override from classification if it exists" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
       cls = p.classifications.create!(:country_id=>@us.id)
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should handle sending multiple lines for related styles" do
-      p = Factory(:product, unique_identifier:'M-Style')
+      p = FactoryBot(:product, unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should handle sending multiple lines for related styles and countries" do
-      p = Factory(:product, unique_identifier:'M-Style')
+      p = FactoryBot(:product, unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       # Use the country split as well so we make sure both line explosions are working together
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
@@ -182,13 +182,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should not output same record twice based on fingerprint" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
-      p2 = Factory(:product)
+      p2 = FactoryBot(:product)
       p2.update_custom_value! @cdefs[:article], 'ZSCR'
       cls2 = p2.classifications.create!(:country_id=>@us.id)
       cls2.tariff_records.create!(:hts_1=>"1234567890")

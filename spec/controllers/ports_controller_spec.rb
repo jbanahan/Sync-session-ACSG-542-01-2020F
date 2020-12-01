@@ -1,6 +1,6 @@
 describe PortsController do
   let! (:user) do
-    u = Factory(:admin_user)
+    u = FactoryBot(:admin_user)
     sign_in_as u
   end
 
@@ -23,7 +23,7 @@ describe PortsController do
   end
 
   describe "create" do
-    let (:us) { Factory(:country, iso_code: "US") }
+    let (:us) { FactoryBot(:country, iso_code: "US") }
     let (:port) do
       {
         port: {
@@ -84,7 +84,7 @@ describe PortsController do
   end
 
   describe "destroy" do
-    let (:port) { Factory(:port) }
+    let (:port) { FactoryBot(:port) }
 
     it "only allows admins" do
       user.admin = false
@@ -104,9 +104,9 @@ describe PortsController do
   end
 
   describe "update" do
-    let (:us) { Factory(:country, iso_code: "US") }
+    let (:us) { FactoryBot(:country, iso_code: "US") }
     let! (:port) do
-      Factory(:port, name: 'old name', unlocode: "LOCOD", schedule_d_code: "1234", schedule_k_code: "12345",
+      FactoryBot(:port, name: 'old name', unlocode: "LOCOD", schedule_d_code: "1234", schedule_k_code: "12345",
                      cbsa_port: "9876", iata_code: "ABC", cbsa_sublocation: "1234")
     end
     let (:port_param) do

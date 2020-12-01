@@ -4,8 +4,8 @@ describe SupportTicket do
   end
   describe "open scope" do
     it "should return open tickets" do
-      find = Factory(:support_ticket)
-      dont_find = Factory(:support_ticket, :state=>"closed")
+      find = FactoryBot(:support_ticket)
+      dont_find = FactoryBot(:support_ticket, :state=>"closed")
       r = SupportTicket.open
       expect(r.size).to eq(1)
       expect(r.first).to eq(find)
@@ -16,7 +16,7 @@ describe SupportTicket do
       expect(@st.can_view?(User.new(:support_agent=>true))).to be_truthy
     end
     it "should allow view if user is requestor" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       @st.requestor = u
       expect(@st.can_view?(u)).to be_truthy
     end
@@ -49,9 +49,9 @@ describe SupportTicket do
   end
   context "notifications", :disable_delayed_jobs do
     before :each do
-      @requestor = Factory(:user)
-      @agent = Factory(:user, :support_agent=>true)
-      @st = Factory(:support_ticket, :requestor=>@requestor, :agent=>@agent, :email_notifications=>true)
+      @requestor = FactoryBot(:user)
+      @agent = FactoryBot(:user, :support_agent=>true)
+      @st = FactoryBot(:support_ticket, :requestor=>@requestor, :agent=>@agent, :email_notifications=>true)
       @mock_email = double(:email)
     end
     it "should notify agent when requestor is_last_saved_by" do
@@ -76,7 +76,7 @@ describe SupportTicket do
       expect(@mock_email).to receive(:deliver_now).twice
       expect(OpenMailer).to receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
       expect(OpenMailer).to receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
-      @st.last_saved_by = Factory(:user)
+      @st.last_saved_by = FactoryBot(:user)
       @st.send_notification
     end
     it "should call send_notification after save if last_saved_by is set" do

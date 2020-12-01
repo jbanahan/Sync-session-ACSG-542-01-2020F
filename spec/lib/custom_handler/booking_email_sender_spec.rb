@@ -3,16 +3,16 @@ describe OpenChain::CustomHandler::BookingEmailSender do
   subject { described_class }
 
   let (:order_line) {
-    order_line = Factory(:order_line, order: Factory(:order, vendor: Factory(:company, name: "Vendor")))
+    order_line = FactoryBot(:order_line, order: FactoryBot(:order, vendor: FactoryBot(:company, name: "Vendor")))
     o = order_line.order
-    o.order_from_address = Factory(:address, company: o.vendor)
+    o.order_from_address = FactoryBot(:address, company: o.vendor)
     o.save!
 
     order_line
   }
 
   let (:shipment_line) {
-    shipment_line = Factory(:shipment_line, product: order_line.product, shipment: Factory(:shipment, forwarder: Factory(:company, name: "Forwarder"), reference: "reference", first_port_receipt: Factory(:port, name: "Port Name", unlocode: "AAAAA")))
+    shipment_line = FactoryBot(:shipment_line, product: order_line.product, shipment: FactoryBot(:shipment, forwarder: FactoryBot(:company, name: "Forwarder"), reference: "reference", first_port_receipt: FactoryBot(:port, name: "Port Name", unlocode: "AAAAA")))
     shipment_line.linked_order_line_id = order_line.id
     shipment_line.save!
 
@@ -22,8 +22,8 @@ describe OpenChain::CustomHandler::BookingEmailSender do
 
   let (:shipment_attachment) { shipment.attachments.create! attached_file_name: "file.txt"}
 
-  let (:user) { Factory(:user) }
-  let (:origin_docs) { Factory(:user, company: shipment.forwarder, username: "OriginDocs", email: "me@there.com")}
+  let (:user) { FactoryBot(:user) }
+  let (:origin_docs) { FactoryBot(:user, company: shipment.forwarder, username: "OriginDocs", email: "me@there.com")}
 
 
   describe "send_email" do

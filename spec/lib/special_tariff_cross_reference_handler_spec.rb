@@ -1,6 +1,6 @@
 describe OpenChain::SpecialTariffCrossReferenceHandler do
   describe 'download handling' do
-    let(:user) { Factory(:user, admin: true) }
+    let(:user) { FactoryBot(:user, admin: true) }
 
     it 'sends the csv file' do
       Timecop.freeze(Time.zone.now) do
@@ -17,7 +17,7 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
 
   describe 'upload handling' do
     describe 'import' do
-      let(:user) { Factory(:user, admin: true)}
+      let(:user) { FactoryBot(:user, admin: true)}
       let(:cf) { instance_double(CustomFile) }
       let(:row_0) { [ 'HTS Number', 'Special HTS Number', 'Origin Country ISO', 'Import Country ISO',
                         'Effective Date Start', 'Effective Date End', 'Priority', 'Special Tariff Type',

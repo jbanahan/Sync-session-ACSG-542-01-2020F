@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:po, :del_date, :coo, :size, :color]
-    @product = Factory(:product, unique_identifier:'1234567')
+    @product = FactoryBot(:product, unique_identifier:'1234567')
   end
   describe "process_entries" do
     before :each do
       @color = '888'
-      @importer = Factory(:company, :importer=>true)
-      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
+      @importer = FactoryBot(:company, :importer=>true)
+      @c_line = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
       @entry = @c_line.commercial_invoice.entry
       @entry.update_attributes(:arrival_date=>0.days.ago, :importer_id=>@importer.id)
       @c_tar = @c_line.commercial_invoice_tariffs.create!(
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
         :classification_qty_1 => 10,
         :classification_uom_1 => "PCS"
       )
-      @s_line = Factory(:shipment_line, :quantity=>10, :product=>@product)
+      @s_line = FactoryBot(:shipment_line, :quantity=>10, :product=>@product)
       @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
       @s_line.update_custom_value! @cdefs[:color], @color
@@ -43,12 +43,12 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     it 'should not call drawback if line was not matched' do
       # testing this because calling the method will be a performance hit
       expect_any_instance_of(described_class).not_to receive(:make_drawback_import_lines)
-      @s_line.product = Factory(:product)
+      @s_line.product = FactoryBot(:product)
       @s_line.save!
       described_class.process_entries [@entry]
     end
     it "should write failure message if no match" do
-      @s_line.product = Factory(:product)
+      @s_line.product = FactoryBot(:product)
       @s_line.save!
       described_class.process_entries [@entry]
       cr = ChangeRecord.first
@@ -60,10 +60,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     before :each do
       @cr = ChangeRecord.new
       @color = '777'
-      @importer = Factory(:company, :importer=>true)
-      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
+      @importer = FactoryBot(:company, :importer=>true)
+      @c_line = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
       @c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago, :importer_id=>@importer.id)
-      @s_line = Factory(:shipment_line, :quantity=>10, :product=>@product)
+      @s_line = FactoryBot(:shipment_line, :quantity=>10, :product=>@product)
       @s_line.shipment.update_attributes(:importer_id=>@importer.id)
       @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line.update_custom_value! @cdefs[:color], @color
@@ -80,13 +80,13 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       expect(r.first).to eq(@s_line)
     end
     it 'should not match if shipment was for a different importer' do
-      other_company = Factory(:company, :importer=>true)
+      other_company = FactoryBot(:company, :importer=>true)
       @s_line.shipment.update_attributes(:importer_id=>other_company.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
       expect(PieceSet.all).to be_empty
     end
     it "should match if the shipment's importer is linked to the entry's importer" do
-      other_company = Factory(:company, :importer=>true)
+      other_company = FactoryBot(:company, :importer=>true)
       other_company.linked_company_ids = [@importer.id]
       @s_line.shipment.update_attributes(:importer_id=>other_company.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it 'should match one entry to two shipment lines by po / style' do
       @c_line.update_attributes(:quantity=>30)
-      @s_line2 = Factory(:shipment_line, :quantity=>20, :product=>@product)
+      @s_line2 = FactoryBot(:shipment_line, :quantity=>20, :product=>@product)
       @s_line2.shipment.update_attributes(:importer_id=>@importer.id)
       @s_line2.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line2.update_custom_value! @cdefs[:po], @c_line.po_number
@@ -109,9 +109,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it 'should not match to a shipment that is already on another piece set matched to a ci_line' do
       @c_line.update_attributes(:quantity=>30)
-      @c_line_used = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
+      @c_line_used = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
       @c_line_used.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
-      @s_line_used = Factory(:shipment_line, :quantity=>20, :product=>@product)
+      @s_line_used = FactoryBot(:shipment_line, :quantity=>20, :product=>@product)
       [@s_line, @s_line_used].each do |s|
         s.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
         s.update_custom_value! @cdefs[:po], @c_line.po_number
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it "should allocate shipment remainders to another invoice line if left over" do
       @c_line.update_attributes(:quantity=>8)
-      @c_line_2 = Factory(:commercial_invoice_line, :quantity=>8, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
+      @c_line_2 = FactoryBot(:commercial_invoice_line, :quantity=>8, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
       @c_line_2.entry.update_attributes(:arrival_date=>0.days.ago, :importer_id=>@importer.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
       expect(r.size).to eq(1)
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it "should consider previous matches to determine how much invoice quantity is available to match" do
       @c_line.update_attributes(:quantity=>8)
-      @s_line_used = Factory(:shipment_line, :quantity=>6, :product=>@product)
+      @s_line_used = FactoryBot(:shipment_line, :quantity=>6, :product=>@product)
       @s_line_used.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line_used.update_custom_value! @cdefs[:po], @c_line.po_number
       PieceSet.create!(:commercial_invoice_line_id=>@c_line.id, :shipment_line_id=>@s_line_used.id, :quantity=>6)
@@ -187,8 +187,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   describe "make_drawback_import_lines" do
     before :each do
       @color = '777'
-      @importer = Factory(:company, :importer=>true)
-      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345', :country_origin_code=>'CN')
+      @importer = FactoryBot(:company, :importer=>true)
+      @c_line = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345', :country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -211,7 +211,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
         :classification_qty_1 => 10,
         :classification_uom_1 => "PCS"
       )
-      @s_line = Factory(:shipment_line, :quantity=>10, :product=>@product)
+      @s_line = FactoryBot(:shipment_line, :quantity=>10, :product=>@product)
       @shipment = @s_line.shipment
       @shipment.update_custom_value! @cdefs[:del_date], 1.days.from_now
       @shipment.update_attributes(:importer_id=>@importer.id)
@@ -253,7 +253,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       expect(PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).size).to eq(1)
     end
     it "should set importer_id based on entry.importer_id when companies are linked" do
-      other_company = Factory(:company, :importer=>true)
+      other_company = FactoryBot(:company, :importer=>true)
       other_company.linked_company_ids = [@importer.id]
       @s_line.shipment.update_attributes(:importer_id=>other_company.id)
       described_class.new.link_commercial_invoice_line @c_line
@@ -265,7 +265,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it "should make multiple links for multiple shipment lines" do
 
-      s_line2 = Factory(:shipment_line, :quantity=>2, :product=>@product)
+      s_line2 = FactoryBot(:shipment_line, :quantity=>2, :product=>@product)
       s2 = s_line2.shipment
       s2.update_attributes(:importer_id=>@importer.id)
       s2.update_custom_value! @cdefs[:del_date], 1.days.from_now
@@ -317,7 +317,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       expect(r.first).not_to be_ocean
     end
     it "should write error if no matches found" do
-      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
+      @c_line = FactoryBot(:commercial_invoice_line, :quantity=>10, :part_number=>"#{@product.unique_identifier}-#{@color}", :po_number=>'12345')
       cr = ChangeRecord.new
       r = described_class.new.make_drawback_import_lines @c_line, cr
       expect(r).to be_blank

@@ -20,8 +20,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
     end
 
     describe "US" do
-      let! (:country) { Factory(:country, iso_code:'US') }
-      let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "595") }
+      let! (:country) { FactoryBot(:country, iso_code:'US') }
+      let! (:broker) { add_system_identifier(FactoryBot(:company, broker: true, name: "The Broker"), "Filer Code", "595") }
 
       it "creates a US entry" do
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_US, key:'RAICNT', value:'21')
@@ -412,7 +412,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         importer_company = Company.create!(importer: true, name: "HOME DEPOT USA INC")
         importer_identifier = SystemIdentifier.create!(system: "Cargowise", code: "US48733060", company:importer_company)
 
-        exist_entry = Factory(:entry, broker_reference:"BQMJ01119279881", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+        exist_entry = FactoryBot(:entry, broker_reference:"BQMJ01119279881", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
         exist_entry.containers.build
         exist_entry.commercial_invoices.build
         exist_entry.entry_comments.build(username:"Private Broker", body:"8675309")
@@ -446,7 +446,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "updates an existing entry with deferred duty broker invoice" do
-        exist_entry = Factory(:entry, broker_reference:"BQMJ01119279881", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+        exist_entry = FactoryBot(:entry, broker_reference:"BQMJ01119279881", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
         bi = exist_entry.broker_invoices.build(broker_reference:"X")
         bi.broker_invoice_lines.build(charge_code:"201", charge_description:"X", charge_amount:1)
         exist_entry.save!
@@ -770,8 +770,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
     end
 
     describe "Canada" do
-      let! (:country) { Factory(:country, iso_code:'CA') }
-      let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "59555") }
+      let! (:country) { FactoryBot(:country, iso_code:'CA') }
+      let! (:broker) { add_system_identifier(FactoryBot(:company, broker: true, name: "The Broker"), "Filer Code", "59555") }
 
       before do
         test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')

@@ -31,13 +31,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
 
   before do
     @cdefs = self.class.prep_custom_definitions [:ord_line_wholesale_unit_price, :prod_reference_number]
-    @ci = Factory(:commercial_invoice)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, quantity: 3, part_number: "part num", po_number:'po num', contract_amount: 4, value: 2, product_line: "JST")
-    @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 5.5)
-    @p = Factory(:product, unique_identifier: "ASCENA-part num")
+    @ci = FactoryBot(:commercial_invoice)
+    @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: @ci, quantity: 3, part_number: "part num", po_number:'po num', contract_amount: 4, value: 2, product_line: "JST")
+    @cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 5.5)
+    @p = FactoryBot(:product, unique_identifier: "ASCENA-part num")
     @p.update_custom_value!(@cdefs[:prod_reference_number], "part num")
-    @o = Factory(:order, order_number: "ASCENA-JST-po num")
-    @ol = Factory(:order_line, order: @o, product: @p, price_per_unit: 6)
+    @o = FactoryBot(:order, order_number: "ASCENA-JST-po num")
+    @ol = FactoryBot(:order_line, order: @o, product: @p, price_per_unit: 6)
     @ol.update_custom_value!(@cdefs[:ord_line_wholesale_unit_price], 7)
   end
 

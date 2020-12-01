@@ -35,8 +35,8 @@ describe OpenChain::Report::BouncedEmailReport do
       it 'retrieves emails after the beginning date' do
         Timecop.freeze(Time.zone.now) do
           beginning, ending = subject.get_yesterday_in_timezone("America/New_York")
-          zero_hour_email = Factory(:sent_email, email_date: beginning, delivery_error: 'it dun goofed')
-          after_beginning_email = Factory(:sent_email, email_date: beginning + 1.hour, delivery_error: 'really goofed')
+          zero_hour_email = FactoryBot(:sent_email, email_date: beginning, delivery_error: 'it dun goofed')
+          after_beginning_email = FactoryBot(:sent_email, email_date: beginning + 1.hour, delivery_error: 'really goofed')
 
           expect(subject.get_bounced_emails_for_dates(beginning, ending)).to include(zero_hour_email)
           expect(subject.get_bounced_emails_for_dates(beginning, ending)).to include(after_beginning_email)
@@ -47,8 +47,8 @@ describe OpenChain::Report::BouncedEmailReport do
     describe 'ending date' do
       it 'retrieves emails before the ending date' do
         beginning, ending = subject.get_yesterday_in_timezone("America/New_York")
-        zero_hour_email = Factory(:sent_email, email_date: ending, delivery_error: 'it dun goofed')
-        after_beginning_email = Factory(:sent_email, email_date: ending - 1.hour, delivery_error: 'really goofed')
+        zero_hour_email = FactoryBot(:sent_email, email_date: ending, delivery_error: 'it dun goofed')
+        after_beginning_email = FactoryBot(:sent_email, email_date: ending - 1.hour, delivery_error: 'really goofed')
 
         expect(subject.get_bounced_emails_for_dates(beginning, ending)).to include(zero_hour_email)
         expect(subject.get_bounced_emails_for_dates(beginning, ending)).to include(after_beginning_email)
@@ -57,8 +57,8 @@ describe OpenChain::Report::BouncedEmailReport do
 
     it 'does not include emails before the beginning or after the ending date' do
       beginning, ending = subject.get_yesterday_in_timezone("America/New_York")
-      before_beginning = Factory(:sent_email, email_date: beginning - 1.hour, delivery_error: 'it dun goofed')
-      after_ending_email = Factory(:sent_email, email_date: ending + 1.hour, delivery_error: 'really goofed')
+      before_beginning = FactoryBot(:sent_email, email_date: beginning - 1.hour, delivery_error: 'it dun goofed')
+      after_ending_email = FactoryBot(:sent_email, email_date: ending + 1.hour, delivery_error: 'really goofed')
 
       expect(subject.get_bounced_emails_for_dates(beginning, ending)).to_not include(before_beginning)
       expect(subject.get_bounced_emails_for_dates(beginning, ending)).to_not include(after_ending_email)
@@ -66,8 +66,8 @@ describe OpenChain::Report::BouncedEmailReport do
 
     it 'does not include emails without errors' do
       beginning, ending = subject.get_yesterday_in_timezone("America/New_York")
-      bad_email = Factory(:sent_email, email_date: ending, delivery_error: 'it dun goofed')
-      good_email = Factory(:sent_email, email_date: ending - 1.hour)
+      bad_email = FactoryBot(:sent_email, email_date: ending, delivery_error: 'it dun goofed')
+      good_email = FactoryBot(:sent_email, email_date: ending - 1.hour)
 
       expect(subject.get_bounced_emails_for_dates(beginning, ending)).to include(bad_email)
       expect(subject.get_bounced_emails_for_dates(beginning, ending)).to_not include(good_email)

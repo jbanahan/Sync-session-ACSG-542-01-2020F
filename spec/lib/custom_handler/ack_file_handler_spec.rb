@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
   }
 
   context "process_ack_file" do
-    let! (:product) { Factory(:product) }
+    let! (:product) { FactoryBot(:product) }
 
     context "line_handling" do
       it "should not handle error if there isn't one" do
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
         expect(sr.confirmed_at).not_to be_nil
       end
       it "should allow alternate module type" do
-        ent = Factory(:entry, broker_reference:'123456')
+        ent = FactoryBot(:entry, broker_reference:'123456')
         sr = ent.sync_records.create!(sent_at:1.hour.ago, trading_partner:'OTHER')
         subject.process_ack_file "h,h,h\n123456,201306191706,\"OK\"", 'OTHER', nil, {module_type:'Entry'}
         sr.reload
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     context "sync_records" do
-      let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
+      let! (:user) { FactoryBot(:user, email: "example@example.com", username: "testuser") }
 
       it "should update product sync record" do
         product.sync_records.create!(:trading_partner=>'XYZ')
@@ -131,8 +131,8 @@ describe OpenChain::CustomHandler::AckFileHandler do
 
   describe "parse" do
     subject { described_class }
-    let (:product) { Factory(:product) }
-    let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
+    let (:product) { FactoryBot(:product) }
+    let! (:user) { FactoryBot(:user, email: "example@example.com", username: "testuser") }
 
     it "should parse a file" do
       product.sync_records.create!(:trading_partner=>'XYZ')
@@ -144,7 +144,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to the user provided if there's an error while processing the file" do
-      user = Factory(:user, email: "me@there.com")
+      user = FactoryBot(:user, email: "me@there.com")
       subject.parse("some\ntext", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
 
       expect(OpenMailer.deliveries.last.to.first).to eq(user.email)
@@ -152,8 +152,8 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to multiple users if there's an error while processing the file" do
-      me = Factory(:user, email: "me@there.com")
-      you = Factory(:user, email: "you@there.com")
+      me = FactoryBot(:user, email: "me@there.com")
+      you = FactoryBot(:user, email: "you@there.com")
       subject.parse("some\ntext", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: [me.username, you.username]})
 
       expect((OpenMailer.deliveries.last.to - [me.email, you.email]).size).to eq(0)
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to the user provided if there's an error while processing the file" do
-      user = Factory(:user, email: "me@there.com")
+      user = FactoryBot(:user, email: "me@there.com")
       subject.parse("some\ntext", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
 
       expect(OpenMailer.deliveries.last.to.first).to eq(user.email)
@@ -169,7 +169,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to the MailingList provided if there's an error while processing the file" do
-      list = Factory(:mailing_list, system_code: "list", email_addresses: "me@there.com")
+      list = FactoryBot(:mailing_list, system_code: "list", email_addresses: "me@there.com")
       subject.parse("some\ntext", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", mailing_list_code: "list"})
 
       expect(OpenMailer.deliveries.last.to.first).to eq("me@there.com")
@@ -177,8 +177,8 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to mailing list and user if there's an error while processing the file" do
-      user = Factory(:user, email: "me@there.com")
-      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      user = FactoryBot(:user, email: "me@there.com")
+      list = FactoryBot(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
 
       subject.parse("some\ntext", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list"})
 
@@ -194,8 +194,8 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "suppresses missing part email warnings if instructed" do
-      user = Factory(:user, email: "me@there.com")
-      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      user = FactoryBot(:user, email: "me@there.com")
+      list = FactoryBot(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
 
       subject.parse("h,h,h\nPART,201306191706,OK", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list", email_warnings: false})
 
@@ -203,8 +203,8 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "suppresses missing sync record email warnings if instructed" do
-      user = Factory(:user, email: "me@there.com")
-      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      user = FactoryBot(:user, email: "me@there.com")
+      list = FactoryBot(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
 
       subject.parse("h,h,h\n#{product.unique_identifier},201306191706,OK", {key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list", email_warnings: false})
 

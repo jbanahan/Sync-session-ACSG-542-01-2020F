@@ -1,14 +1,14 @@
 describe SurveyResponse do
   describe "last_logged_by_user" do
     it "finds most recently saved message created_at associated with given user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       t = 3.days.ago
-      sr = Factory(:survey_response)
+      sr = FactoryBot(:survey_response)
       srl = sr.survey_response_logs
       srl.create!(message: 'earlier', user_id: u.id, created_at: 10.days.ago)
       srl.create!(message: 'findme', user_id: u.id, created_at: t)
       srl.create!(message: 'newer no user')
-      srl.create!(message: 'newer different user', user_id: Factory(:user).id)
+      srl.create!(message: 'newer different user', user_id: FactoryBot(:user).id)
       sr.reload
       expect(sr.last_logged_by_user(u).to_i).to eq t.to_i
     end
@@ -16,32 +16,32 @@ describe SurveyResponse do
 
   describe "rated?" do
     it "returns true if there is a master rating" do
-      expect(Factory(:survey_response, rating: 'abc')).to be_rated
+      expect(FactoryBot(:survey_response, rating: 'abc')).to be_rated
     end
 
     it "returns false if there is no master rating or answers with ratings" do
-      expect(Factory(:survey_response, rating: nil)).not_to be_rated
+      expect(FactoryBot(:survey_response, rating: nil)).not_to be_rated
     end
 
     it "returns true if any answers have ratings" do
-      expect(Factory(:answer, rating: 'abc').survey_response).to be_rated
+      expect(FactoryBot(:answer, rating: 'abc').survey_response).to be_rated
     end
   end
 
   it "requires survey" do
-    expect(described_class.new(user: Factory(:user)).save).to be_falsey
+    expect(described_class.new(user: FactoryBot(:user)).save).to be_falsey
   end
 
   it "requires user" do
-    expect(described_class.new(survey: Factory(:survey)).save).to be_falsey
+    expect(described_class.new(survey: FactoryBot(:survey)).save).to be_falsey
   end
 
   describe "status" do
     let(:survey_response) do
-      s = Factory(:survey)
-      Factory(:question, survey: s)
-      Factory(:question, survey: s)
-      u = Factory(:user)
+      s = FactoryBot(:survey)
+      FactoryBot(:question, survey: s)
+      FactoryBot(:question, survey: s)
+      u = FactoryBot(:user)
       sr = s.generate_response! u
       sr
     end
@@ -65,8 +65,8 @@ describe SurveyResponse do
   end
 
   describe "can_view?" do
-    let(:survey) { Factory(:survey) }
-    let(:response_user) { Factory(:user) }
+    let(:survey) { FactoryBot(:survey) }
+    let(:response_user) { FactoryBot(:user) }
     let(:survey_response) { survey.generate_response! response_user }
 
     it "passes if user is response user" do
@@ -74,74 +74,74 @@ describe SurveyResponse do
     end
 
     it "passes if user can view_survey? and survey is created by user's company" do
-      other_user = Factory(:user, company: survey.company, survey_view: true)
+      other_user = FactoryBot(:user, company: survey.company, survey_view: true)
       expect(survey_response.can_view?(other_user)).to be_truthy
     end
 
     it "fails if user can view_survey? and survey is NOT created by user's company" do
-      other_user = Factory(:user)
+      other_user = FactoryBot(:user)
       expect(survey_response.can_view?(other_user)).to be_falsey
     end
   end
 
   describe "search_secure" do
     it "finds assigned to me, even if I cannot view_survey" do
-      u = Factory(:user, survey_view: false)
-      sr = Factory(:survey_response, user: u)
+      u = FactoryBot(:user, survey_view: false)
+      sr = FactoryBot(:survey_response, user: u)
       expect(described_class.search_secure(u, described_class).to_a).to eq [sr]
     end
 
     it "finds where survey is created by my company and I can view" do
-      u = Factory(:user, survey_view: true)
-      sr = Factory(:survey_response, survey: Factory(:survey, company: u.company))
+      u = FactoryBot(:user, survey_view: true)
+      sr = FactoryBot(:survey_response, survey: FactoryBot(:survey, company: u.company))
       expect(described_class.search_secure(u, described_class).to_a).to eq [sr]
     end
 
     it "does not find where survey is created by my company and I canNOT view surveys" do
-      u = Factory(:user, survey_view: false)
-      Factory(:survey_response, survey: Factory(:survey, company: u.company))
+      u = FactoryBot(:user, survey_view: false)
+      FactoryBot(:survey_response, survey: FactoryBot(:survey, company: u.company))
       expect(described_class.search_secure(u, described_class).to_a).to eq []
     end
   end
 
   describe "can_edit?" do
-    let(:survey) { Factory(:survey) }
-    let(:response_user) { Factory(:user) }
+    let(:survey) { FactoryBot(:survey) }
+    let(:response_user) { FactoryBot(:user) }
     let(:survey_response) { survey.generate_response! response_user }
 
     it "passes if user is from the survey company and can edit surveys" do
-      u = Factory(:user, company: survey.company, survey_edit: true)
+      u = FactoryBot(:user, company: survey.company, survey_edit: true)
       expect(survey_response.can_edit?(u)).to be_truthy
     end
 
     it "fails if user is from the survey company and cannot edit surveys" do
-      u = Factory(:user, company: survey.company, survey_edit: false)
+      u = FactoryBot(:user, company: survey.company, survey_edit: false)
       expect(survey_response.can_edit?(u)).to be_falsey
     end
 
     it "fails if user is not from the survey company" do
-      expect(survey_response.can_edit?(Factory(:user, survey_edit: true))).to be_falsey
+      expect(survey_response.can_edit?(FactoryBot(:user, survey_edit: true))).to be_falsey
     end
 
     it "does not allow edit when survey is archvied" do
-      u = Factory(:user, company: survey.company, survey_edit: true)
+      u = FactoryBot(:user, company: survey.company, survey_edit: true)
       survey.update! archived: true
       expect(survey_response.can_edit?(u)).to be_falsey
     end
   end
 
   describe "can_view_private_comments?" do
-    let(:survey) { Factory(:survey) }
-    let(:response_user) { Factory(:user) }
+    let(:survey) { FactoryBot(:survey) }
+    let(:response_user) { FactoryBot(:user) }
     let(:survey_response) { survey.generate_response! response_user }
 
     it "passes if the user is from the survey company" do
-      u = Factory(:user, company: survey.company)
+      u = FactoryBot(:user, company: survey.company)
       expect(survey_response.can_view_private_comments?(u)).to be_truthy
     end
 
     it "fails if the user is not from the survey company" do
-      expect(survey_response.can_view_private_comments?(Factory(:user))).to be_falsey
+      expect(survey_response.can_view_private_comments?(FactoryBot(:user))).to be_falsey
     end
 
     it "fails if the user is the response_user and is not from the survey company" do
@@ -153,12 +153,12 @@ describe SurveyResponse do
     let!(:master_setup) { stub_master_setup } # rubocop:disable RSpec/LetSetup
 
     let(:survey) do
-      survey = Factory(:question).survey
+      survey = FactoryBot(:question).survey
       survey.update(email_subject: "TEST SUBJ", email_body: "EMLBDY")
       survey
     end
 
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     context "assigned to a user" do
       let(:now) { Time.zone.now }
@@ -194,10 +194,10 @@ describe SurveyResponse do
     end
 
     context "assigned to a group" do
-      let(:user2) { Factory(:user) }
+      let(:user2) { FactoryBot(:user) }
 
       let(:group) do
-        group = Factory(:group)
+        group = FactoryBot(:group)
         user.groups << group
         user2
         user2.groups << group
@@ -226,8 +226,8 @@ describe SurveyResponse do
   end
 
   describe "was_archived" do
-    let(:survey) { Factory(:question).survey }
-    let(:user) { Factory(:user) }
+    let(:survey) { FactoryBot(:question).survey }
+    let(:user) { FactoryBot(:user) }
     let!(:response) { survey.generate_response! user }
 
     it "returns survey responses that are not archived" do
@@ -255,8 +255,8 @@ describe SurveyResponse do
   describe "most_recent_user_log" do
     it "returns the newest log with a user_id associated with it" do
       Timecop.freeze(Time.zone.now) do
-        survey = Factory(:question).survey
-        user = Factory(:user)
+        survey = FactoryBot(:question).survey
+        user = FactoryBot(:user)
         response = survey.generate_response! user
 
         response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now
@@ -269,9 +269,9 @@ describe SurveyResponse do
   end
 
   describe "assigned_to_user?" do
-    let(:survey) { Factory(:question).survey }
-    let(:group) { Factory(:group) }
-    let(:user) { Factory(:user) }
+    let(:survey) { FactoryBot(:question).survey }
+    let(:group) { FactoryBot(:group) }
+    let(:user) { FactoryBot(:user) }
 
     it "shows as assigned if user matches response user" do
       response = survey.generate_response! user
@@ -280,7 +280,7 @@ describe SurveyResponse do
 
     it "does not show as assigned if user is not response user" do
       response = survey.generate_response! user
-      expect(response.assigned_to_user?(Factory(:user))).to be_falsey
+      expect(response.assigned_to_user?(FactoryBot(:user))).to be_falsey
     end
 
     it "shows as assigned if user in in group assigned to response" do
@@ -296,9 +296,9 @@ describe SurveyResponse do
   end
 
   describe "responder_name" do
-    let(:survey) { Factory(:question).survey }
-    let(:group) { Factory(:group) }
-    let(:user) { Factory(:user) }
+    let(:survey) { FactoryBot(:question).survey }
+    let(:group) { FactoryBot(:group) }
+    let(:user) { FactoryBot(:user) }
 
     it "uses user name as responder when assigned to a user" do
       expect(survey.generate_response!(user).responder_name).to eq user.full_name
@@ -316,9 +316,9 @@ describe SurveyResponse do
       sr = nil
       sr2 = nil
       Timecop.freeze(now) do
-        user = Factory(:user)
-        sr = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day)
-        sr2 = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day + 2.seconds)
+        user = FactoryBot(:user)
+        sr = FactoryBot(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day)
+        sr2 = FactoryBot(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day + 2.seconds)
 
         described_class.clear_expired_checkouts(now - 1.day + 1.second)
       end
@@ -338,8 +338,8 @@ describe SurveyResponse do
 
   describe '#not_expired' do
     it "finds unexpired survey responses" do
-      u = Factory(:user)
-      s = Factory(:survey, expiration_days: 5)
+      u = FactoryBot(:user)
+      s = FactoryBot(:survey, expiration_days: 5)
       is_expired = s.generate_response! u
       is_expired.email_sent_date = 10.days.ago
       is_expired.save!
@@ -347,7 +347,7 @@ describe SurveyResponse do
       not_expired.email_sent_date = 2.days.ago
       not_expired.save!
       never_sent = s.generate_response! u
-      no_expiration = Factory(:survey).generate_response! u
+      no_expiration = FactoryBot(:survey).generate_response! u
       expect(described_class.not_expired.order(:id)).to eq [not_expired, never_sent, no_expiration]
     end
   end

@@ -1,37 +1,37 @@
 describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
   let(:data) { IO.read 'spec/fixtures/files/ellery_856.edi' }
   let(:cdefs) { described_class.new.cdefs }
-  let!(:ellery) { Factory(:importer, system_code: "ELLHOL") }
+  let!(:ellery) { FactoryBot(:importer, system_code: "ELLHOL") }
 
   before(:all) { described_class.new.cdefs }
   after(:all) { CustomDefinition.destroy_all }
 
   describe "parse", :disable_delayed_jobs do
     let!(:product) do
-      prod = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-17363BEDDFULMUL")
+      prod = FactoryBot(:product, importer: ellery, unique_identifier: "ELLHOL-17363BEDDFULMUL")
       prod.update_custom_value! cdefs[:prod_part_number], "17363BEDDFULMUL"
 
       prod
     end
 
     let!(:product_2) do
-      prod = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-17363BEDDKNGMUL")
+      prod = FactoryBot(:product, importer: ellery, unique_identifier: "ELLHOL-17363BEDDKNGMUL")
       prod.update_custom_value! cdefs[:prod_part_number], "17363BEDDKNGMUL"
 
       prod
     end
 
     let!(:order) do
-      order = Factory(:order, importer: ellery, order_number: "ELLHOL-60460", customer_order_number: "60460")
-      Factory(:order_line, order: order, product: product)
-      Factory(:order_line, order: order, product: product_2)
+      order = FactoryBot(:order, importer: ellery, order_number: "ELLHOL-60460", customer_order_number: "60460")
+      FactoryBot(:order_line, order: order, product: product)
+      FactoryBot(:order_line, order: order, product: product_2)
       order
     end
 
-    let!(:lading) { Factory(:port, name: "MONTREAL", unlocode: "CAMTR")}
-    let!(:unlading) { Factory(:port, name: "QUEBEC", unlocode: "CAQUE")}
-    let!(:last_origin) { Factory(:port, name: "SEOUL", unlocode: "KRSEL")}
-    let!(:discharge) { Factory(:port, name: "HANOI", unlocode: "VNHAN")}
+    let!(:lading) { FactoryBot(:port, name: "MONTREAL", unlocode: "CAMTR")}
+    let!(:unlading) { FactoryBot(:port, name: "QUEBEC", unlocode: "CAQUE")}
+    let!(:last_origin) { FactoryBot(:port, name: "SEOUL", unlocode: "KRSEL")}
+    let!(:discharge) { FactoryBot(:port, name: "HANOI", unlocode: "VNHAN")}
 
     subject { described_class }
 
@@ -95,10 +95,10 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
     end
 
     it "replaces an existing shipment" do
-      s = Factory :shipment, importer_id: ellery.id, reference: "ELLHOL-974J000427SH0", volume: 15, gross_weight: 380
+      s = FactoryBot :shipment, importer_id: ellery.id, reference: "ELLHOL-974J000427SH0", volume: 15, gross_weight: 380
 
-      container = Factory :container, shipment: s, container_number: 'ECMU1504385', container_size: "NOT 2B"
-      Factory :shipment_line, shipment: s, container: container, product: product, linked_order_line_id: order.order_lines.first, quantity: 50
+      container = FactoryBot :container, shipment: s, container_number: 'ECMU1504385', container_size: "NOT 2B"
+      FactoryBot :shipment_line, shipment: s, container: container, product: product, linked_order_line_id: order.order_lines.first, quantity: 50
 
       subject.parse data, bucket: "bucket", key: "file.edi"
 

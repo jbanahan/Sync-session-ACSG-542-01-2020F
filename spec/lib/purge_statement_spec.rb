@@ -26,22 +26,22 @@ describe OpenChain::PurgeStatement do
 
   describe "purge" do
     it "removes anything received more than 5 years by default" do
-      m = Factory.create(:monthly_statement, received_date: (5.years.ago - 1.day))
+      m = FactoryBot.create(:monthly_statement, received_date: 5.years.ago)
 
       subject.purge older_than: 5.years.ago
       expect(m).not_to exist_in_db
     end
 
     it "uses final recieved date in the event recieved date is nil" do
-      m = Factory.create(:monthly_statement, final_received_date: (5.years.ago - 1.day))
+      m = FactoryBot.create(:monthly_statement, final_received_date: 5.years.ago)
 
       subject.purge older_than: 5.years.ago
       expect(m).not_to exist_in_db
     end
 
     it "associated daily statements are removed with the monthly" do
-      m = Factory.create(:monthly_statement, final_received_date: (5.years.ago - 1.day))
-      d = Factory.create(:daily_statement, monthly_statement: m)
+      m = FactoryBot.create(:monthly_statement, final_received_date: 5.years.ago)
+      d = FactoryBot.create(:daily_statement, monthly_statement: m)
 
       subject.purge older_than: 5.years.ago
       expect(m).not_to exist_in_db

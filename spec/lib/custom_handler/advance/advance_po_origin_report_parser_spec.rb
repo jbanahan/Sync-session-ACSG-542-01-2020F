@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
       ["IND", "IND13786", "89850", "Crossroads", "", "", "10419518", "NCV36576", "CV Axle", "8708996805", "1", "", 24.1, "Shanghai, PRC", "2016-01-21", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011453", "CN", "PART3"]
     ]
   }
-  let (:cq) { Factory(:importer, system_code: "CQ") }
-  let (:user) { Factory(:user) }
+  let (:cq) { FactoryBot(:importer, system_code: "CQ") }
+  let (:user) { FactoryBot(:user) }
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"
     allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
@@ -24,15 +24,15 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     }
 
     let (:product1) {
-      Factory(:product, importer: cq, unique_identifier: "CQ-PART1")
+      FactoryBot(:product, importer: cq, unique_identifier: "CQ-PART1")
     }
 
     let (:product2) {
-      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART2")
+      prod = FactoryBot(:product, importer: cq, unique_identifier: "CQ-PART2")
     }
 
     let (:product3) {
-      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART3")
+      prod = FactoryBot(:product, importer: cq, unique_identifier: "CQ-PART3")
     }
 
     context "with all products present" do
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
           product1.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
 
           # Create another part that has the same cq part number (short description), but won't have the part number from the origin file
-          prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1X")
+          prod = FactoryBot(:product, importer: cq, unique_identifier: "CQ-PART-1X")
           prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
           prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
 
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
           product1.update_custom_value! custom_defintions[:prod_short_description], "YH145726"
 
           # Create another part that has the same cq part number (short description), but won't have the part number from the origin file
-          prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1X")
+          prod = FactoryBot(:product, importer: cq, unique_identifier: "CQ-PART-1X")
           prod.update_custom_value! custom_defintions[:prod_short_description], "YH145726"
           prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
 
@@ -222,7 +222,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
   describe "can_view?" do
     let (:ms) { double("MasterSetup") }
-    let (:user) { Factory(:master_user) }
+    let (:user) { FactoryBot(:master_user) }
 
     context "with Advance 7501 enabled master_setup" do
       before :each do
@@ -241,7 +241,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
       end
 
       it "disallows users that aren't master users" do
-        user = Factory(:user)
+        user = FactoryBot(:user)
         allow(user).to receive(:edit_orders?).and_return true
         expect(described_class.can_view? user).to be_falsey
       end

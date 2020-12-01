@@ -17,7 +17,7 @@
   <TermsOfPayment>NET30</TermsOfPayment>
   <Currency>USD</Currency>
   <Address type="ship-from">
-    <Name>ILS Factory #1</Name>
+    <Name>ILS FactoryBot #1</Name>
     <Line1>100 Any Street</Line1>
     <Line2>Shanghai Economic Development Zone</Line2>
     <Line3>Building 301</Line3>

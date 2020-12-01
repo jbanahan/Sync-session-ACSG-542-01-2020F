@@ -1,13 +1,13 @@
 describe SummaryStatementsHelper do
   before(:each) do
-    @company = Factory(:company)
-    @sum_stat= Factory(:summary_statement, customer: @company)
+    @company = FactoryBot(:company)
+    @sum_stat= FactoryBot(:summary_statement, customer: @company)
   end
 
   describe "render_summary_xls" do
     it "renders statement header" do
-      ent = Factory(:entry, importer: @company)
-      broker_inv = Factory(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_total: 150)
+      ent = FactoryBot(:entry, importer: @company)
+      broker_inv = FactoryBot(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_total: 150)
       wb = helper.render_summary_xls @sum_stat
       sheet = wb.worksheets.first
 
@@ -18,9 +18,9 @@ describe SummaryStatementsHelper do
     end
 
     it "renders data for US invoices" do
-      ent = Factory(:entry, importer: @company, import_country: Factory(:country, iso_code: 'US'),
+      ent = FactoryBot(:entry, importer: @company, import_country: FactoryBot(:country, iso_code: 'US'),
                     entry_number: "1357911", release_date: Date.today - 1, monthly_statement_due_date: Date.today + 1)
-      bi = Factory(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "987654321",
+      bi = FactoryBot(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "987654321",
                     invoice_date: Date.today - 1, invoice_total: 150, bill_to_name: @company.name)
 
       wb = helper.render_summary_xls @sum_stat
@@ -32,9 +32,9 @@ describe SummaryStatementsHelper do
     end
 
     it "renders data for CA invoices" do
-      ent = Factory(:entry, importer: @company, import_country: Factory(:country, iso_code: 'CA'),
+      ent = FactoryBot(:entry, importer: @company, import_country: FactoryBot(:country, iso_code: 'CA'),
                      entry_number: "246810", k84_month: 5, cadex_accept_date: Time.zone.parse("2015-12-02 13:50"))
-      bi = Factory(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "123456789",
+      bi = FactoryBot(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "123456789",
                    invoice_date: Date.today, invoice_total: 100, bill_to_name: @company.name)
 
       wb = helper.render_summary_xls @sum_stat

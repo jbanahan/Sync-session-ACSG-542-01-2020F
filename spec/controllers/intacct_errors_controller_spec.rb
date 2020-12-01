@@ -5,7 +5,7 @@ describe IntacctErrorsController do
     allow(user).to receive(:in_any_group?).with(['intacct-accounting', 'canada-accounting']).and_return true
   end
 
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
   let! (:master_setup) do
     ms = stub_master_setup
     allow(ms).to receive(:custom_feature?).with("WWW").and_return true
@@ -30,7 +30,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
 
       get :index
@@ -51,7 +51,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       p1 = IntacctReceivable.create! intacct_errors: "ERROR"
 
@@ -81,7 +81,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       p1 = IntacctCheck.create! intacct_errors: "ERROR"
 
@@ -111,7 +111,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       p1 = IntacctReceivable.create! intacct_errors: "ERROR"
 
@@ -141,7 +141,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       p1 = IntacctPayable.create! intacct_errors: "ERROR"
 
@@ -171,7 +171,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       p1 = IntacctPayable.create! intacct_errors: "ERROR"
 
@@ -201,7 +201,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
       c1 = IntacctCheck.create! intacct_errors: "ERROR"
 
@@ -230,7 +230,7 @@ describe IntacctErrorsController do
     end
 
     it "rejects unapproved users" do
-      u = Factory(:user, username: 'notallowed')
+      u = FactoryBot(:user, username: 'notallowed')
       sign_in_as u
 
       post :push_to_intacct

@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryBillingComparator do
   subject { described_class }
 
   describe "accept?" do
-    let (:user) { Factory(:master_user) }
-    let (:entry) { Factory(:entry, customer_number: 'ASCE', source_system: "Alliance", entry_filed_date: Date.new(2020, 3, 15)) }
+    let (:user) { FactoryBot(:master_user) }
+    let (:entry) { FactoryBot(:entry, customer_number: 'ASCE', source_system: "Alliance", entry_filed_date: Date.new(2020, 3, 15)) }
     let (:snapshot) { EntitySnapshot.create!(recordable: entry, user: user) }
 
     it "accepts entry snapshots for ASCE account" do

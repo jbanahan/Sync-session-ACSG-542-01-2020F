@@ -7,14 +7,14 @@ describe ProductGroup do
 
   describe "before_destroy" do
     it "should error if product in use" do
-      pg = Factory(:product_group)
+      pg = FactoryBot(:product_group)
       allow(pg).to receive(:in_use?).and_return true
       pg.save!
       expect {pg.destroy}.to_not change(ProductGroup, :count)
       expect(pg.errors).to_not be_blank
     end
     it "should pass if product not in use" do
-      pg = Factory(:product_group)
+      pg = FactoryBot(:product_group)
       allow(pg).to receive(:in_use?).and_return false
       expect {pg.destroy}.to change(ProductGroup, :count).from(1).to(0)
       expect(pg.errors).to be_blank

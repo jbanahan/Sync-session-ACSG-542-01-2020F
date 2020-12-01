@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
   describe "can_view?" do
     let (:master_setup) { stub_master_setup }
-    let (:master_user) { Factory(:master_user) }
-    let (:user) { Factory(:user) }
+    let (:master_user) { FactoryBot(:master_user) }
+    let (:user) { FactoryBot(:user) }
 
     context "with ascena parts enabled" do
       before :each do
@@ -48,9 +48,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       row
     end
 
-    let (:user) { Factory(:user) }
-    let! (:ascena) { Factory(:importer, system_code: "ASCENA") }
-    let! (:us) { Factory(:country, iso_code: "US") }
+    let (:user) { FactoryBot(:user) }
+    let! (:ascena) { FactoryBot(:importer, system_code: "ASCENA") }
+    let! (:us) { FactoryBot(:country, iso_code: "US") }
     let (:cdefs) { subject.cdefs }
 
     it "parses a file and creates products" do
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
     end
 
     it "creates Maurices record when brand is 'MAU'" do
-      Factory(:importer, system_code: "MAUR")
+      FactoryBot(:importer, system_code: "MAUR")
       file_row[0] = "MAU"
 
       expect(subject).to receive(:foreach).with(custom_file, skip_headers: true).exactly(2).times.and_yield file_row
@@ -272,7 +272,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
   describe "assign_fda" do
     let(:cdefs) { subject.cdefs }
-    let(:prod)  { Factory(:product) }
+    let(:prod)  { FactoryBot(:product) }
     let(:changed) { MutableBoolean.new(false) }
 
     it "sets FDA Product Code, FDA Product? when there's a value" do
@@ -294,7 +294,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
   end
 
   describe "process" do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     it "processes a file" do
       expect(subject).to receive(:process_file).with custom_file, user

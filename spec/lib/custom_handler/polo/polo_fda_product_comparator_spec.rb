@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Polo::PoloFdaProductComparator do
   end
 
   describe "compare" do
-    let(:prod) { Factory(:product) }
+    let(:prod) { FactoryBot(:product) }
 
     it "does nothing if type isn't product" do
       expect(described_class).not_to receive(:get_country_tariffs)
@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::Polo::PoloFdaProductComparator do
       new_hsh = copy_hsh old_hsh
       assign_first_hts new_hsh, "2468.10.1214"
       old_hsh["entity"]["model_fields"]["*cf_#{cdef.id}"] = "FD1"
-      OfficialTariff.create!(country: Factory(:country, iso_code: "US"), hts_code: "2468101214", fda_indicator: "FD1")
+      OfficialTariff.create!(country: FactoryBot(:country, iso_code: "US"), hts_code: "2468101214", fda_indicator: "FD1")
 
       expect(described_class).to receive(:get_json_hash).with('old_bucket', 'old_path', 'old_version').and_return old_hsh
       expect(described_class).to receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return new_hsh
@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::Polo::PoloFdaProductComparator do
       assign_first_hts new_hsh, "2468.10.1214"
       old_hsh["entity"]["model_fields"]["*cf_#{cdef.id}"] = "FD1"
       prod.update_custom_value!(cdef, "FD1")
-      OfficialTariff.create!(country: Factory(:country, iso_code: "US"), hts_code: "2468101214", fda_indicator: "FD2")
+      OfficialTariff.create!(country: FactoryBot(:country, iso_code: "US"), hts_code: "2468101214", fda_indicator: "FD2")
 
       expect(described_class).to receive(:get_json_hash).with('old_bucket', 'old_path', 'old_version').and_return old_hsh
       expect(described_class).to receive(:get_json_hash).with('new_bucket', 'new_path', 'new_version').and_return new_hsh
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::Polo::PoloFdaProductComparator do
   end
 
   describe "fda_indicator_from_product" do
-    let(:united_states) { Factory(:country, iso_code: "US")}
+    let(:united_states) { FactoryBot(:country, iso_code: "US")}
 
     it "returns FDA indicator for first HTS that has one" do
       OfficialTariff.create! country: united_states, hts_code: "0987654321", fda_indicator: "FOO\n FD1"

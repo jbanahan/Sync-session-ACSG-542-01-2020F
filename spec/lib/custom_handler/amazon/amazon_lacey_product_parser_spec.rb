@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser do
   let (:csv_data) { CSV.parse(fda_file) }
 
   describe "process_part_lines" do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let! (:importer) {
-      add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "X76YHUR3GKHXS")
+      add_system_identifier(with_customs_management_id(FactoryBot(:importer), "CMID"), "Amazon Reference", "X76YHUR3GKHXS")
     }
     let (:cdefs) { subject.cdefs }
     let (:inbound_file) { InboundFile.new }
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser do
     end
 
     it "updates product and sets Lacey data" do
-      p = Factory(:product, importer: importer, unique_identifier: "CMID-EL89890")
+      p = FactoryBot(:product, importer: importer, unique_identifier: "CMID-EL89890")
 
       expect { subject.process_part_lines(user, "US_PGA_ALG_data.csv", csv_rows) }.not_to change { Product.count }.from(1)
       p.reload
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser do
     end
 
     it "does not snapshot if nothing updates" do
-      p = Factory(:product, importer: importer, unique_identifier: "CMID-EL89890")
+      p = FactoryBot(:product, importer: importer, unique_identifier: "CMID-EL89890")
       p.update_custom_value! cdefs[:prod_lacey_component_of_article], "Bentwood Seats Made of Oak"
       p.update_custom_value! cdefs[:prod_lacey_genus_1], "Quercus"
       p.update_custom_value! cdefs[:prod_lacey_species_1], "Rubra"

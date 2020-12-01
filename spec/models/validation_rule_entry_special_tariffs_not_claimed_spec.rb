@@ -2,7 +2,7 @@ describe ValidationRuleEntrySpecialTariffsNotClaimed do
 
   describe "run_validation" do
     let (:entry) {
-      e = Factory(:entry, origin_country_codes: "CN\nVN", release_date: "2018-10-10 12:00", import_country: Factory(:country, iso_code: "US"))
+      e = FactoryBot(:entry, origin_country_codes: "CN\nVN", release_date: "2018-10-10 12:00", import_country: FactoryBot(:country, iso_code: "US"))
       invoice = e.commercial_invoices.create! invoice_number: "INV1"
       line = invoice.commercial_invoice_lines.create! country_origin_code: "CN", line_number: 1
       tariff = line.commercial_invoice_tariffs.create! hts_code: "1234567980"

@@ -2,28 +2,28 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
 
   context "with entry data" do
     before :each do
-      @tariff = Factory(:commercial_invoice_tariff, duty_amount: 10, commercial_invoice_line: Factory(:commercial_invoice_line, value: 20, hmf: 30, mpf: 40))
+      @tariff = FactoryBot(:commercial_invoice_tariff, duty_amount: 10, commercial_invoice_line: FactoryBot(:commercial_invoice_line, value: 20, hmf: 30, mpf: 40))
       @line = @tariff.commercial_invoice_line
-      @tariff2 = Factory(:commercial_invoice_tariff, duty_amount: 15, commercial_invoice_line: @line)
+      @tariff2 = FactoryBot(:commercial_invoice_tariff, duty_amount: 15, commercial_invoice_line: @line)
       @entry = @line.entry
       @entry.update_attributes! customer_number: "CQ", release_date: "2015-06-01", master_bills_of_lading: "MBOL", entry_number: "EN12345"
 
-      @tariff3 = Factory(:commercial_invoice_tariff, duty_amount: 10,
-                          commercial_invoice_line: Factory(:commercial_invoice_line, value: 10, hmf: 20, mpf: 30,
-                                                            commercial_invoice: Factory(:commercial_invoice, entry: @entry)))
+      @tariff3 = FactoryBot(:commercial_invoice_tariff, duty_amount: 10,
+                          commercial_invoice_line: FactoryBot(:commercial_invoice_line, value: 10, hmf: 20, mpf: 30,
+                                                            commercial_invoice: FactoryBot(:commercial_invoice, entry: @entry)))
       @line2 = @tariff3.commercial_invoice_line
 
-      @container1 = Factory(:container, entry: @entry, commercial_invoice_lines: [@line])
-      @container2 = Factory(:container, entry: @entry, commercial_invoice_lines: [@line2])
+      @container1 = FactoryBot(:container, entry: @entry, commercial_invoice_lines: [@line])
+      @container2 = FactoryBot(:container, entry: @entry, commercial_invoice_lines: [@line2])
 
-      @broker_invoice_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_total: 50), charge_amount: 50)
+      @broker_invoice_line = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry, invoice_total: 50), charge_amount: 50)
       @broker_invoice = @broker_invoice_line.broker_invoice
 
       # Create a freight charge
-      @broker_invoice_line_freight = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry), charge_amount: 50, charge_code: '0600')
+      @broker_invoice_line_freight = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry), charge_amount: 50, charge_code: '0600')
       @broker_invoice_freight = @broker_invoice_line_freight.broker_invoice
 
-      @user = Factory(:master_user, time_zone: "UTC", entry_view: true)
+      @user = FactoryBot(:master_user, time_zone: "UTC", entry_view: true)
       # By defualt, just allow access to all entrie (t)
       allow_any_instance_of(Entry).to receive(:can_view?).with(@user).and_return true
     end
@@ -104,7 +104,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
 
       it "excludes entries user does not have access to" do
         # a blank user will not have entries returned by the query
-        wb = subject.run Factory(:user, time_zone: "UTC"), {'start_date' => '2015-06-01', 'end_date' => '2015-06-02', 'customer_number' => "CQ"}
+        wb = subject.run FactoryBot(:user, time_zone: "UTC"), {'start_date' => '2015-06-01', 'end_date' => '2015-06-02', 'customer_number' => "CQ"}
         wb = Spreadsheet.open(wb.path)
         sheet = wb.worksheet "06-01-15 - 06-01-15"
         expect(sheet.row(1)).to eq []

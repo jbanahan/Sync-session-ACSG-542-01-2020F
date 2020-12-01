@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
   let (:json_data) { JSON.parse(file_data) }
 
   describe "parse_customer" do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let (:json) { json_data.first }
-    let! (:country) { Factory(:country, iso_code: "CN")}
+    let! (:country) { FactoryBot(:country, iso_code: "CN")}
 
     it "parses customer json data" do
       subject.parse_customer(json, user, 'file.json')
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
     end
 
     it "updates company record" do
-      existing = Factory(:company, name: "CUSTNO", system_code: "CODE")
+      existing = FactoryBot(:company, name: "CUSTNO", system_code: "CODE")
       existing.system_identifiers.create! system: "Customs Management", code: "CHYOU"
 
       subject.parse_customer(json, user, 'file.json')
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
     end
 
     it "snapshots when only updating an address" do
-      existing = Factory(:company, name: "CHEER YOU E-BUSINESS CO., LTD.")
+      existing = FactoryBot(:company, name: "CHEER YOU E-BUSINESS CO., LTD.")
       existing.system_identifiers.create! system: "Customs Management", code: "CHYOU"
       existing.addresses.create system_code: "1"
 
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
     end
 
     it "does not blank out IRS Number if company has an IRS Number, but json is missing one" do
-      existing = with_customs_management_id(Factory(:company, name: "CUSTNO", system_code: "CODE", irs_number: "12345"), "CHYOU")
+      existing = with_customs_management_id(FactoryBot(:company, name: "CUSTNO", system_code: "CODE", irs_number: "12345"), "CHYOU")
       json["irs_no"] = ""
       subject.parse_customer(json, user, 'file.json')
       existing.reload

@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
   let(:co1) do
-    co = Factory(:company)
+    co = FactoryBot(:company)
     co.system_identifiers.create! system: "Fenix", code: "807150586RM0001"
     co
   end
 
   let(:co2) do
-    co = Factory(:company)
+    co = FactoryBot(:company)
     co.system_identifiers.create! system: "Fenix", code: "807150586RM0002"
     co
   end
@@ -18,9 +18,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
   let(:date4) { DateTime.new(2020, 3, 18, 9, 30)}
   let!(:sys_date) { SystemDate.create! date_type: "OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator", start_date: Date.new(2020, 1, 5)}
 
-  let(:ent1) do
-    Factory(:entry, entry_number: "11912345678901", importer: co1, file_logged_date: now, entry_type: "A", importer_tax_id: "807150586RM0001", across_sent_date: date3)
-  end
+  let(:ent1) { FactoryBot(:entry, entry_number: "11912345678901", importer: co1, file_logged_date: now, entry_type: "A", importer_tax_id: "807150586RM0001") }
+  let(:ent2) { FactoryBot(:entry, importer: co2, file_logged_date: now - 1.day, entry_type: "A", importer_tax_id: "807150586RM0002") }
 
   let(:ent2) { Factory(:entry, importer: co2, file_logged_date: now - 1.day, entry_type: "A", importer_tax_id: "807150586RM0002", across_sent_date: date3) }
 
@@ -75,33 +74,33 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
 
   describe "generate_xml" do
     before do
-      ca = Factory(:country, iso_code: "CA")
+      ca = FactoryBot(:country, iso_code: "CA")
       ent1.update(import_country: ca, transport_mode_code: "1", cadex_accept_date: date1, broker_reference: "brok ref", total_freight: 305.25,
                   entry_type: "ent type", entry_port_code: "ent port code", ult_consignee_name: "ult consignee name", release_date: date1,
                   entered_value: 25.50, us_exit_port_code: "exit port code", lading_port_code: "lading port code", total_duty: 36.50, customer_name: "cust name",
                   customer_number: "cust num", direct_shipment_date: date2, carrier_code: "carrier code", carrier_name: "carrier name", cargo_control_number: "cargo control",
-                  house_bills_of_lading: "ent_hbol1\n ent_hbol2", across_sent_date: date3)
-      ci = Factory(:commercial_invoice, entry: ent1, currency: "currency", invoice_number: "inv num", master_bills_of_lading: "mbol1\n mbol2",
+                  house_bills_of_lading: "ent_hbol1\n ent_hbol2")
+      ci = FactoryBot(:commercial_invoice, entry: ent1, currency: "currency", invoice_number: "inv num", master_bills_of_lading: "mbol1\n mbol2",
                                         house_bills_of_lading: "inv_hbol1\n inv_hbol2", mfid: "mid", net_weight: 5.25, exchange_rate: 1.25)
-      cil = Factory(:commercial_invoice_line, commercial_invoice: ci, vendor_name: "vend name", po_number: "po num", line_number: 1, customs_line_number: 2,
+      cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, vendor_name: "vend name", po_number: "po num", line_number: 1, customs_line_number: 2,
                                               part_number: "part num", value: 11.25, currency: "GBP", value_foreign: 11.75, country_origin_code: "country origin",
                                               country_export_code: "country export", unit_of_measure: "uom", quantity: 9.25, subheader_number: 3, unit_price: 4.18)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, sima_amount: 2.50, excise_amount: 3.50, gst_amount: 4.50, hts_code: "hts1",
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, sima_amount: 2.50, excise_amount: 3.50, gst_amount: 4.50, hts_code: "hts1",
                                           classification_qty_1: 2.25, classification_uom_1: "uom1", tariff_description: "tariff descr", duty_amount: 3.10,
                                           duty_rate_description: "1.10", tariff_provision: "tariff prov", spi_primary: "spi primary", value_for_duty_code: "val for duty code",
                                           sima_code: "sima code", excise_rate_code: "excise rate code", gst_rate_code: "gst rate code",
                                           entered_value: 12.35, gross_weight: 11, special_authority: "special authority")
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, sima_amount: 2.75, excise_amount: 3.75, gst_amount: 4.75, duty_amount: 4.10, duty_rate_description: "2.10") # rubocop:disable Layout/LineLength
-      pga_line_1 = Factory(:canadian_pga_line, commercial_invoice_line: cil, batch_lot_number: "batch lot num", brand_name: "brand name", commodity_type: "commodity type",
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, sima_amount: 2.75, excise_amount: 3.75, gst_amount: 4.75, duty_amount: 4.10, duty_rate_description: "2.10") # rubocop:disable Layout/LineLength
+      pga_line_1 = FactoryBot(:canadian_pga_line, commercial_invoice_line: cil, batch_lot_number: "batch lot num", brand_name: "brand name", commodity_type: "commodity type",
                                                country_of_origin: "coo", exception_processes: "exc process", expiry_date: date3, fda_product_code: "fda product code",
                                                file_name: "file name", gtin: "gtin", importer_contact_email: "imp contact email", importer_contact_name: "imp contact name",
                                                importer_contact_phone: "imp contact phone", intended_use_code: "intended use code", lpco_number: "lpco num",
                                                lpco_type: "lpco type", manufacture_date: date4, model_designation: "model designation", model_label: "model label",
                                                model_number: "model number", product_name: "product name", purpose: "purpose", state_of_origin: "state of origin",
                                                unique_device_identifier: "unique dev id", program_code: "program code", agency_code: "HC")
-      Factory(:canadian_pga_line, commercial_invoice_line: cil, batch_lot_number: "batch lot num2", commodity_type: "commodity type", program_code: "program code", agency_code: "HC") # rubocop:disable Layout/LineLength
-      Factory(:canadian_pga_line_ingredient, canadian_pga_line: pga_line_1, quality: 0.5, quantity: 5.2, name: "ing name")
-      Factory(:canadian_pga_line_ingredient, canadian_pga_line: pga_line_1, quality: 0.75, quantity: 8.2, name: "ing name 2")
+      FactoryBot(:canadian_pga_line, commercial_invoice_line: cil, batch_lot_number: "batch lot num2", commodity_type: "commodity type", program_code: "program code", agency_code: "HC") # rubocop:disable Layout/LineLength
+      FactoryBot(:canadian_pga_line_ingredient, canadian_pga_line: pga_line_1, quality: 0.5, quantity: 5.2, name: "ing name")
+      FactoryBot(:canadian_pga_line_ingredient, canadian_pga_line: pga_line_1, quality: 0.75, quantity: 8.2, name: "ing name 2")
     end
 
     it "generates an XML" do
@@ -303,17 +302,17 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
       ci = CommercialInvoice.first
       ci.commercial_invoice_lines.destroy_all
 
-      cil = Factory(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 3)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tariff descr")
+      cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 3)
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tariff descr")
 
-      cil_2 = Factory(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 3, line_number: 2)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_2, tariff_description: "tariff descr 2")
+      cil_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 3, line_number: 2)
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_2, tariff_description: "tariff descr 2")
 
-      cil_3 = Factory(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 1)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_3, tariff_description: "tariff descr 3")
+      cil_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 1)
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_3, tariff_description: "tariff descr 3")
 
-      cil_4 = Factory(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 2)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_4, tariff_description: "tariff descr 4")
+      cil_4 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 2, line_number: 2)
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_4, tariff_description: "tariff descr 4")
 
       doc = subject.generate_xml ent1
       elem_root = doc.root

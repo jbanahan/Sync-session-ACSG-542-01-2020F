@@ -2,16 +2,16 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
 
   describe "sync" do
     let (:api_client) { instance_double(OpenChain::Api::ProductApiClient) }
-    let (:importer) { Factory(:importer, system_code: "SYSCODE")}
+    let (:importer) { FactoryBot(:importer, system_code: "SYSCODE")}
     let! (:product) {
-      product = Factory(:product, importer: importer, unique_identifier: "UID", name: "NAME")
+      product = FactoryBot(:product, importer: importer, unique_identifier: "UID", name: "NAME")
       product.update_custom_value! cdefs[:prod_fda_product_code], "FDA-123"
       product.update_custom_value! cdefs[:prod_country_of_origin], "CN"
 
-      classification = Factory(:classification, product: product, country: Factory(:country, iso_code: "US"))
+      classification = FactoryBot(:classification, product: product, country: FactoryBot(:country, iso_code: "US"))
       classification.update_custom_value! cdefs[:class_customs_description], "Description"
 
-      tariff = Factory(:tariff_record, hts_1: "1234567890", hts_2: "0987654321", hts_3: "2468101214", classification: classification)
+      tariff = FactoryBot(:tariff_record, hts_1: "1234567890", hts_2: "0987654321", hts_3: "2468101214", classification: classification)
       product.reload
     }
 

@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
   subject { described_class }
 
   let (:content) { File.read 'spec/support/bin/fenix_invoices.csv' }
-  let! (:ent) { Factory(:entry, source_system: 'Fenix', broker_reference: '280952') }
-  let (:ent2) { Factory(:entry, source_system: 'Fenix', broker_reference: '281350') }
+  let! (:ent) { FactoryBot(:entry, source_system: 'Fenix', broker_reference: '280952') }
+  let (:ent2) { FactoryBot(:entry, source_system: 'Fenix', broker_reference: '281350') }
 
   let(:log) { InboundFile.new }
 
@@ -410,9 +410,9 @@ INV
   end
 
   it "assigns fiscal month to broker invoice" do
-    imp = Factory(:company, fiscal_reference: "ent_release_date")
+    imp = FactoryBot(:company, fiscal_reference: "ent_release_date")
     ent.update!(importer: imp, release_date: "20130105")
-    fm = Factory(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013, 1, 1), end_date: Date.new(2015, 1, 31))
+    fm = FactoryBot(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013, 1, 1), end_date: Date.new(2015, 1, 31))
     subject.parse_file content, log
 
     brok_inv = ent.broker_invoices.first

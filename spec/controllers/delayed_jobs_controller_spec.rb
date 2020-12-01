@@ -1,6 +1,6 @@
 describe DelayedJobsController do
   before :each do
-    @u = Factory(:user, :admin => true, :sys_admin => true, :company => Factory(:company, :master=>true))
+    @u = FactoryBot(:user, :admin => true, :sys_admin => true, :company => FactoryBot(:company, :master=>true))
     sign_in_as @u
   end
 

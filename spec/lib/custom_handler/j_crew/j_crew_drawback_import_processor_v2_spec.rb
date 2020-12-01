@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       described_class.parse(d, u)
     end
     it 'should email log to user' do
-      u = Factory(:user, email:'sample@vfitrack.net')
+      u = FactoryBot(:user, email:'sample@vfitrack.net')
       ds = double('data_structure')
       d = double('data')
 
@@ -51,18 +51,18 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
   end
 
   describe '#process_entry' do
-    let! (:us) { Factory(:country, iso_code: "US")}
+    let! (:us) { FactoryBot(:country, iso_code: "US")}
 
     before :each do
       mo = double('mail_obj')
       allow(mo).to receive(:deliver_now)
       allow(OpenMailer).to receive(:send_simple_text).and_return(mo)
-      @crew = with_customs_management_id(Factory(:company), 'JCREW')
+      @crew = with_customs_management_id(FactoryBot(:company), 'JCREW')
       # create underlying entry
       OpenChain::CustomHandler::KewillEntryParser.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_entry.json'), imaging: false)
     end
     it 'should create drawback_import_lines' do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to be_empty
       expect(DrawbackImportLine.count).to eq 317
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(dil.importer_id).to eq @crew.id
     end
     it "should fail if units don't match entry" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       data = IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv')
       data.gsub!(
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(DrawbackImportLine.count).to eq 0
     end
     it 'should fail if Sum of line quantities grouped by style/po does not match Invoice Line Units' do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       data = IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv')
       data.gsub!(
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
     end
 
     it "should fail if line isn't found" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       CommercialInvoiceLine.where(part_number:'24892', po_number:'4016516').first.destroy
       log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892, Quantity 340 not found.']
@@ -126,8 +126,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
     end
 
     it 'should fail on used entries' do
-      u = Factory(:master_user)
-      Factory(:drawback_import_line, entry_number:Entry.last.entry_number)
+      u = FactoryBot(:master_user)
+      FactoryBot(:drawback_import_line, entry_number:Entry.last.entry_number)
       log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to eq ['Entry 31604364559 already has drawback lines.']
       expect(DrawbackImportLine.count).to eq 1

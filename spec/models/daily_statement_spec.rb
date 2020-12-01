@@ -1,7 +1,7 @@
 describe DailyStatement do
 
   describe "search_where" do
-    let (:master_user) { Factory(:master_user) }
+    let (:master_user) { FactoryBot(:master_user) }
     let! (:statement) { described_class.create! statement_number: "STATEMENT" }
 
     context "with user than can view statements" do
@@ -14,15 +14,15 @@ describe DailyStatement do
       end
 
       it "allows importer users to view statements linked to their account" do
-        user = Factory(:user, company: Factory(:importer))
+        user = FactoryBot(:user, company: FactoryBot(:importer))
         statement.update_attributes! importer_id: user.company.id
 
         expect(described_class.where(described_class.search_where(master_user)).all).to include statement
       end
 
       it "allows users linked to the statements importer to see it" do
-        user = Factory(:user)
-        importer = Factory(:importer)
+        user = FactoryBot(:user)
+        importer = FactoryBot(:importer)
         statement.update_attributes! importer_id: importer.id
         user.company.linked_companies << importer
 
@@ -30,8 +30,8 @@ describe DailyStatement do
       end
 
       it "does not allow users not linked to importer to see it" do
-        user = Factory(:user)
-        importer = Factory(:importer)
+        user = FactoryBot(:user)
+        importer = FactoryBot(:importer)
         statement.update_attributes! importer_id: importer.id
 
         expect(described_class.where(described_class.search_where(master_user)).all).to include statement
@@ -53,23 +53,23 @@ describe DailyStatement do
       end
 
       it "allows master company to view all statements" do
-        expect(statement.can_view? Factory(:master_user)).to eq true
+        expect(statement.can_view? FactoryBot(:master_user)).to eq true
       end
 
       it "does not allow non-master users to see statements without an importer" do
-        expect(statement.can_view? Factory(:user)).to eq false
+        expect(statement.can_view? FactoryBot(:user)).to eq false
       end
 
       it "allows importer users to view statements linked to their account" do
-        user = Factory(:user, company: Factory(:importer))
+        user = FactoryBot(:user, company: FactoryBot(:importer))
         statement.update_attributes! importer_id: user.company.id
 
         expect(statement.can_view? user).to eq true
       end
 
       it "allows users linked to the statements importer to see it" do
-        user = Factory(:user)
-        importer = Factory(:importer)
+        user = FactoryBot(:user)
+        importer = FactoryBot(:importer)
         statement.update_attributes! importer_id: importer.id
         user.company.linked_companies << importer
 
@@ -77,8 +77,8 @@ describe DailyStatement do
       end
 
       it "does not allow users not linked to importer to see it" do
-        user = Factory(:user)
-        importer = Factory(:importer)
+        user = FactoryBot(:user)
+        importer = FactoryBot(:importer)
         statement.update_attributes! importer_id: importer.id
 
         expect(statement.can_view? user).to eq false

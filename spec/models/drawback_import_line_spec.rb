@@ -1,18 +1,18 @@
 describe DrawbackImportLine do
   describe "unallocated" do
     it "should return if no allocations" do
-      d = Factory(:drawback_import_line, quantity:10)
+      d = FactoryBot(:drawback_import_line, quantity:10)
       expect(DrawbackImportLine.unallocated.to_a).to eql([d])
     end
 
     it "should return if unallocated quantity" do
-      d = Factory(:drawback_import_line, quantity:10)
+      d = FactoryBot(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:9)
       expect(DrawbackImportLine.unallocated.to_a).to eql([d])
     end
 
     it "should not return if fully allocated" do
-      d = Factory(:drawback_import_line, quantity:10)
+      d = FactoryBot(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:10)
       expect(DrawbackImportLine.unallocated.to_a).to be_empty
     end
@@ -20,7 +20,7 @@ describe DrawbackImportLine do
 
   describe "unallocated_quantity" do
     it "should return difference between quantities and allocations" do
-      d = Factory(:drawback_import_line, quantity:10)
+      d = FactoryBot(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:9)
       expect(d.unallocated_quantity).to eql(1)
     end
@@ -28,8 +28,8 @@ describe DrawbackImportLine do
 
   describe "not_in_duty_calc_file" do
     it "should find line not linked" do
-      d1 = Factory(:drawback_import_line)
-      d2 = Factory(:drawback_import_line)
+      d1 = FactoryBot(:drawback_import_line)
+      d2 = FactoryBot(:drawback_import_line)
       dcl = DutyCalcImportFileLine.create!(:drawback_import_line_id=>d2.id)
 
       expect(DrawbackImportLine.not_in_duty_calc_file.all).to eq([d1])
@@ -39,7 +39,7 @@ describe DrawbackImportLine do
   describe "duty_calc_line_legacy" do
     it "should generate line" do
       d = DrawbackImportLine.create!(
-        :product=>Factory(:product, :unique_identifier=>"123456"),
+        :product=>FactoryBot(:product, :unique_identifier=>"123456"),
         :entry_number=>'12345678901',
         :quantity=>BigDecimal("10.04"),
         :part_number=>"123456",
@@ -72,8 +72,8 @@ describe DrawbackImportLine do
   describe "duty_calc_line_array_standard" do
     it "should generate array" do
       d = DrawbackImportLine.create!(
-          :product=>Factory(:product, :unique_identifier=>"123456"),
-          :importer=>with_customs_management_id(Factory(:company), '555666'),
+          :product=>FactoryBot(:product, :unique_identifier=>"123456"),
+          :importer=>with_customs_management_id(FactoryBot(:company), '555666'),
           :entry_number=>'12345678901',
           :quantity=>BigDecimal("10.04"),
           :part_number=>"123456",
@@ -124,7 +124,7 @@ describe DrawbackImportLine do
 
     it "handles nils when generating array" do
       d = DrawbackImportLine.create!(
-          :product=>Factory(:product, :unique_identifier=>"123456")
+          :product=>FactoryBot(:product, :unique_identifier=>"123456")
       )
 
       arr = d.duty_calc_line_array_standard

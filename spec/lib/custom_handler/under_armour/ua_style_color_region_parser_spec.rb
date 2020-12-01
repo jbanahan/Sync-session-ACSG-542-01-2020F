@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
   end
   describe '#process' do
     it 'should collect_rows and pass to update_data_hash and then process_data_hash' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return true
       expect(parser).to receive(:collect_rows).and_yield 'cr'
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       expect(u.messages.first.subject).to eq "Style/Color/Region Parser Complete"
     end
     it 'should fail if user cannot view' do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return false
       expect {parser.process(u)}.to raise_error(/permission/)
@@ -144,7 +144,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
     let :user do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(Variant).to receive(:can_edit?).and_return true
-      Factory(:master_user)
+      FactoryBot(:master_user)
     end
     let :custom_defs do
       described_class.prep_custom_definitions [
@@ -173,9 +173,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
     end
     it 'should update existing style' do
       cdefs = custom_defs
-      p = Factory(:product, name:'somename', unique_identifier:'1234567')
+      p = FactoryBot(:product, name:'somename', unique_identifier:'1234567')
       p.update_custom_value!(cdefs[:prod_seasons], "FW17\nSS17")
-      v = Factory(:variant, product:p, variant_identifier:'001')
+      v = FactoryBot(:variant, product:p, variant_identifier:'001')
       expect {new_parser.update_product(hash, user)}.to_not change(Product, :count)
       p = Product.first
       expect(p.name).to eq 'My Name'

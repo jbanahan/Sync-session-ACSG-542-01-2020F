@@ -1,15 +1,15 @@
 describe OpenChain::CustomHandler::AnnInc::AnnFtzErrorReport do
   let(:report) { described_class.new }
   let(:cdefs) { report.cdefs }
-  let(:user) { Factory(:user, username: "Nigel Tufnel") }
+  let(:user) { FactoryBot(:user, username: "Nigel Tufnel") }
   let(:approved_date) { Date.new(2019, 3, 15) }
   let(:prod) do
-    p = Factory(:product, unique_identifier: "style", last_updated_by: user)
+    p = FactoryBot(:product, unique_identifier: "style", last_updated_by: user)
     p.update_custom_value! cdefs[:related_styles], "related styles"
     p
   end
   let(:classi) do
-    cl = Factory(:classification, product: prod)
+    cl = FactoryBot(:classification, product: prod)
     cl.find_and_set_custom_value(cdefs[:approved_date], approved_date)
     cl.find_and_set_custom_value(cdefs[:manual_flag], true)
     cl.find_and_set_custom_value(cdefs[:classification_type], "class type")
@@ -17,23 +17,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnFtzErrorReport do
     cl
   end
   let(:tariff_1) do
-    tr = Factory(:tariff_record, classification: classi, hts_1: "123456789", line_number: 1)
+    tr = FactoryBot(:tariff_record, classification: classi, hts_1: "123456789", line_number: 1)
     tr.find_and_set_custom_value(cdefs[:percent_of_value], 25)
     tr.find_and_set_custom_value(cdefs[:key_description], "key description")
     tr.save!
     tr
   end
   let(:tariff_2) do
-    tr = Factory(:tariff_record, classification: classi, hts_1: "987654321", line_number: 2)
+    tr = FactoryBot(:tariff_record, classification: classi, hts_1: "987654321", line_number: 2)
     tr.find_and_set_custom_value(cdefs[:percent_of_value], 75)
     tr.find_and_set_custom_value(cdefs[:key_description], "key description 2")
     tr.save!
     tr
   end
-  let(:bvt) { Factory(:business_validation_template, module_type: "Product", system_code: "FTZ") }
-  let(:bvre) { Factory(:business_validation_result, business_validation_template: bvt, validatable: prod) }
-  let(:bvru) { Factory(:business_validation_rule, business_validation_template: bvt) }
-  let(:bvrr) { Factory(:business_validation_rule_result_without_callback, business_validation_rule: bvru, business_validation_result: bvre, state: "Fail", message: "FAIL!!") }
+  let(:bvt) { FactoryBot(:business_validation_template, module_type: "Product", system_code: "FTZ") }
+  let(:bvre) { FactoryBot(:business_validation_result, business_validation_template: bvt, validatable: prod) }
+  let(:bvru) { FactoryBot(:business_validation_rule, business_validation_template: bvt) }
+  let(:bvrr) { FactoryBot(:business_validation_rule_result_without_callback, business_validation_rule: bvru, business_validation_result: bvre, state: "Fail", message: "FAIL!!") }
   let(:header) { ["Style", "Related Styles", "Approved Date", "Manual Entry Processing", "Classification Type", "HTS Value",
                   "Percent of Value", "Key Description", "Last User to Alter the Record", "Business Rule Failure Message",
                   "Link to VFI Track"] }
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnFtzErrorReport do
     it "creates and emails report" do
       load_all
 
-      dist_list = Factory(:mailing_list, system_code: "FTZ list", email_addresses: "tufnel@stonehenge.biz")
+      dist_list = FactoryBot(:mailing_list, system_code: "FTZ list", email_addresses: "tufnel@stonehenge.biz")
       Timecop.freeze(DateTime.new(2019, 3, 15, 6)) { described_class.run_schedulable("distribution_list" => "FTZ list") }
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]

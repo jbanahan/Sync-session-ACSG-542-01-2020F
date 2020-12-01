@@ -2,14 +2,14 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
   let (:xml_data) { IO.read 'spec/fixtures/files/gtn_generic_invoice.xml' }
   let (:xml) { REXML::Document.new(xml_data) }
   let (:invoice_xml) { REXML::XPath.first(xml, "/Invoice/invoiceDetail") }
-  let! (:india) { Factory(:country, iso_code: "IN") }
-  let! (:ca) { Factory(:country, iso_code: "CA") }
+  let! (:india) { FactoryBot(:country, iso_code: "IN") }
+  let! (:ca) { FactoryBot(:country, iso_code: "CA") }
   let! (:importer) {
-    i = Factory(:importer, system_code: "SYSTEM_CODE")
+    i = FactoryBot(:importer, system_code: "SYSTEM_CODE")
     i.system_identifiers.create! system: "GT Nexus Invoice Consignee", code: "63480155069"
     i
   }
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
   let (:inbound_file) { InboundFile.new }
 
   describe "process_invoice" do

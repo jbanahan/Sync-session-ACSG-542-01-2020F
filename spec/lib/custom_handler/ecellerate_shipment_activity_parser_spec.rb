@@ -28,22 +28,22 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     it "must have ecellerate custom feature" do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return false
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:master_user))).to be_falsey
+      expect(described_class.can_view?(FactoryBot(:master_user))).to be_falsey
     end
     it "must be from master user" do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:user))).to be_falsey
+      expect(described_class.can_view?(FactoryBot(:user))).to be_falsey
     end
     it "must be user who can edit shipments" do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return false
-      expect(described_class.can_view?(Factory(:master_user))).to be_falsey
+      expect(described_class.can_view?(FactoryBot(:master_user))).to be_falsey
     end
     it "should pass for user who can edit shipments, is master, and has custom feature enabled" do
       expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('ecellerate').and_return true
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
-      expect(described_class.can_view?(Factory(:master_user))).to be_truthy
+      expect(described_class.can_view?(FactoryBot(:master_user))).to be_truthy
     end
   end
   describe "process" do
@@ -71,10 +71,10 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
       described_class.new(a).parse x
     end
     before :each do
-      @imp = Factory(:company, importer:true, ecellerate_customer_number:'CUSTNUM')
+      @imp = FactoryBot(:company, importer:true, ecellerate_customer_number:'CUSTNUM')
     end
     it "should update existing shipment" do
-      s = Factory(:shipment, importer:@imp, house_bill_of_lading:'HBOL123')
+      s = FactoryBot(:shipment, importer:@imp, house_bill_of_lading:'HBOL123')
       r = default_row
       expect {run_parse [r]}.to_not change(Shipment, :count)
       s.reload
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     it "should skip shipments where ecellerate_customer_number not found for importer" do
       r = default_row(ior:'OTHER')
       d = 1.week.ago
-      s = Factory(:shipment, importer:@imp, house_bill_of_lading:r[1], updated_at:d)
+      s = FactoryBot(:shipment, importer:@imp, house_bill_of_lading:r[1], updated_at:d)
       expect {run_parse [r]}.to_not change(s, :updated_at)
       expect(ActionMailer::Base.deliveries.size).to eq 0
     end

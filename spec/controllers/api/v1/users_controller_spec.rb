@@ -7,7 +7,7 @@ describe Api::V1::UsersController do
   describe "login" do
 
     it "validates a user's login credentials" do
-      u = Factory(:user, username: "user", api_auth_token: "auth_token")
+      u = FactoryBot(:user, username: "user", api_auth_token: "auth_token")
       u.update_user_password "password", "password"
       post :login, {user: {username: "user", password: "password"}}
 
@@ -26,7 +26,7 @@ describe Api::V1::UsersController do
     end
 
     it "generates an authtoken for users without one" do
-      u = Factory(:user, username: "user")
+      u = FactoryBot(:user, username: "user")
       u.update_user_password "password", "password"
       post :login, {user: {username: "user", password: "password"}}
 
@@ -38,7 +38,7 @@ describe Api::V1::UsersController do
   end
 
   describe "google_oauth2", :without_partial_double_verification do
-    let!(:user) { Factory(:user, username: "user", api_auth_token: "auth_token", email: "me@gmail.com") }
+    let!(:user) { FactoryBot(:user, username: "user", api_auth_token: "auth_token", email: "me@gmail.com") }
 
     let(:config) do
       {client_secret: "secret", client_id: "id"}
@@ -125,7 +125,7 @@ describe Api::V1::UsersController do
 
   describe "#me" do
     it "gets my user profile" do
-      u = Factory(:user,
+      u = FactoryBot(:user,
                   first_name: 'Joe',
                   last_name: 'User',
                   username: 'uname',
@@ -157,12 +157,12 @@ describe Api::V1::UsersController do
 
   describe "enabled_users" do
     it "returns enabled users belonging to current_user's visible companies" do
-      linked_co = Factory(:company, name: 'Konvenientz')
-      co = Factory(:company, name: 'Acme', linked_companies: [linked_co])
-      u = Factory(:user, company: co, first_name: 'Nigel', last_name: 'Tufnel', username: 'ntufnel', disabled: false)
-      u2 = Factory(:user, company: linked_co, first_name: 'David', last_name: 'St. Hubbins', username: 'dsthubbins', disabled: nil)
-      u3 = Factory(:user, company: linked_co, first_name: 'AAA', last_name: 'ZZZZ', username: 'AAA ZZZZ', disabled: nil)
-      Factory(:user, company: linked_co, first_name: 'Derek', last_name: 'Smalls', username: 'dsmalls', disabled: true)
+      linked_co = FactoryBot(:company, name: 'Konvenientz')
+      co = FactoryBot(:company, name: 'Acme', linked_companies: [linked_co])
+      u = FactoryBot(:user, company: co, first_name: 'Nigel', last_name: 'Tufnel', username: 'ntufnel', disabled: false)
+      u2 = FactoryBot(:user, company: linked_co, first_name: 'David', last_name: 'St. Hubbins', username: 'dsthubbins', disabled: nil)
+      u3 = FactoryBot(:user, company: linked_co, first_name: 'AAA', last_name: 'ZZZZ', username: 'AAA ZZZZ', disabled: nil)
+      FactoryBot(:user, company: linked_co, first_name: 'Derek', last_name: 'Smalls', username: 'dsmalls', disabled: true)
       allow_api_access u
 
       get :enabled_users
@@ -201,7 +201,7 @@ describe Api::V1::UsersController do
 
   describe "#toggle_email_new_messages" do
     it "sets email_new_messages" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow_api_access u
       post :toggle_email_new_messages
       expect(response).to redirect_to '/api/v1/users/me'
@@ -211,7 +211,7 @@ describe Api::V1::UsersController do
     end
 
     it "unsets email_new_messages" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       u.email_new_messages = true
       u.save!
       allow_api_access u
@@ -224,7 +224,7 @@ describe Api::V1::UsersController do
   end
 
   describe "change_my_password" do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     it "allows user to change their password" do
       allow_api_access(user)

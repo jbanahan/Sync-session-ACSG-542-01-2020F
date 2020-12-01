@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser do
     let (:file_data) { IO.read 'spec/fixtures/files/attorney.png' }
     let (:filename) { "US_IOR-12345789_EE908U_Ion#Enterprises_PGA_RAD_RadiationCertificate.20191203171954407.png" }
     let! (:importer) {
-      add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "12345789")
+      add_system_identifier(with_customs_management_id(FactoryBot(:importer), "CMID"), "Amazon Reference", "12345789")
     }
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let! (:inbound_file) {
       f = InboundFile.new
       allow(subject).to receive(:inbound_file).and_return f

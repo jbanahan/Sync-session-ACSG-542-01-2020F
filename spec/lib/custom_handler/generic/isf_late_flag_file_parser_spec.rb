@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Generic::IsfLateFlagFileParser do
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
   let(:custom_file) { double "custom file "}
   before { allow(custom_file).to receive(:attached_file_name).and_return "file.xls" }
 
@@ -42,8 +42,8 @@ describe OpenChain::CustomHandler::Generic::IsfLateFlagFileParser do
   describe 'process' do
     let(:subject) { described_class.new(custom_file) }
     let(:file_reader) { double "dummy reader" }
-    let!(:transaction_1) { Factory(:security_filing, transaction_number: "Transaction1") }
-    let!(:transaction_2) { Factory(:security_filing, transaction_number: "Transaction2") }
+    let!(:transaction_1) { FactoryBot(:security_filing, transaction_number: "Transaction1") }
+    let!(:transaction_2) { FactoryBot(:security_filing, transaction_number: "Transaction2") }
 
     let(:header_row) { ["A", "B", "C", "D", "E", "F", "G", "H"] }
     let(:blank_row) { ["", "", "", "", "", "", "", ""] }

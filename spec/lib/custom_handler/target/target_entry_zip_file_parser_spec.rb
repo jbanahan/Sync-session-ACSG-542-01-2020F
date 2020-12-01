@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
 
   describe "handle_empty_file" do
     it "logs a reject message and sends an email" do
-      Factory(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
+      FactoryBot(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
 
       subject.handle_empty_file "some_file_678.zip", nil
 
@@ -43,16 +43,16 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
 
     it "combines all PDFs from a zip file" do
       # This entry shouldn't be chosen because it doesn't belong to Target.
-      Factory(:entry, customer_number: "ARGENT", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28856",
+      FactoryBot(:entry, customer_number: "ARGENT", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28856",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 8, 1))
       # This entry shouldn't be chosen because it doesn't come from the Alliance system.
-      Factory(:entry, customer_number: "TARGEN", source_system: Entry::FENIX_SOURCE_SYSTEM, broker_reference: "ENT28857",
+      FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::FENIX_SOURCE_SYSTEM, broker_reference: "ENT28857",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 8, 2))
       # This entry is the one that we should be matching to.
-      entry = Factory(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
+      entry = FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
                               master_bills_of_lading: "YMLUW490374362\n YMLUW490374363", file_logged_date: Date.new(2019, 7, 31))
       # The newer entry should be chosen, not this one, although this entry matches the look-up criteria.
-      Factory(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28855",
+      FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28855",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 4, 4))
 
       # This verifies that we're not trying to include the html file in this zip, only the PDFs.
@@ -86,10 +86,10 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
 
     it "sends email if matching entry cannot be found" do
       # This entry matches everything it needs to match, but the file logged date is too far in the past to be returned.
-      Factory(:entry, customer_number: "TARGEN", source_system: Entry::FENIX_SOURCE_SYSTEM, broker_reference: "ENT28857",
+      FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::FENIX_SOURCE_SYSTEM, broker_reference: "ENT28857",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 2, 15))
 
-      Factory(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
+      FactoryBot(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
 
       expect(OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender).not_to receive(:send_entry_packet_to_s3)
 
@@ -111,7 +111,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
     end
 
     it "sends email if filename format is abnormal" do
-      Factory(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
+      FactoryBot(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
 
       expect(OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender).not_to receive(:send_entry_packet_to_s3)
 
@@ -139,9 +139,9 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
     end
 
     it "handles a zip-stitching error" do
-      Factory(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
+      FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 7, 31))
-      Factory(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
+      FactoryBot(:mailing_list, system_code: "target_pdf_errors", email_addresses: "a@b.com, c@d.com")
 
       expect(subject).to receive(:add_pdf_to_entry_packet).and_raise "Stitching error"
 
@@ -162,7 +162,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryZipFileParser do
     end
 
     it "raises error if mailing list not configured when there's a zip-stitching error" do
-      Factory(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
+      FactoryBot(:entry, customer_number: "TARGEN", source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "ENT28858",
                       master_bills_of_lading: "YMLUW490374363", file_logged_date: Date.new(2019, 7, 31))
 
       expect(subject).to receive(:add_pdf_to_entry_packet).and_raise "Stitching error"

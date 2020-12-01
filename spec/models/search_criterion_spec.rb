@@ -1,5 +1,5 @@
 describe SearchCriterion do
-  let(:product) { Factory(:product) }
+  let(:product) { FactoryBot(:product) }
 
   it 'knows what type of criterion it is' do
     sc = described_class.create(model_field_uid: 'ent_release_date', operator: 'nqf', value: 'ent_arrival_date')
@@ -14,8 +14,8 @@ describe SearchCriterion do
 
   describe "copy_attributes" do
     let(:criterion) do
-      Factory(:search_criterion, search_setup: Factory(:search_setup), business_validation_template: Factory(:business_validation_template),
-                                 one_time_alert: Factory(:one_time_alert), include_empty: true, model_field_uid: "ent_cust_num",
+      FactoryBot(:search_criterion, search_setup: FactoryBot(:search_setup), business_validation_template: FactoryBot(:business_validation_template),
+                                 one_time_alert: FactoryBot(:one_time_alert), include_empty: true, model_field_uid: "ent_cust_num",
                                  operator: "eq", secondary_model_field_uid: "ent_brok_ref", value: "val")
     end
 
@@ -32,7 +32,7 @@ describe SearchCriterion do
   end
 
   context "less than decimal" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'CommercialInvoiceLine', user: user) }
 
     let(:search_criterion) do
@@ -56,7 +56,7 @@ describe SearchCriterion do
   end
 
   context "greater than decimal" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'CommercialInvoiceLine', user: user) }
 
     let(:search_criterion) do
@@ -80,7 +80,7 @@ describe SearchCriterion do
   end
 
   context "equal decimal" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'CommercialInvoiceLine', user: user) }
 
     let(:search_criterion) do
@@ -104,7 +104,7 @@ describe SearchCriterion do
   end
 
   context "not equal decimal" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'CommercialInvoiceLine', user: user) }
 
     let(:search_criterion) do
@@ -134,23 +134,23 @@ describe SearchCriterion do
       let(:sc) { ss.search_criterions.new(model_field_uid: 'ent_customer_references', operator: 'regexp', value: 'X\d{3}Y') }
 
       it "passes if all field segments validate" do
-        ent = Factory(:entry, customer_references: "X123Y\n X456Y")
+        ent = FactoryBot(:entry, customer_references: "X123Y\n X456Y")
         expect(sc.test?(ent, nil, {split_field: true})).to be_truthy
       end
 
       it "fails if any field segment fails to validate" do
-        ent = Factory(:entry, customer_references: "X123Y\n 456Y")
+        ent = FactoryBot(:entry, customer_references: "X123Y\n 456Y")
         expect(sc.test?(ent, nil, {split_field: true})).to be_falsey
       end
 
       context "with pass_if_any option" do
         it "passes if at least one field segment validates" do
-          ent = Factory(:entry, customer_references: "X123Y\n 456Y")
+          ent = FactoryBot(:entry, customer_references: "X123Y\n 456Y")
           expect(sc.test?(ent, nil, {split_field: true, pass_if_any: true})).to be_truthy
         end
 
         it "fails if all field segments fail to validate" do
-          ent = Factory(:entry, customer_references: "123Y\n 456Y")
+          ent = FactoryBot(:entry, customer_references: "123Y\n 456Y")
           expect(sc.test?(ent, nil, {split_field: true, pass_if_any: true})).to be_falsey
         end
       end
@@ -160,23 +160,23 @@ describe SearchCriterion do
       let(:sc) { ss.search_criterions.new(model_field_uid: 'ent_customer_references', operator: 'eqf', value: 'ent_cust_num') }
 
       it "passes if all field segments validate" do
-        ent = Factory(:entry, customer_references: "FOO\n FOO", customer_number: "FOO")
+        ent = FactoryBot(:entry, customer_references: "FOO\n FOO", customer_number: "FOO")
         expect(sc.test?(ent, nil, {split_field: true})).to be_truthy
       end
 
       it "fails if any field segment fails to validate" do
-        ent = Factory(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
+        ent = FactoryBot(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
         expect(sc.test?(ent, nil, {split_field: true})).to be_falsey
       end
 
       context "with pass_if_any option" do
         it "passes if at least one field segment validates" do
-          ent = Factory(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
+          ent = FactoryBot(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
           expect(sc.test?(ent, nil, {split_field: true, pass_if_any: true})).to be_truthy
         end
 
         it "fails if all field segments fail to validate" do
-          ent = Factory(:entry, customer_references: "BAR\n BAR", customer_number: "FOO")
+          ent = FactoryBot(:entry, customer_references: "BAR\n BAR", customer_number: "FOO")
           expect(sc.test?(ent, nil, {split_field: true, pass_if_any: true})).to be_falsey
         end
       end
@@ -184,35 +184,35 @@ describe SearchCriterion do
   end
 
   context "not equal to (field)" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'Entry', user: user) }
     let(:search_criterion) do
       search_setup.search_criterions.new(model_field_uid: 'ent_release_date', operator: 'nqfd', value: 'ent_arrival_date')
     end
 
     it "passes if field is not equal to other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "does not pass if field is equal other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "passes if field is null" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "passes if other field is null" do
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
@@ -220,7 +220,7 @@ describe SearchCriterion do
   end
 
   context "not equal to (field including time)" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'Entry', user: user) }
 
     let(:search_criterion) do
@@ -230,14 +230,14 @@ describe SearchCriterion do
     it "cares about time" do
       time1 = Time.zone.local("2017", "01", "01", "12", "59")
       time2 = Time.zone.local("2017", "01", "01", "12", "58")
-      ent = Factory(:entry, arrival_date: time1, release_date: time2)
+      ent = FactoryBot(:entry, arrival_date: time1, release_date: time2)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "passes if field is not equal to other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
@@ -245,21 +245,21 @@ describe SearchCriterion do
 
     it "does not pass if field is equal other field's value" do
       time = Time.zone.local("2017", "01", "01", "12", "59")
-      ent = Factory(:entry, arrival_date: time, release_date: time)
+      ent = FactoryBot(:entry, arrival_date: time, release_date: time)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "passes if field is null" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "passes if other field is null" do
-      ent = Factory(:entry, arrival_date: nil, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
@@ -267,7 +267,7 @@ describe SearchCriterion do
   end
 
   context "equals (field including time)" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'Entry', user: user) }
 
     let(:search_criterion) do
@@ -277,7 +277,7 @@ describe SearchCriterion do
     it "cares about time" do
       time1 = Time.zone.local("2017", "01", "01", "12", "59")
       time2 = Time.zone.local("2017", "01", "01", "12", "58")
-      ent = Factory(:entry, arrival_date: time1, release_date: time2)
+      ent = FactoryBot(:entry, arrival_date: time1, release_date: time2)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -285,7 +285,7 @@ describe SearchCriterion do
 
     it "passes if field is equal to other field's value" do
       time = Time.zone.local("2017", "01", "01", "12", "59")
-      ent = Factory(:entry, arrival_date: time, release_date: time)
+      ent = FactoryBot(:entry, arrival_date: time, release_date: time)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
@@ -294,21 +294,21 @@ describe SearchCriterion do
     it "does not pass if field does not equal other field's value" do
       time1 = Time.zone.local("2017", "01", "01", "12", "59")
       time2 = Time.zone.local("2017", "01", "01", "12", "58")
-      ent = Factory(:entry, arrival_date: time1, release_date: time2)
+      ent = FactoryBot(:entry, arrival_date: time1, release_date: time2)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "does not pass if field is null" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "does not pass if other field is null" do
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -316,7 +316,7 @@ describe SearchCriterion do
   end
 
   context "after (field)" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'Entry', user: user) }
 
     let(:search_criterion) do
@@ -324,35 +324,35 @@ describe SearchCriterion do
     end
 
     it "passes if field is after other field's value" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "fails if field is same as other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if field is before other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if field is null" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if other field is null" do
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -360,7 +360,7 @@ describe SearchCriterion do
 
     it "passes if field is null and include empty is true" do
       search_criterion.include_empty = true
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -368,7 +368,7 @@ describe SearchCriterion do
 
     it "passes if field is not null and other field is true and include empty is true" do
       search_criterion.include_empty = true
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -378,12 +378,12 @@ describe SearchCriterion do
       # There's no real logic differences in search criterion for handling custom fields
       # for the before fields, but there is some backend stuff behind it that I want to make sure
       # don't cause regressions if they're modified.
-      def1 = Factory(:custom_definition, data_type: 'date', module_type: 'Entry')
-      def2 = Factory(:custom_definition, data_type: 'date', module_type: 'Entry')
+      def1 = FactoryBot(:custom_definition, data_type: 'date', module_type: 'Entry')
+      def2 = FactoryBot(:custom_definition, data_type: 'date', module_type: 'Entry')
       search_criterion.model_field_uid = described_class.make_field_name def1
       search_criterion.value = described_class.make_field_name def2
 
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       ent.update_custom_value! def1, 1.month.ago
       ent.update_custom_value! def2, 2.months.ago
 
@@ -394,7 +394,7 @@ describe SearchCriterion do
 
     it "passes when comparing fields across multiple module levels" do
       # This tests that we get the entry back if the release date is after the invoice date
-      inv = Factory(:commercial_invoice, invoice_date: 2.months.ago)
+      inv = FactoryBot(:commercial_invoice, invoice_date: 2.months.ago)
       ent = inv.entry
       ent.update release_date: 1.month.ago
       search_criterion.value = "ci_invoice_date"
@@ -406,7 +406,7 @@ describe SearchCriterion do
   end
 
   context "before (field)" do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
     let(:search_setup) { SearchSetup.new(module_type: 'Entry', user: user) }
 
     let(:search_criterion) do
@@ -414,35 +414,35 @@ describe SearchCriterion do
     end
 
     it "passes if field is before other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "fails if field is same as other field's value" do
-      ent = Factory(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: 1.day.ago, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if field is after other field's value" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: 1.day.ago)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: 1.day.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if field is null" do
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "fails if other field is null" do
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_falsey
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -450,7 +450,7 @@ describe SearchCriterion do
 
     it "passes if field is null and include empty is true" do
       search_criterion.include_empty = true
-      ent = Factory(:entry, arrival_date: 2.days.ago, release_date: nil)
+      ent = FactoryBot(:entry, arrival_date: 2.days.ago, release_date: nil)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -458,7 +458,7 @@ describe SearchCriterion do
 
     it "passes if field is not null and other field is true and include empty is true" do
       search_criterion.include_empty = true
-      ent = Factory(:entry, arrival_date: nil, release_date: 2.days.ago)
+      ent = FactoryBot(:entry, arrival_date: nil, release_date: 2.days.ago)
       expect(search_criterion.test?(ent)).to be_truthy
       ents = search_criterion.apply(Entry.all).all
       expect(ents).to be_empty
@@ -468,8 +468,8 @@ describe SearchCriterion do
       # There's no real logic differences in search criterion for handling custom fields
       # for the before fields, but there is some backend stuff behind it that I want to make sure
       # don't cause regressions if they're modified.
-      def1 = Factory(:custom_definition, data_type: 'date')
-      def2 = Factory(:custom_definition, data_type: 'date')
+      def1 = FactoryBot(:custom_definition, data_type: 'date')
+      def2 = FactoryBot(:custom_definition, data_type: 'date')
       search_criterion.model_field_uid = described_class.make_field_name def1
       search_criterion.value = described_class.make_field_name def2
 
@@ -483,7 +483,7 @@ describe SearchCriterion do
 
     it "passes when comparing fields across multiple module levels" do
       # This tests that we get the entry back if the release date is before the invoice date
-      inv = Factory(:commercial_invoice, invoice_date: 1.month.ago)
+      inv = FactoryBot(:commercial_invoice, invoice_date: 1.month.ago)
       ent = inv.entry
       ent.update release_date: 2.months.ago
       search_criterion.value = "ci_invoice_date"
@@ -648,7 +648,7 @@ describe SearchCriterion do
     describe "apply" do
       context "custom_field" do
         it "finds something created last month with val = 1" do
-          definition = Factory(:custom_definition, data_type: 'date')
+          definition = FactoryBot(:custom_definition, data_type: 'date')
           product.update_custom_value! definition, 1.month.ago
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "pm", value: 1)
           v = sc.apply(Product.where("1=1"))
@@ -656,7 +656,7 @@ describe SearchCriterion do
         end
 
         it "finds something with nil date and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'date')
+          definition = FactoryBot(:custom_definition, data_type: 'date')
           product.update_custom_value! definition, nil
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "pm", value: 1)
           sc.include_empty = true
@@ -665,7 +665,7 @@ describe SearchCriterion do
         end
 
         it "finds something with nil string and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'string')
+          definition = FactoryBot(:custom_definition, data_type: 'string')
           product.update_custom_value! definition, nil
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
@@ -674,7 +674,7 @@ describe SearchCriterion do
         end
 
         it "finds something with blank string and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'string')
+          definition = FactoryBot(:custom_definition, data_type: 'string')
           # MySQL only trims out spaces (not other whitespace), that's good enough for our use
           # as the actual vetting of the model fields will catch any additional whitespace and reject
           # the model
@@ -686,7 +686,7 @@ describe SearchCriterion do
         end
 
         it "finds something with nil text and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'text')
+          definition = FactoryBot(:custom_definition, data_type: 'text')
           product.update_custom_value! definition, nil
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
@@ -695,7 +695,7 @@ describe SearchCriterion do
         end
 
         it "finds something with blank text and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'text')
+          definition = FactoryBot(:custom_definition, data_type: 'text')
           product.update_custom_value! definition, " "
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
@@ -704,7 +704,7 @@ describe SearchCriterion do
         end
 
         it "finds something with 0 and include_empty" do
-          definition = Factory(:custom_definition, data_type: 'integer')
+          definition = FactoryBot(:custom_definition, data_type: 'integer')
           product.update_custom_value! definition, 0
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
@@ -713,7 +713,7 @@ describe SearchCriterion do
         end
 
         it "finds something with include_empty that doesn't have a custom value record for custom field" do
-          definition = Factory(:custom_definition, data_type: 'integer')
+          definition = FactoryBot(:custom_definition, data_type: 'integer')
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
@@ -721,7 +721,7 @@ describe SearchCriterion do
         end
 
         it "finds something with include_empty that doesn't have a custom value record for the child object's custom field" do
-          definition = Factory(:custom_definition, data_type: 'integer', module_type: "Classification")
+          definition = FactoryBot(:custom_definition, data_type: 'integer', module_type: "Classification")
           sc = described_class.new(model_field_uid: "*cf_#{definition.id}", operator: "eq", value: 1)
           sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
@@ -730,7 +730,7 @@ describe SearchCriterion do
 
         it "handles virtual custom fields" do
           # Virtual search queries work pretty much identical to standard fields, so we shouldn't need to bother checking all different data types, etc
-          cdef = Factory(:custom_definition, data_type: 'datetime', virtual_search_query: "SELECT NOW()", virtual_value_query: "SELECT NOW()")
+          cdef = FactoryBot(:custom_definition, data_type: 'datetime', virtual_search_query: "SELECT NOW()", virtual_value_query: "SELECT NOW()")
 
           sc = described_class.new(model_field_uid: "*cf_#{cdef.id}", operator: "gt", value: (Time.zone.now.to_date - 1.day).to_s)
           v = sc.apply(Product.where("1=1"))
@@ -741,7 +741,7 @@ describe SearchCriterion do
 
       context "normal_field" do
         it "processes value before search" do
-          t = Factory(:tariff_record, hts_1: "9801001010")
+          t = FactoryBot(:tariff_record, hts_1: "9801001010")
           sc = described_class.new(model_field_uid: :hts_hts_1, operator: "eq", value: "9801.00.1010")
           v = sc.apply(TariffRecord.where("1=1"))
           expect(v.all).to include t
@@ -787,7 +787,7 @@ describe SearchCriterion do
 
         it "finds something with a nil date and include_empty" do
           # Need to use an order since there are no nullable datetime fields on a product
-          order = Factory(:order)
+          order = FactoryBot(:order)
           sc = described_class.new(model_field_uid: :ord_closed_at, operator: "pm", value: 2)
           sc.include_empty = true
           expect(sc.apply(Order.all)).to include order
@@ -823,7 +823,7 @@ describe SearchCriterion do
 
         it "finds an entry when there is a regex match on the appropriate date field" do
           # Using entry because it has an actual date field in it
-          e = Factory(:entry, eta_date: '2013-02-03')
+          e = FactoryBot(:entry, eta_date: '2013-02-03')
 
           sc = described_class.new(model_field_uid: :ent_eta_date, operator: "dt_regexp", value: "-02-")
           expect(sc.apply(Entry.where("1=1")).all).to include e
@@ -836,7 +836,7 @@ describe SearchCriterion do
 
         it "finds an entry when there is a not regex match on the appropriate date field" do
           # Using entry because it has an actual date field in it
-          e = Factory(:entry, eta_date: '2013-02-03')
+          e = FactoryBot(:entry, eta_date: '2013-02-03')
 
           sc = described_class.new(model_field_uid: :ent_eta_date, operator: "dt_notregexp", value: "1999")
           expect(sc.apply(Entry.where("1=1")).all).to include e
@@ -845,7 +845,7 @@ describe SearchCriterion do
 
         it "does not find an entry when there is a not regex match on the appropriate date field" do
           # Using entry because it has an actual date field in it
-          e = Factory(:entry, eta_date: '2013-02-03')
+          e = FactoryBot(:entry, eta_date: '2013-02-03')
 
           sc = described_class.new(model_field_uid: :ent_eta_date, operator: "dt_notregexp", value: "2013")
           expect(sc.apply(Entry.where("1=1")).all).not_to include e
@@ -896,14 +896,14 @@ describe SearchCriterion do
         end
 
         it "finds a product when there is a regex match on the appropriate integer field" do
-          product.attachments << Factory(:attachment)
+          product.attachments << FactoryBot(:attachment)
           sc = described_class.new(model_field_uid: :prod_attachment_count, operator: "regexp", value: "1")
           expect(sc.apply(Product.where("1=1")).all).to include product
           expect(sc.test?(product)).to be_truthy
         end
 
         it "finds a product when there is a regex match on the appropriate integer field" do
-          product.attachments << Factory(:attachment)
+          product.attachments << FactoryBot(:attachment)
           sc = described_class.new(model_field_uid: :prod_attachment_count, operator: "notregexp", value: "0")
           expect(sc.apply(Product.where("1=1")).all).to include product
           expect(sc.test?(product)).to be_truthy
@@ -924,7 +924,7 @@ describe SearchCriterion do
         end
 
         it "finds something with 0 integer value and include_empty" do
-          entry = Factory(:entry)
+          entry = FactoryBot(:entry)
           entry.update(total_packages: 0)
           sc = described_class.new(model_field_uid: :ent_total_packages, operator: "eq", value: "1")
           sc.include_empty = true
@@ -932,7 +932,7 @@ describe SearchCriterion do
         end
 
         it "finds an entry with a decimal value and a regex match" do
-          entry = Factory(:entry)
+          entry = FactoryBot(:entry)
           entry.update(total_fees: 123.45)
           sc = described_class.new(model_field_uid: :ent_total_fees, operator: "regexp", value: "123")
           sc.apply(Entry.where("1=1")).to_sql
@@ -941,7 +941,7 @@ describe SearchCriterion do
         end
 
         it "finds something with 0 decimal value and include_empty" do
-          entry = Factory(:entry)
+          entry = FactoryBot(:entry)
           entry.update(total_fees: 0.0)
           sc = described_class.new(model_field_uid: :ent_total_fees, operator: "eq", value: "1")
           sc.include_empty = true
@@ -949,7 +949,7 @@ describe SearchCriterion do
         end
 
         it "finds something with blank text value and include_empty" do
-          entry = Factory(:entry)
+          entry = FactoryBot(:entry)
           entry.update(sub_house_bills_of_lading: '   ')
           sc = described_class.new(model_field_uid: :ent_sbols, operator: "eq", value: "1")
           sc.include_empty = true
@@ -968,7 +968,7 @@ describe SearchCriterion do
         end
 
         it "finds something with an include empty search parameter on a child object, even if the child object doesn't exist" do
-          entry = Factory(:entry)
+          entry = FactoryBot(:entry)
           sc = described_class.new(model_field_uid: :ci_invoice_number, operator: "eq", value: "1")
           sc.include_empty = true
           expect(sc.apply(Entry.where("1=1")).all).to include entry
@@ -1004,7 +1004,7 @@ describe SearchCriterion do
 
     context "test?" do
       let(:search_criterion_2) { described_class.new(model_field_uid: :pro_start_date, operator: "bma", value: 1) }
-      let(:rate_override) { Factory(:product_rate_override, product_id: product.id) }
+      let(:rate_override) { FactoryBot(:product_rate_override, product_id: product.id) }
 
       it "accepts product created prior to first of the previous month" do
         product.created_at = 2.months.ago.end_of_month
@@ -1041,7 +1041,7 @@ describe SearchCriterion do
 
     context "test?" do
       let(:search_criterion_2) { described_class.new(model_field_uid: :pro_start_date, operator: "ama", value: 1) }
-      let(:rate_override) { Factory(:product_rate_override, product_id: product.id) }
+      let(:rate_override) { FactoryBot(:product_rate_override, product_id: product.id) }
 
       it "accepts product created after the first of the previous month" do
         product.created_at = Time.zone.now.beginning_of_month.at_midnight
@@ -1078,7 +1078,7 @@ describe SearchCriterion do
 
     context "test?" do
       let(:search_criterion_2) { described_class.new(model_field_uid: :pro_start_date, operator: "amf", value: 1) }
-      let(:rate_override) { Factory(:product_rate_override, product_id: product.id) }
+      let(:rate_override) { FactoryBot(:product_rate_override, product_id: product.id) }
 
       it "accepts product created after 1 month from now" do
         product.created_at = (Time.zone.now.beginning_of_month + 2.months).at_midnight
@@ -1115,7 +1115,7 @@ describe SearchCriterion do
 
     context "test?" do
       let(:search_criterion_2) { described_class.new(model_field_uid: :pro_start_date, operator: "bmf", value: 1) }
-      let(:rate_override) { Factory(:product_rate_override, product_id: product.id) }
+      let(:rate_override) { FactoryBot(:product_rate_override, product_id: product.id) }
 
       it "accepts product created before 1 month from now" do
         product.created_at = ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
@@ -1457,11 +1457,11 @@ describe SearchCriterion do
 
   context 'date time field' do
     it "properlies handle not null" do
-      u = Factory(:master_user)
-      cd = Factory(:custom_definition, module_type: 'Product', data_type: 'date')
+      u = FactoryBot(:master_user)
+      cd = FactoryBot(:custom_definition, module_type: 'Product', data_type: 'date')
       product.update_custom_value! cd, Time.zone.now
-      Factory(:product)
-      p3 = Factory(:product)
+      FactoryBot(:product)
+      p3 = FactoryBot(:product)
       p3.custom_values.create!(custom_definition_id: cd.id)
       ss = SearchSetup.new(module_type: 'Product', user: u)
       ss.search_criterions.new(model_field_uid: "*cf_#{cd.id}", operator: 'notnull')
@@ -1471,11 +1471,11 @@ describe SearchCriterion do
     end
 
     it "properlies handle null" do
-      u = Factory(:master_user)
-      cd = Factory(:custom_definition, module_type: 'Product', data_type: 'date')
+      u = FactoryBot(:master_user)
+      cd = FactoryBot(:custom_definition, module_type: 'Product', data_type: 'date')
       product.update_custom_value! cd, Time.zone.now
-      p2 = Factory(:product)
-      p3 = Factory(:product)
+      p2 = FactoryBot(:product)
+      p3 = FactoryBot(:product)
       p3.custom_values.create!(custom_definition_id: cd.id)
       ss = SearchSetup.new(module_type: 'Product', user: u)
       ss.search_criterions.new(model_field_uid: "*cf_#{cd.id}", operator: 'null')
@@ -1653,7 +1653,7 @@ describe SearchCriterion do
   end
 
   context 'boolean custom field' do
-    let(:definition) { Factory(:custom_definition, data_type: 'boolean') }
+    let(:definition) { FactoryBot(:custom_definition, data_type: 'boolean') }
     let(:custom_value) { product.get_custom_value definition }
 
     context 'Is Empty' do
@@ -1683,7 +1683,7 @@ describe SearchCriterion do
       end
 
       context "string_handling" do
-        let!(:entry) { Factory(:entry, broker_reference: ' ') }
+        let!(:entry) { FactoryBot(:entry, broker_reference: ' ') }
         let(:search_criterion) { described_class.new(model_field_uid: 'ent_brok_ref', operator: 'null') }
 
         it "returns on empty string" do
@@ -1735,7 +1735,7 @@ describe SearchCriterion do
       end
 
       context "string_handling" do
-        let!(:entry) { Factory(:entry, broker_reference: 'x') }
+        let!(:entry) { FactoryBot(:entry, broker_reference: 'x') }
         let(:search_criterion) { described_class.new(model_field_uid: 'ent_brok_ref', operator: 'notnull') }
 
         it "returns on empty string" do
@@ -1765,7 +1765,7 @@ describe SearchCriterion do
     end
 
     it "tests for numbers not starting with" do
-      ent = Factory(:entry, total_packages: 10)
+      ent = FactoryBot(:entry, total_packages: 10)
       sc = described_class.new(model_field_uid: 'ent_total_packages', operator: 'nsw', value: "9")
 
       expect(sc.test?(ent)).to be_truthy
@@ -1789,7 +1789,7 @@ describe SearchCriterion do
     end
 
     it "tests for numbers not ending with" do
-      ent = Factory(:entry, total_packages: 10)
+      ent = FactoryBot(:entry, total_packages: 10)
       sc = described_class.new(model_field_uid: 'ent_total_packages', operator: 'new', value: "9")
 
       expect(sc.test?(ent)).to be_truthy
@@ -1802,13 +1802,13 @@ describe SearchCriterion do
   end
 
   context "hierarchical behavior of #test?" do
-    let!(:entry) { Factory(:entry)}
-    let!(:ci1) { Factory(:commercial_invoice, entry: entry) }
-    let!(:cil1_1) { Factory(:commercial_invoice_line, commercial_invoice: ci1, cotton_fee: 100) }
-    let(:cit1_1_1) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
-    let(:cit1_1_2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
+    let!(:entry) { FactoryBot(:entry)}
+    let!(:ci1) { FactoryBot(:commercial_invoice, entry: entry) }
+    let!(:cil1_1) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci1, cotton_fee: 100) }
+    let(:cit1_1_1) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
+    let(:cit1_1_2) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
     let!(:mf) { ModelField.by_uid :cil_cotton_fee }
-    let!(:sc) { Factory(:search_criterion, model_field_uid: "cil_cotton_fee", operator: "eq", value: 100)}
+    let!(:sc) { FactoryBot(:search_criterion, model_field_uid: "cil_cotton_fee", operator: "eq", value: 100)}
 
     it "applies standard test to object's children" do
       expect(sc.test?(entry)).to eq true
@@ -1833,7 +1833,7 @@ describe SearchCriterion do
       end
 
       it "compares fields across hierarchies" do
-        cil2 = Factory(:commercial_invoice_line, cotton_fee: 100)
+        cil2 = FactoryBot(:commercial_invoice_line, cotton_fee: 100)
         expect(sc.test?([entry, cil2.commercial_invoice.entry])).to eq true
       end
     end
@@ -1851,11 +1851,11 @@ describe SearchCriterion do
     end
 
     describe "compare_two_fields" do
-      let!(:cil1_2) { Factory(:commercial_invoice_line, commercial_invoice: ci1) }
-      let(:cit1_2_1) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
-      let(:cit1_2_2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
+      let!(:cil1_2) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci1) }
+      let(:cit1_2_1) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
+      let(:cit1_2_2) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
 
-      let!(:ci2) { Factory(:commercial_invoice, entry: entry) }
+      let!(:ci2) { FactoryBot(:commercial_invoice, entry: entry) }
 
       context "single hierarchy" do
         it "stops yielding after last field testable fields have been reached" do
@@ -1869,10 +1869,10 @@ describe SearchCriterion do
       end
 
       context "two hierarchies" do
-        let(:entry2) { Factory(:entry)}
-        let(:ci_ent2) { Factory(:commercial_invoice, entry: entry2) }
-        let!(:cil_ent2) { Factory(:commercial_invoice_line, commercial_invoice: ci_ent2) }
-        let(:cit_ent2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_ent2)}
+        let(:entry2) { FactoryBot(:entry)}
+        let(:ci_ent2) { FactoryBot(:commercial_invoice, entry: entry2) }
+        let!(:cil_ent2) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci_ent2) }
+        let(:cit_ent2) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_ent2)}
 
         it "stops yielding after last testable fields have been reached" do
           tested = []

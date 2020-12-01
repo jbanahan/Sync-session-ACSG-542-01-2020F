@@ -1,12 +1,12 @@
 describe SecurityFilingsController do
   before :each do
 
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     sign_in_as @u
   end
   describe "show" do
     before :each do
-      @sf = Factory(:security_filing)
+      @sf = FactoryBot(:security_filing)
     end
     it "should allow user who can view the given filing" do
       allow_any_instance_of(SecurityFiling).to receive(:can_view?).and_return(true)

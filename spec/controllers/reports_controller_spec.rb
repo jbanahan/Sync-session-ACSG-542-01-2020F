@@ -3,7 +3,7 @@ describe ReportsController do
   let! (:master_setup) { stub_master_setup }
 
   before(:each) do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
 
     sign_in_as @u
   end
@@ -104,7 +104,7 @@ describe ReportsController do
     end
 
     context "run", :disable_delayed_jobs do
-      let (:country) { Factory(:country) }
+      let (:country) { FactoryBot(:country) }
       let (:first_tariff_set) { country.tariff_sets.create! label: "Old" }
       let (:second_tariff_set) { country.tariff_sets.create! label: "New" }
 
@@ -127,7 +127,7 @@ describe ReportsController do
 
   describe "Daily First Sale Exception Report" do
     let(:report_class) { OpenChain::Report::DailyFirstSaleExceptionReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user}
 
     context "show" do
@@ -170,7 +170,7 @@ describe ReportsController do
       end
 
       it "renders for users who have permission" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         sign_in_as u
         expect(u).to receive(:view_entries?).and_return true
         get :show_duty_savings_report
@@ -187,7 +187,7 @@ describe ReportsController do
       end
 
       it "runs for users who have permission" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         sign_in_as u
         expect(u).to receive(:view_entries?).and_return true
         post :run_duty_savings_report, settings
@@ -199,7 +199,7 @@ describe ReportsController do
 
   describe "H&M Statistics Report" do
     before (:each) do
-      @admin = Factory(:user)
+      @admin = FactoryBot(:user)
       @admin.admin = true
       @admin.save
     end
@@ -236,7 +236,7 @@ describe ReportsController do
 
   describe "POA expiration report" do
     before(:each) do
-      @admin = Factory(:user)
+      @admin = FactoryBot(:user)
       @admin.admin = true
       @admin.save
     end
@@ -273,8 +273,8 @@ describe ReportsController do
 
   describe "Drawback audit report" do
     before(:each) do
-      @u = Factory(:drawback_user)
-      @u.company.drawback_claims << Factory(:drawback_claim)
+      @u = FactoryBot(:drawback_user)
+      @u.company.drawback_claims << FactoryBot(:drawback_claim)
       @dc = @u.company.drawback_claims
     end
 
@@ -435,10 +435,10 @@ describe ReportsController do
 
       it "renders page for authorized users" do
         expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).with(@u).and_return true
-        sgi = with_customs_management_id(Factory(:company, name: 'SGI APPAREL LTD'), 'SGI')
-        sgold = with_customs_management_id(Factory(:company, name: 'S GOLDBERG & CO INC'), 'SGOLD')
-        rugged = with_customs_management_id(Factory(:company, name: 'RUGGED SHARK LLC'), 'RUGGED')
-        Factory(:company)
+        sgi = with_customs_management_id(FactoryBot(:company, name: 'SGI APPAREL LTD'), 'SGI')
+        sgold = with_customs_management_id(FactoryBot(:company, name: 'S GOLDBERG & CO INC'), 'SGOLD')
+        rugged = with_customs_management_id(FactoryBot(:company, name: 'RUGGED SHARK LLC'), 'RUGGED')
+        FactoryBot(:company)
 
         get :show_sg_duty_due_report
         expect(response).to be_success
@@ -470,7 +470,7 @@ describe ReportsController do
 
   describe "Ticket Tracking Report" do
     let(:report_class) { OpenChain::Report::TicketTrackingReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -510,7 +510,7 @@ describe ReportsController do
 
   describe "Ascena Actual Vs Potential First Sale Report" do
     let(:report_class) { OpenChain::Report::AscenaActualVsPotentialFirstSaleReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -549,9 +549,9 @@ describe ReportsController do
   describe "Ascena Entry Audit Report" do
 
     let(:report_class) { OpenChain::Report::AscenaEntryAuditReport }
-    let!(:user) { Factory(:user) }
+    let!(:user) { FactoryBot(:user) }
     let!(:ascena) do
-      co = Factory(:importer)
+      co = FactoryBot(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
@@ -601,9 +601,9 @@ describe ReportsController do
 
   describe "Ascena Vendor Scorecard Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport }
-    let!(:user) { Factory(:user) }
+    let!(:user) { FactoryBot(:user) }
     let!(:ascena) do
-      co = Factory(:importer)
+      co = FactoryBot(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
@@ -651,13 +651,13 @@ describe ReportsController do
 
   describe "Ascena Duty Savings Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport }
-    let!(:user) { Factory(:user) }
+    let!(:user) { FactoryBot(:user) }
     let!(:ascena) do
-      co = Factory(:importer)
+      co = FactoryBot(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
-    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9) }
+    let!(:fm) { FactoryBot(:fiscal_month, company: ascena, year: 2019, month_number: 9) }
 
     before { sign_in_as user }
 
@@ -706,9 +706,9 @@ describe ReportsController do
 
   describe "PVH Canada Duty Assist Report" do
     let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
-    let!(:user) { Factory(:user) }
-    let!(:pvh_canada) { Factory(:company, system_code: "PVHCANADA") }
-    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
+    let!(:user) { FactoryBot(:user) }
+    let!(:pvh_canada) { FactoryBot(:company, system_code: "PVHCANADA") }
+    let!(:fm) { FactoryBot(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
 
     before { sign_in_as user }
 
@@ -720,7 +720,7 @@ describe ReportsController do
       end
 
       it "renders for authorized users" do
-        Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
+        FactoryBot(:fiscal_month, company: pvh_canada, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
 
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         get :show_pvh_canada_duty_assist_report
@@ -752,9 +752,9 @@ describe ReportsController do
 
   describe "PVH Duty Assist Report" do
     let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
-    let!(:user) { Factory(:user) }
-    let!(:pvh) { Factory(:company, system_code: "PVH") }
-    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
+    let!(:user) { FactoryBot(:user) }
+    let!(:pvh) { FactoryBot(:company, system_code: "PVH") }
+    let!(:fm) { FactoryBot(:fiscal_month, company: pvh, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
 
     before { sign_in_as user }
 
@@ -766,7 +766,7 @@ describe ReportsController do
       end
 
       it "renders for authorized users" do
-        Factory(:fiscal_month, company: pvh, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
+        FactoryBot(:fiscal_month, company: pvh, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
 
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         get :show_pvh_duty_assist_report
@@ -798,13 +798,13 @@ describe ReportsController do
 
   describe "Ascena MPF Savings Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport }
-    let!(:user) { Factory(:user) }
+    let!(:user) { FactoryBot(:user) }
     let!(:ascena) do
-      co = Factory(:importer)
+      co = FactoryBot(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
-    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9, end_date: Date.new(2019, 10, 31)) }
+    let!(:fm) { FactoryBot(:fiscal_month, company: ascena, year: 2019, month_number: 9, end_date: Date.new(2019, 10, 31)) }
 
     before { sign_in_as user }
 
@@ -855,7 +855,7 @@ describe ReportsController do
     before :each do
       @ms = stub_master_setup
       allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
       allow(@u).to receive(:view_entries?).and_return true
       sign_in_as @u
 
@@ -869,7 +869,7 @@ describe ReportsController do
       end
 
       it "doesn't render page for non-Vandegrift user" do
-        @u = Factory(:user)
+        @u = FactoryBot(:user)
         sign_in_as @u
         get :show_eddie_bauer_ca_k84_summary
         expect(response).to_not be_success
@@ -886,7 +886,7 @@ describe ReportsController do
       end
 
       it "doesn't run report for non-Vandegrift user" do
-        @u = Factory(:user)
+        @u = FactoryBot(:user)
         sign_in_as @u
         expect(ReportResult).not_to receive(:run_report!)
         post :run_eddie_bauer_ca_k84_summary, {date: @date}
@@ -909,7 +909,7 @@ describe ReportsController do
 
   describe "Lumber Order Snapshot Discrepancy Report" do
     let(:report_class) { OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -986,7 +986,7 @@ describe ReportsController do
 
   describe "Entry Year Over Year Report" do
     let(:report_class) { OpenChain::Report::CustomerYearOverYearReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1000,10 +1000,10 @@ describe ReportsController do
         user.company.master = true
         user.save!
 
-        us_company_1 = with_customs_management_id(Factory(:importer, name:'US-Z'), '12345')
-        us_company_2 = with_customs_management_id(Factory(:importer, name:'US-A'), '23456')
-        ca_company_1 = with_fenix_id(Factory(:importer, name:'CA-Z'), '12345')
-        ca_company_2 = with_fenix_id(Factory(:importer, name:'CA-A'), '23456')
+        us_company_1 = with_customs_management_id(FactoryBot(:importer, name:'US-Z'), '12345')
+        us_company_2 = with_customs_management_id(FactoryBot(:importer, name:'US-A'), '23456')
+        ca_company_1 = with_fenix_id(FactoryBot(:importer, name:'CA-Z'), '12345')
+        ca_company_2 = with_fenix_id(FactoryBot(:importer, name:'CA-A'), '23456')
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_customer_year_over_year_report
@@ -1022,14 +1022,14 @@ describe ReportsController do
       end
 
       it "renders for authorized users, typical user" do
-        us_company_1 = with_customs_management_id(Factory(:importer, name:'US-A'), '23456')
+        us_company_1 = with_customs_management_id(FactoryBot(:importer, name:'US-A'), '23456')
 
         user.company.customer = true
         user.company.linked_companies << us_company_1
         user.save!
 
-        us_company_2 = with_customs_management_id(Factory(:importer, name:'US-Z'), '12345')
-        ca_company = with_fenix_id(Factory(:importer, name:'CA-Z'), '12345')
+        us_company_2 = with_customs_management_id(FactoryBot(:importer, name:'US-Z'), '12345')
+        ca_company = with_fenix_id(FactoryBot(:importer, name:'CA-Z'), '12345')
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_customer_year_over_year_report
@@ -1119,10 +1119,10 @@ describe ReportsController do
       it "runs for admin users" do
         expect(user).to receive(:admin?).and_return true
 
-        importer_1 = with_customs_management_id(Factory(:company), 'SYS01')
-        importer_2 = with_fenix_id(Factory(:company), 'SYS02')
+        importer_1 = with_customs_management_id(FactoryBot(:company), 'SYS01')
+        importer_2 = with_fenix_id(FactoryBot(:company), 'SYS02')
         # No match should be made for this even though there is a blank line in the input.
-        importer_3 = Factory(:company, alliance_customer_number:'')
+        importer_3 = FactoryBot(:company, alliance_customer_number:'')
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
@@ -1158,7 +1158,7 @@ describe ReportsController do
 
   describe "Company Year Over Year Report" do
     let(:report_class) { OpenChain::Report::CompanyYearOverYearReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1198,7 +1198,7 @@ describe ReportsController do
 
   describe "Puma Division Quarter Breakdown" do
     let(:report_class) { OpenChain::Report::PumaDivisionQuarterBreakdown }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1238,7 +1238,7 @@ describe ReportsController do
 
   describe "US Billing Report" do
     let(:report_class) { OpenChain::Report::UsBillingSummary }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1249,8 +1249,8 @@ describe ReportsController do
       end
 
       it "renders for authorized user" do
-        co_1 = with_customs_management_id(Factory(:importer, name: "ACME US"), "ACME")
-        co_2 = with_fenix_id(Factory(:importer, name: "ACME CA"), "ACME CA")
+        co_1 = with_customs_management_id(FactoryBot(:importer, name: "ACME US"), "ACME")
+        co_2 = with_fenix_id(FactoryBot(:importer, name: "ACME CA"), "ACME CA")
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_us_billing_summary
@@ -1291,7 +1291,7 @@ describe ReportsController do
 
   describe "H&M Canada Drawback Report" do
     let(:report_class) { OpenChain::Report::HmCanadaDrawbackReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1331,7 +1331,7 @@ describe ReportsController do
 
     describe "PVH Duty Discount Report" do
       let(:report_class) { OpenChain::Report::PvhDutyDiscountReport }
-      let(:user) { Factory(:user) }
+      let(:user) { FactoryBot(:user) }
       before { sign_in_as user }
 
       context "show" do
@@ -1342,8 +1342,8 @@ describe ReportsController do
         end
 
         it "renders for authorized users" do
-          pvh = Factory(:company, name:'PVH', system_code:'PVH')
-          pvh_ca = Factory(:company, name:'PVH', system_code:'PVHCANADA')
+          pvh = FactoryBot(:company, name:'PVH', system_code:'PVH')
+          pvh_ca = FactoryBot(:company, name:'PVH', system_code:'PVHCANADA')
 
           FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019, 4, 1))
           FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019, 2, 20))
@@ -1413,7 +1413,7 @@ describe ReportsController do
 
   describe "PVH First Cost Savings Report" do
     let(:report_class) { OpenChain::Report::PvhFirstCostSavingsReport }
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     before { sign_in_as user }
 
     context "show" do
@@ -1424,8 +1424,8 @@ describe ReportsController do
       end
 
       it "renders for authorized users" do
-        pvh = Factory(:company, name:'PVH', system_code:'PVH')
-        another_importer = Factory(:company, name:'Another Importer', system_code:'imp')
+        pvh = FactoryBot(:company, name:'PVH', system_code:'PVH')
+        another_importer = FactoryBot(:company, name:'Another Importer', system_code:'imp')
 
         FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019, 4, 1))
         FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019, 2, 20))

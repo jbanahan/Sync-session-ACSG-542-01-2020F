@@ -23,19 +23,19 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
 
   describe "can_view?" do
     it "returns true for master users" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(ms).to receive(:custom_feature?).with('Intacct Invoice Report Upload').and_return true
       expect(described_class.can_view? u).to eq true
     end
 
     it "returns false for non-master users" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(ms).to receive(:custom_feature?).with('Intacct Invoice Report Upload').and_return true
       expect(described_class.can_view? u).to eq false
     end
 
     it "returns false if feature not enabled" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(ms).to receive(:custom_feature?).with('Intacct Invoice Report Upload').and_return false
       expect(described_class.can_view? u).to eq false
     end
@@ -43,8 +43,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
 
   describe "get_urls" do
     it "associates a list of invoice numbers with entry URLs, returning nil for those that aren't found" do
-      bi1 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "1234")
-      bi2 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "5678")
+      bi1 = FactoryBot(:broker_invoice, entry: FactoryBot(:entry), invoice_number: "1234")
+      bi2 = FactoryBot(:broker_invoice, entry: FactoryBot(:entry), invoice_number: "5678")
       expect(handler.get_urls(["1234", "5678", "9012"])).to eq({"1234" => bi1.entry.excel_url,
                                                                 "5678" => bi2.entry.excel_url,
                                                                 "9012" => nil})
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
   describe "send_xl" do
     it "downloads and emails updated XLSX file" do
       temp = instance_double "TempFile"
-      u = Factory(:user, email: "tufnel@stonehenge.biz")
+      u = FactoryBot(:user, email: "tufnel@stonehenge.biz")
       expect(cf).to receive(:attached_file_name).and_return "foo.xlsx"
       expect(OpenChain::S3).to receive(:download_to_tempfile).with("chainio-temp", "test-uuid/intacct_invoice_report/foo.xlsx").and_yield temp
       expect(handler).to receive(:send_success_email).with "tufnel@stonehenge.biz", temp, ["k3"]
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
     let(:xl_client) { instance_double "XlClient" }
 
     describe "process" do
-      let(:u) { Factory(:user, email: "tufnel@stonehenge.biz") }
+      let(:u) { FactoryBot(:user, email: "tufnel@stonehenge.biz") }
 
       it "adds URLs to file, saves it to S3, and emails it" do
         urls = instance_double "Hash"

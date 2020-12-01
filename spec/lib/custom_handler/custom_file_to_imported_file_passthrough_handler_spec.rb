@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
   }
 
   describe "process_file" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     let(:search_setup_attributes) { {name: "Search", user_id: user.id, module_type: "Product"} }
     let(:search_column_uids) { [:prod_uid, :prod_name] }
     let(:file_data) {[["uid", "name"], ["uid2", "name2"]]}

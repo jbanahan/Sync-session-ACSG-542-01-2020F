@@ -1,20 +1,20 @@
 describe AdvancedSearchController do
   before :each do
-    @user = Factory(:master_user, :email=>'a@example.com')
+    @user = FactoryBot(:master_user, :email=>'a@example.com')
 
     sign_in_as @user
   end
 
   describe "destroy" do
     it "should destroy and return id of previous search" do
-      old_search = Factory(:search_setup, :module_type=>'Product', :user=>@user)
-      new_search = Factory(:search_setup, :module_type=>'Product', :user=>@user)
+      old_search = FactoryBot(:search_setup, :module_type=>'Product', :user=>@user)
+      new_search = FactoryBot(:search_setup, :module_type=>'Product', :user=>@user)
       delete :destroy, :id=>new_search.id
       expect(JSON.parse(response.body)['id']).to eq(old_search.id)
       expect(SearchSetup.find_by_id(new_search.id)).to be_nil
     end
     it "should destroy and create new search if none found" do
-      ss = Factory(:search_setup, :user=>@user)
+      ss = FactoryBot(:search_setup, :user=>@user)
       delete :destroy, :id=>ss.id
       id = JSON.parse(response.body)['id']
       new_ss = SearchSetup.find(id)
@@ -22,7 +22,7 @@ describe AdvancedSearchController do
       expect(new_ss.module_type).to eq(ss.module_type)
     end
     it "should not allow destroy of another users search (404)" do
-      ss = Factory(:search_setup)
+      ss = FactoryBot(:search_setup)
       expect {delete :destroy, :id=>ss.id}.to raise_error ActionController::RoutingError
       expect(SearchSetup.find_by_id(ss.id)).not_to be_nil
     end
@@ -62,11 +62,11 @@ describe AdvancedSearchController do
   end
   describe "update" do
     before :each do
-      @ss = Factory(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
+      @ss = FactoryBot(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
         :module_type=>"Product")
     end
     it "should 404 for wrong user" do
-      ss = Factory(:search_setup)
+      ss = FactoryBot(:search_setup)
       expect {put :update, :id=>ss.id, :search_setup=>{:name=>'q'}}.to raise_error ActionController::RoutingError
     end
     it "returns error if sort is submitted without search criterion" do
@@ -194,16 +194,16 @@ describe AdvancedSearchController do
 
   describe "last_search_id" do
     it "should get last search based on search_run" do
-      ss_first = Factory(:search_setup, :user=>@user)
-      ss_second = Factory(:search_setup, :user=>@user)
+      ss_first = FactoryBot(:search_setup, :user=>@user)
+      ss_second = FactoryBot(:search_setup, :user=>@user)
       ss_first.touch
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
 
     it "should return last search updated if no search_runs" do
-      ss_first = Factory(:search_setup, :user=>@user, updated_at:1.day.ago)
-      ss_second = Factory(:search_setup, :user=>@user, updated_at:1.year.ago)
+      ss_first = FactoryBot(:search_setup, :user=>@user, updated_at:1.day.ago)
+      ss_second = FactoryBot(:search_setup, :user=>@user, updated_at:1.year.ago)
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
@@ -213,8 +213,8 @@ describe AdvancedSearchController do
       expect(JSON.parse(response.body)['id']).to eq("0")
     end
     it "should not find a search for another user" do
-      ss_first = Factory(:search_setup)
-      ss_second = Factory(:search_setup, :user=>@user)
+      ss_first = FactoryBot(:search_setup)
+      ss_second = FactoryBot(:search_setup, :user=>@user)
       ss_first.touch
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_second.id.to_s)
@@ -227,7 +227,7 @@ describe AdvancedSearchController do
       expect(response).to redirect_to '/advanced_search#!/1'
     end
     it "should write response for json" do
-      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
+      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'MYNAME',
         :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product", locked:true, date_format:"mm-dd-yyyy")
       @ss.search_columns.create!(:rank=>1, :model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2, :model_field_uid=>:prod_name)
@@ -285,7 +285,7 @@ describe AdvancedSearchController do
       expect(h['model_fields']).to eq(expected_model_fields)
     end
     it "should write response for json and include ftp information for admins" do
-      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
+      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'MYNAME',
         :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product")
       @ss.search_columns.create!(:rank=>1, :model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2, :model_field_uid=>:prod_name)
@@ -307,7 +307,7 @@ describe AdvancedSearchController do
       ])
     end
     it "should set include empty for criterions" do
-      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
+      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'MYNAME',
         :module_type=>"Product")
       @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123", :include_empty=>true)
       get :setup, :id=>@ss.id, :format=>'json'
@@ -318,26 +318,26 @@ describe AdvancedSearchController do
     it "indicates if the search belongs to Integration User" do
       integration = User.integration
       sign_in_as integration
-      @ss = Factory(:search_setup, user: integration, module_type: "Product", name: "MYNAME")
+      @ss = FactoryBot(:search_setup, user: integration, module_type: "Product", name: "MYNAME")
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
       expect(h['user']['integration']).to be true
     end
     it "should 404 if not for correct user" do
-      ss = Factory(:search_setup)
+      ss = FactoryBot(:search_setup)
       expect {get :show, :id=>ss.id, :format=>:json}.to raise_error ActionController::RoutingError
     end
     it "should set allow ftp to true for admin" do
-      ss = Factory(:search_setup, :user=>@user)
+      ss = FactoryBot(:search_setup, :user=>@user)
       expect_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       expect(h['allow_ftp']).to be_truthy
     end
     it "should return full search list for current module_type" do
-      ss = Factory(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
-      ss2 = Factory(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
+      ss = FactoryBot(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
+      ss2 = FactoryBot(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       list = h['search_list']
@@ -345,9 +345,9 @@ describe AdvancedSearchController do
       expect(list.collect {|ss| ss['id']}).to eq([ss2.id, ss.id])
     end
     it "should not return search list for different module_types" do
-      ss = Factory(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
-      ss2 = Factory(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
-      dont_find = Factory(:search_setup, :user=>@user, :module_type=>"Product")
+      ss = FactoryBot(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
+      ss2 = FactoryBot(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
+      dont_find = FactoryBot(:search_setup, :user=>@user, :module_type=>"Product")
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       list = h['search_list']
@@ -356,7 +356,7 @@ describe AdvancedSearchController do
     end
     it "should not show model fields that user cannot view" do
       allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
-      ss = Factory(:search_setup, :user=>@user, :module_type=>'Entry')
+      ss = FactoryBot(:search_setup, :user=>@user, :module_type=>'Entry')
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       found_duty_due = false
@@ -365,7 +365,7 @@ describe AdvancedSearchController do
     end
 
     it "should default date format when none is provided in the search setup" do
-      @ss = Factory(:search_setup, user: @user, name: 'MYNAME', module_type: "Product")
+      @ss = FactoryBot(:search_setup, user: @user, name: 'MYNAME', module_type: "Product")
       get :setup, id: @ss.id, format: 'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -379,7 +379,7 @@ describe AdvancedSearchController do
       expect(response).to redirect_to '/advanced_search#!/1/1'
     end
     it "should write page and per page to search run" do
-      @ss = Factory(:search_setup, :user=>@user)
+      @ss = FactoryBot(:search_setup, :user=>@user)
       get :show, :id=>@ss.id, :page=>'2', :per_page=>'40', :format=>'json'
       expect(response).to be_success
       @ss.reload
@@ -389,10 +389,10 @@ describe AdvancedSearchController do
     end
     context "json" do
       before :each do
-        @ss = Factory(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
+        @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
         @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
         @ss.search_columns.create!(:model_field_uid=>:prod_name, :rank=>2)
-        @p = Factory(:product, :name=>'mpn')
+        @p = FactoryBot(:product, :name=>'mpn')
         allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) # to allow bulk actions
         allow_any_instance_of(SearchQuery).to receive(:count).and_return(501)
         allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
@@ -438,7 +438,7 @@ describe AdvancedSearchController do
       end
 
       it "should 404 if not for current_user" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         @ss.update_attributes(:user_id=>u.id)
         expect {get :show, :id=>@ss.id, :page=>'1', :per_page=>'50', :format=>'json'}.to raise_error ActionController::RoutingError
       end
@@ -459,7 +459,7 @@ describe AdvancedSearchController do
         expect(r['total_pages']).to eq(51)
       end
       it 'should render second page' do
-        p2 = Factory(:product, :name=>'prod2')
+        p2 = FactoryBot(:product, :name=>'prod2')
         get :show, :id=>@ss.id, :format=>'json', :per_page=>'1', :page=>'2'
         r = JSON.parse response.body
         expect(r['page']).to eq(2)
@@ -491,11 +491,11 @@ describe AdvancedSearchController do
     }
 
     before :each do
-      @ss = Factory(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
+      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
       @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
       @ss.search_columns.create!(:model_field_uid=>:prod_name, :rank=>2)
       @ss.search_criterions.create!(:model_field_uid=>:prod_uid, :operator=>:sw, :value=>'X')
-      @p = Factory(:product, :name=>'mpn')
+      @p = FactoryBot(:product, :name=>'mpn')
       allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
     end
 
@@ -547,14 +547,14 @@ describe AdvancedSearchController do
       end
     end
     it "should 404 if user doesn't own search setup" do
-      ss = Factory(:search_setup)
+      ss = FactoryBot(:search_setup)
       expect {get :download, :id=>ss.id, :format=>:xls}.to raise_error ActionController::RoutingError
     end
   end
 
   describe "send_email" do
     before(:each) do
-      @ss = Factory(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
+      @ss = FactoryBot(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
         :module_type=>"Product")
       allow_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true
     end
@@ -632,13 +632,13 @@ describe AdvancedSearchController do
   end
 
   context "audit" do
-    let(:ss) { Factory(:search_setup, user: @user, name: "search name") }
+    let(:ss) { FactoryBot(:search_setup, user: @user, name: "search name") }
 
     describe "show_audit" do
       it "renders if called with search setup that belongs to user" do
         ra1 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018, 3, 15)
         ra2 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018, 3, 16)
-        ra3 = RandomAudit.create! user: Factory(:user), search_setup: ss, report_date: Date.new(2018, 3, 17)
+        ra3 = RandomAudit.create! user: FactoryBot(:user), search_setup: ss, report_date: Date.new(2018, 3, 17)
         get :show_audit, id: ss.id
         expect(response).to render_template :show_audit
         expect(assigns(:ss_id)).to eq ss.id
@@ -646,7 +646,7 @@ describe AdvancedSearchController do
       end
 
       it "redirects otherwise" do
-        ss.update_attributes user: Factory(:user)
+        ss.update_attributes user: FactoryBot(:user)
         get :show_audit, id: ss.id
         expect(response).to be_redirect
       end
@@ -662,7 +662,7 @@ describe AdvancedSearchController do
       end
 
       it "redirects if search setup doesn't belong to user" do
-        ss.update_attributes user: Factory(:user)
+        ss.update_attributes user: FactoryBot(:user)
         expect(ReportResult).to_not receive(:run_report!)
         post :audit, id: ss.id, percent: 25, record_type: "header"
         expect(response).to be_redirect

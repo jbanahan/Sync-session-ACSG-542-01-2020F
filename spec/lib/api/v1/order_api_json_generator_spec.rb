@@ -1,6 +1,6 @@
 describe OpenChain::Api::V1::OrderApiJsonGenerator do
 
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
   let (:params) { {} }
   let (:order) { Order.new }
 

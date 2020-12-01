@@ -1,7 +1,7 @@
 describe OpenChain::Report::AscenaEntryAuditReport do
 
   let(:report) { described_class.new }
-  let(:co) { with_customs_management_id Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE" }
+  let(:co) { with_customs_management_id FactoryBot(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE" }
   let(:date_1) { DateTime.new(2016, 03, 15) }
   let(:date_2) { DateTime.new(2016, 03, 16) }
   let(:date_3) { DateTime.new(2016, 03, 17) }
@@ -12,33 +12,33 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Duty Due Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'Container Count', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'MID Supplier Name', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Invoice Value - Brand', 'Invoice Value - 7501', 'Invoice Value - Contract', 'Entered Value', 'Rounded Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Unit Price - Brand', 'Unit Price - PO', 'Unit Price - 7501', 'Duty Savings - NDC', 'Duty Savings - First Sale', 'First Sale Flag', 'Related Parties', 'Fiscal Month', 'Fiscal Year', 'Vessel/Airline', 'Voyage/Flight', 'Web Link'] }
 
   def create_data
-    vend = Factory(:company, name: "vend name", system_code: "vend sys code")
-    fact = Factory(:company, name: "fact name", system_code: "fact sys code")
-    @ent = Factory(:entry, customer_number: 'ASCE', broker_reference: 'brok ref', entry_number: 'ent num', entry_type: 'ent type', first_release_date: date_1,
+    vend = FactoryBot(:company, name: "vend name", system_code: "vend sys code")
+    fact = FactoryBot(:company, name: "fact name", system_code: "fact sys code")
+    @ent = FactoryBot(:entry, customer_number: 'ASCE', broker_reference: 'brok ref', entry_number: 'ent num', entry_type: 'ent type', first_release_date: date_1,
                    first_entry_sent_date: date_2, entry_filed_date: date_3, final_statement_date: date_4, release_date: date_5, duty_due_date: date_5, transport_mode_code: 'transport mode',
                    master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols', unlading_port_code: 'unlading', lading_port_code: 'lading', importer_tax_id: 'imp tax',
                    customer_name: 'cust name', total_non_dutiable_amount: 1, source_system: 'Alliance', entry_port_code: '0123', fiscal_month: 9, fiscal_year: 2017,
                    vessel: "HMS Pinafore", voyage: "Silk Road")
-    ci = Factory(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 1, non_dutiable_amount: 2)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: ci, po_number: 'po num', part_number: "part num", product_line: 'prod line', country_origin_code: 'coo',
+    ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 1, non_dutiable_amount: 2)
+    @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, po_number: 'po num', part_number: "part num", product_line: 'prod line', country_origin_code: 'coo',
                    country_export_code: 'export code', department: 'dept', mid: 'mid', subheader_number: 1, line_number: 2,
                    customs_line_number: 3, quantity: 1, unit_of_measure: 'uom', add_case_number: 'add case', value: 18, prorated_mpf: 3, mpf: 4, hmf: 5,
                    add_case_value: 6, cvd_case_value: 7, cotton_fee: 8, non_dutiable_amount: 9, unit_price: 10, contract_amount: 20, related_parties: true)
-    @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', duty_rate: 1, spi_primary: 'spi', classification_qty_1: 2,
+    @cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', duty_rate: 1, spi_primary: 'spi', classification_qty_1: 2,
                     classification_qty_2: 3, classification_uom_1: 'class uom 1', classification_uom_2: 'class uom 2', entered_value: 4, entered_value_7501:4,
                     excise_amount: 5, duty_amount: 6)
-    @cit_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts2', duty_rate: 2, spi_primary: 'spi2', classification_qty_1: 3,
+    @cit_2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts2', duty_rate: 2, spi_primary: 'spi2', classification_qty_1: 3,
                      classification_qty_2: 4, classification_uom_1: 'class uom 1(2)', classification_uom_2: 'class uom 2(2)', entered_value: 5, entered_value_7501: 5, excise_amount: 6,
                      duty_amount: 7)
-    Factory(:port, name: 'fenix port', cbsa_port: '0123')
-    Factory(:port, name: 'alliance port', schedule_d_code: '0123')
-    Factory(:container, entry: @ent)
-    @prod = Factory(:product, unique_identifier: 'ASCENA-part num')
-    @ord = Factory(:order, order_number: 'ASCENA-prod line-po num', vendor: vend, factory: fact)
+    FactoryBot(:port, name: 'fenix port', cbsa_port: '0123')
+    FactoryBot(:port, name: 'alliance port', schedule_d_code: '0123')
+    FactoryBot(:container, entry: @ent)
+    @prod = FactoryBot(:product, unique_identifier: 'ASCENA-part num')
+    @ord = FactoryBot(:order, order_number: 'ASCENA-prod line-po num', vendor: vend, factory: fact)
     @ord.find_and_set_custom_value(cdefs[:ord_type], 'AGS')
     @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
     @ord.save!
-    ordln = Factory(:order_line, order: @ord, product: @prod, price_per_unit: 1)
+    ordln = FactoryBot(:order_line, order: @ord, product: @prod, price_per_unit: 1)
     ordln.update_custom_value!(cdefs[:ord_line_wholesale_unit_price], 2)
   end
 
@@ -46,11 +46,11 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     subject { described_class }
 
     let(:helper) { OpenChain::CustomHandler::Ascena::AscenaReportHelper }
-    let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
-    let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
-    let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
-    let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
-    let! (:user) { Factory(:master_user) }
+    let! (:ascena) { with_customs_management_id(FactoryBot(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+    let! (:ann) { with_customs_management_id(FactoryBot(:importer, name: "Ann"), "ATAYLOR") }
+    let! (:maurices) { with_customs_management_id(FactoryBot(:importer, name: "Maurices"), "MAUR") }
+    let! (:ascena_master) { with_customs_management_id(FactoryBot(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+    let! (:user) { FactoryBot(:master_user) }
     let!(:ms) do
       m = stub_master_setup
       allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
@@ -83,7 +83,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
 
     it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
       user.company.update master: false
-      g = Factory(:group, system_code: "ASCE_TRADE_ASSOC")
+      g = FactoryBot(:group, system_code: "ASCE_TRADE_ASSOC")
       user.groups << g
       expect(subject.permissions user).to eq(cust_descriptions)
     end
@@ -101,7 +101,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   end
 
   describe "run_report" do
-    let(:u) { Factory(:user, time_zone: "Eastern Time (US & Canada)", company: co) }
+    let(:u) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)", company: co) }
     after { @temp.close if @temp }
 
     it "generates spreadsheet based on release_date, adjusts for user time zone" do
@@ -123,8 +123,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     it "generates spreadsheet based on fiscal_date" do
       create_data
       @ent.update_attributes(fiscal_date: '2016-12-11', release_date: nil)
-      Factory(:fiscal_month, company: co, year: 2016, month_number: 11, start_date: '2016-11-05', end_date: '2016-12-10')
-      Factory(:fiscal_month, company: co, year: 2017, month_number: 2, start_date: '2017-02-07', end_date: '2017-03-06')
+      FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 11, start_date: '2016-11-05', end_date: '2016-12-10')
+      FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 2, start_date: '2017-02-07', end_date: '2017-03-06')
       stub_master_setup
       @temp = described_class.run_report(u, {'start_fiscal_year_month' => '2016-11', 'end_fiscal_year_month' => '2017-02', 'range_field' => 'fiscal_date', 'cust_number' => 'ASCE'})
       wb = Spreadsheet.open @temp.path
@@ -135,11 +135,11 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   end
 
   describe "get_dates" do
-    let(:u) { Factory(:user, time_zone: "Eastern Time (US & Canada)") }
+    let(:u) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)") }
 
     it "extracts/converts month and year args to the right fiscal_date when range_field is 'fiscal_date'" do
-      Factory(:fiscal_month, company: co, year: 2016, month_number: 11, start_date: '2016-11-05', end_date: '2016-12-10')
-      Factory(:fiscal_month, company: co, year: 2017, month_number: 2, start_date: '2017-02-07', end_date: '2017-03-06')
+      FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 11, start_date: '2016-11-05', end_date: '2016-12-10')
+      FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 2, start_date: '2017-02-07', end_date: '2017-03-06')
       start_date, end_date = report.get_dates(u, {'range_field' => 'fiscal_date', 'start_fiscal_year_month' => '2016-11', 'start_fiscal_year' => '2016', 'end_fiscal_year_month' => '2017-02'})
       expect(start_date).to eq "2016-11-05"
       expect(end_date).to eq "2017-02-07"

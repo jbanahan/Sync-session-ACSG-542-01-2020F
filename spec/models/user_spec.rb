@@ -1,12 +1,12 @@
 describe User do
   describe "new_announcements" do
-    let(:user) { Factory(:user, time_zone: "Eastern Time (US & Canada)") }
+    let(:user) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)") }
     let(:now) { Time.zone.now }
 
     it "returns associated announcements within date range for type 'all' in descending order" do
-      anc1 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
-      anc2 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
-      anc3 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc1 = FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc2 = FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc3 = FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
 
       [anc1, anc2, anc3].each_with_index do |a, idx|
         # test sorting
@@ -18,9 +18,9 @@ describe User do
     end
 
     it "returns associated announcements within date range for type 'user'" do
-      user2 = Factory(:user, time_zone: "Eastern Time (US & Canada)")
-      anc1 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
-      anc2 = Factory(:announcement, category: 'users', start_at: now - 1.day, end_at: now + 1.day)
+      user2 = FactoryBot(:user, time_zone: "Eastern Time (US & Canada)")
+      anc1 = FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc2 = FactoryBot(:announcement, category: 'users', start_at: now - 1.day, end_at: now + 1.day)
       anc2.selected_users << user
 
       [anc1, anc2].each_with_index do |a, idx|
@@ -34,27 +34,27 @@ describe User do
     end
 
     it "omits confirmed announcements" do
-      anc = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
-      Factory(:user_announcement_marker, announcement: anc, user: user, confirmed_at: now)
+      anc = FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      FactoryBot(:user_announcement_marker, announcement: anc, user: user, confirmed_at: now)
 
       expect(user.new_announcements).to be_empty
     end
 
     it "omits announcements before UTC start date" do
-      Factory(:announcement, category: 'all', start_at: now + 1.hour, end_at: now + 1.day)
+      FactoryBot(:announcement, category: 'all', start_at: now + 1.hour, end_at: now + 1.day)
 
       expect(user.new_announcements).to be_empty
     end
 
     it "omits announcements after UTC end date" do
-      Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now - 1.hour)
+      FactoryBot(:announcement, category: 'all', start_at: now - 1.day, end_at: now - 1.hour)
 
       expect(user.new_announcements).to be_empty
     end
   end
 
   describe "locked?" do
-    let(:user) { Factory.create(:user) }
+    let(:user) { FactoryBot.create(:user) }
 
     it 'returns false if user is not active' do
       user.update(disabled: true)
@@ -84,7 +84,7 @@ describe User do
 
   describe "recent_passwords" do
 
-    let!(:user) { Factory.create(:user) }
+    let!(:user) { FactoryBot.create(:user) }
 
     it 'returns the 5 most recently used passwords' do
       # We would expect that password6 not be included in the return value as it is the oldest
@@ -107,7 +107,7 @@ describe User do
 
   describe "api_hash" do
     let (:user) do
-      Factory(:user, first_name: 'Joe', last_name: 'User', username: 'uname', email: 'j@sample.com',
+      FactoryBot(:user, first_name: 'Joe', last_name: 'User', username: 'uname', email: 'j@sample.com',
                      department: 'something', email_new_messages: true)
     end
 
@@ -152,9 +152,9 @@ describe User do
   end
 
   describe "groups" do
-    let(:group_a) { Factory(:group, system_code: 'groupA') }
-    let(:group_b) { Factory(:group, system_code: 'groupB') }
-    let(:user_one) { Factory(:user) }
+    let(:group_a) { FactoryBot(:group, system_code: 'groupA') }
+    let(:group_b) { FactoryBot(:group, system_code: 'groupB') }
+    let(:user_one) { FactoryBot(:user) }
 
     before do
       group_a.users << user_one
@@ -177,24 +177,24 @@ describe User do
   end
 
   describe "available_importers" do
-    let!(:company_one) { Factory(:company, importer: true) }
-    let!(:company_two) { Factory(:company, importer: true) }
-    let!(:company_three) { Factory(:company, importer: true) }
-    let!(:company_four) { Factory(:company) }
+    let!(:company_one) { FactoryBot(:company, importer: true) }
+    let!(:company_two) { FactoryBot(:company, importer: true) }
+    let!(:company_three) { FactoryBot(:company, importer: true) }
+    let!(:company_four) { FactoryBot(:company) }
 
     it "shows all importers if master company" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(u.available_importers.to_a).to eq [company_one, company_two, company_three]
     end
 
     it "shows all linked importers" do
-      u = Factory(:user, company: company_four)
+      u = FactoryBot(:user, company: company_four)
       company_four.linked_companies << company_one
       expect(u.available_importers.to_a).to eq [company_one]
     end
 
     it "shows me if i'm an importer" do
-      u = Factory(:user, company: company_two)
+      u = FactoryBot(:user, company: company_two)
       company_two.linked_companies << company_one
       expect(u.available_importers.to_a).to eq [company_one, company_two]
     end
@@ -216,7 +216,7 @@ describe User do
     end
 
     it "returns api_admin if it exits" do
-      u = Factory(:master_user, username: 'ApiAdmin')
+      u = FactoryBot(:master_user, username: 'ApiAdmin')
       expect(described_class.api_admin).to eq u
     end
   end
@@ -237,13 +237,13 @@ describe User do
     end
 
     it "returns integration if it exits" do
-      u = Factory(:master_user, username: 'integration')
+      u = FactoryBot(:master_user, username: 'integration')
       expect(described_class.integration).to eq u
     end
   end
 
   describe "magic_columns" do
-    let(:user) { Factory(:user, updated_at: 1.year.ago) }
+    let(:user) { FactoryBot(:user, updated_at: 1.year.ago) }
 
     it "does not update updated_at if only confirmation token changed" do
       user.confirmation_token = '12345'
@@ -341,15 +341,15 @@ describe User do
 
     context "official tariffs" do
       it "allows master company user" do
-        expect(Factory(:master_user)).to be_view_official_tariffs
+        expect(FactoryBot(:master_user)).to be_view_official_tariffs
       end
 
       it "does not allow non master company user" do
-        expect(Factory(:user)).not_to be_view_official_tariffs
+        expect(FactoryBot(:user)).not_to be_view_official_tariffs
       end
 
       it "allows if user can view products" do
-        expect(Factory(:user, product_view: true).view_official_tariffs?).to be_truthy
+        expect(FactoryBot(:user, product_view: true).view_official_tariffs?).to be_truthy
       end
     end
 
@@ -374,14 +374,14 @@ describe User do
 
       context "private rules" do
         it "allows master users" do
-          u = Factory(:master_user)
+          u = FactoryBot(:master_user)
           u.company.update(show_business_rules: true)
           expect(u.view_all_business_validation_results?).to be_truthy
           expect(u.edit_all_business_validation_results?).to be_truthy
         end
 
         it "doesn't allow importer users even if company has business-rules viewing allowed" do
-          u = Factory(:importer_user)
+          u = FactoryBot(:importer_user)
           u.company.update(show_business_rules: true)
           expect(u.view_all_business_validation_results?).to be_falsey
           expect(u.edit_all_business_validation_results?).to be_falsey
@@ -391,20 +391,20 @@ describe User do
 
     context "business_validation_rule_results" do
       it "allows master users" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         u.company.update(show_business_rules: true)
         expect(u.view_business_validation_rule_results?).to be_truthy
         expect(u.edit_business_validation_rule_results?).to be_truthy
       end
 
       it "does not allow non master users" do
-        u = Factory(:importer_user)
+        u = FactoryBot(:importer_user)
         expect(u.view_business_validation_rule_results?).to be_falsey
         expect(u.edit_business_validation_rule_results?).to be_falsey
       end
 
       it "allows importer user if company has business rules viewing allowed" do
-        u = Factory(:importer_user)
+        u = FactoryBot(:importer_user)
         u.company.update! show_business_rules: true
 
         expect(u.view_business_validation_rule_results?).to be_truthy
@@ -413,14 +413,14 @@ describe User do
 
       context "private rules" do
         it "allows master users" do
-          u = Factory(:master_user)
+          u = FactoryBot(:master_user)
           u.company.update(show_business_rules: true)
           expect(u.view_all_business_validation_rule_results?).to be_truthy
           expect(u.edit_all_business_validation_rule_results?).to be_truthy
         end
 
         it "doesn't allow importer users even if company has business-rules viewing allowed" do
-          u = Factory(:importer_user)
+          u = FactoryBot(:importer_user)
           u.company.update! show_business_rules: true
 
           expect(u.view_all_business_validation_rule_results?).to be_falsey
@@ -508,21 +508,21 @@ describe User do
 
     context "attachment_archives" do
       it "allows for master user who can view entries" do
-        u = Factory(:user, company: Factory(:company, master: true))
+        u = FactoryBot(:user, company: FactoryBot(:company, master: true))
         allow(u).to receive(:view_entries?).and_return true
         expect(u).to be_view_attachment_archives
         expect(u).to be_edit_attachment_archives
       end
 
       it "does not allow for non-master user" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         allow(u).to receive(:view_entries?).and_return true
         expect(u).not_to be_view_attachment_archives
         expect(u).not_to be_edit_attachment_archives
       end
 
       it "does not allow for user who cannot view entries" do
-        u = Factory(:user, company: Factory(:company, master: true))
+        u = FactoryBot(:user, company: FactoryBot(:company, master: true))
         allow(u).to receive(:view_entries?).and_return false
         expect(u).not_to be_view_attachment_archives
         expect(u).not_to be_edit_attachment_archives
@@ -539,7 +539,7 @@ describe User do
         end
 
         it "allows if permission set and company has permission" do
-          u = Factory(:user, security_filing_view: true, security_filing_edit: true, security_filing_attach: true, security_filing_comment: true)
+          u = FactoryBot(:user, security_filing_view: true, security_filing_edit: true, security_filing_attach: true, security_filing_comment: true)
           expect(u.view_security_filings?).to be_truthy
           expect(u.edit_security_filings?).to be_truthy
           expect(u.attach_security_filings?).to be_truthy
@@ -547,7 +547,7 @@ describe User do
         end
 
         it "does not allow if user permission not set and company has permission" do
-          u = Factory(:user, security_filing_view: false, security_filing_edit: false, security_filing_attach: false, security_filing_comment: false)
+          u = FactoryBot(:user, security_filing_view: false, security_filing_edit: false, security_filing_attach: false, security_filing_comment: false)
           expect(u.view_security_filings?).to be_falsey
           expect(u.edit_security_filings?).to be_falsey
           expect(u.attach_security_filings?).to be_falsey
@@ -560,7 +560,7 @@ describe User do
         allow_any_instance_of(Company).to receive(:edit_security_filings?).and_return(false)
         allow_any_instance_of(Company).to receive(:attach_security_filings?).and_return(false)
         allow_any_instance_of(Company).to receive(:comment_security_filings?).and_return(false)
-        u = Factory(:user, security_filing_view: true, security_filing_edit: true, security_filing_attach: true, security_filing_comment: true)
+        u = FactoryBot(:user, security_filing_view: true, security_filing_edit: true, security_filing_attach: true, security_filing_comment: true)
         expect(u.view_security_filings?).to be_falsey
         expect(u.edit_security_filings?).to be_falsey
         expect(u.attach_security_filings?).to be_falsey
@@ -576,22 +576,22 @@ describe User do
       end
 
       it "allows user to view if permission is set and drawback enabled" do
-        expect(Factory(:user, drawback_view: true).view_drawback?).to be_truthy
+        expect(FactoryBot(:user, drawback_view: true).view_drawback?).to be_truthy
       end
 
       it "allows user to edit if permission is set and drawback enabled" do
-        expect(Factory(:user, drawback_edit: true).edit_drawback?).to be_truthy
+        expect(FactoryBot(:user, drawback_edit: true).edit_drawback?).to be_truthy
       end
 
       it "does not allow view/edit if drawback not enabled" do
         allow(master_setup).to receive(:drawback_enabled?).and_return false
-        u = Factory(:user, drawback_view: true, drawback_edit: true)
+        u = FactoryBot(:user, drawback_view: true, drawback_edit: true)
         expect(u.view_drawback?).to be_falsey
         expect(u.edit_drawback?).to be_falsey
       end
 
       it "nows allow if permissions not set" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         expect(u.view_drawback?).to be_falsey
         expect(u.edit_drawback?).to be_falsey
       end
@@ -605,19 +605,19 @@ describe User do
         end
 
         it "allows view if permission is set" do
-          expect(Factory(:user, broker_invoice_view: true).view_broker_invoices?).to be_truthy
+          expect(FactoryBot(:user, broker_invoice_view: true).view_broker_invoices?).to be_truthy
         end
 
         it "allows edit if permission is set" do
-          expect(Factory(:user, broker_invoice_edit: true).edit_broker_invoices?).to be_truthy
+          expect(FactoryBot(:user, broker_invoice_edit: true).edit_broker_invoices?).to be_truthy
         end
 
         it "does not allow view without permission" do
-          expect(Factory(:user, broker_invoice_view: false).view_broker_invoices?).to be_falsey
+          expect(FactoryBot(:user, broker_invoice_view: false).view_broker_invoices?).to be_falsey
         end
 
         it "does not allow edit without permission" do
-          expect(Factory(:user, broker_invoice_edit: false).edit_broker_invoices?).to be_falsey
+          expect(FactoryBot(:user, broker_invoice_edit: false).edit_broker_invoices?).to be_falsey
         end
       end
 
@@ -628,11 +628,11 @@ describe User do
         end
 
         it "does not allow view even if permission is set" do
-          expect(Factory(:user, broker_invoice_view: true).view_broker_invoices?).to be_falsey
+          expect(FactoryBot(:user, broker_invoice_view: true).view_broker_invoices?).to be_falsey
         end
 
         it "does not allow edit even if permission is set" do
-          expect(Factory(:user, broker_invoice_edit: true).edit_broker_invoices?).to be_falsey
+          expect(FactoryBot(:user, broker_invoice_edit: true).edit_broker_invoices?).to be_falsey
         end
       end
     end
@@ -645,19 +645,19 @@ describe User do
         end
 
         it "allows view if permission is set" do
-          expect(Factory(:user, vfi_invoice_view: true).view_vfi_invoices?).to be_truthy
+          expect(FactoryBot(:user, vfi_invoice_view: true).view_vfi_invoices?).to be_truthy
         end
 
         it "allows edit if permission is set" do
-          expect(Factory(:user, vfi_invoice_edit: true).edit_vfi_invoices?).to be_truthy
+          expect(FactoryBot(:user, vfi_invoice_edit: true).edit_vfi_invoices?).to be_truthy
         end
 
         it "does not allow view without permission" do
-          expect(Factory(:user, vfi_invoice_view: false).view_vfi_invoices?).to be_falsey
+          expect(FactoryBot(:user, vfi_invoice_view: false).view_vfi_invoices?).to be_falsey
         end
 
         it "does not allow edit without permission" do
-          expect(Factory(:user, vfi_invoice_edit: false).edit_vfi_invoices?).to be_falsey
+          expect(FactoryBot(:user, vfi_invoice_edit: false).edit_vfi_invoices?).to be_falsey
         end
       end
 
@@ -668,11 +668,11 @@ describe User do
         end
 
         it "does not allow view even if permission is set" do
-          expect(Factory(:user, vfi_invoice_view: true).view_vfi_invoices?).to be_falsey
+          expect(FactoryBot(:user, vfi_invoice_view: true).view_vfi_invoices?).to be_falsey
         end
 
         it "does not allow edit even if permission is set" do
-          expect(Factory(:user, vfi_invoice_edit: true).edit_vfi_invoices?).to be_falsey
+          expect(FactoryBot(:user, vfi_invoice_edit: true).edit_vfi_invoices?).to be_falsey
         end
       end
     end
@@ -696,10 +696,10 @@ describe User do
     end
 
     context "entry" do
-      let(:company) { Factory(:company, broker: true) }
+      let(:company) { FactoryBot(:company, broker: true) }
 
       it "allows user to edit entry if permission is set and company is not broker" do
-        expect(Factory(:user, entry_edit: true, company: company)).to be_edit_entries
+        expect(FactoryBot(:user, entry_edit: true, company: company)).to be_edit_entries
       end
 
       it "does not allow user to edit entry if permission is not set" do
@@ -715,7 +715,7 @@ describe User do
     # Commercial Invoices fall under entry edit/view permissions.
 
     context "variant" do
-      let(:user) { Factory(:master_user, product_edit: true) }
+      let(:user) { FactoryBot(:master_user, product_edit: true) }
 
       context "enabled" do
         let! (:master_setup) do
@@ -757,8 +757,8 @@ describe User do
     end
 
     context "powers of attorney" do
-      let!(:group) { Factory(:group, system_code: "maintain_poa")}
-      let!(:user) { Factory(:user) }
+      let!(:group) { FactoryBot(:group, system_code: "maintain_poa")}
+      let!(:user) { FactoryBot(:user) }
 
       describe "edit_power_of_attorneys?" do
         it "returns true if user is a member of group" do
@@ -862,7 +862,7 @@ describe User do
     end
 
     it "saves hidden messages" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       u.add_hidden_message 'hx'
       u.add_hidden_message 'abc'
       u.save!
@@ -882,7 +882,7 @@ describe User do
     it "sends an invite email to a user" do
       e = instance_double("Email")
       expect(e).to receive(:deliver_now!)
-      u = Factory(:user)
+      u = FactoryBot(:user)
 
       expect_any_instance_of(described_class).to receive(:update_user_password).with(instance_of(String), instance_of(String), true, false).and_call_original
 
@@ -902,7 +902,7 @@ describe User do
     it "sends an invite email to an admin user" do
       e = instance_double("Email")
       expect(e).to receive(:deliver_now!)
-      u = Factory(:user, admin: true)
+      u = FactoryBot(:user, admin: true)
 
       expect(OpenMailer).to receive(:send_invite) do |user, password|
         expect(user.id).to eq(u.id)
@@ -923,13 +923,13 @@ describe User do
       expect(e).to receive(:deliver_now!).twice
       expect(OpenMailer).to receive(:send_invite).twice.and_return(e)
 
-      u = Factory(:user)
+      u = FactoryBot(:user)
       described_class.send_invite_emails [u.id, u.id]
     end
   end
 
   describe "authenticate" do
-    let(:user) { Factory :user, password: "abc" }
+    let(:user) { FactoryBot :user, password: "abc" }
 
     it "validates user exists with specified password" do
       expect(described_class.authenticate(user.username, "abc")).to eq user
@@ -967,18 +967,18 @@ describe User do
     end
 
     it "validates user company is not locked" do
-      user = Factory(:user, company: Factory(:company, locked: true))
+      user = FactoryBot(:user, company: FactoryBot(:company, locked: true))
       expect(described_class.access_allowed?(user)).to be_falsey
     end
 
     it "validates user" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(described_class.access_allowed?(user)).to be_truthy
     end
   end
 
   describe "update_user_password" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     it 'creates user_password_histories record if password is valid' do
       user.update! time_zone: "Central Time (US & Canada)"
@@ -1057,7 +1057,7 @@ describe User do
 
   describe "on_successful_login" do
     it "sets last_login_at, current_login_at, failed_login_count and creates a history record" do
-      user = Factory(:user, current_login_at: Date.new(2014, 1, 1), failed_login_count: 10)
+      user = FactoryBot(:user, current_login_at: Date.new(2014, 1, 1), failed_login_count: 10)
       last_login = user.current_login_at
       updated_at = user.updated_at
 
@@ -1078,7 +1078,7 @@ describe User do
     end
 
     it "doesn't update host with port if it's not blank" do
-      user = Factory(:user, host_with_port: "www.test.com")
+      user = FactoryBot(:user, host_with_port: "www.test.com")
       user.on_successful_login instance_double("request")
 
       user.reload
@@ -1087,7 +1087,7 @@ describe User do
   end
 
   describe "from_omniauth" do
-    let!(:user) { Factory(:user, email: "condoleeza@rice.com") }
+    let!(:user) { FactoryBot(:user, email: "condoleeza@rice.com") }
 
     context "google oauth" do
       it "returns an updated user when a user is found" do
@@ -1142,7 +1142,7 @@ describe User do
 
   describe "username uniqueness" do
     it "prevents duplicate usernames without case sensitivity" do
-      c = Factory(:company)
+      c = FactoryBot(:company)
       u1 = described_class.new(email: "example@example.com", username: "username")
       u1.password = "password"
       u1.company = c
@@ -1162,7 +1162,7 @@ describe User do
 
   describe "email validation" do
     it "updates email field if all members of semicolon/comma-separated list match regex pattern" do
-      u = Factory(:user, email: "default@vandegriftinc.com")
+      u = FactoryBot(:user, email: "default@vandegriftinc.com")
       list = "abc@exam-ple.net, nbc123@vandegriftinc.com; cbs_1@britishcompany.co.uk; 1@2.3.com, philip.glass@mail.ymu-global.com"
       u.update(email: list)
       u.reload
@@ -1171,7 +1171,7 @@ describe User do
     end
 
     it "does not update email field if any member of semicolon/comma-separated list fails to match regex pattern" do
-      u = Factory(:user, email: "default@vandegriftinc.com")
+      u = FactoryBot(:user, email: "default@vandegriftinc.com")
       list = "abc@example.*et, nbc123grifter.com; cbs@somewhere.org"
       u.update(email: list)
       u.reload
@@ -1180,7 +1180,7 @@ describe User do
     end
 
     it "has a different error for one invalid email" do
-      u = Factory(:user, email: "default@vandegriftinc.com")
+      u = FactoryBot(:user, email: "default@vandegriftinc.com")
       addr = "abc@example.*et"
       u.update(email: addr)
       u.reload
@@ -1189,7 +1189,7 @@ describe User do
     end
 
     it "prevents duplicate emails without case sensitivity" do
-      c = Factory(:company)
+      c = FactoryBot(:company)
       u1 = described_class.new(email: "example@example.com", username: "username")
       u1.password = "password"
       u1.company = c
@@ -1219,13 +1219,13 @@ describe User do
   describe "url" do
     it "returns user's nested url" do
       stub_master_setup
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(u.url).to eq "https://localhost:3000/companies/#{u.company.id}/users/#{u.id}"
     end
   end
 
   describe "view_statements?" do
-    let (:user) { Factory(:user, statement_view: true) }
+    let (:user) { FactoryBot(:user, statement_view: true) }
 
     it "allows users with statement view and company access to view statements" do
       expect(user.company).to receive(:view_statements?).and_return true
@@ -1246,7 +1246,7 @@ describe User do
 
   describe "user_auth_token" do
     let (:user) do
-      Factory(:user, username: "username", api_auth_token: "authtoken")
+      FactoryBot(:user, username: "username", api_auth_token: "authtoken")
     end
 
     it "returns token if already set" do

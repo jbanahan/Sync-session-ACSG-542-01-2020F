@@ -1,21 +1,21 @@
 describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
 
   let (:consignee) {
-    c = Factory(:company, name: "Consignee")
+    c = FactoryBot(:company, name: "Consignee")
     c.addresses.create! line_1: "Con Line 1"
     c
   }
 
   let (:ship_to) {
-    Factory(:address, name: "Ship To", line_1: "SF Line 1")
+    FactoryBot(:address, name: "Ship To", line_1: "SF Line 1")
   }
 
   let (:ship_from) {
-    Factory(:address, name: "Ship From", line_1: "SF Line 1")
+    FactoryBot(:address, name: "Ship From", line_1: "SF Line 1")
   }
 
   let (:product) {
-    p = Factory(:product, name: "Description")
+    p = FactoryBot(:product, name: "Description")
     p.update_custom_value! cdefs[:prod_part_number], "PART"
     p.update_hts_for_country(ca, "1234567890")
 
@@ -23,11 +23,11 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
   }
 
   let (:ca) {
-    Factory(:country, iso_code: "CA")
+    FactoryBot(:country, iso_code: "CA")
   }
 
   let (:order) {
-    o = Factory(:order, order_number: "Order", customer_order_number: "Cust Order")
+    o = FactoryBot(:order, order_number: "Order", customer_order_number: "Cust Order")
     o.order_lines.create! product_id: product.id, price_per_unit: BigDecimal("5"), country_of_origin: "CN"
 
     o
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
   }
 
   let (:shipment) {
-    s = Factory(:shipment, house_bill_of_lading: "SCAC123456", consignee_id: consignee.id, ship_from_id: ship_from.id, ship_to_id: ship_to.id)
+    s = FactoryBot(:shipment, house_bill_of_lading: "SCAC123456", consignee_id: consignee.id, ship_from_id: ship_from.id, ship_to_id: ship_to.id)
     line = s.shipment_lines.build quantity: 10, product_id: product.id, invoice_number: "INV"
     line.linked_order_line_id = order.order_lines.first.id
     line.save!

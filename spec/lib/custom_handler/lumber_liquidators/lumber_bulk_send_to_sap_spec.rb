@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap do
   describe 'act' do
     before :each do
-      @ord = Factory(:order)
-      @user = Factory(:master_user, order_view:true)
+      @ord = FactoryBot(:order)
+      @user = FactoryBot(:master_user, order_view:true)
       @cdefs = described_class.prep_custom_definitions [:ord_manual_send_to_sap_date]
     end
     it "should FTP file to SAP" do

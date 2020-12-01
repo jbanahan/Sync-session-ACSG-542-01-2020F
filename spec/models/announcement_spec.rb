@@ -1,6 +1,6 @@
 describe Announcement do
   let(:date) { DateTime.new 2015, 3, 15, 10 }
-  let(:anc) { Factory(:announcement) }
+  let(:anc) { FactoryBot(:announcement) }
 
   describe "validations" do
     it "validates presence of title, start_at, end_at" do
@@ -18,7 +18,7 @@ describe Announcement do
 
   describe "hide_from_user" do
     it "hides the announcement for specified user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(u.user_announcement_markers.count).to eq 0
       anc.hide_from_user u.id
       anc.reload

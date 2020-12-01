@@ -23,18 +23,18 @@ describe OpenChain::Report::EntriesWithHoldsReport do
   end
 
   describe "run_report" do
-    let(:u) { Factory(:user, time_zone: "Eastern Time (US & Canada)", company: Factory(:company, master:true)) }
+    let(:u) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)", company: FactoryBot(:company, master:true)) }
     after { @temp.close if @temp }
 
     it "generates report" do
       zone = ActiveSupport::TimeZone["America/New_York"]
-      entry_1 = Factory(:entry, customer_number:"ABC", broker_reference:"br_1", entry_number:"en_1", container_numbers:"cn_1", master_bills_of_lading:"mb_1", house_bills_of_lading:"hb_1", customer_references:"cr_1", po_numbers:"po_1", release_date:zone.parse("2019-12-09T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:true)
-      entry_2 = Factory(:entry, customer_number:"DEF", broker_reference:"br_2", entry_number:"en_2", container_numbers:"cn_2", master_bills_of_lading:"mb_2", house_bills_of_lading:"hb_2", customer_references:"cr_2", po_numbers:"po_2", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-03T00:00:00"), on_hold:true)
-      entry_too_early = Factory(:entry, broker_reference:"br_3", entry_number:"en_3", container_numbers:"cn_3", master_bills_of_lading:"mb_3", house_bills_of_lading:"hb_3", customer_references:"cr_3", po_numbers:"po_3", release_date:zone.parse("2019-11-25T00:00:00"), arrival_date:zone.parse("2019-11-15T00:00:00"), on_hold:true)
-      entry_too_late = Factory(:entry, broker_reference:"br_4", entry_number:"en_4", container_numbers:"cn_4", master_bills_of_lading:"mb_4", house_bills_of_lading:"hb_4", customer_references:"cr_4", po_numbers:"po_4", release_date:zone.parse("2020-01-25T00:00:00"), arrival_date:zone.parse("2020-01-15T00:00:00"), on_hold:true)
-      entry_wrong_customer = Factory(:entry, customer_number:"GHI", broker_reference:"br_5", entry_number:"en_5", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:true)
-      entry_not_on_hold = Factory(:entry, customer_number:"DEF", broker_reference:"br_6", entry_number:"en_6", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:false)
-      entry_no_on_hold_status = Factory(:entry, customer_number:"DEF", broker_reference:"br_7", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:nil)
+      entry_1 = FactoryBot(:entry, customer_number:"ABC", broker_reference:"br_1", entry_number:"en_1", container_numbers:"cn_1", master_bills_of_lading:"mb_1", house_bills_of_lading:"hb_1", customer_references:"cr_1", po_numbers:"po_1", release_date:zone.parse("2019-12-09T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:true)
+      entry_2 = FactoryBot(:entry, customer_number:"DEF", broker_reference:"br_2", entry_number:"en_2", container_numbers:"cn_2", master_bills_of_lading:"mb_2", house_bills_of_lading:"hb_2", customer_references:"cr_2", po_numbers:"po_2", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-03T00:00:00"), on_hold:true)
+      entry_too_early = FactoryBot(:entry, broker_reference:"br_3", entry_number:"en_3", container_numbers:"cn_3", master_bills_of_lading:"mb_3", house_bills_of_lading:"hb_3", customer_references:"cr_3", po_numbers:"po_3", release_date:zone.parse("2019-11-25T00:00:00"), arrival_date:zone.parse("2019-11-15T00:00:00"), on_hold:true)
+      entry_too_late = FactoryBot(:entry, broker_reference:"br_4", entry_number:"en_4", container_numbers:"cn_4", master_bills_of_lading:"mb_4", house_bills_of_lading:"hb_4", customer_references:"cr_4", po_numbers:"po_4", release_date:zone.parse("2020-01-25T00:00:00"), arrival_date:zone.parse("2020-01-15T00:00:00"), on_hold:true)
+      entry_wrong_customer = FactoryBot(:entry, customer_number:"GHI", broker_reference:"br_5", entry_number:"en_5", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:true)
+      entry_not_on_hold = FactoryBot(:entry, customer_number:"DEF", broker_reference:"br_6", entry_number:"en_6", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:false)
+      entry_no_on_hold_status = FactoryBot(:entry, customer_number:"DEF", broker_reference:"br_7", release_date:zone.parse("2019-12-10T00:00:00"), arrival_date:zone.parse("2019-12-02T00:00:00"), on_hold:nil)
 
       @temp = described_class.run_report(u, {'start_date' => '2019-12-01', 'end_date' => '2019-12-31', 'customer_numbers' => "ABC\nDEF"})
       wb = XlsxTestReader.new(@temp.path).raw_workbook_data

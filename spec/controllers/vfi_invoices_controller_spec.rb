@@ -1,7 +1,7 @@
 describe VfiInvoicesController do
   before(:each) do
-    @u = Factory(:user)
-    @inv = Factory(:vfi_invoice)
+    @u = FactoryBot(:user)
+    @inv = FactoryBot(:vfi_invoice)
     sign_in_as @u
   end
 
@@ -39,10 +39,10 @@ describe VfiInvoicesController do
     end
 
     it "renders and totals invoices" do
-      Factory(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 5)
-      Factory(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 3)
+      FactoryBot(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 5)
+      FactoryBot(:vfi_invoice_line, vfi_invoice: @inv, charge_amount: 3)
 
-      @u.company = Factory(:master_company)
+      @u.company = FactoryBot(:master_company)
       allow(@u).to receive(:view_vfi_invoices?).and_return true
 
       get :show, id: @inv

@@ -19,7 +19,7 @@ describe LinkableAttachment do
 
   context 'attachment' do
     it 'allows an attachment to be created' do
-      linkable = Factory(:linkable_attachment)
+      linkable = FactoryBot(:linkable_attachment)
       att = linkable.create_attachment
       expect(att.attachable).to eq(linkable)
     end
@@ -39,18 +39,18 @@ describe LinkableAttachment do
 
   describe 'model_field' do
     it 'returns a good model field' do
-      linkable = Factory(:linkable_attachment, model_field_uid: 'ord_ord_num')
+      linkable = FactoryBot(:linkable_attachment, model_field_uid: 'ord_ord_num')
       expect(linkable.model_field.uid).to eq(:ord_ord_num)
     end
 
     it 'returns nil for a bad model filed' do
-      expect(Factory(:linkable_attachment, model_field_uid: 'somethingbad').model_field).to be_nil
+      expect(FactoryBot(:linkable_attachment, model_field_uid: 'somethingbad').model_field).to be_nil
     end
   end
 
   describe 'model_field_uids' do
     it 'returns distinct list of model_field_uids in table' do
-      ['f1', 'f2', 'f3', 'f1', 'f2', 'f4'].each {|m| Factory(:linkable_attachment, model_field_uid: m)}
+      ['f1', 'f2', 'f3', 'f1', 'f2', 'f4'].each {|m| FactoryBot(:linkable_attachment, model_field_uid: m)}
 
       uids = described_class.model_field_uids
       expect(uids.to_a.sort).to eq(['f1', 'f2', 'f3', 'f4'])

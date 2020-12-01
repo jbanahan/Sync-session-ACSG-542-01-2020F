@@ -1,6 +1,6 @@
 describe CommercialInvoiceMapsController do
   before :each do
-    @u = Factory(:user, :admin=>true)
+    @u = FactoryBot(:user, :admin=>true)
 
     sign_in_as @u
   end
@@ -12,7 +12,7 @@ describe CommercialInvoiceMapsController do
       expect(flash[:errors].size).to eq(1)
     end
     it "should load all mappings" do
-      2.times { Factory(:commercial_invoice_map)}
+      2.times { FactoryBot(:commercial_invoice_map)}
       get :index
       expect(response).to be_success
       expect(assigns(:maps).size).to eq(2)
@@ -37,9 +37,9 @@ describe CommercialInvoiceMapsController do
     end
     it "should delete existing items" do
       # this one will be replaced
-      Factory(:commercial_invoice_map, :source_mfid=>"prod_uid", :destination_mfid=>"cil_part_number")
+      FactoryBot(:commercial_invoice_map, :source_mfid=>"prod_uid", :destination_mfid=>"cil_part_number")
       # this one will be deleted
-      Factory(:commercial_invoice_map, :source_mfid=>"ord_ord_num", :destination_mfid=>"cil_po_number")
+      FactoryBot(:commercial_invoice_map, :source_mfid=>"ord_ord_num", :destination_mfid=>"cil_po_number")
 
       p = {"map"=>{"1"=>{"src"=>"prod_uid", "dest"=>"cil_part_number"},
         "2"=>{"src"=>"shp_ref", "dest"=>"ci_invoice_number"}

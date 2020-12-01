@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser do
   before :each do
-    @le_company = Factory(:company)
+    @le_company = FactoryBot(:company)
     @p = described_class.new @le_company
     @data = "Use,Entry #,Port Code,Import Date,HTS,Description of Merchandise,Qty,UOM,Value Per Unit2,Rate,100% Duty
 I,23189224317,3901,10/3/08,6110121050,1049812 - MN V-NECK CASHMERE S,1.00,EA,48.07,0.16,1.92
@@ -28,15 +28,15 @@ I,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.
     expect(d.duty_per_unit).to eq(1.92)
   end
   it "should update existing DrawbackImportLine for same entry / part" do
-    p = Factory(:product)
+    p = FactoryBot(:product)
     d = DrawbackImportLine.create!(product_id:p.id, entry_number:'23189224317', part_number:'1049812', :unit_of_measure=>'X', importer_id:@le_company.id)
     @p.parse @data
     d.reload
     expect(d.duty_per_unit).to eq(1.92)
   end
   it "should not update existing DrawbackImportLine for different importer" do
-    other_company = Factory(:company)
-    p = Factory(:product)
+    other_company = FactoryBot(:company)
+    p = FactoryBot(:product)
     d = DrawbackImportLine.create!(importer_id:other_company.id, product_id:p.id, entry_number:'23189224317', part_number:'1049812', :unit_of_measure=>'X')
     @p.parse @data
     d.reload

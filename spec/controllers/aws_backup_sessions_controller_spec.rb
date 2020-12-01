@@ -1,6 +1,6 @@
 describe AwsBackupSessionsController do
-  let!(:session) { Factory(:aws_backup_session) }
-  let!(:u) { Factory(:sys_admin_user) }
+  let!(:session) { FactoryBot(:aws_backup_session) }
+  let!(:u) { FactoryBot(:sys_admin_user) }
   before { sign_in_as u }
 
   describe "index" do

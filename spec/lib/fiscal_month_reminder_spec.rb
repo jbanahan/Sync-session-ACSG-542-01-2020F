@@ -1,11 +1,11 @@
 describe OpenChain::FiscalMonthReminder do
   let(:now) { Date.new 2016, 02, 15 }
-  let(:co) { Factory(:company, name: "ACME", system_code: "ac", fiscal_reference: "release_date") }
+  let(:co) { FactoryBot(:company, name: "ACME", system_code: "ac", fiscal_reference: "release_date") }
 
   describe "fiscal_months_remaining" do
-    let!(:fm_fut_1) { Factory(:fiscal_month, company: co, start_date: '20160301', end_date: "20160331") }
-    let!(:fm_fut_2) { Factory(:fiscal_month, company: co, start_date: '20160401', end_date: "20160430") }
-    let!(:fm_current) { Factory(:fiscal_month, company: co, start_date: '20160201', end_date: "20160229") }
+    let!(:fm_fut_1) { FactoryBot(:fiscal_month, company: co, start_date: '20160301', end_date: "20160331") }
+    let!(:fm_fut_2) { FactoryBot(:fiscal_month, company: co, start_date: '20160401', end_date: "20160430") }
+    let!(:fm_current) { FactoryBot(:fiscal_month, company: co, start_date: '20160201', end_date: "20160229") }
 
     it "returns the number of fiscal months with a future start_date assigned to a company if it has a fiscal reference" do
       Timecop.freeze(now) { expect(described_class.fiscal_months_remaining co).to eq 2 }
@@ -34,8 +34,8 @@ describe OpenChain::FiscalMonthReminder do
   describe "companies_needing_update" do
     it "returns list of companies needing update" do
       co
-      co_2 = Factory(:company, name: "Konvenientz", system_code: "Ko", fiscal_reference: "release_date")
-      7.times { Factory(:fiscal_month, company: co, start_date: '20160301') }
+      co_2 = FactoryBot(:company, name: "Konvenientz", system_code: "Ko", fiscal_reference: "release_date")
+      7.times { FactoryBot(:fiscal_month, company: co, start_date: '20160301') }
       Timecop.freeze(now) { expect(described_class.companies_needing_update).to eq [co_2] }
     end
   end

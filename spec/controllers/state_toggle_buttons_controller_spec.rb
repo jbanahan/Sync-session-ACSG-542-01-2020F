@@ -1,12 +1,12 @@
 describe StateToggleButtonsController do
 
-  let!(:u) { Factory(:user) }
+  let!(:u) { FactoryBot(:user) }
   before { sign_in_as u }
 
   describe "index" do
     let!(:stb) do
-      user_cdef = Factory(:custom_definition, data_type: "integer", module_type: "Order", is_user: true, label: "Closed By")
-      Factory(:state_toggle_button, module_type: "Order", user_custom_definition_id: user_cdef.id, date_attribute: "ord_closed_at")
+      user_cdef = FactoryBot(:custom_definition, data_type: "integer", module_type: "Order", is_user: true, label: "Closed By")
+      FactoryBot(:state_toggle_button, module_type: "Order", user_custom_definition_id: user_cdef.id, date_attribute: "ord_closed_at")
     end
 
     it "lists STBs and user/date-field labels for a sys-admin" do
@@ -72,7 +72,7 @@ describe StateToggleButtonsController do
   end
 
   describe "edit" do
-      let!(:stb) { Factory(:state_toggle_button, module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date") }
+      let!(:stb) { FactoryBot(:state_toggle_button, module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date") }
       it "renders the page for an admin" do
         expect(u).to receive(:admin?).and_return true
         get :edit, id: stb.id

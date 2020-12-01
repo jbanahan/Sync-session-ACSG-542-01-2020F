@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
   let (:standard_data) { IO.read 'spec/fixtures/files/talbots.edi' }
   let (:prepack_data) { IO.read 'spec/fixtures/files/talbots_prepack.edi'}
   let (:cdefs) { described_class.new.cdefs }
-  let! (:talbots) { Factory(:importer, system_code: "TALBO") }
-  let! (:us) { Factory(:country, iso_code: "US") }
+  let! (:talbots) { FactoryBot(:importer, system_code: "TALBO") }
+  let! (:us) { FactoryBot(:country, iso_code: "US") }
 
   before(:all) {
     described_class.new.cdefs
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
   }
 
   describe "parse", :disable_delayed_jobs do
-    let! (:ai) { Factory(:country, iso_code: "AI")}
-    let! (:cn) { Factory(:country, iso_code: "CN")}
+    let! (:ai) { FactoryBot(:country, iso_code: "AI")}
+    let! (:cn) { FactoryBot(:country, iso_code: "CN")}
 
     subject { described_class }
 
@@ -183,15 +183,15 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
     context "with existing data" do
       let (:product) {
-        Factory(:product, importer:talbots, unique_identifier: "TALBO-53903309P")
+        FactoryBot(:product, importer:talbots, unique_identifier: "TALBO-53903309P")
       }
 
       let (:order) {
-        order = Factory(:order, importer: talbots, order_number: "TALBO-5086819", processing_errors: "earlier error")
+        order = FactoryBot(:order, importer: talbots, order_number: "TALBO-5086819", processing_errors: "earlier error")
       }
 
       let! (:order_line) {
-        Factory(:order_line, order: order, product: product, line_number: 1, sku: "sku")
+        FactoryBot(:order_line, order: order, product: product, line_number: 1, sku: "sku")
       }
 
       it "updates an existing order, deleting all existing lines" do
@@ -217,7 +217,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
     }
 
     let (:product) {
-      product = Factory(:product, importer: talbots, unique_identifier: "TALBO-53903309P", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
+      product = FactoryBot(:product, importer: talbots, unique_identifier: "TALBO-53903309P", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
       product.update_custom_value! cdefs[:prod_fish_wildlife], true
       product.update_custom_value! cdefs[:prod_fabric_content], "99% COTTON 1% SPANDEX"
       product.update_hts_for_country(us, "6204624011")

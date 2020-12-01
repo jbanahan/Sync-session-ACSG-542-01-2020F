@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Generator315::Tradelens::TradelensClient do
 
-  let(:session) { Factory(:api_session, retry_count: 0, class_name: "OpenChain::CustomHandler::Generator315::Tradelens::CustomReleaseHandler") }
+  let(:session) { FactoryBot(:api_session, retry_count: 0, class_name: "OpenChain::CustomHandler::Generator315::Tradelens::CustomReleaseHandler") }
 
   let(:secrets_file) do
     {"tradelens" => {"org_id" => "org",

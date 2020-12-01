@@ -1,8 +1,8 @@
 describe ProductVendorAssignment do
   context "security" do
     before :each do
-      @u = Factory(:user)
-      @pva = Factory(:product_vendor_assignment)
+      @u = FactoryBot(:user)
+      @pva = FactoryBot(:product_vendor_assignment)
     end
     describe '#can_view?' do
       it "should allow if user can view vendor" do
@@ -34,10 +34,10 @@ describe ProductVendorAssignment do
   end
   describe '#search_secure' do
     it "should allow if pva linked to vendor user can view" do
-      v = Factory(:vendor)
-      u = Factory(:user, company:v)
-      pva = Factory(:product_vendor_assignment, vendor:v)
-      Factory(:product_vendor_assignment) # don't find this one
+      v = FactoryBot(:vendor)
+      u = FactoryBot(:user, company:v)
+      pva = FactoryBot(:product_vendor_assignment, vendor:v)
+      FactoryBot(:product_vendor_assignment) # don't find this one
 
       expect(described_class.search_secure(u, described_class).to_a).to eq [pva]
     end

@@ -1,11 +1,11 @@
 describe Api::V1::TradePreferenceProgramsController do
   let :prep_countries do
-    us = Factory(:country, iso_code:'US')
-    ca = Factory(:country, iso_code:'CA')
+    us = FactoryBot(:country, iso_code:'US')
+    ca = FactoryBot(:country, iso_code:'CA')
     [us, ca]
   end
   before :each do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return true
     allow_any_instance_of(User).to receive(:edit_trade_preference_programs?).and_return true
     allow_any_instance_of(TradePreferenceProgram).to receive(:can_view?).and_return true
@@ -17,8 +17,8 @@ describe Api::V1::TradePreferenceProgramsController do
   describe '#index' do
     it 'should find tpps' do
       us, ca = prep_countries
-      Factory(:trade_preference_program, origin_country:us, destination_country:ca)
-      Factory(:trade_preference_program, origin_country:ca, destination_country:us)
+      FactoryBot(:trade_preference_program, origin_country:us, destination_country:ca)
+      FactoryBot(:trade_preference_program, origin_country:ca, destination_country:us)
 
       get :index
 
@@ -40,7 +40,7 @@ describe Api::V1::TradePreferenceProgramsController do
 
   describe '#show' do
     it 'should find tpp' do
-      tpp = Factory(:trade_preference_program)
+      tpp = FactoryBot(:trade_preference_program)
 
       get :show, id: tpp.id.to_s
 
@@ -50,7 +50,7 @@ describe Api::V1::TradePreferenceProgramsController do
     end
     it 'should fail if user cannot view tpp' do
       allow_any_instance_of(TradePreferenceProgram).to receive(:can_view?).and_return false
-      get :show, id: Factory(:trade_preference_program).id.to_s
+      get :show, id: FactoryBot(:trade_preference_program).id.to_s
       expect(response).to_not be_success
     end
   end
@@ -93,7 +93,7 @@ describe Api::V1::TradePreferenceProgramsController do
   describe '#update' do
     let :data_prep do
       prep_countries
-      tpp = Factory(:trade_preference_program)
+      tpp = FactoryBot(:trade_preference_program)
       h = {
         'id' => tpp.id.to_s,
         'trade_preference_program'=>

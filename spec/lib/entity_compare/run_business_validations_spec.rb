@@ -4,7 +4,7 @@ describe OpenChain::EntityCompare::RunBusinessValidations do
 
   describe "compare" do
     it "calls BusinessValidationTemplate.create_results_for_object!" do
-      ord = Factory(:order)
+      ord = FactoryBot(:order)
       expect(OpenChain::EntityCompare::CascadeProductValidations).to receive(:compare).with('Order', ord.id, 'a', 'b', 'c', 'd', 'e', 'f')
       expect(OpenChain::EntityCompare::CascadeCompanyValidations).to receive(:compare).with('Order', ord.id, 'a', 'b', 'c', 'd', 'e', 'f')
       subject.compare 'Order', ord.id, 'a', 'b', 'c', 'd', 'e', 'f'

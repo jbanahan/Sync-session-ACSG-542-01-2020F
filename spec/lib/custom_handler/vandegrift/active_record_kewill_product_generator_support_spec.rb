@@ -17,10 +17,10 @@ describe OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGenerato
   end
 
   describe "find_products" do
-    let(:us) { Factory(:country, iso_code: "US") }
-    let(:importer) { Factory(:importer) }
+    let(:us) { FactoryBot(:country, iso_code: "US") }
+    let(:importer) { FactoryBot(:importer) }
     let!(:product) do
-      p = Factory(:product, unique_identifier: "12345-67", importer: importer)
+      p = FactoryBot(:product, unique_identifier: "12345-67", importer: importer)
       c = p.classifications.create!(country: us)
       c.tariff_records.create!(line_number: 1, hts_1: "9903123456")
 
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGenerato
     end
 
     it "does not find products without us classifications" do
-      product.classifications.first.update! country: Factory(:country)
+      product.classifications.first.update! country: FactoryBot(:country)
       expect(subject.find_products([importer], "CMUS", 1).to_a).to eq []
     end
 
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGenerato
   end
 
   describe "make_xml_file" do
-    let(:product) { Factory(:product, unique_identifier: "12345") }
+    let(:product) { FactoryBot(:product, unique_identifier: "12345") }
 
     it "builds xml file" do
       expect(subject).to receive(:preload_product).with(product)

@@ -1,6 +1,6 @@
 describe EntitySnapshotFailure do
 
-  let (:snapshot) { EntitySnapshot.create! recordable: Factory(:entry), user: Factory(:user)}
+  let (:snapshot) { EntitySnapshot.create! recordable: FactoryBot(:entry), user: FactoryBot(:user)}
   let (:failure) { EntitySnapshotFailure.create! snapshot: snapshot, snapshot_json: "json"}
 
   describe "fix_snapshot_data" do

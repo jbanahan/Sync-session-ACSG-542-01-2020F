@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     context "csm_season" do
 
       it "should set CSM Season for existing products" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         p.update_custom_value! cdefs[:csm_season], 'someval'
         expect(@xlc).to receive(:last_row_number).and_return(1)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        u = Factory(:user)
+        u = FactoryBot(:user)
         @h.process u
         p.reload
         expect(p.custom_value(cdefs[:csm_season])).to eq("seas\nsomeval")
@@ -66,13 +66,13 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>'newproduid', 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         p = Product.find_by unique_identifier: 'newproduid'
         expect(p.custom_value(cdefs[:csm_season])).to eq('seas')
       end
 
       it "should accumulate CSM Seasons" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         expect(@xlc).to receive(:last_row_number).and_return(2)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
           0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         expect(p.custom_value(cdefs[:csm_season])).to eq("aaa\nseas")
       end
     end
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     # US Style Number is column I
 
     it "should set CSM numbers for existing product with no CSM custom value" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       expect(@xlc).to receive(:last_row_number).and_return(2)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -121,12 +121,12 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      @h.process Factory(:user)
+      @h.process FactoryBot(:user)
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234")
     end
 
     it "should include non-contiguous CSM numbers for a product" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       expect(@xlc).to receive(:last_row_number).and_return(3)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -158,7 +158,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
-      @h.process Factory(:user)
+      @h.process FactoryBot(:user)
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234")
       expect(Product.where(unique_identifier: 'something else').first.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
     end
@@ -175,14 +175,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
-      @h.process Factory(:user)
+      @h.process FactoryBot(:user)
       p = Product.where(unique_identifier: 'something else').first
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
       expect(p.custom_value(cdefs[:csm_department])).to eq('CSMDEPT')
     end
 
     it "should drop existing CSM numbers not in file" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value!(cdefs[:csm_numbers], 'XZY')
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -194,13 +194,13 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      @h.process Factory(:user)
+      @h.process FactoryBot(:user)
       p = Product.find p.id
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
     end
 
     it "should fail if CSM number is not 18 digits" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -211,7 +211,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      u = Factory(:user)
+      u = FactoryBot(:user)
       @h.process u
       expect(p.custom_value(cdefs[:csm_numbers])).to be_blank
       expect(u.messages.size).to eq(1)
@@ -221,12 +221,12 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     it "should not fail for empty lines" do
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return({})
-      expect {@h.process Factory(:user)}.to_not change(ErrorLogEntry, :count)
+      expect {@h.process FactoryBot(:user)}.to_not change(ErrorLogEntry, :count)
     end
 
     it "should fail if user cannot edit products" do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return false
-      p = Factory(:product)
+      p = FactoryBot(:product)
 
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -238,7 +238,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      u = Factory(:user)
+      u = FactoryBot(:user)
       @h.process u
       expect(p.custom_value(cdefs[:csm_numbers])).to be_blank
       expect(u.messages.size).to eq(1)
@@ -246,7 +246,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     end
 
     it "should utilize field logic validations" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       rule = FieldValidatorRule.create! model_field_uid: :prod_uid, module_type: 'Product', starts_with: 'ABC'
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -258,7 +258,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
         13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      u = Factory(:user)
+      u = FactoryBot(:user)
       @h.process u
       expect(p.custom_value(cdefs[:csm_numbers])).to be_blank
       expect(u.messages.size).to eq(1)
@@ -270,7 +270,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     context "dates" do
 
       it "should set first/last csm received dates" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         expect(@xlc).to receive(:last_row_number).and_return(1)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
           0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -281,13 +281,13 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         expect(p.custom_value(cdefs[:csm_received_date_first]).strftime("%y%m%d")).to eq(0.seconds.ago.strftime("%y%m%d"))
         expect(p.custom_value(cdefs[:csm_received_date_last]).strftime("%y%m%d")).to eq(0.seconds.ago.strftime("%y%m%d"))
       end
 
       it "should not change existing first csm received date" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         p.update_custom_value! cdefs[:csm_received_date_first], 1.day.ago
         expect(@xlc).to receive(:last_row_number).and_return(1)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -299,11 +299,11 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         expect(p.custom_value(cdefs[:csm_received_date_first]).strftime("%y%m%d")).to eq(1.day.ago.strftime("%y%m%d"))
       end
       it "should not move last csm date backwards" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         p.update_custom_value! cdefs[:csm_received_date_last], 1.day.from_now
         expect(@xlc).to receive(:last_row_number).and_return(1)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -315,11 +315,11 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         expect(p.custom_value(cdefs[:csm_received_date_last]).strftime("%y%m%d")).to eq(1.day.from_now.strftime("%y%m%d"))
       end
       it "should respect override for file received date" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         expect(@xlc).to receive(:last_row_number).and_return(1)
         expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
           0=>{'value'=>'seas', 'datatype'=>'string'},
@@ -331,7 +331,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h = described_class.new @cf, 1.day.from_now
-        @h.process Factory(:user)
+        @h.process FactoryBot(:user)
         expect(p.custom_value(cdefs[:csm_received_date_last]).strftime("%y%m%d")).to eq(1.day.from_now.strftime("%y%m%d"))
       end
     end
@@ -339,7 +339,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
 
   describe "process_from_s3" do
     before :each do
-      @user = Factory(:user, username: 'rbjork')
+      @user = FactoryBot(:user, username: 'rbjork')
       @f = Tempfile.new ['file', '.txt']
       @f << "content"
       @f.flush

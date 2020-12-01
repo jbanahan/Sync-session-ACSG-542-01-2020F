@@ -4,9 +4,9 @@ describe OpenChain::BulkUpdateClassification do
       ModelField.reload # cleanup from other tests
       @ms = MasterSetup.new :request_host => "localhost"
       allow(MasterSetup).to receive(:get).and_return @ms
-      @u = Factory(:user, :company=>Factory(:company, :master=>true), :product_edit=>true, :classification_edit=>true)
-      @p = Factory(:product, :unit_of_measure=>"UOM")
-      @country = Factory(:country)
+      @u = FactoryBot(:user, :company=>FactoryBot(:company, :master=>true), :product_edit=>true, :classification_edit=>true)
+      @p = FactoryBot(:product, :unit_of_measure=>"UOM")
+      @country = FactoryBot(:country)
       @h = {"pk"=>{ "1"=>@p.id.to_s }, "product"=>{"classifications_attributes"=>{"0"=>{"class_cntry_id"=>@country.id.to_s}}}}
     end
 
@@ -61,10 +61,10 @@ describe OpenChain::BulkUpdateClassification do
         expect(@u.messages.length).to eq(0)
       end
       it "creates new classification and tariff records" do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
-        tr_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
-        prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+        tr_cd = FactoryBot(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
+        prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890', 'hts_view_sequence'=>'987654321', tr_cd.model_field_uid.to_s => 'DEF'}}
         @h['product']['classifications_attributes']['0']['class_cntry_id'] = @country.id.to_s
@@ -89,11 +89,11 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it "does not use blank attributes and custom values from product, classification, and tariff parameters" do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
-        tr_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
-        prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
-        tr = Factory(:tariff_record, :hts_2=>'1234567890', :classification=>Factory(:classification, :country=>@country, :product=>@p))
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+        tr_cd = FactoryBot(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
+        prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+        tr = FactoryBot(:tariff_record, :hts_2=>'1234567890', :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
         tr.update_custom_value! tr_cd, 'DEF'
         classification = tr.classification
         classification.update_custom_value! class_cd, 'ABC'
@@ -126,10 +126,10 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it "should allow override of classification & tariff custom values" do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
-        tr_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
-        tr = Factory(:tariff_record, :classification=>Factory(:classification, :country=>@country, :product=>@p))
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+        tr_cd = FactoryBot(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
+        tr = FactoryBot(:tariff_record, :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
         tr.update_custom_value! tr_cd, 'DEF'
         cls = tr.classification
         cls.update_custom_value! class_cd, 'ABC'
@@ -144,11 +144,11 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it "skips classification and tariff values without overwriting them when no classification parameters are sent" do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
-        tr_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
-        prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
-        tr = Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country=>@country, :product=>@p))
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+        tr_cd = FactoryBot(:custom_definition, :module_type=>'TariffRecord', :data_type=>:string)
+        prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+        tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
         tr.update_custom_value! tr_cd, 'DEF'
         cls = tr.classification
         cls.update_custom_value! class_cd, 'ABC'
@@ -170,10 +170,10 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it 'uses tariff line number, when present, to identify which tariff record to update' do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        Factory(:official_tariff, :country=>@country, :hts_code=>'9876543210')
-        tr = Factory(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification, :country=>@country, :product=>@p))
-        tr2 = Factory(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'9876543210')
+        tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
+        tr2 = FactoryBot(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
         # Note the long index value for the second tariff line, this is how the screen effectively sends updates when the users adds second hts lines on the bulk screen
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1234567890', 'hts_view_sequence'=>'0', 'hts_line_number'=>'2'}, '1234567890'=>{'hts_hts_1' => '9876543210', 'hts_view_sequence'=>'1234567890', 'hts_line_number'=>'1'}}
@@ -187,10 +187,10 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it 'does not remove existing tariff lines if updating only the first tariff record in a set' do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        Factory(:official_tariff, :country=>@country, :hts_code=>'9876543210')
-        tr = Factory(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification, :country=>@country, :product=>@p))
-        tr2 = Factory(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'9876543210')
+        tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
+        tr2 = FactoryBot(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '9876543210', 'hts_view_sequence'=>'0'}}
 
@@ -203,11 +203,11 @@ describe OpenChain::BulkUpdateClassification do
       end
 
       it 'does not remove existing tariff lines if updating only the second tariff record in a set' do
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1234567890')
-        Factory(:official_tariff, :country=>@country, :hts_code=>'9876543210')
-        Factory(:official_tariff, :country=>@country, :hts_code=>'1111111111')
-        tr = Factory(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification, :country=>@country, :product=>@p))
-        tr2 = Factory(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1234567890')
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'9876543210')
+        FactoryBot(:official_tariff, :country=>@country, :hts_code=>'1111111111')
+        tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :line_number => 1, :classification=>FactoryBot(:classification, :country=>@country, :product=>@p))
+        tr2 = FactoryBot(:tariff_record, :hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
 
         @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_hts_1' => '1111111111', 'hts_view_sequence'=>'0', 'hts_line_number'=>'2'}}
 
@@ -255,8 +255,8 @@ describe OpenChain::BulkUpdateClassification do
   end
   describe 'build_common_classifications' do
     before :each do
-      @products = 2.times.collect {Factory(:product)}
-      @country = Factory(:country)
+      @products = 2.times.collect {FactoryBot(:product)}
+      @country = FactoryBot(:country)
       @hts = '1234567890'
       @products.each do |p|
         p.classifications.create!(:country_id=>@country.id).tariff_records.create!(:line_number=>1, :hts_1=>@hts)
@@ -275,8 +275,8 @@ describe OpenChain::BulkUpdateClassification do
       expect(tr.line_number).to eq(1)
     end
     it "should build tariff based on search run" do
-      user = Factory(:user, :admin=>true, :company_id=>Factory(:company, :master=>true).id)
-      search_setup = Factory(:search_setup, :module_type=>"Product", :user=>user)
+      user = FactoryBot(:user, :admin=>true, :company_id=>FactoryBot(:company, :master=>true).id)
+      search_setup = FactoryBot(:search_setup, :module_type=>"Product", :user=>user)
       search_setup.touch # makes search_run
       OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_runs.first, @base_product
       expect(@base_product.classifications.size).to eq(1)
@@ -288,7 +288,7 @@ describe OpenChain::BulkUpdateClassification do
       expect(tr.line_number).to eq(1)
     end
     it "should build for one country and not for another when the second has different tariffs" do
-      country_2 = Factory(:country)
+      country_2 = FactoryBot(:country)
       @products.each_with_index do |p, i|
         p.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:line_number=>1, :hts_1=>"123456789#{i}")
       end
@@ -303,7 +303,7 @@ describe OpenChain::BulkUpdateClassification do
       expect(tr.line_number).to eq(1)
     end
     it "should not build if one of the products does not have the classification for the country" do
-      country_2 = Factory(:country)
+      country_2 = FactoryBot(:country)
       @products.first.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:line_number=>1, :hts_1=>"123456789")
       product_ids = @products.collect {|p| p.id}
       OpenChain::BulkUpdateClassification.build_common_classifications product_ids, @base_product
@@ -319,10 +319,10 @@ describe OpenChain::BulkUpdateClassification do
 
   describe "quick_classify" do
     before :each do
-      @u = Factory(:user, :company=>Factory(:company, :master=>true), :product_edit=>true, :classification_edit=>true, :product_view=> true)
-      @country = Factory(:country, :iso_code => "US")
-      @products = [Factory(:product, classifications: [Factory(:classification, country: @country)]),
-                   Factory(:product)]
+      @u = FactoryBot(:user, :company=>FactoryBot(:company, :master=>true), :product_edit=>true, :classification_edit=>true, :product_view=> true)
+      @country = FactoryBot(:country, :iso_code => "US")
+      @products = [FactoryBot(:product, classifications: [FactoryBot(:classification, country: @country)]),
+                   FactoryBot(:product)]
       @ms = MasterSetup.new :request_host => "localhost"
       allow(MasterSetup).to receive(:get).and_return @ms
 
@@ -382,7 +382,7 @@ describe OpenChain::BulkUpdateClassification do
     end
 
     it "does not add custom value even if there is one present in the parameters" do
-      class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+      class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
       @parameters['product']['classifications_attributes'][@country.id.to_s][class_cd.model_field_uid.to_s] = 'VALUE'
 
       OpenChain::BulkUpdateClassification.quick_classify @parameters.to_json, @u

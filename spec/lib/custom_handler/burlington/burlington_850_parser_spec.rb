@@ -8,14 +8,14 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
   describe "parse_file" do
     subject { described_class }
-    let! (:burlington) { Factory(:importer, system_code: "BURLI", name: "Burlington") }
-    let! (:us) { Factory(:country, iso_code: "US") }
+    let! (:burlington) { FactoryBot(:importer, system_code: "BURLI", name: "Burlington") }
+    let! (:us) { FactoryBot(:country, iso_code: "US") }
 
     let (:cdefs) { subject.new.cdefs }
-    let (:existing_order) { Factory(:order, importer: burlington, order_number: "BURLI-364225101")}
-    let (:existing_product) { Factory(:product, importer: burlington, unique_identifier: "BURLI-9050-E", name: "PARIS CRIB N CHANGER")}
+    let (:existing_order) { FactoryBot(:order, importer: burlington, order_number: "BURLI-364225101")}
+    let (:existing_product) { FactoryBot(:product, importer: burlington, unique_identifier: "BURLI-9050-E", name: "PARIS CRIB N CHANGER")}
     let (:existing_prepack_product) {
-      p = Factory(:product, importer: burlington, unique_identifier: "BURLI-10708", name: "BEADOS S4 4 COLOR PEN")
+      p = FactoryBot(:product, importer: burlington, unique_identifier: "BURLI-10708", name: "BEADOS S4 4 COLOR PEN")
       c = p.classifications.create! country: us
       c.tariff_records.create! hts_1: "9503000073"
       p
@@ -117,7 +117,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
     it "ignores lines that are shipping and does not update them" do
       ol = existing_order.order_lines.create! line_number: 1, product: existing_product
-      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF"), product: ol.product)
+      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF"), product: ol.product)
       PieceSet.create!(quantity: 1, order_line: ol, shipment_line: sl)
 
       subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"

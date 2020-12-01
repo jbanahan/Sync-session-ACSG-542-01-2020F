@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
     custom_file
   }
   subject { described_class.new custom_file }
-  let (:lumber_master) { Factory(:company, master: true, system_code: "LUMBER")}
+  let (:lumber_master) { FactoryBot(:company, master: true, system_code: "LUMBER")}
   let (:us_lines) {
     [
       ["Article #", "Name", "Old Article #", "HTS 1"],
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
   end
 
   describe "process" do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     before :each do
       lumber_master
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
   end
 
   describe "can_view?" do
-    let (:user) { Factory(:user, company: lumber_master) }
+    let (:user) { FactoryBot(:user, company: lumber_master) }
     let (:master_setup) { double("MasterSetup") }
 
     before :each do
@@ -200,7 +200,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
     end
 
     it "disallows non-master user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow(u).to receive(:edit_products?).and_return true
       expect(described_class.can_view? u).to be_falsey
     end

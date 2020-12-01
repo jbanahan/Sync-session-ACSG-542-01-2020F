@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser do
   before :each do
     @data = "\"5675291\",\"34813\",\"5322514\",\"4/8/11\",\"THE FORZANI GROUP\",\"MISSISSAUGA DISTRIBUTION CENTRE\",\"3109, SC TDC #3109\",\"MISSISSAUGA\",\"ON\",\"L5T 2R7\",\"CA\",\"10970001440\",\"Crcbnd Jaunt Blk W7\",\"CN\",30,\"Pairs\",\"FEFX\",\"FedEx Freight - Canada\""
-    @c = Factory(:company)
+    @c = FactoryBot(:company)
   end
   it "should parse row" do
     d = described_class.parse_csv_line @data.parse_csv, 1, @c

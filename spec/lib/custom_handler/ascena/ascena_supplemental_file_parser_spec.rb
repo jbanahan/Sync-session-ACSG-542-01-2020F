@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaSupplementalFileParser do
   end
 
   describe "parse" do
-    let!(:ent) { Factory(:entry, entry_number: "21612345671", broker_reference: "1234567", source_system: Entry::KEWILL_SOURCE_SYSTEM) }
+    let!(:ent) { FactoryBot(:entry, entry_number: "21612345671", broker_reference: "1234567", source_system: Entry::KEWILL_SOURCE_SYSTEM) }
     let(:inbound) { InboundFile.new(s3_path: "path/to/some_file.csv") }
 
     before do
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaSupplementalFileParser do
     end
 
     context "errors" do
-      before { Factory(:mailing_list, system_code: "ascena_ftz_validations", email_addresses: "tufnel@stonehenge.biz") }
+      before { FactoryBot(:mailing_list, system_code: "ascena_ftz_validations", email_addresses: "tufnel@stonehenge.biz") }
 
       it "sends email if first entry number is missing" do
         csv.gsub! "316-2523440-1", ""

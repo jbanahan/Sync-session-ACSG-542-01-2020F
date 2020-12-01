@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
 
   describe "generate" do
     it "should email report" do
-      u = Factory(:master_user, username:'EU Fiber Content', email:'a@sample.com')
+      u = FactoryBot(:master_user, username:'EU Fiber Content', email:'a@sample.com')
       mail = double('mail')
       expect(mail).to receive(:deliver_now)
       d = described_class.new
@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       d.generate
     end
     it "should create user" do
-      master_company = Factory(:company, master:true)
+      master_company = FactoryBot(:company, master:true)
       mail = double('mail')
       expect(mail).to receive(:deliver_now)
       d = described_class.new
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
   end
   describe "sync" do
     before :each do
-      @italy = Factory(:country, iso_code:'IT')
+      @italy = FactoryBot(:country, iso_code:'IT')
       @cdefs = described_class.prep_custom_definitions([
         :merch_division,
         :fiber_content,
@@ -50,26 +50,26 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       r
     end
     it "should get new record" do
-      p = Factory(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
+      p = FactoryBot(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division], 'MD')
       p.update_custom_value!(@cdefs[:fiber_content], 'FC')
       p.update_custom_value!(@cdefs[:csm_numbers], 'CSM')
       p.update_custom_value!(@cdefs[:season], 'SEA')
-      c = Factory(:classification, country:@italy, product:p)
-      t = Factory(:tariff_record, hts_1:'1234567890', classification:c)
+      c = FactoryBot(:classification, country:@italy, product:p)
+      t = FactoryBot(:tariff_record, hts_1:'1234567890', classification:c)
       expect(do_sync).to eq [@headers, [
         'UID', 'NM', 'FC', '1234567890', 'CSM', 'MD', 'SEA'
         ]]
       expect(p.sync_records.find_by(trading_partner: "eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should get changed record" do
-      p = Factory(:product, unique_identifier:'UID', name:'NM', updated_at:1.second.ago)
+      p = FactoryBot(:product, unique_identifier:'UID', name:'NM', updated_at:1.second.ago)
       p.update_custom_value!(@cdefs[:merch_division], 'MD')
       p.update_custom_value!(@cdefs[:fiber_content], 'FC')
       p.update_custom_value!(@cdefs[:csm_numbers], 'CSM')
       p.update_custom_value!(@cdefs[:season], 'SEA')
-      c = Factory(:classification, country:@italy, product:p)
-      t = Factory(:tariff_record, hts_1:'1234567890', classification:c)
+      c = FactoryBot(:classification, country:@italy, product:p)
+      t = FactoryBot(:tariff_record, hts_1:'1234567890', classification:c)
       p.sync_records.create!(trading_partner:'eu_fiber_content', fingerprint:'OTHER', sent_at:1.day.ago, confirmed_at:1.hour.ago)
       expect(do_sync).to eq [@headers, [
         'UID', 'NM', 'FC', '1234567890', 'CSM', 'MD', 'SEA'
@@ -77,22 +77,22 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(p.sync_records.find_by(trading_partner: "eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should not get record not changed" do
-      p = Factory(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
+      p = FactoryBot(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division], 'MD')
       p.update_custom_value!(@cdefs[:fiber_content], 'FC')
       p.update_custom_value!(@cdefs[:csm_numbers], 'CSM')
-      c = Factory(:classification, country:@italy, product:p)
-      t = Factory(:tariff_record, hts_1:'1234567890', classification:c)
+      c = FactoryBot(:classification, country:@italy, product:p)
+      t = FactoryBot(:tariff_record, hts_1:'1234567890', classification:c)
       p.sync_records.create!(trading_partner:'eu_fiber_content', fingerprint:'FC', sent_at:1.day.ago, confirmed_at:1.hour.ago)
       expect(do_sync).to eq []
     end
     it "should not get record without Italy HTS 1" do
-      p = Factory(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
+      p = FactoryBot(:product, unique_identifier:'UID', name:'NM', updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division], 'MD')
       p.update_custom_value!(@cdefs[:fiber_content], 'FC')
       p.update_custom_value!(@cdefs[:csm_numbers], 'CSM')
-      c = Factory(:classification, country:@italy, product:p)
-      t = Factory(:tariff_record, hts_1:'', classification:c)
+      c = FactoryBot(:classification, country:@italy, product:p)
+      t = FactoryBot(:tariff_record, hts_1:'', classification:c)
       expect(do_sync).to eq []
     end
   end

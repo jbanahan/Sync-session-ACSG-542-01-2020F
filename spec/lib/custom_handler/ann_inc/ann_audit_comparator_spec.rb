@@ -3,9 +3,9 @@ require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 describe OpenChain::CustomHandler::AnnInc::AnnAuditComparator do
   subject { described_class }
 
-  let (:ann) { Factory(:importer, system_code: "ann") }
-  let (:order) { Factory(:order, importer: ann) }
-  let (:country) { Factory(:country, iso_code: "US")}
+  let (:ann) { FactoryBot(:importer, system_code: "ann") }
+  let (:order) { FactoryBot(:order, importer: ann) }
+  let (:country) { FactoryBot(:country, iso_code: "US")}
   let (:cdefs) { subject.new.cdefs }
 
   describe "compare" do

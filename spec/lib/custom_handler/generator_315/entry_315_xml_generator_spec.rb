@@ -6,15 +6,15 @@ describe OpenChain::CustomHandler::Generator315::Entry315XmlGenerator do
 
   describe "create_315_data" do
     let(:entry) do
-      Factory(:entry, broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR",
+      FactoryBot(:entry, broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR",
                       vessel: "VES", voyage: "VOY", entry_port_code: "1234", lading_port_code: "65433", unlading_port_code: "9876",
                       po_numbers: "ABC\n DEF")
     end
     let(:milestone) { milestone_update('code', Time.zone.now.to_date, SyncRecord.new) }
-    let(:canada) { Factory(:country, iso_code: 'CA')}
-    let!(:port_entry) { Factory(:port, schedule_d_code: "1234", name: "Entry Port") }
-    let!(:port_unlading) { Factory(:port, schedule_d_code: "9876", name: "Unlading Port") }
-    let!(:port_lading) { Factory(:port, schedule_k_code: "65433", name: "Lading Port") }
+    let(:canada) { FactoryBot(:country, iso_code: 'CA')}
+    let!(:port_entry) { FactoryBot(:port, schedule_d_code: "1234", name: "Entry Port") }
+    let!(:port_unlading) { FactoryBot(:port, schedule_d_code: "9876", name: "Unlading Port") }
+    let!(:port_lading) { FactoryBot(:port, schedule_k_code: "65433", name: "Lading Port") }
 
     it "extracts data from entry for 315 creation" do
       d = subject.send(:create_315_data, entry, {master_bills: ["ABC"], container_numbers: ["CON"], house_bills: ["HAWB"],

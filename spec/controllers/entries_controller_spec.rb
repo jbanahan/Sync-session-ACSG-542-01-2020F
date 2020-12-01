@@ -7,7 +7,7 @@ describe EntriesController do
   end
 
   let!(:user) do
-    Factory(:master_user, entry_view: true, company: Factory(:company, master: true, show_business_rules: true))
+    FactoryBot(:master_user, entry_view: true, company: FactoryBot(:company, master: true, show_business_rules: true))
   end
 
   before do
@@ -15,7 +15,7 @@ describe EntriesController do
   end
 
   describe "sync_records" do
-    let (:entry) { Factory(:entry) }
+    let (:entry) { FactoryBot(:entry) }
 
     it "renders page" do
       get :sync_records, id: entry.id
@@ -26,8 +26,8 @@ describe EntriesController do
   end
 
   describe 'validation_results' do
-    let(:ent) { Factory(:entry, broker_reference: '123456', importer: Factory(:importer)) }
-    let(:rule_result) { Factory(:business_validation_rule_result) }
+    let(:ent) { FactoryBot(:entry, broker_reference: '123456', importer: FactoryBot(:importer)) }
+    let(:rule_result) { FactoryBot(:business_validation_rule_result) }
     let(:bvr) { rule_result.business_validation_result }
 
     before do
@@ -78,7 +78,7 @@ describe EntriesController do
     it "requests images" do
       # make sure we're not relying on the referrer
       request.env["HTTP_REFERER"] = nil
-      entry = Factory(:entry, source_system: 'Alliance', broker_reference: '123456')
+      entry = FactoryBot(:entry, source_system: 'Alliance', broker_reference: '123456')
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('123456')
       post :get_images, 'id' => entry.id
       expect(response).to redirect_to(entry)
@@ -87,7 +87,7 @@ describe EntriesController do
     end
 
     it "does not request images for non-alliance entries" do
-      entry = Factory(:entry, source_system: 'Fenix', broker_reference: '123456')
+      entry = FactoryBot(:entry, source_system: 'Fenix', broker_reference: '123456')
       expect(OpenChain::AllianceImagingClient).not_to receive(:request_images)
       post :get_images, 'id' => entry.id
       expect(response).to be_redirect
@@ -99,7 +99,7 @@ describe EntriesController do
 
     it "handles bulk image requests with a referer" do
       request.env["HTTP_REFERER"] = "blah"
-      Factory(:entry, source_system: 'Alliance', broker_reference: '123456')
+      FactoryBot(:entry, source_system: 'Alliance', broker_reference: '123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id' => '1234', 'pk' => '123'}
 
@@ -110,7 +110,7 @@ describe EntriesController do
 
     it "handles bulk image requests without a referer" do
       request.env["HTTP_REFERER"] = nil
-      Factory(:entry, source_system: 'Alliance', broker_reference: '123456')
+      FactoryBot(:entry, source_system: 'Alliance', broker_reference: '123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id' => '1234', 'pk' => '123'}
 
@@ -122,8 +122,8 @@ describe EntriesController do
   end
 
   describe 'request data methods' do
-    let(:entry) { Factory(:entry, source_system: 'Alliance', broker_reference: '123456', importer: Factory(:importer)) }
-    let(:sys_admin_user) { Factory(:sys_admin_user, entry_view: true) }
+    let(:entry) { FactoryBot(:entry, source_system: 'Alliance', broker_reference: '123456', importer: FactoryBot(:importer)) }
+    let(:sys_admin_user) { FactoryBot(:sys_admin_user, entry_view: true) }
 
     describe 'as a sysadmin' do
       before do
@@ -169,7 +169,7 @@ describe EntriesController do
 
         context "with a search run id" do
           let(:sr) do
-            Factory(:search_setup, module_type: "Entry", user: sys_admin_user).search_runs.create!
+            FactoryBot(:search_setup, module_type: "Entry", user: sys_admin_user).search_runs.create!
           end
 
           before do
@@ -228,7 +228,7 @@ describe EntriesController do
     end
 
     it "shows a US entry" do
-      entry = Factory(:entry, importer: Factory(:importer))
+      entry = FactoryBot(:entry, importer: FactoryBot(:importer))
       get :show, id: entry.id
 
       expect(response.status).to eq(200)
@@ -238,7 +238,7 @@ describe EntriesController do
 
     it "shows a US simple entry" do
       user.update! simple_entry_mode: true
-      entry = Factory(:entry, importer: Factory(:importer))
+      entry = FactoryBot(:entry, importer: FactoryBot(:importer))
       get :show, id: entry.id
 
       expect(response.status).to eq(200)
@@ -247,8 +247,8 @@ describe EntriesController do
     end
 
     it "shows a CA entry" do
-      country = Factory(:country, iso_code: 'CA')
-      entry = Factory(:entry, import_country: country, importer: Factory(:importer))
+      country = FactoryBot(:country, iso_code: 'CA')
+      entry = FactoryBot(:entry, import_country: country, importer: FactoryBot(:importer))
 
       get :show, id: entry.id
 
@@ -260,7 +260,7 @@ describe EntriesController do
     it "redirects if user can't view" do
       expect_any_instance_of(Entry).to receive(:can_view?).and_return false
 
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       get :show, id: entry.id
       expect(response).to redirect_to("/")
       expect(flash[:errors]).to eq ["You do not have permission to view this entry."]
@@ -270,16 +270,16 @@ describe EntriesController do
     it "sends an xls version of the entry" do
       allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return true
 
-      e = Factory(:entry, importer: Factory(:importer))
-      line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: e))
-      Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
-      line.commercial_invoice_tariffs << Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
+      e = FactoryBot(:entry, importer: FactoryBot(:importer))
+      line = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, entry: e))
+      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line)
+      line.commercial_invoice_tariffs << FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line)
       line.save!
-      line2 = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: e))
+      line2 = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, entry: e))
 
-      broker_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e)).broker_invoice
-      Factory(:broker_invoice_line, broker_invoice: broker_invoice)
-      broker_invoice_2 = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e)).broker_invoice
+      broker_invoice = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: e)).broker_invoice
+      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice)
+      broker_invoice_2 = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: e)).broker_invoice
 
       get :show, id: e.id, format: :xls
 
@@ -311,7 +311,7 @@ describe EntriesController do
 
     it "uses canadian fields in xls file for canadian entries" do
       expect_any_instance_of(Entry).to receive(:canadian?).twice.and_return true
-      e = Factory(:entry, importer: Factory(:importer))
+      e = FactoryBot(:entry, importer: FactoryBot(:importer))
 
       get :show, id: e.id, format: :xls
       wb = Spreadsheet.open StringIO.new(response.body)
@@ -325,7 +325,7 @@ describe EntriesController do
 
     it "does not show broker invoices to users not capable of seeing them" do
       allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return false
-      e = Factory(:entry, importer: Factory(:importer))
+      e = FactoryBot(:entry, importer: FactoryBot(:importer))
 
       get :show, id: e.id, format: :xls
       wb = Spreadsheet.open StringIO.new(response.body)
@@ -337,9 +337,9 @@ describe EntriesController do
   context "country activity summaries" do
     describe "ca_activity_summary" do
       # before(:each) do
-      #   @ca_1 = with_fenix_id(Factory(:company), "1")
-      #   @ca_2 = with_fenix_id(Factory(:company), "2")
-      #   @ca_3 = with_fenix_id(Factory(:company), "3")
+      #   @ca_1 = with_fenix_id(FactoryBot(:company), "1")
+      #   @ca_2 = with_fenix_id(FactoryBot(:company), "2")
+      #   @ca_3 = with_fenix_id(FactoryBot(:company), "3")
 
       #   @iso = 'ca'
       #   @ca_companies = [@ca_1, @ca_2, @ca_3]
@@ -351,8 +351,8 @@ describe EntriesController do
       end
 
       it "renders activity_summary_portal if there are multiple CA importers" do
-        ca1 = with_fenix_id(Factory(:company), "1")
-        ca2 = with_fenix_id(Factory(:company), "2")
+        ca1 = with_fenix_id(FactoryBot(:company), "1")
+        ca2 = with_fenix_id(FactoryBot(:company), "2")
         get :ca_activity_summary
         expect(response).to render_template :act_summary_portal
         expect(assigns(:iso)).to eq "ca"
@@ -361,7 +361,7 @@ describe EntriesController do
       end
 
       it "redirects to the CA importer if there is only one" do
-        co = with_fenix_id(Factory(:company), "1")
+        co = with_fenix_id(FactoryBot(:company), "1")
         get :ca_activity_summary
         expect(response).to redirect_to "/entries/importer/#{co.id}/activity_summary/ca"
       end
@@ -379,8 +379,8 @@ describe EntriesController do
       end
 
       it "renders activity_summary_portal if there are multiple US importers" do
-        co1 = with_customs_management_id(Factory(:company), "1")
-        co2 = with_customs_management_id(Factory(:company), "2")
+        co1 = with_customs_management_id(FactoryBot(:company), "1")
+        co2 = with_customs_management_id(FactoryBot(:company), "2")
         get :us_activity_summary
         expect(response).to render_template :act_summary_portal
         expect(assigns(:iso)).to eq "us"
@@ -389,7 +389,7 @@ describe EntriesController do
       end
 
       it "redirects to the US importer if there is only one" do
-        co1 = with_customs_management_id(Factory(:company), "1")
+        co1 = with_customs_management_id(FactoryBot(:company), "1")
         get :us_activity_summary
         expect(response).to redirect_to "/entries/importer/#{co1.id}/activity_summary/us"
       end
@@ -403,7 +403,7 @@ describe EntriesController do
 
   describe "by_release_range" do
     before do
-      @country = Factory(:country, iso_code: 'US')
+      @country = FactoryBot(:country, iso_code: 'US')
     end
 
     it "validates access and creates a release range query object" do
@@ -465,9 +465,9 @@ describe EntriesController do
 
   describe "purge" do
     let(:entry) do
-      Factory.create(:entry,
+      FactoryBot.create(:entry,
                      broker_reference: "1234567",
-                     import_country_id: Factory.create(:country).id,
+                     import_country_id: FactoryBot.create(:country).id,
                      source_system: "SomeSystem")
 
     end
@@ -517,8 +517,8 @@ describe EntriesController do
   end
 
   describe "us_duty_detail" do
-    let(:company) {  Factory(:company) }
-    let(:user) { Factory(:user, company: company) }
+    let(:company) {  FactoryBot(:company) }
+    let(:user) { FactoryBot(:user, company: company) }
 
     before do
       sign_in_as user
@@ -570,7 +570,7 @@ describe EntriesController do
 
   describe "by_release_range_download" do
     before do
-      Factory(:country, iso_code: "US")
+      FactoryBot(:country, iso_code: "US")
     end
 
     it "returns XLS file" do
@@ -586,7 +586,7 @@ describe EntriesController do
     end
 
     it "rejects unauthorized users" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :by_release_range_download, importer_id: user.company.id, iso_code: "US", release_range: "1w"
       expect(response).to redirect_to request.referer
@@ -595,14 +595,14 @@ describe EntriesController do
   end
 
   describe "generate_delivery_order" do
-    let (:user) { Factory(:master_user) }
+    let (:user) { FactoryBot(:master_user) }
 
     before do
       sign_in_as user
     end
 
     it "generates a delivery order for US entry" do
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       expect_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
       expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).to receive(:delay).and_return OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator
       expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).to receive(:generate_and_send_delivery_orders).with(user.id, entry.id)
@@ -612,7 +612,7 @@ describe EntriesController do
     end
 
     it "redirects to error for canadian entries" do
-      entry = Factory(:entry, import_country: Factory(:country, iso_code: "CA"))
+      entry = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: "CA"))
       expect_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
       expect(OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator).not_to receive(:delay)
       post :generate_delivery_order, {id: entry.id}

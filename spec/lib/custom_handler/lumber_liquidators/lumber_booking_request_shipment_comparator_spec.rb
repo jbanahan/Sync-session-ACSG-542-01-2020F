@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       shipment.save!
       shipment.sync_records.create! trading_partner: 'Booking Request', sent_at: Time.zone.now
       shipment.update_attributes!(booking_received_date:Date.new(2018, 1, 29))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).not_to receive(:generate_xml)
       expect(subject).not_to receive(:ftp_sync_file)

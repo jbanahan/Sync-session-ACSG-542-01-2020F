@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Burlington::BurlingtonProductParser do
   let(:user) do
-    u = Factory(:master_user)
+    u = FactoryBot(:master_user)
     allow(u).to receive(:edit_products?).and_return true
     u
   end
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonProductParser do
   end
 
   describe "process" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     subject { described_class.new(cf) }
 
@@ -72,8 +72,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonProductParser do
     let(:row2) { ["", "PuTian YongFeng Footwear Co.,Ltd", "Frozen2", "NIFR7750A-B", "SILVER", "Frozen 2 sandal", "$5.80", "pu+ eva outsole", "UPPER:95% plastic +5% copper OUTSOLE:100% eva", "6402.99.2590", "12.5%", "6-10#", "", "", "6", "", "", "", "", "", "34.0", "26.0", "Inches (Standard)", "2", "", "", "", "UPPER: 95% plastic +5% copper", "OUTSOLE:100% eva", "", "", ""] }
     let(:row3) { ["", "PuTian YongFeng Footwear Co.,Ltd", "Frozen2", "NIFR7750A-C", "SILVER", "Frozen 3 sandal", "$5.80", "pu+ eva outsole", "UPPER:95% plastic +5% copper OUTSOLE:100% eva", "6402.99.2590", "12.5%", "6-10#", "", "", "6", "", "", "", "", "", "34.0", "26.0", "Inches (Standard)", "2", "", "", "", "UPPER: 95% plastic +5% copper", "OUTSOLE:100% eva", "", "", ""] }
     let(:row4) { ["", "PuTian YongFeng Footwear Co.,Ltd", "Frozen2", "NIFR7750A-C", "SILVER", "Frozen 3 sandal", "$5.80", "pu+ eva outsole", "UPPER:95% plastic +5% copper OUTSOLE:100% eva", "6402.99.2590", "12.5%", "6-10#", "", "", "6", "", "", "", "", "", "34.0", "26.0", "Inches (Standard)", "2", "", "", "", "UPPER: 95% plastic +5% copper", "OUTSOLE:100% eva", "", "", ""] }
-    let(:us) { Factory(:country, iso_code: "US") }
-    let(:imp) { Factory(:company, system_code: "BURLI")}
+    let(:us) { FactoryBot(:country, iso_code: "US") }
+    let(:imp) { FactoryBot(:company, system_code: "BURLI")}
     subject { described_class.new(cf) }
     let(:cdefs) { subject.cdefs }
     before { us; cf; imp }

@@ -1,22 +1,22 @@
 describe OpenChain::Report::LandedCostDataGenerator do
 
   before :each do
-    @entry = Factory(:entry, :file_logged_date=>Time.zone.now, :customer_name=>"Test", :customer_references=>"A\nB\nPO", :po_numbers=>"PO\nPO2", :importer_id=>5, :release_date=>Time.zone.now, :transport_mode_code=>"2")
-    @bi = Factory(:broker_invoice, :entry=>@entry)
+    @entry = FactoryBot(:entry, :file_logged_date=>Time.zone.now, :customer_name=>"Test", :customer_references=>"A\nB\nPO", :po_numbers=>"PO\nPO2", :importer_id=>5, :release_date=>Time.zone.now, :transport_mode_code=>"2")
+    @bi = FactoryBot(:broker_invoice, :entry=>@entry)
 
-    @bi_line_brokerage = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"R", :charge_amount=> BigDecimal.new("100"))
-    @bi_line_other = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"O", :charge_amount => BigDecimal.new("100"))
-    @bi_line_freight = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"F", :charge_amount => BigDecimal.new("100"), charge_code: "0600")
-    @bi_line_inland = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"T", :charge_amount => BigDecimal.new("100"))
+    @bi_line_brokerage = FactoryBot(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"R", :charge_amount=> BigDecimal.new("100"))
+    @bi_line_other = FactoryBot(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"O", :charge_amount => BigDecimal.new("100"))
+    @bi_line_freight = FactoryBot(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"F", :charge_amount => BigDecimal.new("100"), charge_code: "0600")
+    @bi_line_inland = FactoryBot(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"T", :charge_amount => BigDecimal.new("100"))
 
-    @ci = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV1")
-    @ci_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part1", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID1", :country_origin_code=>"CN",
+    @ci = FactoryBot(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV1")
+    @ci_line_1 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part1", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID1", :country_origin_code=>"CN",
                           :hmf => BigDecimal.new("25"), :prorated_mpf => BigDecimal.new("25"), :cotton_fee =>  BigDecimal.new("50"), :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("1000"))])
 
-    @ci_line_2 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part2", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
+    @ci_line_2 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part2", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
                           :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :entered_value=>BigDecimal.new("750"))])
 
-    @ci_line_3 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part3", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
+    @ci_line_3 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part3", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
                           :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"9876543210", :entered_value=>BigDecimal.new("500")), CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("500"))])
   end
 
@@ -141,8 +141,8 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
     it "should prorate international freight against a single invoice if specified" do
       # Create a second invoice and move one of the other lines to the new invoice
-      ci_2 = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV2")
-      ci_2_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>ci_2, :part_number=>"Part4", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID4", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
+      ci_2 = FactoryBot(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV2")
+      ci_2_line_1 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>ci_2, :part_number=>"Part4", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID4", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
                             :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"))])
 
       @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> ci_2.invoice_number, :charge_code=>"0600"
@@ -169,8 +169,8 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
     it "should prorate international freight against a single invoice if specified - fuzzy freight invoice matching" do
       # Create a second invoice and move one of the other lines to the new invoice
-      ci_2 = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV2")
-      ci_2_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>ci_2, :part_number=>"Part4", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID4", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
+      ci_2 = FactoryBot(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV2")
+      ci_2_line_1 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>ci_2, :part_number=>"Part4", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID4", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
                             :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"))])
 
       @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> "Test#{ci_2.invoice_number}", :charge_code=>"0600"

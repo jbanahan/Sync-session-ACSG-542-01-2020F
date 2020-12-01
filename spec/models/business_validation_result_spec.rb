@@ -1,15 +1,15 @@
 describe BusinessValidationResult do
-  let(:bvr) { Factory(:business_validation_result) }
+  let(:bvr) { FactoryBot(:business_validation_result) }
 
   describe "can_view" do
     it "allows users who can view results" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       u.company.update(show_business_rules: true)
       expect(bvr.can_view?(u)).to eq true
     end
 
     it "does not allow who can't view results" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(bvr.can_view?(u)).to eq false
     end
 
@@ -19,13 +19,13 @@ describe BusinessValidationResult do
       end
 
       it "allows users with viewing rights" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         u.company.update(show_business_rules: true)
         expect(bvr.can_view?(u)).to eq true
       end
 
       it "blocks users without viewing rights" do
-        u = Factory(:user)
+        u = FactoryBot(:user)
         u.company.update(show_business_rules: true)
         expect(bvr.can_view?(u)).to eq false
       end
@@ -34,13 +34,13 @@ describe BusinessValidationResult do
 
   describe "can_edit" do
     it "allows users from master company" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       u.company.update(show_business_rules: true)
       expect(bvr.can_edit?(u)).to eq true
     end
 
     it "does not allow users not from master company" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(bvr.can_edit?(u)).to eq false
     end
   end
@@ -120,7 +120,7 @@ describe BusinessValidationResult do
   end
 
   describe "run_validation_with_state_tracking" do
-    let(:order) { Factory(:order, order_number: "ajklsdfajl") }
+    let(:order) { FactoryBot(:order, order_number: "ajklsdfajl") }
     let(:rule) do
       ValidationRuleFieldFormat.create! type: 'ValidationRuleFieldFormat', name: "Name", description: "Description",
                                         rule_attributes_json: {model_field_uid: 'ord_ord_num', regex: '12345'}.to_json

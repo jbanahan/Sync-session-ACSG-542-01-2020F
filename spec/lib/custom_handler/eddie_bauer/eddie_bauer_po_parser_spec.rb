@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser do
   before :each do
-    @eddie = Factory(:company, system_code:'EDDIE')
-    @ebcc = Factory(:company, system_code:'EBCC')
+    @eddie = FactoryBot(:company, system_code:'EDDIE')
+    @ebcc = FactoryBot(:company, system_code:'EBCC')
     @data = "E-0442532-0003                      MILLWORK PTE LTD                   91 E0002842            MILLWORK PTE (DIRECT)               0901            0067            201403302014033020140509OJAKARTA             N                   00670501                            PT METRO GARMIN FTY                91 E0002842-F007       ID0000800    M LS WR                                                                         SEATTLE DIRECT SOURCING  C
 E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E0002450            SHAHI EXPORTS PVT LTD               0799            0009            201403282014032820140509OCHENNAI             N                   00098498                            SHAHI EXPORTS PVT LTD              91 E0002450-F001       IN0011134    W SS LACE                                                                       SEATTLE DIRECT SOURCING  X
 E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E0002450            SHAHI EXPORTS PVT LTD               0799            0009            201403282014032820140509OCHENNAI             N                   00098499                            SHAHI EXPORTS PVT LTD              91 E0002450-F001       IN0002762    WP SS LCE                                                                       SEATTLE DIRECT SOURCING  X
@@ -35,13 +35,13 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
         expect {subject.parse lines.join("")}.to change(Order.where(importer_id:@ebcc.id), :count).from(0).to(2)
       end
       it "should find existing product" do
-        p = Factory(:product, unique_identifier:'EDDIE-009-8498', importer:@eddie)
+        p = FactoryBot(:product, unique_identifier:'EDDIE-009-8498', importer:@eddie)
         subject.parse(@data)
         expect(Order.find_by(order_number: 'EDDIE-E0442642-0011').order_lines.find_by(product: p)).not_to be_nil
       end
       it "should delete and rebuild lines on existing order" do
-        p = Factory(:product, unique_identifier:'EDDIE-009-9999', importer:@eddie)
-        line_to_delete = Factory(:order_line, product:p, order:Factory(:order, importer:@eddie, order_number:'EDDIE-E0442642-0011'))
+        p = FactoryBot(:product, unique_identifier:'EDDIE-009-9999', importer:@eddie)
+        line_to_delete = FactoryBot(:order_line, product:p, order:FactoryBot(:order, importer:@eddie, order_number:'EDDIE-E0442642-0011'))
         expect {subject.parse(@data)}.to change(OrderLine, :count).from(1).to(5)
         ord = line_to_delete.order
         ord.reload
@@ -50,7 +50,7 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
       end
       it "should use existing vendor" do
         sys_code = "EDDIE-E0002450"
-        vendor = Factory(:company, vendor:true, system_code:sys_code)
+        vendor = FactoryBot(:company, vendor:true, system_code:sys_code)
         subject.parse @data
         expect(Order.find_by(order_number: 'EDDIE-E0442642-0011').vendor).to eq vendor
       end

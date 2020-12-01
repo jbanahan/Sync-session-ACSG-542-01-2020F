@@ -153,9 +153,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
 
   describe '#can_revise_booking?' do
 
-    let (:delivery_location) { Factory(:port, unlocode: "LOCOD") }
+    let (:delivery_location) { FactoryBot(:port, unlocode: "LOCOD") }
     let (:shipment) {
-      s = Factory(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
+      s = FactoryBot(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
       s.attachments.create! attached_file_name: "file.pdf", attachment_type: "VDS-Vendor Document Set"
       s.booking_lines.create order: order, order_line: order.order_lines.first, quantity: 10, cbms: 10
       s
@@ -167,8 +167,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
     }
     let (:company) { Company.new }
     let (:order) {
-      o = Factory(:order, fob_point: delivery_location.unlocode)
-      l = Factory(:order_line, order: o)
+      o = FactoryBot(:order, fob_point: delivery_location.unlocode)
+      l = FactoryBot(:order_line, order: o)
       o
     }
 
@@ -233,9 +233,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
 
   describe "can_request_booking?" do
 
-    let (:delivery_location) { Factory(:port, unlocode: "LOCOD") }
+    let (:delivery_location) { FactoryBot(:port, unlocode: "LOCOD") }
     let (:shipment) {
-      s = Factory(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
+      s = FactoryBot(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
       s.attachments.create! attached_file_name: "file.pdf", attachment_type: "VDS-Vendor Document Set"
       s.booking_lines.create order: order, order_line: order.order_lines.first, quantity: 10, cbms: 10
       s
@@ -246,10 +246,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       u.company = company
       u
     }
-    let (:company) { Factory(:company) }
+    let (:company) { FactoryBot(:company) }
     let (:order) {
-      o = Factory(:order, fob_point: delivery_location.unlocode)
-      l = Factory(:order_line, order: o)
+      o = FactoryBot(:order, fob_point: delivery_location.unlocode)
+      l = FactoryBot(:order_line, order: o)
       o
     }
 
@@ -338,7 +338,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
   end
 
   describe "open_bookings_hook" do
-    let! (:shipment) { Factory(:shipment) }
+    let! (:shipment) { FactoryBot(:shipment) }
 
     before :each do
       booking_unlocked_date
@@ -403,22 +403,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
     end
 
     context "with booked orders on shipment" do
-      let (:ship_to) { Factory(:address) }
-      let (:delivery_location) { Factory(:port, unlocode: "UNLOC")}
+      let (:ship_to) { FactoryBot(:address) }
+      let (:delivery_location) { FactoryBot(:port, unlocode: "UNLOC")}
       let (:booked_order) {
-        o = Factory(:order, fob_point: "UNLOC")
-        line = Factory(:order_line, order: o, ship_to: ship_to)
+        o = FactoryBot(:order, fob_point: "UNLOC")
+        line = FactoryBot(:order_line, order: o, ship_to: ship_to)
         o
       }
       let (:shipment) {
-        s = Factory(:shipment, first_port_receipt_id: delivery_location.id, ship_to: ship_to)
+        s = FactoryBot(:shipment, first_port_receipt_id: delivery_location.id, ship_to: ship_to)
         s.booking_lines.create! quantity: 1, order: booked_order, order_line: booked_order.order_lines.first, product: booked_order.order_lines.first.product
         s
       }
 
       let (:another_order) {
-        o = Factory(:order, fob_point: "UNLOC")
-        line = Factory(:order_line, order: o, ship_to: ship_to)
+        o = FactoryBot(:order, fob_point: "UNLOC")
+        line = FactoryBot(:order_line, order: o, ship_to: ship_to)
         o
       }
 
@@ -432,17 +432,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       end
 
       it "does not allow booking if shipment' delivery location does not match" do
-        shipment.first_port_receipt = Factory(:port, unlocode: "LOCOD")
+        shipment.first_port_receipt = FactoryBot(:port, unlocode: "LOCOD")
         expect(subject.can_book_order_to_shipment? another_order, shipment).to eq false
       end
 
       it "does not allow booking if ship to doesn't match" do
-        another_order.order_lines.first.update_attributes! ship_to_id: Factory(:address)
+        another_order.order_lines.first.update_attributes! ship_to_id: FactoryBot(:address)
         expect(subject.can_book_order_to_shipment? another_order, shipment).to eq false
       end
 
       it "doesn't allow booking unless all ship to lines on the order match whats on the shipment" do
-        another_order.order_lines.build ship_to_id: Factory(:address).id
+        another_order.order_lines.build ship_to_id: FactoryBot(:address).id
         expect(subject.can_book_order_to_shipment? another_order, shipment).to eq false
       end
     end

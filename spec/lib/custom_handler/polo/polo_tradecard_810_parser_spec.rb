@@ -35,7 +35,7 @@ XML
     let (:log) { InboundFile.new }
 
     it "parses tradecard 810 xml" do
-      importer = Factory(:importer, system_code: "polo")
+      importer = FactoryBot(:importer, system_code: "polo")
 
       subject.parse_file xml, log
 
@@ -66,7 +66,7 @@ XML
     end
 
     it "updates existing invoices" do
-      line = Factory(:commercial_invoice_line, :commercial_invoice => Factory(:commercial_invoice, :vendor_name=>"Tradecard", :invoice_number=>"9586/13"))
+      line = FactoryBot(:commercial_invoice_line, :commercial_invoice => FactoryBot(:commercial_invoice, :vendor_name=>"Tradecard", :invoice_number=>"9586/13"))
       existing_inv = line.commercial_invoice
 
       subject.parse_file xml, log
@@ -97,7 +97,7 @@ XML
     end
 
     it "marks connected POs as received" do
-      o = Order.create! order_number: "806167003RM0001-CAN007629", importer: Factory(:importer, fenix_customer_number: "806167003RM0001")
+      o = Order.create! order_number: "806167003RM0001-CAN007629", importer: FactoryBot(:importer, fenix_customer_number: "806167003RM0001")
       cds = OpenChain::CustomHandler::Polo::PoloTradecard810Parser.prep_custom_definitions([:ord_invoiced, :ord_invoicing_system])
       o.update_custom_value! cds[:ord_invoicing_system], "Tradecard"
 

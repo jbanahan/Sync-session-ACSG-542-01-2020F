@@ -1,7 +1,7 @@
 describe BusinessRuleSnapshotsController do
 
-  let! (:entity) { Factory(:entry, broker_reference: "REF") }
-  let (:user) { Factory(:user) }
+  let! (:entity) { FactoryBot(:entry, broker_reference: "REF") }
+  let (:user) { FactoryBot(:user) }
 
   before :each do
     sign_in_as user

@@ -2,8 +2,8 @@ describe Api::V1::SurveyResponsesController do
 
   describe "index" do
     it "returns a list of surveys accessible to the user" do
-      s = Factory(:survey_response, subtitle: "sub")
-      Factory(:survey_response)
+      s = FactoryBot(:survey_response, subtitle: "sub")
+      FactoryBot(:survey_response)
       allow_api_access s.user
       s.user.update! survey_view: true
 
@@ -16,11 +16,11 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "returns list of surveys assign to a user's group" do
-      s = Factory(:survey_response, subtitle: "sub")
-      g = Factory(:group)
+      s = FactoryBot(:survey_response, subtitle: "sub")
+      g = FactoryBot(:group)
       s.update! user: nil, group: g
 
-      user = Factory(:user, survey_view: true)
+      user = FactoryBot(:user, survey_view: true)
 
       user.groups << g
 
@@ -35,14 +35,14 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "returns forbidden if user doesn't have survey visibility" do
-      user = Factory(:user, survey_view: false)
+      user = FactoryBot(:user, survey_view: false)
       allow_api_access user
       get :index
       expect(response.status).to eq 403
     end
 
     it "does not return archived survey repsonses" do
-      s = Factory(:survey_response, subtitle: "sub", archived: true)
+      s = FactoryBot(:survey_response, subtitle: "sub", archived: true)
       allow_api_access s.user
       s.user.update! survey_view: true
 
@@ -53,7 +53,7 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "does not return responses linked to archived surveys" do
-      s = Factory(:survey_response, subtitle: "sub")
+      s = FactoryBot(:survey_response, subtitle: "sub")
       s.survey.update! archived: true
       allow_api_access s.user
       s.user.update! survey_view: true
@@ -65,8 +65,8 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "includes checkout information" do
-      user = Factory(:user, survey_view: true)
-      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
+      user = FactoryBot(:user, survey_view: true)
+      s = FactoryBot(:survey_response, subtitle: "sub", user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
       c = s.checkout_by_user
       allow_api_access s.user
 
@@ -78,8 +78,8 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "excludes checkout token if checked out by another user" do
-      user = Factory(:user, survey_view: true)
-      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: Factory(:user), checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
+      user = FactoryBot(:user, survey_view: true)
+      s = FactoryBot(:survey_response, subtitle: "sub", user: user, checkout_by_user: FactoryBot(:user), checkout_token: "token", checkout_expiration: Time.zone.now + 1.day)
 
       c = s.checkout_by_user
       allow_api_access s.user
@@ -92,8 +92,8 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "clears checkout information if its outdated" do
-      user = Factory(:user, survey_view: true)
-      s = Factory(:survey_response, subtitle: "sub", user: user, checkout_by_user: Factory(:user), checkout_token: "token", checkout_expiration: Time.zone.now - 1.day)
+      user = FactoryBot(:user, survey_view: true)
+      s = FactoryBot(:survey_response, subtitle: "sub", user: user, checkout_by_user: FactoryBot(:user), checkout_token: "token", checkout_expiration: Time.zone.now - 1.day)
 
       s.checkout_by_user
       allow_api_access s.user
@@ -105,8 +105,8 @@ describe Api::V1::SurveyResponsesController do
   end
 
   describe "show" do
-    let(:user) { Factory(:user, survey_view: true) }
-    let!(:survey_response) { Factory(:survey_response, user: user) }
+    let(:user) { FactoryBot(:user, survey_view: true) }
+    let!(:survey_response) { FactoryBot(:survey_response, user: user) }
 
     before do
       allow_api_access user
@@ -139,8 +139,8 @@ describe Api::V1::SurveyResponsesController do
   end
 
   describe "checkout" do
-    let(:user) { Factory(:user, survey_view: true) }
-    let(:survey_response) { Factory(:survey_response, user: user) }
+    let(:user) { FactoryBot(:user, survey_view: true) }
+    let(:survey_response) { FactoryBot(:survey_response, user: user) }
 
     before do
       allow_api_access user
@@ -167,7 +167,7 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "fails if survey is already checked out" do
-      survey_response.checkout_by_user = Factory(:user)
+      survey_response.checkout_by_user = FactoryBot(:user)
       survey_response.save!
 
       post :checkout, {id: survey_response.id, checkout_token: "token"}
@@ -206,8 +206,8 @@ describe Api::V1::SurveyResponsesController do
   end
 
   describe "cancel_checkout" do
-    let(:user) { Factory(:user, survey_view: true) }
-    let(:survey_response) { Factory(:survey_response, user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now) }
+    let(:user) { FactoryBot(:user, survey_view: true) }
+    let(:survey_response) { FactoryBot(:survey_response, user: user, checkout_by_user: user, checkout_token: "token", checkout_expiration: Time.zone.now) }
 
     before do
       allow_api_access user
@@ -235,7 +235,7 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "fails if user doesn't own the checkout" do
-      survey_response.checkout_by_user = Factory(:user)
+      survey_response.checkout_by_user = FactoryBot(:user)
       survey_response.save!
 
       post :cancel_checkout, {id: survey_response.id, checkout_token: "token"}
@@ -279,10 +279,10 @@ describe Api::V1::SurveyResponsesController do
   end
 
   describe "checkin" do
-    let(:user) { Factory(:user, survey_view: true) }
-    let(:survey) { Factory(:survey) }
-    let!(:question) { Factory(:question, survey: survey, content: "Is this a test?", choices: "Yes\nNo") }
-    let!(:question2) { Factory(:question, survey: survey, content: "Is this a second question?", choices: "Y\nN") }
+    let(:user) { FactoryBot(:user, survey_view: true) }
+    let(:survey) { FactoryBot(:survey) }
+    let!(:question) { FactoryBot(:question, survey: survey, content: "Is this a test?", choices: "Yes\nNo") }
+    let!(:question2) { FactoryBot(:question, survey: survey, content: "Is this a second question?", choices: "Y\nN") }
 
     let(:survey_response) do
       survey_response = survey.generate_response! user
@@ -420,7 +420,7 @@ describe Api::V1::SurveyResponsesController do
     end
 
     it "errors if survey is not checked out to user" do
-      survey_response.checkout_by_user = Factory(:user)
+      survey_response.checkout_by_user = FactoryBot(:user)
       survey_response.save!
 
       post :checkin, {'id' => survey_response.id, 'survey_response' => req}
@@ -561,9 +561,9 @@ describe Api::V1::SurveyResponsesController do
   end
 
   describe "submit" do
-    let(:user) { Factory(:user, survey_view: true) }
-    let!(:survey) { Factory(:survey) }
-    let!(:question) { Factory(:question, survey: survey, content: "Is this a test?", choices: "Yes\nNo", rank: 0) }
+    let(:user) { FactoryBot(:user, survey_view: true) }
+    let!(:survey) { FactoryBot(:survey) }
+    let!(:question) { FactoryBot(:question, survey: survey, content: "Is this a test?", choices: "Yes\nNo", rank: 0) }
 
     let(:survey_response) do
       survey_response = survey.generate_response! user
@@ -746,7 +746,7 @@ describe Api::V1::SurveyResponsesController do
         question.require_comment = true
         question.save!
         answer.update! choice: "Yes"
-        answer.answer_comments.create! content: "Comment", user: Factory(:user)
+        answer.answer_comments.create! content: "Comment", user: FactoryBot(:user)
         post :submit, {id: survey_response.id}
         expect(response.status).to eq 403
         expect(JSON.parse(response.body)).to eq({'errors' => ["Question #1 is a required question. You must provide a comment."]})
@@ -793,7 +793,7 @@ describe Api::V1::SurveyResponsesController do
         question.require_attachment = true
         question.save!
         answer.update! choice: "Yes"
-        answer.attachments.create! attached_file_name: "file.text", uploaded_by: Factory(:user)
+        answer.attachments.create! attached_file_name: "file.text", uploaded_by: FactoryBot(:user)
         post :submit, {id: survey_response.id}
         expect(response.status).to eq 403
         expect(JSON.parse(response.body)).to eq({'errors' => ["Question #1 is a required question. You must provide an attachment."]})

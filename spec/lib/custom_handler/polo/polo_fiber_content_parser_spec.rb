@@ -336,7 +336,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @custom_defs = nil
     end
     before :each do
-      @prod = Factory(:product)
+      @prod = FactoryBot(:product)
       @tariff = @prod.classifications.create(country: usa).tariff_records.create(hts_1: '1234567890')
 
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status, :clean_fiber_content, :set_type]
@@ -590,24 +590,24 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
   describe "run_schedulable" do
     before :each do
-      @prod = Factory(:product)
+      @prod = FactoryBot(:product)
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_1, :msl_fiber_failure]
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
     end
 
     it "finds products with updated fiber contents and calls parse on them" do
       # This should be skipped because its updated at is in the future
-      future_product = Factory(:product)
+      future_product = FactoryBot(:product)
       future_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
       future_product.custom_values.first.update_column :updated_at, (Time.zone.now + 1.day)
 
       # This should be skipped because its updated at is prior to the previous run
-      old_product  = Factory(:product)
+      old_product  = FactoryBot(:product)
       old_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
       old_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
 
       # This should be picked up because it is currently in a failure state even though the fiber field has not been updated
-      failed_product = Factory(:product)
+      failed_product = FactoryBot(:product)
       failed_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
       failed_product.custom_values.first.update_column :updated_at, (Time.zone.now - 1.day)
       failed_product.update_custom_value! @test_cds[:msl_fiber_failure], true
@@ -639,7 +639,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
   describe "update_styles" do
     before :each do
-      @prod = Factory(:product)
+      @prod = FactoryBot(:product)
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_1]
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
     end

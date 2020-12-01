@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
-  let(:prod) { Factory(:product) }
+  let(:prod) { FactoryBot(:product) }
 
   describe "accept?" do
-    let(:snap) { Factory(:entity_snapshot) }
+    let(:snap) { FactoryBot(:entity_snapshot) }
 
     it "returns 'true' for products" do
       snap.update! recordable: prod
@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
     end
 
     it "returns 'false' otherwise" do
-      snap.update! recordable: Factory(:entry)
+      snap.update! recordable: FactoryBot(:entry)
       expect(described_class.accept? snap).to eq false
     end
   end
@@ -18,18 +18,18 @@ describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
   describe "compare" do
     let(:cdef) { described_class.prep_custom_definitions([:set_type])[:set_type] }
     let(:class_1) do
-      cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "US"))
+      cl = FactoryBot(:classification, product: prod, country: FactoryBot(:country, iso_code: "US"))
       cl.update_custom_value! cdef, "RL"
       cl
     end
     let(:class_2) do
-      cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "CA"), tariff_records: [Factory(:tariff_record, line_number: 1), Factory(:tariff_record, line_number: 2)])
+      cl = FactoryBot(:classification, product: prod, country: FactoryBot(:country, iso_code: "CA"), tariff_records: [FactoryBot(:tariff_record, line_number: 1), FactoryBot(:tariff_record, line_number: 2)])
       cl.update_custom_value! cdef, "CTS"
       cl
     end
-    let(:class_3) { Factory(:classification, product: prod, country: Factory(:country, iso_code: "CN"), tariff_records: [Factory(:tariff_record, line_number: 1), Factory(:tariff_record, line_number: 2)]) }
+    let(:class_3) { FactoryBot(:classification, product: prod, country: FactoryBot(:country, iso_code: "CN"), tariff_records: [FactoryBot(:tariff_record, line_number: 1), FactoryBot(:tariff_record, line_number: 2)]) }
     let(:class_4) do
-      cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "PK"), tariff_records: [Factory(:tariff_record)])
+      cl = FactoryBot(:classification, product: prod, country: FactoryBot(:country, iso_code: "PK"), tariff_records: [FactoryBot(:tariff_record)])
       cl.update_custom_value! cdef, "CTS"
       cl
     end

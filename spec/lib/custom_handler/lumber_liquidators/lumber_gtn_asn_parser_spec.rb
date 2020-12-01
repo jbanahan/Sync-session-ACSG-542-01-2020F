@@ -33,27 +33,27 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
   describe 'parse_dom' do
     before :each do
       @test_data = IO.read('spec/fixtures/files/ll_gtn_asn.xml')
-      @ord = Factory(:order, order_number:'4500173883')
-      @ord_2 = Factory(:order, order_number:'4500173884')
+      @ord = FactoryBot(:order, order_number:'4500173883')
+      @ord_2 = FactoryBot(:order, order_number:'4500173884')
     end
 
     let (:cdefs) { subject.send(:cdefs) }
 
     it 'should update order and shipment with matching lines and containers' do
-      shp = Factory(:shipment, reference:'201611221551')
-      port_shanghai = Factory(:port, unlocode:'CNSHA')
-      port_los_angeles = Factory(:port, unlocode:'USLAX')
-      port_pomona = Factory(:port, unlocode:'USPQC')
-      importer = Factory(:importer, system_code:'LUMBER')
+      shp = FactoryBot(:shipment, reference:'201611221551')
+      port_shanghai = FactoryBot(:port, unlocode:'CNSHA')
+      port_los_angeles = FactoryBot(:port, unlocode:'USLAX')
+      port_pomona = FactoryBot(:port, unlocode:'USPQC')
+      importer = FactoryBot(:importer, system_code:'LUMBER')
 
-      prod = Factory(:product, unique_identifier:'PRODXYZ')
-      shp_container_1 = Factory(:container, container_number:'TEMU3877030', shipment:shp)
-      shp_container_2 = Factory(:container, container_number:'TEMU3877031', shipment:shp)
-      ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
-      ord_line_2 = Factory(:order_line, product:prod, order:@ord_2, line_number:3)
-      shp_line_1 = Factory(:shipment_line, shipment:shp, product:prod, container:shp_container_1, quantity:0, line_number: 1, carton_qty:5, gross_kgs:6.5)
+      prod = FactoryBot(:product, unique_identifier:'PRODXYZ')
+      shp_container_1 = FactoryBot(:container, container_number:'TEMU3877030', shipment:shp)
+      shp_container_2 = FactoryBot(:container, container_number:'TEMU3877031', shipment:shp)
+      ord_line_1 = FactoryBot(:order_line, product:prod, order:@ord, line_number:1)
+      ord_line_2 = FactoryBot(:order_line, product:prod, order:@ord_2, line_number:3)
+      shp_line_1 = FactoryBot(:shipment_line, shipment:shp, product:prod, container:shp_container_1, quantity:0, line_number: 1, carton_qty:5, gross_kgs:6.5)
       shp_line_1.piece_sets.create!(order_line:ord_line_1, quantity:0)
-      shp_line_2 = Factory(:shipment_line, shipment:shp, product:prod, container:shp_container_2, quantity:0, line_number: 2, carton_qty:7, gross_kgs:5.6)
+      shp_line_2 = FactoryBot(:shipment_line, shipment:shp, product:prod, container:shp_container_2, quantity:0, line_number: 2, carton_qty:7, gross_kgs:5.6)
       shp_line_2.piece_sets.create!(order_line:ord_line_2, quantity:0)
 
       DataCrossReference.create! key:'20STD', value:'D20', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
@@ -203,16 +203,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       ms = stub_master_setup
       allow(ms).to receive(:production?).and_return true
 
-      shp = Factory(:shipment, reference:'201611221551')
+      shp = FactoryBot(:shipment, reference:'201611221551')
 
-      prod = Factory(:product, unique_identifier:'PRODXYZ')
-      shp_container_1 = Factory(:container, container_number:'TEMU3877030', shipment:shp)
-      shp_container_2 = Factory(:container, container_number:'TEMU3877031', shipment:shp)
-      ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
-      ord_line_2 = Factory(:order_line, product:prod, order:@ord_2, line_number:3)
-      shp_line_1 = Factory(:shipment_line, shipment:shp, product:prod, container:shp_container_1, quantity:0, line_number: 1, carton_qty:5, gross_kgs:6.5)
+      prod = FactoryBot(:product, unique_identifier:'PRODXYZ')
+      shp_container_1 = FactoryBot(:container, container_number:'TEMU3877030', shipment:shp)
+      shp_container_2 = FactoryBot(:container, container_number:'TEMU3877031', shipment:shp)
+      ord_line_1 = FactoryBot(:order_line, product:prod, order:@ord, line_number:1)
+      ord_line_2 = FactoryBot(:order_line, product:prod, order:@ord_2, line_number:3)
+      shp_line_1 = FactoryBot(:shipment_line, shipment:shp, product:prod, container:shp_container_1, quantity:0, line_number: 1, carton_qty:5, gross_kgs:6.5)
       shp_line_1.piece_sets.create!(order_line:ord_line_1, quantity:0)
-      shp_line_2 = Factory(:shipment_line, shipment:shp, product:prod, container:shp_container_2, quantity:0, line_number: 2, carton_qty:7, gross_kgs:5.6)
+      shp_line_2 = FactoryBot(:shipment_line, shipment:shp, product:prod, container:shp_container_2, quantity:0, line_number: 2, carton_qty:7, gross_kgs:5.6)
       shp_line_2.piece_sets.create!(order_line:ord_line_2, quantity:0)
 
       described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
@@ -247,10 +247,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     it 'should update shipment with no existing lines or containers, missing ports, xrefs and BOL' do
       @test_data.gsub!(/EGLV142657648711/, '')
 
-      shp = Factory(:shipment, reference:'201611221551', master_bill_of_lading:'old-BOL')
+      shp = FactoryBot(:shipment, reference:'201611221551', master_bill_of_lading:'old-BOL')
 
-      prod = Factory(:product, unique_identifier:'PRODXYZ')
-      ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
+      prod = FactoryBot(:product, unique_identifier:'PRODXYZ')
+      ord_line_1 = FactoryBot(:order_line, product:prod, order:@ord, line_number:1)
       # No second PO line.
 
       described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
@@ -312,7 +312,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     end
 
     it 'should fail when order cannot be found' do
-      shp = Factory(:shipment, reference:'201611221551')
+      shp = FactoryBot(:shipment, reference:'201611221551')
       @ord.delete
 
       described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
@@ -339,11 +339,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     it 'should error when missing PO Number, but still update shipment' do
       @test_data.gsub!(/4500173883/, '')
 
-      shp = Factory(:shipment, reference:'201611221551')
+      shp = FactoryBot(:shipment, reference:'201611221551')
 
-      prod = Factory(:product, unique_identifier:'PRODXYZ')
-      ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
-      ord_line_2 = Factory(:order_line, product:prod, order:@ord_2, line_number:3)
+      prod = FactoryBot(:product, unique_identifier:'PRODXYZ')
+      ord_line_1 = FactoryBot(:order_line, product:prod, order:@ord, line_number:1)
+      ord_line_2 = FactoryBot(:order_line, product:prod, order:@ord_2, line_number:3)
 
       described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
@@ -369,7 +369,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     end
 
     it "skips updating shipment level information if xml is older than shipments last exported from source date, but still updates containers if container is not outdated" do
-      shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
+      shp = FactoryBot(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
 
       expect(subject).not_to receive(:update_shipment)
       subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
@@ -384,9 +384,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     end
 
     it "skips updating shipment / container level information if xml is older than shipment and container receipt dates" do
-      shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
-      Factory(:container, shipment: shp, container_number: "TEMU3877030", last_exported_from_source: "2019-01-01 12:00")
-      Factory(:container, shipment: shp, container_number: "TEMU3877031", last_exported_from_source: "2019-01-01 12:00")
+      shp = FactoryBot(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
+      FactoryBot(:container, shipment: shp, container_number: "TEMU3877030", last_exported_from_source: "2019-01-01 12:00")
+      FactoryBot(:container, shipment: shp, container_number: "TEMU3877031", last_exported_from_source: "2019-01-01 12:00")
 
       subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
 

@@ -1,5 +1,5 @@
 describe OpenChain::GoogleAccountChecker do
-  let!(:user) { Factory(:user, username: "user1", email: 'dummy@vandegriftinc.com', disabled: false) }
+  let!(:user) { FactoryBot(:user, username: "user1", email: 'dummy@vandegriftinc.com', disabled: false) }
 
   let!(:user_list) {
     Set.new ["dummy@vandegriftinc.com"]

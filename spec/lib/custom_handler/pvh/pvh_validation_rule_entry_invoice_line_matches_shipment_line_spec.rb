@@ -1,31 +1,31 @@
 describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine do
 
   let! (:pvh) {
-    Factory(:importer, system_code: "PVH")
+    FactoryBot(:importer, system_code: "PVH")
   }
 
   let (:product) {
-    Factory(:product, importer: pvh, unique_identifier: "PVH-PART")
+    FactoryBot(:product, importer: pvh, unique_identifier: "PVH-PART")
   }
 
   let (:order) {
-    order = Factory(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
+    order = FactoryBot(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
     order_line = order.order_lines.create! product_id: product.id, quantity: 10, line_number: 1, price_per_unit: 10
     order_line = order.order_lines.create! product_id: product.id, quantity: 20, line_number: 8, price_per_unit: 5
     order
   }
 
   let! (:shipment) {
-    s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh)
+    s = FactoryBot(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh)
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
-    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200, invoice_number: "1")
+    l = FactoryBot(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200, invoice_number: "1")
 
     l.shipment.reload
   }
 
   let (:entry) {
-    e = Factory(:entry, broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: "10")
+    e = FactoryBot(:entry, broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: "10")
     container = e.containers.create! container_number: "ABCD1234567890"
     invoice = e.commercial_invoices.create! invoice_number: "1"
     line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: 20, unit_price: 5, container_id: container.id

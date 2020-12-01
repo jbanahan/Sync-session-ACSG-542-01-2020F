@@ -1,12 +1,12 @@
 describe PasswordResetsController do
-  let (:user) { Factory(:user) }
+  let (:user) { FactoryBot(:user) }
   before :each do
     sign_in_as user
   end
 
   describe "create" do
     it "sends password reset message" do
-      u = Factory(:user, disallow_password:false, email:"this_is_a_test@email.com")
+      u = FactoryBot(:user, disallow_password:false, email:"this_is_a_test@email.com")
 
       expect_any_instance_of(User).to receive(:delay).and_return(u)
       expect(u).to receive(:deliver_password_reset_instructions!)
@@ -17,7 +17,7 @@ describe PasswordResetsController do
     end
 
     it "notifies if user has password disallowed" do
-      u = Factory(:user, disallow_password:true, email:"this_is_a_test2@email.com")
+      u = FactoryBot(:user, disallow_password:true, email:"this_is_a_test2@email.com")
 
       expect_any_instance_of(User).to_not receive(:delay)
 
@@ -37,7 +37,7 @@ describe PasswordResetsController do
 
   describe "update" do
     it "updates password" do
-      u = Factory(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to receive(:on_successful_login).with(request)
@@ -51,7 +51,7 @@ describe PasswordResetsController do
     end
 
     it "errors when user can't be found by confirmation token" do
-      u = Factory(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect(subject).to receive(:sign_out)
       expect_any_instance_of(User).to_not receive(:update_user_password)
@@ -66,7 +66,7 @@ describe PasswordResetsController do
     end
 
     it "handles unsuccessful password update" do
-      u = Factory(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return false
       expect_any_instance_of(User).to_not receive(:on_successful_login)
@@ -83,7 +83,7 @@ describe PasswordResetsController do
     end
 
     it "handles expired password (with no current password)" do
-      u = Factory(:user, password_reset:true, password_expired:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, password_reset:true, password_expired:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to_not receive(:update_user_password)
       expect_any_instance_of(User).to_not receive(:on_successful_login)
@@ -98,7 +98,7 @@ describe PasswordResetsController do
     end
 
     it "handles expired password (with invalid current password)" do
-      u = Factory(:user, password_reset:true, password_expired:true, email:"this_is_a_test@email.com", confirmation_token:"555666", password_salt:"ZBX678")
+      u = FactoryBot(:user, password_reset:true, password_expired:true, email:"this_is_a_test@email.com", confirmation_token:"555666", password_salt:"ZBX678")
 
       expect_any_instance_of(User).to_not receive(:update_user_password)
       expect_any_instance_of(User).to_not receive(:on_successful_login)
@@ -115,7 +115,7 @@ describe PasswordResetsController do
     end
 
     it "allows forgotten password to reset password" do
-      u = Factory(:user, forgot_password:true, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, forgot_password:true, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to receive(:on_successful_login).with(request)
@@ -130,7 +130,7 @@ describe PasswordResetsController do
 
     # Password reset is updated, but the user is not actually signed in.  ("Success" value for sign in is false.)
     it "allows password locked user to reset password" do
-      u = Factory(:user, password_locked:true, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
+      u = FactoryBot(:user, password_locked:true, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to_not receive(:on_successful_login)

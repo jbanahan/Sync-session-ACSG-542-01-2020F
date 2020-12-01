@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
 
   describe "sync_xml" do
     let! (:product) {
-      Factory(:product)
+      FactoryBot(:product)
     }
 
     it "finds and sends xml file for products that need syncing" do
@@ -48,10 +48,10 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
 
     let (:cdefs) { subject.cdefs }
     let (:xml) { REXML::Element.new "root" }
-    let (:us) { Factory(:country, iso_code: "US") }
-    let (:ca) { Factory(:country, iso_code: "CA") }
+    let (:us) { FactoryBot(:country, iso_code: "US") }
+    let (:ca) { FactoryBot(:country, iso_code: "CA") }
     let (:product) {
-      p = Factory(:product, unique_identifier: "uid", name: "Long Description")
+      p = FactoryBot(:product, unique_identifier: "uid", name: "Long Description")
       [us, ca].each do |co|
         c = p.classifications.create! country_id: co.id
         c.tariff_records.create! hts_1: "1234567890"

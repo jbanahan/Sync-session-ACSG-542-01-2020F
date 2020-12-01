@@ -1,8 +1,8 @@
 describe ValidationRuleOrderLineFieldFormat do
   before :each do
     @rule = described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts', regex:'ABC'}.to_json)
-    @ol = Factory(:order_line, hts: 'ABC')
-    @o = Factory(:order, order_lines: [@ol])
+    @ol = FactoryBot(:order_line, hts: 'ABC')
+    @o = FactoryBot(:order, order_lines: [@ol])
   end
 
   it 'should pass if all lines are valid' do
@@ -48,7 +48,7 @@ describe ValidationRuleOrderLineFieldFormat do
 
   it 'should pass if order line that does not meet search criteria is invalid' do
     @rule.search_criterions.new(model_field_uid: 'ordln_hts', operator:'eq', value:'ABC')
-    @bad_ol = Factory(:order_line, hts: 'XYZ')
+    @bad_ol = FactoryBot(:order_line, hts: 'XYZ')
     @o.update_attributes(order_lines: [@ol, @bad_ol])
     expect(@rule.run_validation(@ol.order)).to be_nil
   end

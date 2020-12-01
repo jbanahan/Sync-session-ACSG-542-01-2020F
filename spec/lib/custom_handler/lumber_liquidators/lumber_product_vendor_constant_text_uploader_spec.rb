@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstantTextUploader do
 
   describe "process", :without_partial_double_verification do
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let (:custom_file) { instance_double(CustomFile) }
     let (:row_data) {
      [
@@ -12,8 +12,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstan
 
     let! (:xref_code) { DataCrossReference.create! key: "CODE", value: "TEXT", cross_reference_type: "XREF TYPE"}
     let! (:xref_code_2) { DataCrossReference.create! key: "CODE2", value: "TEXT2", cross_reference_type: "XREF TYPE" }
-    let (:product) { Factory(:product, unique_identifier: "PRODUCT".rjust(18, '0')) }
-    let (:vendor) { Factory(:vendor, system_code: "VENDOR".rjust(10, '0')) }
+    let (:product) { FactoryBot(:product, unique_identifier: "PRODUCT".rjust(18, '0')) }
+    let (:vendor) { FactoryBot(:vendor, system_code: "VENDOR".rjust(10, '0')) }
     let! (:product_vendor_assignment) { product.product_vendor_assignments.create! vendor: vendor }
 
     subject { described_class.new nil }

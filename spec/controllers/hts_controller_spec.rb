@@ -2,8 +2,8 @@ describe HtsController do
 
   describe "country" do
     before :each do
-      @usa = Factory(:country, "name"=> "United States", iso_code: "US")
-      @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
+      @usa = FactoryBot(:country, "name"=> "United States", iso_code: "US")
+      @tariff1 = FactoryBot(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
     end
 
     it 'should return the correct hash of values' do
@@ -19,8 +19,8 @@ describe HtsController do
 
   describe "chapter" do
     before :each do
-      @usa = Factory(:country, "name"=> "United States", iso_code: "US")
-      @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
+      @usa = FactoryBot(:country, "name"=> "United States", iso_code: "US")
+      @tariff1 = FactoryBot(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
     end
 
     it 'should return some stuff for the us' do
@@ -36,8 +36,8 @@ describe HtsController do
 
   describe "heading" do
     before :each do
-      @usa = Factory(:country, "name"=> "United States", iso_code: "US")
-      @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
+      @usa = FactoryBot(:country, "name"=> "United States", iso_code: "US")
+      @tariff1 = FactoryBot(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
     end
 
     it 'should return some stuff for the us' do
@@ -50,17 +50,17 @@ describe HtsController do
 
   describe "subscribed_countries" do
     before :each do
-      @usa = Factory(:country, "name"=> "United States", iso_code: "US", import_location: true)
-      @can = Factory(:country, "name"=> "Canada", iso_code: "CA", import_location: true)
-      @vnm = Factory(:country, "name"=> "Vietnam", iso_code: "VN", import_location: true)
-      @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
-      @tariff2 = Factory(:official_tariff, hts_code: "23456", chapter: 234, country: @can)
-      @tariff3 = Factory(:official_tariff, hts_code: "34567", chapter: 345, country: @vnm)
-      @tariff4 = Factory(:official_tariff, hts_code: "45678", chapter: 456, country: @usa)
+      @usa = FactoryBot(:country, "name"=> "United States", iso_code: "US", import_location: true)
+      @can = FactoryBot(:country, "name"=> "Canada", iso_code: "CA", import_location: true)
+      @vnm = FactoryBot(:country, "name"=> "Vietnam", iso_code: "VN", import_location: true)
+      @tariff1 = FactoryBot(:official_tariff, hts_code: "12345", chapter: 123, country: @usa)
+      @tariff2 = FactoryBot(:official_tariff, hts_code: "23456", chapter: 234, country: @can)
+      @tariff3 = FactoryBot(:official_tariff, hts_code: "34567", chapter: 345, country: @vnm)
+      @tariff4 = FactoryBot(:official_tariff, hts_code: "45678", chapter: 456, country: @usa)
     end
 
     it "should return all countries in your local OfficialTariff table when logged in" do
-      u = Factory(:user); sign_in_as u
+      u = FactoryBot(:user); sign_in_as u
       get :subscribed_countries
       expect(response).to be_success
       countries = JSON.parse(response.body)["countries"]

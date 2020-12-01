@@ -1,7 +1,7 @@
 describe OpenChain::ScheduleSupport do
   describe "run_if_needed" do
     before :each do
-      @ss = Factory(:search_schedule, :last_start_time=>1.year.ago)
+      @ss = FactoryBot(:search_schedule, :last_start_time=>1.year.ago)
     end
     it "should run if next_run_time < Time.now.utc" do
       allow(@ss).to receive(:next_run_time).and_return 1.year.ago
@@ -78,7 +78,7 @@ describe OpenChain::ScheduleSupport do
 
   describe "needs_to_run?" do
     before :each do
-      @ss = Factory(:search_schedule, :last_start_time=>1.year.ago)
+      @ss = FactoryBot(:search_schedule, :last_start_time=>1.year.ago)
     end
 
     it "needs to run if next run time before now" do

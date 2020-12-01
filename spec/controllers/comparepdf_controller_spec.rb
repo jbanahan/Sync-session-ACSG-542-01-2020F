@@ -5,7 +5,7 @@ describe ComparepdfController do
     let (:att1) { instance_double(Attachment, secure_url: secure_url, attached_file_name: "file1.pdf") }
     let (:att2) { instance_double(Attachment, secure_url: secure_url, attached_file_name: "file2.pdf") }
     let (:att3) { instance_double(Attachment, secure_url: secure_url, attached_file_name: "file3.csv") }
-    let! (:user) { u = Factory(:user); sign_in_as(u); u }
+    let! (:user) { u = FactoryBot(:user); sign_in_as(u); u }
 
     it "provides s3 inline urls for viewing" do
       expect(Attachment).to receive(:find).with("1").and_return att1

@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Polo::PoloProductApiSyncGenerator do
       @api_client = double("FakeProductApiClient")
       @c = described_class.new api_client: @api_client
 
-      tariff = Factory(:tariff_record, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "CA")))
+      tariff = FactoryBot(:tariff_record, hts_1: "1234567890", classification: FactoryBot(:classification, country: FactoryBot(:country, iso_code: "CA")))
       @product = tariff.product
     end
 

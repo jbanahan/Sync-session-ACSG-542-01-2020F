@@ -1,10 +1,10 @@
 describe OpenChain::Report::EddieBauerStatementSummary do
   before :each do
-    @user = Factory(:user)
-    @imp = with_customs_management_id(Factory(:company), "EDDIE")
+    @user = FactoryBot(:user)
+    @imp = with_customs_management_id(FactoryBot(:company), "EDDIE")
     @monthly_date = 0.seconds.ago
     @daily_date = 1.day.ago
-    @ent = Factory(:entry, :importer=>@imp,
+    @ent = FactoryBot(:entry, :importer=>@imp,
       :daily_statement_number=>'123456',
       :monthly_statement_number=>'MSTMT',
       :monthly_statement_received_date=>@monthly_date,
@@ -13,8 +13,8 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       :release_date=>1.month.ago)
     @po_number = 'E0427291-0011'
     @invoice_number = 'INV1234'
-    @line = Factory(:commercial_invoice_line,
-      :commercial_invoice=>Factory(:commercial_invoice, :entry=>@ent, :invoice_number=>@invoice_number),
+    @line = FactoryBot(:commercial_invoice_line,
+      :commercial_invoice=>FactoryBot(:commercial_invoice, :entry=>@ent, :invoice_number=>@invoice_number),
       :country_origin_code=>'CN',
       :po_number=>@po_number,
       :prorated_mpf => BigDecimal("10.50"),
@@ -82,18 +82,18 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   end
   context "default mode (not_paid)" do
     it "should return entries not paid on PMS but on daily statement" do
-      dont_find_because_paid = Factory(:entry, :importer=>@imp,
+      dont_find_because_paid = FactoryBot(:entry, :importer=>@imp,
         :daily_statement_number=>'123456', :monthly_statement_paid_date=>Time.now)
-      dont_find_because_not_on_daily = Factory(:entry, :importer=>@imp)
-      dont_find_because_not_eddie = Factory(:entry, :daily_statement_number=>'12345')
+      dont_find_because_not_on_daily = FactoryBot(:entry, :importer=>@imp)
+      dont_find_because_not_eddie = FactoryBot(:entry, :daily_statement_number=>'12345')
       expect(described_class.new(@user).find_entries(@imp).to_a).to eq([@ent])
     end
   end
   context "previous_month mode" do
     it "should return entries from month / year specified regardless of paid status" do
-      find_even_though_paid = Factory(:entry, :importer=>@imp, :monthly_statement_paid_date=>Time.now, :release_date=>((Time.zone.now - 3.months) + 1.minute).in_time_zone("America/New_York"))
+      find_even_though_paid = FactoryBot(:entry, :importer=>@imp, :monthly_statement_paid_date=>Time.now, :release_date=>((Time.zone.now - 3.months) + 1.minute).in_time_zone("America/New_York"))
       @ent.update_attributes!(:release_date=>(Time.zone.now - 3.months).in_time_zone("America/New_York"))
-      dont_find_even_though_unpaid_because_different_month = Factory(:entry, :importer=>@imp, :release_date=>1.hour.from_now.in_time_zone("America/New_York"))
+      dont_find_even_though_unpaid_because_different_month = FactoryBot(:entry, :importer=>@imp, :release_date=>1.hour.from_now.in_time_zone("America/New_York"))
       options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>"EDDIE"}
       ent = described_class.new(@user, options)
       expect(ent.find_entries(@imp).map(&:id)).to eq([@ent, find_even_though_paid].map(&:id))
@@ -107,21 +107,21 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       expect(r[7]).to eq(BigDecimal("13.22").to_f)
   end
   it "should create summary tab" do
-    e2 = Factory(:entry, :importer=>@imp,
+    e2 = FactoryBot(:entry, :importer=>@imp,
       :daily_statement_number=>'6555',
       :monthly_statement_number=>@ent.monthly_statement_number,
       :monthly_statement_received_date=>@ent.monthly_statement_received_date,
       :daily_statement_approved_date=>2.weeks.ago,
       :entry_number=>'316555555555'
     )
-    l2 = Factory(:commercial_invoice_line, :commercial_invoice=>Factory(:commercial_invoice, :entry=>e2, :invoice_number=>'123'),
+    l2 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>FactoryBot(:commercial_invoice, :entry=>e2, :invoice_number=>'123'),
       :po_number=>'E123-0011', :prorated_mpf=>BigDecimal("10.00"), :hmf=>BigDecimal("20.00"),
       :cotton_fee=>BigDecimal("5.00")
     )
     t2 = l2.commercial_invoice_tariffs.create!(:duty_rate=>BigDecimal("0.088"),
       :duty_amount=>BigDecimal("4.00")
     )
-    l3 = Factory(:commercial_invoice_line, :commercial_invoice=>Factory(:commercial_invoice, :entry=>e2, :invoice_number=>'123'),
+    l3 = FactoryBot(:commercial_invoice_line, :commercial_invoice=>FactoryBot(:commercial_invoice, :entry=>e2, :invoice_number=>'123'),
       :po_number=>'E123-0099', :prorated_mpf=>BigDecimal("10.00"), :hmf=>BigDecimal("20.00"),
       :cotton_fee=>BigDecimal("5.00")
     )

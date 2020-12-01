@@ -24,7 +24,7 @@
         <invoiceDateValue>2018-08-06</invoiceDateValue>
       </invoiceDate>
       <invoiceDate>
-        <invoiceDateTypeCode>ExFactory</invoiceDateTypeCode>
+        <invoiceDateTypeCode>ExFactoryBot</invoiceDateTypeCode>
         <invoiceDateValue>2018-07-07</invoiceDateValue>
       </invoiceDate>
       <incotermCode>FOB</incotermCode>

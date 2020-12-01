@@ -1,9 +1,9 @@
 describe OpenChain::BulkAction::BulkComment do
   describe '#act' do
     before :each do
-      @ord = Factory(:order)
-      @u = Factory(:master_user, order_comment:true, order_view:true)
-      @bpl = Factory(:bulk_process_log)
+      @ord = FactoryBot(:order)
+      @u = FactoryBot(:master_user, order_comment:true, order_view:true)
+      @bpl = FactoryBot(:bulk_process_log)
     end
     it 'should comment on object' do
       opts = {'module_type'=>'Order', 'subject'=>'sub', 'body'=>'bod'}

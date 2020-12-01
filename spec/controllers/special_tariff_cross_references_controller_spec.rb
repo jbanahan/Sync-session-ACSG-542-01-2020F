@@ -1,5 +1,5 @@
 describe SpecialTariffCrossReferencesController do
-  let(:u) { Factory(:user, admin: true, sys_admin: true, company: Factory(:company, master: true)) }
+  let(:u) { FactoryBot(:user, admin: true, sys_admin: true, company: FactoryBot(:company, master: true)) }
 
   let(:special_tariff) do
     SpecialTariffCrossReference.create!(hts_number: '1234567890', special_hts_number: '0987654321', country_origin_iso: 'CA',

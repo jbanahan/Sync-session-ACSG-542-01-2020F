@@ -99,7 +99,7 @@ describe OpenChain::Events::EventHandler do
 
     it "should find an ActiveRecord model" do
       # Just make sure this works fine with a "real" model object
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       event.object_class = entry.class.name
       event.object_id = entry.id
 

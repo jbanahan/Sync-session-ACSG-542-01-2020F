@@ -9,12 +9,12 @@ describe OpenChain::Report::UaDutyPlanningReport do
 
     end
     let :user do
-      Factory(:master_user)
+      FactoryBot(:master_user)
     end
     let :make_countries do
       r = {}
       @country_rates.each_key do |iso|
-        r[iso] = Factory(:country, :iso_code=>iso, import_location:true)
+        r[iso] = FactoryBot(:country, :iso_code=>iso, import_location:true)
       end
       r
     end
@@ -25,7 +25,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       end
     end
     let :make_product do
-      p = Factory(:product, name:'pname')
+      p = FactoryBot(:product, name:'pname')
       # intentionally using CN for both import & export country
       # to be sure we don't generate record w/ same country in both positions
       p.update_custom_value!(@cdefs[:prod_export_countries], "CN\nMX")
@@ -34,7 +34,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
 
       @country_rates.each_key do |iso|
         country = Country.find_by iso_code: iso
-        Factory(:tariff_record, hts_1:'1234567890', classification:Factory(:classification, country:country, product:p))
+        FactoryBot(:tariff_record, hts_1:'1234567890', classification:FactoryBot(:classification, country:country, product:p))
       end
       p
     end
@@ -71,7 +71,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use expected duty rate from classification' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
         make_tariffs
         p = make_product
         p.classifications.where(country_id:countries['CN'].id).first.update_custom_value!(@cdefs[:expected_duty_rate], 5.8)
@@ -83,7 +83,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use default common decimal rate with late uplift' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
         make_tariffs
         p = make_product
         f = described_class.run_report user, season: 'FW17'
@@ -94,10 +94,10 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use tpp decimal rate' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
-        Factory(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX')
         make_tariffs
-        Factory(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
+        FactoryBot(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
         p = make_product
         f = described_class.run_report user, season: 'FW17'
         results = CSV.read(f.path)
@@ -107,10 +107,10 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use tpp decimal rate with lane uplift' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
-        Factory(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
         make_tariffs
-        Factory(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
+        FactoryBot(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
         p = make_product
         f = described_class.run_report user, season: 'FW17'
         results = CSV.read(f.path)
@@ -120,11 +120,11 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use tpp decimal rate with override' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
-        tpp = Factory(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
-        Factory(:tpp_hts_override, trade_preference_program:tpp, hts_code:'123', rate:'6.2')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        tpp = FactoryBot(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
+        FactoryBot(:tpp_hts_override, trade_preference_program:tpp, hts_code:'123', rate:'6.2')
         make_tariffs
-        Factory(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
+        FactoryBot(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
         p = make_product
         f = described_class.run_report user, season: 'FW17'
         results = CSV.read(f.path)
@@ -134,12 +134,12 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should use most specific override' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
-        tpp = Factory(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
-        Factory(:tpp_hts_override, trade_preference_program:tpp, hts_code:'123', rate:'6.2')
-        Factory(:tpp_hts_override, trade_preference_program:tpp, hts_code:'1234', rate:'8')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        tpp = FactoryBot(:trade_preference_program, origin_country:countries['MX'], destination_country:countries['CN'], tariff_identifier:'CNMX', tariff_adjustment_percentage:'2.1')
+        FactoryBot(:tpp_hts_override, trade_preference_program:tpp, hts_code:'123', rate:'6.2')
+        FactoryBot(:tpp_hts_override, trade_preference_program:tpp, hts_code:'1234', rate:'8')
         make_tariffs
-        Factory(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
+        FactoryBot(:spi_rate, country:countries['CN'], special_rate_key:OfficialTariff.first.special_rate_key, program_code:'CNMX', rate:BigDecimal('0.02'))
         p = make_product
         f = described_class.run_report user, season: 'FW17'
         results = CSV.read(f.path)
@@ -158,7 +158,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should return blank with no common decimal rate, with lane, w/o tpp' do
         @country_rates = {'CN'=>nil, 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
         make_tariffs
         p = make_product
         f = described_class.run_report user, season: 'FW17'
@@ -170,9 +170,9 @@ describe OpenChain::Report::UaDutyPlanningReport do
       it 'should only use first tariff record for sets' do
         @country_rates = {'CN'=>BigDecimal('0.21'), 'MX'=>BigDecimal('0.03')}
         countries = make_countries
-        Factory(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
+        FactoryBot(:trade_lane, origin_country:countries['MX'], destination_country:countries['CN'], tariff_adjustment_percentage:'1')
         make_tariffs
-        Factory(:official_tariff, hts_code:'987654321', common_rate_decimal:0.99, country_id:countries['CN'].id)
+        FactoryBot(:official_tariff, hts_code:'987654321', common_rate_decimal:0.99, country_id:countries['CN'].id)
         p = make_product
         p.classifications.find_by(country: countries['CN']).tariff_records(line_number:'99', hts_1:'987654321')
         f = described_class.run_report user, season: 'FW17'

@@ -11,7 +11,7 @@ describe ValidatesField do
     end
   end
 
-  let (:order_line) { Factory(:order_line, line_number: 1, price_per_unit: 4)}
+  let (:order_line) { FactoryBot(:order_line, line_number: 1, price_per_unit: 4)}
   let (:rule) { Rule.new('operator' => 'gt', 'model_field_uid' => 'ordln_ppu', 'value' => 5) }
   let (:block) { Proc.new {|mf, tested_val, op_label, value, fail_if_matches| "All #{mf.label} values are not #{op_label} #{value}."} }
 
@@ -185,7 +185,7 @@ describe ValidatesField do
     end
 
     context "with split field" do
-      let (:entry) { Factory(:entry, customer_references: "XabcY\n XdefY\n XghiY")}
+      let (:entry) { FactoryBot(:entry, customer_references: "XabcY\n XdefY\n XghiY")}
       let (:rule) { Rule.new({'model_field_uid' => 'ent_customer_references', 'operator' => 'regexp', 'value' => '^X\w+Y$', 'split_field' => true}) }
       let (:block) { Proc.new { |mf, tested_val, op_label, value, fail_if_matches| "There is at least one value in #{mf.label} that doesn't match '#{value}'." } }
 

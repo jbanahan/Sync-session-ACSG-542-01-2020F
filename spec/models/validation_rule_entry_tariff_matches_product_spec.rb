@@ -1,13 +1,13 @@
 describe ValidationRuleEntryTariffMatchesProduct do
   context "full rule test" do
     before :each do
-      @c = Factory(:company)
-      @t = Factory(:tariff_record, hts_1:'1234567890', classification:Factory(:classification, product:Factory(:product, importer:@c)))
-      @ct = Factory(:commercial_invoice_tariff, hts_code:@t.hts_1,
-        commercial_invoice_line:Factory(:commercial_invoice_line,
+      @c = FactoryBot(:company)
+      @t = FactoryBot(:tariff_record, hts_1:'1234567890', classification:FactoryBot(:classification, product:FactoryBot(:product, importer:@c)))
+      @ct = FactoryBot(:commercial_invoice_tariff, hts_code:@t.hts_1,
+        commercial_invoice_line:FactoryBot(:commercial_invoice_line,
           part_number:@t.product.unique_identifier,
-          commercial_invoice:Factory(:commercial_invoice,
-            entry:Factory(:entry, import_country:@t.classification.country,
+          commercial_invoice:FactoryBot(:commercial_invoice,
+            entry:FactoryBot(:entry, import_country:@t.classification.country,
               importer:@c
             )
           )
@@ -44,12 +44,12 @@ describe ValidationRuleEntryTariffMatchesProduct do
       expect(described_class.new(rule_attributes_json:'{"part_number_mask":"X-?"}').run_validation(@ct.entry)).to be_nil
     end
     it "should check override importer_id" do
-      c2 = Factory(:company)
+      c2 = FactoryBot(:company)
       @t.product.update_attributes(importer_id:c2.id)
       expect(described_class.new(rule_attributes_json:'{"importer_id":"'+c2.id.to_s+'"}').run_validation(@ct.entry)).to be_nil
     end
     it "should fail if no classification for country" do
-      country2 = Factory(:country)
+      country2 = FactoryBot(:country)
       cls = @t.classification
       cls.country= country2
       cls.save!

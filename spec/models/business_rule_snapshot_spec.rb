@@ -16,11 +16,11 @@ describe BusinessRuleSnapshot do
     }
 
     let! (:entry) {
-      Factory(:entry, broker_reference: "REF")
+      FactoryBot(:entry, broker_reference: "REF")
     }
 
     let (:user) {
-      Factory(:user)
+      FactoryBot(:user)
     }
 
     it "returns history data for given entity" do
@@ -206,8 +206,8 @@ describe BusinessRuleSnapshot do
       }.to_json
     }
 
-    let (:user) { Factory(:user) }
-    let (:entry) { Factory(:entry) }
+    let (:user) { FactoryBot(:user) }
+    let (:entry) { FactoryBot(:entry) }
 
     it "returns comparisons over distinct rule state changes" do
       # Create 6 snapshot records (2 for each snapshot above) so it shows we're filtering out any that don't
@@ -303,7 +303,7 @@ describe BusinessRuleSnapshot do
     end
 
     it "calls delete_from_s3 in destroy callback" do
-      subject.recordable = Factory(:entry)
+      subject.recordable = FactoryBot(:entry)
       subject.save!
 
       expect(subject).to receive(:delete_from_s3)

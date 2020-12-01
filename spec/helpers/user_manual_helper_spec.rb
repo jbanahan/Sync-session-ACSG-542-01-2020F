@@ -1,6 +1,6 @@
 describe UserManualHelper do
 
-  let!(:um) { Factory(:user_manual, document_url: "http://www.document_url.com", wistia_code: "wistful") }
+  let!(:um) { FactoryBot(:user_manual, document_url: "http://www.document_url.com", wistia_code: "wistful") }
 
   describe "url" do
     it "returns the document_url if it exists" do

@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
-  let(:user) { Factory(:master_user) }
+  let(:user) { FactoryBot(:master_user) }
   let(:fenix) { OpenChain::CustomHandler::FenixNdInvoiceGenerator }
 
   describe "can_view?" do

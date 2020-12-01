@@ -20,7 +20,7 @@ describe TestLocalController do
 
   before :each do
     # make sure to create a user since it's referenced in the simple controller show method
-    Factory(:user)
+    FactoryBot(:user)
   end
 
   it "should run the render pipeline and return a string of the page" do

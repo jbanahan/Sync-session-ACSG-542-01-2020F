@@ -1,14 +1,14 @@
 describe Api::V1::OfficialTariffsController do
   before :each do
-    @user = Factory(:user)
+    @user = FactoryBot(:user)
     allow_api_access @user
   end
 
   describe "find" do
     it "should render tariff" do
       allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
-      us = Factory(:country, iso_code:'US', name:'USA')
-      ot = Factory(:official_tariff,
+      us = FactoryBot(:country, iso_code:'US', name:'USA')
+      ot = FactoryBot(:official_tariff,
         hts_code:'1234567890',
         full_description:'Full Desc',
         special_rates:'NAFTA:0',
@@ -30,7 +30,7 @@ describe Api::V1::OfficialTariffsController do
         common_rate:'CR',
         country:us
         )
-      other_ot = Factory(:official_tariff)
+      other_ot = FactoryBot(:official_tariff)
       allow_any_instance_of(OfficialTariff).to receive(:binding_ruling_url).and_return 'abc'
       allow_any_instance_of(OfficialTariff).to receive(:taric_url).and_return 'tar'
 
@@ -66,8 +66,8 @@ describe Api::V1::OfficialTariffsController do
     end
     it "should strip periods" do
       allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
-      us = Factory(:country, iso_code:'US', name:'USA')
-      ot = Factory(:official_tariff, country:us, hts_code:'1234567890')
+      us = FactoryBot(:country, iso_code:'US', name:'USA')
+      ot = FactoryBot(:official_tariff, country:us, hts_code:'1234567890')
 
       expect(get :find, {iso:'us', hts:'1234.56.7890'}).to be_success
       expect(JSON.parse(response.body)['official_tariff']['id']).to eq ot.id

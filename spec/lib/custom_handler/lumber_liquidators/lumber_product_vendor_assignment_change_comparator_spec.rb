@@ -51,33 +51,33 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
   end
   describe "find_linked_orders" do
     it "should find linked orders" do
-      p = Factory(:product)
-      v = Factory(:company)
+      p = FactoryBot(:product)
+      v = FactoryBot(:company)
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
-      ol = Factory(:order_line, product:p, order:Factory(:order, vendor:v))
+      ol = FactoryBot(:order_line, product:p, order:FactoryBot(:order, vendor:v))
       # an order without this product for the same vendor
-      Factory(:order_line, order:Factory(:order, vendor:v))
+      FactoryBot(:order_line, order:FactoryBot(:order, vendor:v))
 
-      other_vendor = Factory(:company)
+      other_vendor = FactoryBot(:company)
       p.product_vendor_assignments.create!(vendor_id:other_vendor.id)
       # an order for this product for a different vendor
-      Factory(:order_line, product:p, order:Factory(:order, vendor:other_vendor))
+      FactoryBot(:order_line, product:p, order:FactoryBot(:order, vendor:other_vendor))
 
       expect(described_class.find_linked_orders(pva.id).to_a).to eq [ol.order]
     end
 
     it "does not find closed orders" do
-      p = Factory(:product)
-      v = Factory(:company)
+      p = FactoryBot(:product)
+      v = FactoryBot(:company)
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
-      ol = Factory(:order_line, product:p, order:Factory(:order, vendor:v, closed_at: Time.zone.now))
+      ol = FactoryBot(:order_line, product:p, order:FactoryBot(:order, vendor:v, closed_at: Time.zone.now))
       # an order without this product for the same vendor
-      Factory(:order_line, order:Factory(:order, vendor:v))
+      FactoryBot(:order_line, order:FactoryBot(:order, vendor:v))
 
-      other_vendor = Factory(:company)
+      other_vendor = FactoryBot(:company)
       p.product_vendor_assignments.create!(vendor_id:other_vendor.id)
       # an order for this product for a different vendor
-      Factory(:order_line, product:p, order:Factory(:order, vendor:other_vendor))
+      FactoryBot(:order_line, product:p, order:FactoryBot(:order, vendor:other_vendor))
 
       expect(described_class.find_linked_orders(pva.id).to_a).not_to include ol.order
     end

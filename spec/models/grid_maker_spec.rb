@@ -1,10 +1,10 @@
 describe GridMaker do
   context "max_details" do
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
     end
     it "should truncate entry lines at 3" do
-      ci = Factory(:commercial_invoice)
+      ci = FactoryBot(:commercial_invoice)
       5.times do |i|
         ci.commercial_invoice_lines.create!(:line_number=>i, :part_number=>"p#{i}", :quantity=>i)
       end
@@ -16,7 +16,7 @@ describe GridMaker do
     end
     it "should process all parent objects when truncation is turned on" do
       2.times do |x|
-        ci = Factory(:commercial_invoice)
+        ci = FactoryBot(:commercial_invoice)
         5.times do |i|
           ci.commercial_invoice_lines.create!(:line_number=>i, :part_number=>"p#{i}", :quantity=>i)
         end

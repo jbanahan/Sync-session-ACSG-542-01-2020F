@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFenixProductFileGene
   end
 
   describe "make_file" do
-    let!(:canada) { Factory(:country, iso_code: 'CA') }
-    let!(:prod) { Factory(:product, unique_identifier: 'myuid', name: "Name Description") }
+    let!(:canada) { FactoryBot(:country, iso_code: 'CA') }
+    let!(:prod) { FactoryBot(:product, unique_identifier: 'myuid', name: "Name Description") }
     let!(:clas) do
       c = prod.classifications.create!(country_id: canada.id)
       c.tariff_records.create!(hts_1: '1234567890')

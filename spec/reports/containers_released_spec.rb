@@ -1,13 +1,13 @@
 describe OpenChain::Report::ContainersReleased do
   before :each do
-    importer = Factory(:company, :importer=>true)
-    broker = Factory(:company, :broker=>true, :master=>true)
-    @importer_user = Factory(:user, :entry_view=>true, :company=>importer)
+    importer = FactoryBot(:company, :importer=>true)
+    broker = FactoryBot(:company, :broker=>true, :master=>true)
+    @importer_user = FactoryBot(:user, :entry_view=>true, :company=>importer)
     allow(@importer_user).to receive(:view_entries?).and_return(true)
-    @broker_user = Factory(:user, :company=>broker)
+    @broker_user = FactoryBot(:user, :company=>broker)
     allow(@broker_user).to receive(:view_entries?).and_return(true)
-    @e1 = Factory(:entry, :entry_number=>"31612354578", :importer_id=>importer.id, :container_numbers=>"A\nB\nC", :arrival_date=>1.day.ago, :release_date=>0.days.ago, :export_date=>3.days.ago)
-    @e2 = Factory(:entry, :entry_number=>"31698545621", :customer_number=>"ABC", :container_numbers=>"D\nE\nF", :arrival_date=>20.days.ago, :release_date=>0.days.ago, :export_date=>3.days.ago)
+    @e1 = FactoryBot(:entry, :entry_number=>"31612354578", :importer_id=>importer.id, :container_numbers=>"A\nB\nC", :arrival_date=>1.day.ago, :release_date=>0.days.ago, :export_date=>3.days.ago)
+    @e2 = FactoryBot(:entry, :entry_number=>"31698545621", :customer_number=>"ABC", :container_numbers=>"D\nE\nF", :arrival_date=>20.days.ago, :release_date=>0.days.ago, :export_date=>3.days.ago)
   end
   it "should secure entries by run_by's company" do
     wb = Spreadsheet.open OpenChain::Report::ContainersReleased.run_report @importer_user

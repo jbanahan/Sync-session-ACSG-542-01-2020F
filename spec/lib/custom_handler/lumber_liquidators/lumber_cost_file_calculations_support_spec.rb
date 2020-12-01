@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
   describe "calculate_proration_for_lines" do
 
     let (:entry) {
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       # This second invoice exists only so that 50% of the charge amount is considered for proration against our
       # test line(s), which all belong to a different invoice, for gross-weight-based prorations.  The actual
       # gross weight of this line doesn't matter.  It's 100 and the other line is 50, but the two invoices are

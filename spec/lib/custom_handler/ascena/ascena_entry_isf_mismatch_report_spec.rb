@@ -2,9 +2,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
 
 
   describe "run_report" do
-    let (:importer) { Factory(:importer) }
+    let (:importer) { FactoryBot(:importer) }
     let! (:entry) {
-      e = Factory(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", house_bills_of_lading: "HBOL\n HBOL2", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-05-01 12:00"))
+      e = FactoryBot(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", house_bills_of_lading: "HBOL\n HBOL2", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-05-01 12:00"))
       i = e.commercial_invoices.create! invoice_number: "INV"
       l = i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", country_origin_code: "CO", product_line: "BRAND"
       t = l.commercial_invoice_tariffs.create! hts_code: "1234567890"
@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     }
 
     let! (:isf) {
-      sf = Factory(:security_filing, importer: importer, transaction_number: "TRANS", entry_reference_numbers: "REF", master_bill_of_lading: "MBOL", house_bills_of_lading: "HBOL1")
+      sf = FactoryBot(:security_filing, importer: importer, transaction_number: "TRANS", entry_reference_numbers: "REF", master_bill_of_lading: "MBOL", house_bills_of_lading: "HBOL1")
       sf.security_filing_lines.create! po_number: "PO", part_number: "PART", hts_code: "1234567890", country_of_origin_code: "CO"
 
       sf
@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       t
     }
 
-    let! (:ascena) { with_customs_management_id(Factory(:importer), "ASCE")}
+    let! (:ascena) { with_customs_management_id(FactoryBot(:importer), "ASCE")}
 
     after (:each) { tempfile.close! }
 

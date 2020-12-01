@@ -181,12 +181,12 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
       expect(MasterSetup).to receive(:get).and_return ms
       expect(ms).to receive(:custom_feature?).with('WWW VFI Track Reports').and_return true
 
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(described_class.new(nil).can_view? u).to be_truthy
     end
 
     it "prevents non-master user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(described_class.new(nil).can_view? u).to be_falsey
     end
 
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
       expect(MasterSetup).to receive(:get).and_return ms
       expect(ms).to receive(:custom_feature?).with('WWW VFI Track Reports').and_return false
 
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(described_class.new(nil).can_view? u).to be_falsey
     end
   end

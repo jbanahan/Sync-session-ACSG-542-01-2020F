@@ -1,13 +1,13 @@
 describe FileImportResultsController do
   before :each do
-    @u = Factory(:admin_user)
+    @u = FactoryBot(:admin_user)
     sign_in_as @u
   end
 
   describe "download_all" do
     before :each do
-      @fir = Factory(:file_import_result)
-      @a = Factory(:attachment)
+      @fir = FactoryBot(:file_import_result)
+      @a = FactoryBot(:attachment)
     end
 
     it "should delay if there are more than 200 records" do
@@ -34,8 +34,8 @@ describe FileImportResultsController do
 
   describe "download_failed" do
     before :each do
-      @fir = Factory(:file_import_result)
-      @a = Factory(:attachment)
+      @fir = FactoryBot(:file_import_result)
+      @a = FactoryBot(:attachment)
     end
 
     it "should delay if there are more than 200 records" do

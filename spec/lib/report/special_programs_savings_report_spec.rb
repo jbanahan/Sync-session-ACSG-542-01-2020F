@@ -6,7 +6,7 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
                     'Duty without SPI', 'Savings'] }
 
   describe "permission?" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     let(:ms) { stub_master_setup }
 
     it "allow master users on systems with feature" do
@@ -83,32 +83,32 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
 
   context "run" do
     before do
-      @country = Factory(:country, :iso_code=>'US')
-      @entry = Factory(:entry, :import_country=>@country, :customer_number=>"SPECIAL", :release_date=>Time.zone.now, :broker_reference=>'99123456',
+      @country = FactoryBot(:country, :iso_code=>'US')
+      @entry = FactoryBot(:entry, :import_country=>@country, :customer_number=>"SPECIAL", :release_date=>Time.zone.now, :broker_reference=>'99123456',
                        :entry_number => '1231kl0')
       @invoices = []
       @invoice_lines = []
       @invoice_tariffs = []
 
       ['Invoice 1'].each do |inv_num|
-        invoice = Factory(:commercial_invoice, :entry_id=>@entry.id, :invoice_number => inv_num)
+        invoice = FactoryBot(:commercial_invoice, :entry_id=>@entry.id, :invoice_number => inv_num)
         @invoices << invoice
       end
 
       ['Invoice Line 1'].each_with_index do |inv_line, inv_num|
-        invoice_line = Factory(:commercial_invoice_line, :commercial_invoice=>@invoices[inv_num], :po_number=>inv_line,
+        invoice_line = FactoryBot(:commercial_invoice_line, :commercial_invoice=>@invoices[inv_num], :po_number=>inv_line,
                                :country_origin_code=>'US', :part_number=>'1234')
         @invoice_lines << invoice_line
       end
 
       ['Invoice Tariff 1'].each_with_index do |inv_line, inv_num|
-        invoice_tariff = Factory(:commercial_invoice_tariff, :commercial_invoice_line=>@invoice_lines[inv_num],
+        invoice_tariff = FactoryBot(:commercial_invoice_tariff, :commercial_invoice_line=>@invoice_lines[inv_num],
                                  :hts_code=>'123456789', :tariff_description=>'XYZ123', :entered_value=>'134631.67',
                                  :entered_value_7501=>'134634', :duty_rate=>0.18, :duty_amount=>'1514.83', :spi_primary=>"2")
         @invoice_tariffs << invoice_tariff
       end
 
-      @ot = Factory(:official_tariff, :country=>@country, :hts_code=>'123456789', :common_rate_decimal=>0.18)
+      @ot = FactoryBot(:official_tariff, :country=>@country, :hts_code=>'123456789', :common_rate_decimal=>0.18)
     end
 
     it 'should create a worksheet with invoice billing data' do

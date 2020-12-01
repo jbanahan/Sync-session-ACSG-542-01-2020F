@@ -1,6 +1,6 @@
 describe ShipmentsController do
-  let!(:u) { Factory(:user) }
-  let(:shipment) { Factory(:shipment, reference: "REFNUM") }
+  let!(:u) { FactoryBot(:user) }
+  let(:shipment) { FactoryBot(:shipment, reference: "REFNUM") }
 
   before { sign_in_as u }
 
@@ -26,7 +26,7 @@ describe ShipmentsController do
     end
 
     it "uses J Jill generator for shipments with JJILL importer" do
-      co = Factory(:company, system_code: "JJILL")
+      co = FactoryBot(:company, system_code: "JJILL")
       shipment.update! importer_id: co.id
 
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true

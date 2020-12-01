@@ -58,7 +58,7 @@ describe OpenChain::Report::PreparerSiteInvalidEntryReport do
 
   describe 'run' do
     before do
-      @entry = Factory.create(:entry)
+      @entry = FactoryBot.create(:entry)
       @port = Port.create(:name=>'PORT', :schedule_d_code=>"1234")
       @entry.update_attributes(
           last_exported_from_source: start_date,
@@ -88,7 +88,7 @@ describe OpenChain::Report::PreparerSiteInvalidEntryReport do
     end
 
     it 'handles more than one failure' do
-      second_entry = Factory.create(:entry)
+      second_entry = FactoryBot.create(:entry)
       second_entry.update_attributes(
           last_exported_from_source: start_date,
           entry_filed_date: start_date,

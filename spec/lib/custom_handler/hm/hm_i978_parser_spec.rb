@@ -7,26 +7,26 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     allow(subject).to receive(:inbound_file).and_return f
     f
   }
-  let (:product_importer) { Factory(:importer, system_code: "HENNE") }
-  let (:cn) { Factory(:country, iso_code: "CN") }
-  let (:ca) { Factory(:country, iso_code: "CA") }
-  let (:us) { Factory(:country, iso_code: "US") }
+  let (:product_importer) { FactoryBot(:importer, system_code: "HENNE") }
+  let (:cn) { FactoryBot(:country, iso_code: "CN") }
+  let (:ca) { FactoryBot(:country, iso_code: "CA") }
+  let (:us) { FactoryBot(:country, iso_code: "US") }
   let (:product) {
     # Delivery Item # 1
-    p = Factory(:product, unique_identifier: "HENNE-0615141", importer_id: product_importer.id)
+    p = FactoryBot(:product, unique_identifier: "HENNE-0615141", importer_id: product_importer.id)
     p.update_hts_for_country country, "6115950000"
     p
   }
   let (:product_2) {
     # Delivery Item # 2 / 3
-    p = Factory(:product, unique_identifier: "HENNE-0742769", importer_id: product_importer.id)
+    p = FactoryBot(:product, unique_identifier: "HENNE-0742769", importer_id: product_importer.id)
     p.update_hts_for_country country, "6115951111"
     p
   }
 
   describe "process_shipment_xml" do
     let (:xml) { REXML::XPath.first(REXML::Document.new(xml_data), "/ns0:CustomsTransactionalDataTransaction/Payload/CustomsTransactionalData/BILLING_SHIPMENT")}
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     before :each do
       product_importer
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     end
 
     context "with canada import" do
-      let! (:importer) { with_fenix_id(Factory(:importer), "887634400RM0001")}
+      let! (:importer) { with_fenix_id(FactoryBot(:importer), "887634400RM0001")}
       let! (:country) { ca }
       let! (:data_cross_reference) { DataCrossReference.create! cross_reference_type: "hm_pars", key: "PARS"}
       let! (:ca_email_lists) {
@@ -256,10 +256,10 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         MailingList.create! user_id: User.integration.id, company_id: importer.id, system_code: "us_h_m_i978_files_1", name: "FILES", email_addresses: "usfiles@company.com"
       }
       let! (:entry) {
-        e = Factory(:entry, source_system: "Alliance", importer: importer, release_date: Time.zone.now, export_country_codes: "CN")
-        inv = Factory(:commercial_invoice, entry: e, invoice_number: "123456")
-        inv_line = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0615141", mid: "MID1")
-        inv_line_2 = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0742769", mid: "MID2")
+        e = FactoryBot(:entry, source_system: "Alliance", importer: importer, release_date: Time.zone.now, export_country_codes: "CN")
+        inv = FactoryBot(:commercial_invoice, entry: e, invoice_number: "123456")
+        inv_line = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0615141", mid: "MID1")
+        inv_line_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0742769", mid: "MID2")
 
         e.reload
       }
@@ -420,7 +420,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         end
 
         it "converts Myanmaar country code to Burma for US entries" do
-          burma = Factory(:country, iso_code: "BU")
+          burma = FactoryBot(:country, iso_code: "BU")
 
           xml_data.gsub!("<COO>CN</COO>", "<COO>MM</COO>")
           invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
@@ -466,8 +466,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     }
 
     let! (:entry) {
-      e = Factory(:entry, source_system: "Alliance", importer: product_importer, release_date: Time.zone.now, export_country_codes: "CN", broker_reference: "REF")
-      inv = Factory(:commercial_invoice, entry: e, invoice_number: "PO")
+      e = FactoryBot(:entry, source_system: "Alliance", importer: product_importer, release_date: Time.zone.now, export_country_codes: "CN", broker_reference: "REF")
+      inv = FactoryBot(:commercial_invoice, entry: e, invoice_number: "PO")
       e.reload
     }
 
@@ -478,7 +478,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
 
     context "with ca data" do
       let (:country) { ca }
-      let! (:importer) { Factory(:importer, fenix_customer_number: "887634400RM0001")}
+      let! (:importer) { FactoryBot(:importer, fenix_customer_number: "887634400RM0001")}
 
       it "does not generate exception spreadsheet if nothing is missing" do
         expect(subject.generate_missing_parts_spreadsheet invoice).to be_nil

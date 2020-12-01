@@ -1,6 +1,6 @@
 describe VendorsController do
   before :each do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     sign_in_as @u
   end
 
@@ -78,9 +78,9 @@ describe VendorsController do
       expect(flash[:errors].first).to match(/view/)
     end
     it "should return matches based on first 3 characters" do
-      c1 = Factory(:company, vendor:true, name:'abcxxx')
-      Factory(:company, vendor:false, name:'abc') # don't match non-vendors
-      Factory(:company, vendor:true, name:'xxx') # don't match non-3 letter name matches
+      c1 = FactoryBot(:company, vendor:true, name:'abcxxx')
+      FactoryBot(:company, vendor:false, name:'abc') # don't match non-vendors
+      FactoryBot(:company, vendor:true, name:'xxx') # don't match non-3 letter name matches
       allow_any_instance_of(User).to receive(:view_vendors?).and_return true
 
       get :matching_vendors, name:'abcdefg'
@@ -117,8 +117,8 @@ describe VendorsController do
     it "should search_secure orders" do
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
       @u.company.update_attributes(vendor:true)
-      o = Factory(:order, vendor_id:@u.company.id)
-      Factory(:order) # don't find this one
+      o = FactoryBot(:order, vendor_id:@u.company.id)
+      FactoryBot(:order) # don't find this one
       get :orders, id: @u.company.id.to_s
       expect(response).to be_success
       expect(assigns[:orders]).to eq [o]
@@ -136,9 +136,9 @@ describe VendorsController do
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
       c = @u.company
       @u.update_attributes(survey_view:true)
-      sr = Factory(:survey_response, survey:Factory(:survey, company:@u.company), base_object:c)
-      sr2 = Factory(:survey_response, user:@u, base_object:c)
-      Factory(:survey_response, base_object:c) # don't find this one
+      sr = FactoryBot(:survey_response, survey:FactoryBot(:survey, company:@u.company), base_object:c)
+      sr2 = FactoryBot(:survey_response, user:@u, base_object:c)
+      FactoryBot(:survey_response, base_object:c) # don't find this one
       get :survey_responses, id: @u.company_id.to_s
       expect(response).to be_success
       expect(assigns[:survey_responses].to_a).to eq [sr, sr2]
@@ -158,9 +158,9 @@ describe VendorsController do
       @u.company.update_attributes(vendor:true)
       allow_any_instance_of(User).to receive(:view_products?).and_return true
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.vendors << @u.company
-      Factory(:product) # don't find this one
+      FactoryBot(:product) # don't find this one
       get :products, id: @u.company_id.to_s
       expect(response).to be_success
       expect(assigns(:products).to_a).to eq [p]
@@ -170,7 +170,7 @@ describe VendorsController do
       @u.company.update_attributes(vendor:true)
       allow_any_instance_of(User).to receive(:view_products?).and_return true
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.vendors << @u.company
       get :products, id: @u.company_id.to_s
       expect(response).to be_success
@@ -182,7 +182,7 @@ describe VendorsController do
       @u.company.update_attributes(vendor:true)
       allow_any_instance_of(User).to receive(:view_products?).and_return true
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.vendors << @u.company
       get :products, id: @u.company_id.to_s
       expect(response).to be_success

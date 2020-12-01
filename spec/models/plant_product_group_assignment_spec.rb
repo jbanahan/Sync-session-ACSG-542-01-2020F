@@ -1,7 +1,7 @@
 describe PlantProductGroupAssignment do
   before :each do
-    @plant = Factory(:plant)
-    @product_group = Factory(:product_group)
+    @plant = FactoryBot(:plant)
+    @product_group = FactoryBot(:product_group)
     @ppga = @plant.plant_product_group_assignments.create!(product_group_id:@product_group.id)
     @user = double(:user)
   end

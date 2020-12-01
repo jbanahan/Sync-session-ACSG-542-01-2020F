@@ -1,5 +1,5 @@
 describe DrawbackUploadFilesController do
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
 
   before do
     sign_in_as user

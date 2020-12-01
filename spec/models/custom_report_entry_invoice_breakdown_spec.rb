@@ -2,8 +2,8 @@ describe CustomReportEntryInvoiceBreakdown do
 
   context "static methods" do
     let(:klass) { described_class }
-    let(:master_user) { Factory(:master_user) }
-    let(:importer_user) { Factory(:importer_user) }
+    let(:master_user) { FactoryBot(:master_user) }
+    let(:importer_user) { FactoryBot(:importer_user) }
 
     it "has all column fields available from BROKER_INVOICE that the user can see" do
       fields = klass.column_fields_available master_user
@@ -32,14 +32,14 @@ describe CustomReportEntryInvoiceBreakdown do
   end
 
   it "produces report" do
-    master_user = Factory(:master_user)
+    master_user = FactoryBot(:master_user)
     allow(master_user).to receive(:view_broker_invoices?).and_return(true)
-    invoice_line = Factory(:broker_invoice_line, charge_description: "CD1", charge_amount: 100.12)
+    invoice_line = FactoryBot(:broker_invoice_line, charge_description: "CD1", charge_amount: 100.12)
     invoice_line.broker_invoice.entry.update(entry_number: "31612345678", broker_reference: "1234567")
-    Factory(:broker_invoice_line, broker_invoice: invoice_line.broker_invoice, charge_description: "CD2", charge_amount: 55)
-    broker_invoice_2 = Factory(:broker_invoice, entry: invoice_line.broker_invoice.entry)
-    Factory(:broker_invoice_line, broker_invoice: broker_invoice_2, charge_description: "CD3", charge_amount: 50.02)
-    Factory(:broker_invoice_line, broker_invoice: broker_invoice_2, charge_description: "CD4", charge_amount: 26.40)
+    FactoryBot(:broker_invoice_line, broker_invoice: invoice_line.broker_invoice, charge_description: "CD2", charge_amount: 55)
+    broker_invoice_2 = FactoryBot(:broker_invoice, entry: invoice_line.broker_invoice.entry)
+    FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice_2, charge_description: "CD3", charge_amount: 50.02)
+    FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice_2, charge_description: "CD4", charge_amount: 26.40)
 
     rpt = described_class.create!
     rpt.search_columns.create!(model_field_uid: :bi_entry_num, rank: 1)

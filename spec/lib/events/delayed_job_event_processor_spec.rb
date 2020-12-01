@@ -1,9 +1,9 @@
 describe OpenChain::Events::DelayedJobEventProcessor do
 
   describe "process_event" do
-    let (:object) { Factory(:order) }
+    let (:object) { FactoryBot(:order) }
     let (:event_hash) { OpenChain::Events::DelayedJobEventPublisher.event_descriptor(:order_create, object) }
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let! (:subscription) { EventSubscription.create! event_type: "order_create", system_message: true, email: true, user_id: user.id }
     let! (:master_setup) { stub_master_setup }
 
@@ -33,7 +33,7 @@ describe OpenChain::Events::DelayedJobEventProcessor do
 
     subject { described_class }
 
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let (:object) { Order.new id: 1 }
     let (:event_hash) { OpenChain::Events::DelayedJobEventPublisher.event_descriptor(:order_create, object) }
 
@@ -59,7 +59,7 @@ describe OpenChain::Events::DelayedJobEventProcessor do
 
     subject { described_class }
 
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
     let (:object) { Order.new id: 1 }
     let (:event_hash) { OpenChain::Events::DelayedJobEventPublisher.event_descriptor(:order_create, object) }
 

@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Vandegrift::SpiClaimEntryValidationRule do
   let(:entry) do
-    ent = Factory(:entry, export_country_codes: "CN\n IN", origin_country_codes: "NO\n FI")
+    ent = FactoryBot(:entry, export_country_codes: "CN\n IN", origin_country_codes: "NO\n FI")
     ent.commercial_invoices.build(invoice_number: 'INV-XYZ')
     ent
   end

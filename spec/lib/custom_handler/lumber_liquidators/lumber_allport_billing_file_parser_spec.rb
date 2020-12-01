@@ -2,7 +2,7 @@ require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser do
 
-  let(:user) { Factory(:user, email:'fake@emailaddress.com') }
+  let(:user) { FactoryBot(:user, email:'fake@emailaddress.com') }
 
   describe 'can_view?' do
     let(:subject) { described_class.new(nil) }
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1).and_yield(row_1b).and_yield(row_2).and_yield(blank_row).and_yield(totals_row)
 
-      entry_1 = Factory(:entry,
+      entry_1 = FactoryBot(:entry,
           customer_number:'LUMBER',
           source_system:Entry::KEWILL_SOURCE_SYSTEM,
           customer_name:'Crudco',
@@ -96,12 +96,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
           container_sizes:"45ft\n25ft",
           broker_invoice_total:1234.56
       )
-      container_1 = Factory(:container, container_number:'CON-1', entry:entry_1)
-      container_2 = Factory(:container, container_number:'CON-2', entry:entry_1)
-      invoice_1 = Factory(:broker_invoice, entry:entry_1)
+      container_1 = FactoryBot(:container, container_number:'CON-1', entry:entry_1)
+      container_2 = FactoryBot(:container, container_number:'CON-2', entry:entry_1)
+      invoice_1 = FactoryBot(:broker_invoice, entry:entry_1)
       entry_1.save!
 
-      entry_2 = Factory(:entry,
+      entry_2 = FactoryBot(:entry,
           customer_number:'LUMBER',
           source_system:Entry::KEWILL_SOURCE_SYSTEM,
           customer_name:'Stufftek',
@@ -117,8 +117,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
           container_sizes:'22ft',
           broker_invoice_total:789.01
       )
-      container_3 = Factory(:container, container_number:'CON-3', entry:entry_2)
-      invoice_2 = Factory(:broker_invoice, entry:entry_2)
+      container_3 = FactoryBot(:container, container_number:'CON-3', entry:entry_2)
+      invoice_2 = FactoryBot(:broker_invoice, entry:entry_2)
       entry_2.save!
 
       now = ActiveSupport::TimeZone['UTC'].parse('2017-03-06 16:30:12')
@@ -204,8 +204,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1).and_yield(row_2).and_yield(row_1).and_yield(blank_row).and_yield(totals_row)
 
-      entry_2 = Factory(:entry, master_bills_of_lading:'OTHER BOL', house_bills_of_lading:'BOL-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_2 = Factory(:broker_invoice, entry:entry_2)
+      entry_2 = FactoryBot(:entry, master_bills_of_lading:'OTHER BOL', house_bills_of_lading:'BOL-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_2 = FactoryBot(:broker_invoice, entry:entry_2)
 
       subject.process user
 
@@ -237,9 +237,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_1 = Factory(:broker_invoice, entry:entry_1)
-      entry_2 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-3', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry_1 = FactoryBot(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_1 = FactoryBot(:broker_invoice, entry:entry_1)
+      entry_2 = FactoryBot(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-3', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
 
       subject.process user
 
@@ -262,10 +262,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_1 = Factory(:broker_invoice, entry:entry_1)
-      entry_2 = Factory(:entry, broker_reference:'BR67890', master_bills_of_lading:'BOL-1', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_2 = Factory(:broker_invoice, entry:entry_2)
+      entry_1 = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_1 = FactoryBot(:broker_invoice, entry:entry_1)
+      entry_2 = FactoryBot(:entry, broker_reference:'BR67890', master_bills_of_lading:'BOL-1', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_2 = FactoryBot(:broker_invoice, entry:entry_2)
 
       subject.process user
 
@@ -286,8 +286,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      entry_2 = Factory(:entry, broker_reference:'BR67890', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry_1 = FactoryBot(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry_2 = FactoryBot(:entry, broker_reference:'BR67890', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
 
       subject.process user
 
@@ -308,7 +308,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
       # No broker invoices.
 
       subject.process user
@@ -330,7 +330,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry_1 = FactoryBot(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
 
       subject.process user
 
@@ -353,8 +353,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       subject.process user
 
@@ -376,8 +376,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       subject.process user
 
@@ -399,8 +399,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       subject.process user
 
@@ -422,8 +422,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       subject.process user
 
@@ -445,8 +445,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4), entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4), entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       Timecop.freeze(DateTime.new(2017, 3, 6)) do
         subject.process user
@@ -470,8 +470,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4), entry_filed_date: DateTime.now)
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4), entry_filed_date: DateTime.now)
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       Timecop.freeze(DateTime.new(2017, 3, 6)) do
         subject.process user
@@ -493,8 +493,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
       yield_standard_header(expect(file_reader).to receive(:foreach)).and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date: nil, entry_filed_date: DateTime.new(2016, 9, 4))
-      invoice = Factory(:broker_invoice, entry:entry)
+      entry = FactoryBot(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date: nil, entry_filed_date: DateTime.new(2016, 9, 4))
+      invoice = FactoryBot(:broker_invoice, entry:entry)
 
       Timecop.freeze(DateTime.new(2017, 3, 6)) do
         subject.process user
@@ -517,7 +517,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      entry = FactoryBot(:entry, broker_reference:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
 
       allow(XlsMaker).to receive(:add_body_row).and_raise(StandardError.new("This is a terrible error."))
 
@@ -540,8 +540,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(file_reader).to receive(:foreach).and_yield(header_row).and_yield(header_row).and_yield(header_row).
           and_yield(blank_row).and_yield(header_row).and_yield(column_header_row).and_yield(row_1)
 
-      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_1 = Factory(:broker_invoice, entry:entry_1)
+      entry_1 = FactoryBot(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_1 = FactoryBot(:broker_invoice, entry:entry_1)
 
       subject.process user
 
@@ -565,8 +565,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(file_reader).to receive(:foreach).and_yield(header_row).and_yield(header_row).and_yield(header_row).
           and_yield(blank_row).and_yield(header_row).and_yield(bad_column_header_row).and_yield(row_1)
 
-      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
-      invoice_1 = Factory(:broker_invoice, entry:entry_1)
+      entry_1 = FactoryBot(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now, entry_filed_date: DateTime.now)
+      invoice_1 = FactoryBot(:broker_invoice, entry:entry_1)
 
       subject.process user
 

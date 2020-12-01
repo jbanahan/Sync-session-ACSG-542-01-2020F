@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
-  let(:u) { Factory(:user, username: "integration") }
-  let!(:company) { Factory(:company, system_code: "HENNE")}
-  let!(:country_ca) { Factory(:country, iso_code: "CA")}
-  let!(:country_us) { Factory(:country, iso_code: "US")}
+  let(:u) { FactoryBot(:user, username: "integration") }
+  let!(:company) { FactoryBot(:company, system_code: "HENNE")}
+  let!(:country_ca) { FactoryBot(:country, iso_code: "CA")}
+  let!(:country_us) { FactoryBot(:country, iso_code: "US")}
 
   describe "accept?" do
-    let!(:prod) { Factory(:product, importer: company) }
-    let(:snap) { Factory(:entity_snapshot, recordable: prod) }
+    let!(:prod) { FactoryBot(:product, importer: company) }
+    let(:snap) { FactoryBot(:entity_snapshot, recordable: prod) }
 
     it "returns true if snapshot belongs to an H&M product" do
       expect(described_class.accept?(snap)).to be true
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
     end
 
     it "returns false if the snapshot doesn't belong to a product" do
-      snap.update_attributes(recordable: Factory(:entry))
+      snap.update_attributes(recordable: FactoryBot(:entry))
       expect(described_class.accept?(snap)).to be false
     end
   end
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
 
     it "sets CA tariff number, flag, customs description; saves entity snapshot" do
       descr_cdef = cdefs[:class_customs_description]
-      tariff = Factory(:tariff_record, classification: Factory(:classification, country: country_ca, product: Factory(:product, importer: company)))
+      tariff = FactoryBot(:tariff_record, classification: FactoryBot(:classification, country: country_ca, product: FactoryBot(:product, importer: company)))
       classi = tariff.classification
       prod = classi.product
       prod.assign_attributes(importer: company)
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
     end
 
     it "does nothing if CA tariff number already exists" do
-      tariff = Factory(:tariff_record, classification: Factory(:classification, country: country_ca), hts_1: "4444444444" )
+      tariff = FactoryBot(:tariff_record, classification: FactoryBot(:classification, country: country_ca), hts_1: "4444444444" )
       classi = tariff.classification
       prod = classi.product
       prod.assign_attributes(importer: company)
@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
   end
 
   describe "update_classi!" do
-    let(:classi) { Factory(:classification, country: country_ca, product: Factory(:product, importer: company)) }
+    let(:classi) { FactoryBot(:classification, country: country_ca, product: FactoryBot(:product, importer: company)) }
     let!(:cdef) { described_class.prep_custom_definitions([:class_customs_description])[:class_customs_description]}
     before { DataCrossReference.create_ca_hts_to_descr! "3333333333", "cement shoes", company.id }
 

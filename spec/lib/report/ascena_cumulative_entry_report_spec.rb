@@ -1,12 +1,12 @@
 describe OpenChain::Report::AscenaCumulativeEntryReport do
   let(:parser) { described_class.new }
-  let(:us) { Factory :country, iso_code: "US" }
+  let(:us) { FactoryBot :country, iso_code: "US" }
 
   describe "run_schedulable" do
     it "emails report" do
-      ascena = Factory(:company, system_code: "ASCENA")
-      this_month = Factory :fiscal_month, company: ascena, month_number: 6, year: 2018, start_date: Date.new(2017, 12, 31), end_date: Date.new(2018, 1, 27)
-      last_month = Factory :fiscal_month, company: ascena, month_number: 5, year: 2018, start_date: Date.new(2017, 11, 26), end_date: Date.new(2017, 12, 30)
+      ascena = FactoryBot(:company, system_code: "ASCENA")
+      this_month = FactoryBot :fiscal_month, company: ascena, month_number: 6, year: 2018, start_date: Date.new(2017, 12, 31), end_date: Date.new(2018, 1, 27)
+      last_month = FactoryBot :fiscal_month, company: ascena, month_number: 5, year: 2018, start_date: Date.new(2017, 11, 26), end_date: Date.new(2017, 12, 30)
       us
 
       expect_any_instance_of(described_class).to receive(:main_query).with(5, 2018).and_call_original
@@ -37,17 +37,17 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
   end
 
   describe "main_query" do
-    let(:ca) { Factory :country, iso_code: "CA" }
-    let!(:e1) { Factory :entry, customer_number: "ASCE", import_country: us, entry_number: "12345", transport_mode_code: 40, gross_weight: 2, mpf: 3, total_duty: 4, entered_value: 17, fiscal_month: 1, fiscal_year: 2018 }
-    let!(:e2) { Factory :entry, customer_number: "ASCE", import_country: us, entry_number: "12346", transport_mode_code: 41, gross_weight: 5, mpf: 6, total_duty: 7, entered_value: 18, fiscal_month: 1, fiscal_year: 2018 }
-    let!(:e3) { Factory :entry, customer_number: "ASCE", import_country: us, entry_number: "12347", transport_mode_code: 10, gross_weight: 8, mpf: 9, total_duty: 10, entered_value: 19, fiscal_month: 1, fiscal_year: 2018 }
-    let!(:e4) { Factory :entry, customer_number: "ASCE", import_country: us, entry_number: "12348", transport_mode_code: 11, gross_weight: 11, mpf: 12, total_duty: 13, entered_value: 20, fiscal_month: 1, fiscal_year: 2018 }
-    let!(:e5) { Factory :entry, customer_number: "ASCE", import_country: us, entry_number: "12349", transport_mode_code: 99, gross_weight: 14, mpf: 15, total_duty: 16, entered_value: 21, fiscal_month: 1, fiscal_year: 2018 }
-    let!(:ci1) { Factory :commercial_invoice, entry: e1 }
-    let!(:ci2) { Factory :commercial_invoice, entry: e2 }
-    let!(:cil1) { Factory :commercial_invoice_line, commercial_invoice: ci1 }
-    let!(:cil2) { Factory :commercial_invoice_line, commercial_invoice: ci1 }
-    let!(:cil3) { Factory :commercial_invoice_line, commercial_invoice: ci2 }
+    let(:ca) { FactoryBot :country, iso_code: "CA" }
+    let!(:e1) { FactoryBot :entry, customer_number: "ASCE", import_country: us, entry_number: "12345", transport_mode_code: 40, gross_weight: 2, mpf: 3, total_duty: 4, entered_value: 17, fiscal_month: 1, fiscal_year: 2018 }
+    let!(:e2) { FactoryBot :entry, customer_number: "ASCE", import_country: us, entry_number: "12346", transport_mode_code: 41, gross_weight: 5, mpf: 6, total_duty: 7, entered_value: 18, fiscal_month: 1, fiscal_year: 2018 }
+    let!(:e3) { FactoryBot :entry, customer_number: "ASCE", import_country: us, entry_number: "12347", transport_mode_code: 10, gross_weight: 8, mpf: 9, total_duty: 10, entered_value: 19, fiscal_month: 1, fiscal_year: 2018 }
+    let!(:e4) { FactoryBot :entry, customer_number: "ASCE", import_country: us, entry_number: "12348", transport_mode_code: 11, gross_weight: 11, mpf: 12, total_duty: 13, entered_value: 20, fiscal_month: 1, fiscal_year: 2018 }
+    let!(:e5) { FactoryBot :entry, customer_number: "ASCE", import_country: us, entry_number: "12349", transport_mode_code: 99, gross_weight: 14, mpf: 15, total_duty: 16, entered_value: 21, fiscal_month: 1, fiscal_year: 2018 }
+    let!(:ci1) { FactoryBot :commercial_invoice, entry: e1 }
+    let!(:ci2) { FactoryBot :commercial_invoice, entry: e2 }
+    let!(:cil1) { FactoryBot :commercial_invoice_line, commercial_invoice: ci1 }
+    let!(:cil2) { FactoryBot :commercial_invoice_line, commercial_invoice: ci1 }
+    let!(:cil3) { FactoryBot :commercial_invoice_line, commercial_invoice: ci2 }
 
     it "produces expected results" do
       results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
@@ -83,8 +83,8 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
   end
 
   describe "isf_query" do
-    let!(:sf) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 15) }
-    let!(:sf2) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 25) }
+    let!(:sf) { FactoryBot :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 15) }
+    let!(:sf2) { FactoryBot :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 25) }
 
     it "produces expected results" do
       results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01", "2018-01-31")

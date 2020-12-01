@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyComparator do
   subject { described_class }
 
   describe "accept?" do
-    let (:entry) { Factory(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
+    let (:entry) { FactoryBot(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
     let (:snapshot) { EntitySnapshot.new recordable: entry }
 
     it "accepts Kirklands entries with Last 7501 Print Dates" do
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyComparator do
   end
 
   describe "generate_and_send" do
-    let (:entry) { Factory(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
+    let (:entry) { FactoryBot(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
     let (:new_snapshot) { JSON.parse(CoreModule.find_by_object(entry).entity_json(entry)) }
     let (:old_snapshot) { JSON.parse(CoreModule.find_by_object(entry).entity_json(entry)) }
 
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyComparator do
   end
 
   describe "compare" do
-    let (:entry) { Factory(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
+    let (:entry) { FactoryBot(:entry, customer_number: "KLANDS", last_7501_print: Time.zone.parse("2020-03-02 05:00")) }
     let (:new_snapshot) { JSON.parse(CoreModule.find_by_object(entry).entity_json(entry)) }
     let (:old_snapshot) { JSON.parse(CoreModule.find_by_object(entry).entity_json(entry)) }
 

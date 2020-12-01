@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
     HEREDOC
   end
 
-  let!(:lenox) { Factory(:company, system_code: 'LENOX') }
+  let!(:lenox) { FactoryBot(:company, system_code: 'LENOX') }
 
   let (:log) { InboundFile.new }
 
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "moves existing product to correct importer" do
-    p = Factory(:product, unique_identifier: 'LENOX-6083927')
+    p = FactoryBot(:product, unique_identifier: 'LENOX-6083927')
     described_class.new.process testdata, log
     pr = Order.first.order_lines.first.product
     expect(pr.id).to eq p.id
@@ -67,9 +67,9 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "updates existing PO, updating but not deleting lines" do
-    ord = Factory(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
-    Factory(:order_line, order: ord, line_number: 1) # update this one
-    o_line2 = Factory(:order_line, order: ord, line_number: 100) # leave this one alone
+    ord = FactoryBot(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
+    FactoryBot(:order_line, order: ord, line_number: 1) # update this one
+    o_line2 = FactoryBot(:order_line, order: ord, line_number: 100) # leave this one alone
     described_class.new.process testdata, log
     expect(Order.count).to eq 1
     o = Order.first
@@ -81,9 +81,9 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "deletes lines with D as first character" do
-    ord = Factory(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
-    Factory(:order_line, order: ord, line_number: 1) # delete this one
-    Factory(:order_line, order: ord, line_number: 100) # leave this one alone
+    ord = FactoryBot(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
+    FactoryBot(:order_line, order: ord, line_number: 1) # delete this one
+    FactoryBot(:order_line, order: ord, line_number: 100) # leave this one alone
     testdata[0] = 'D'
     described_class.new.process testdata, log
     ord.reload
@@ -91,11 +91,11 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "doesn't delete shipped lines" do
-    ord = Factory(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
+    ord = FactoryBot(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
 
-    prod = Factory(:product)
-    o_line = Factory(:order_line, order: ord, line_number: 1, product: prod)
-    s_line = Factory(:shipment_line, product: prod)
+    prod = FactoryBot(:product)
+    o_line = FactoryBot(:order_line, order: ord, line_number: 1, product: prod)
+    s_line = FactoryBot(:shipment_line, product: prod)
     PieceSet.create! order_line: o_line, shipment_line: s_line, quantity: 1
     testdata[0] = 'D'
 
@@ -105,8 +105,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "deletes order with no lines" do
-    ord = Factory(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
-    Factory(:order_line, order: ord, line_number: 1) # delete this one
+    ord = FactoryBot(:order, order_number: 'LENOX-RB057225', importer_id: lenox.id)
+    FactoryBot(:order_line, order: ord, line_number: 1) # delete this one
     td = ""
     testdata.lines.each {|ln| ln[0] = 'D'; td << ln}
     described_class.new.process td, log
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "updates earliest ship date on product if earlier than existing date" do
-    p = Factory(:product, unique_identifier: 'LENOX-6083927', importer: lenox)
+    p = FactoryBot(:product, unique_identifier: 'LENOX-6083927', importer: lenox)
     cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd, Date.new(2015, 1, 1))
     described_class.new.process testdata, log
@@ -122,7 +122,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "doesn't update earliest ship date on product if later than existing date" do
-    p = Factory(:product, unique_identifier: 'LENOX-6083927', importer: lenox)
+    p = FactoryBot(:product, unique_identifier: 'LENOX-6083927', importer: lenox)
     cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd, Date.new(2013, 1, 1))
     described_class.new.process testdata, log

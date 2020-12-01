@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
   describe "set_defaults" do
     before :each do
       @cdefs = described_class.prep_custom_definitions([:cmp_default_inco_term, :cmp_default_handover_port, :cmp_default_country_of_origin, :ord_country_of_origin])
-      @vendor = Factory(:company)
-      @order = Factory(:order, vendor:@vendor)
+      @vendor = FactoryBot(:company)
+      @order = FactoryBot(:order, vendor:@vendor)
     end
     context "country_of_origin" do
       it "should set default Country of Origin" do
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
     end
     context "ship_from" do
       it "should set the ship from if the vendor only has one shipping address" do
-        a = Factory(:address, shipping:true, company:@vendor)
+        a = FactoryBot(:address, shipping:true, company:@vendor)
         @vendor.reload
         expect {described_class.set_defaults(@order)}.to change(EntitySnapshot, :count).from(0).to(1)
         expect(EntitySnapshot.first.context).to eq "System Job: Order Default Value Setter"
@@ -36,8 +36,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
         expect(@order.ship_from_id).to eq a.id
       end
       it "should not set the ship from if the vendor has multiple shipping addresses" do
-        Factory(:address, shipping:true, company:@vendor)
-        Factory(:address, shipping:true, company:@vendor)
+        FactoryBot(:address, shipping:true, company:@vendor)
+        FactoryBot(:address, shipping:true, company:@vendor)
         expect {described_class.set_defaults(@order)}.to_not change(EntitySnapshot, :count)
         @order.reload
         expect(@order.ship_from_id).to be_nil
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
         expect(@order.ship_from_id).to be_nil
       end
       it "should not overwrite an existing ship from" do
-        a = Factory(:address, shipping:true, company:@vendor)
+        a = FactoryBot(:address, shipping:true, company:@vendor)
         @vendor.reload
         @order.update_attributes(ship_from_id: -2)
 

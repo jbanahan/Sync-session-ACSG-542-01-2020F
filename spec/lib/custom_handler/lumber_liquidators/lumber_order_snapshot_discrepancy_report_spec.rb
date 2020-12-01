@@ -50,11 +50,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
     end
 
     it "runs report based on snapshot date filters" do
-      vendor = Factory(:company, name:'Crudco')
-      order_1 = Factory(:order, order_number: '5551234', vendor:vendor, created_at:DateTime.new(2018, 3, 31))
+      vendor = FactoryBot(:company, name:'Crudco')
+      order_1 = FactoryBot(:order, order_number: '5551234', vendor:vendor, created_at:DateTime.new(2018, 3, 31))
       order_1.update_custom_value! @cdefs[:ord_snapshot_discrepancy_comment], "This order is discrepant.\nIt's discrepanting."
 
-      prod = Factory(:product)
+      prod = FactoryBot(:product)
       ol_1 = order_1.order_lines.create! line_number: 1, product:prod
       set_snapshot_value_and_date ol_1, :ordln_po_create_article, "Article 1", DateTime.new(2018, 1, 11)
       set_snapshot_value_and_date ol_1, :ordln_po_booked_article, "Article 1", DateTime.new(2018, 1, 13)
@@ -88,10 +88,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
       set_snapshot_value_and_date ol_2, :ordln_po_create_quantity, 10.5, DateTime.new(2018, 1, 12)
       set_snapshot_value_and_date ol_2, :ordln_po_booked_quantity, 10.5, DateTime.new(2018, 1, 14)
 
-      shp = Factory(:shipment, booking_received_date:DateTime.new(2018, 1, 10), departure_date:DateTime.new(2018, 1, 12))
+      shp = FactoryBot(:shipment, booking_received_date:DateTime.new(2018, 1, 10), departure_date:DateTime.new(2018, 1, 12))
       shp.booking_lines.create! order_line:order_1.order_lines[0]
 
-      order_2 = Factory(:order, order_number: '5551235', vendor:vendor, created_at:DateTime.new(2018, 3, 25))
+      order_2 = FactoryBot(:order, order_number: '5551235', vendor:vendor, created_at:DateTime.new(2018, 3, 25))
       order_2.update_custom_value! @cdefs[:ord_snapshot_discrepancy_comment], "This order is also discrepant."
       ol_3 = order_2.order_lines.create! line_number: 3, product:prod
 
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
       set_snapshot_value_and_date ol_3, :ordln_po_booked_total_price, 32.5, DateTime.new(2018, 1, 2)
       set_snapshot_value_and_date ol_3, :ordln_po_shipped_total_price, 33.75, DateTime.new(2018, 1, 5)
 
-      order_3 = Factory(:order, order_number: '5551236', vendor:vendor, created_at:DateTime.new(2018, 3, 27))
+      order_3 = FactoryBot(:order, order_number: '5551236', vendor:vendor, created_at:DateTime.new(2018, 3, 27))
       ol_4 = order_3.order_lines.create! line_number: 4, product:prod
 
       # Should be excluded because the snapshot dates all occur before the date range.
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
       set_snapshot_value_and_date ol_4, :ordln_po_booked_total_price, 32.5, DateTime.new(2017, 12, 26)
       set_snapshot_value_and_date ol_4, :ordln_po_shipped_total_price, 33.75, DateTime.new(2017, 12, 27)
 
-      order_4 = Factory(:order, order_number: '5551237', vendor:vendor, created_at:DateTime.new(2018, 3, 28))
+      order_4 = FactoryBot(:order, order_number: '5551237', vendor:vendor, created_at:DateTime.new(2018, 3, 28))
       ol_5 = order_4.order_lines.create! line_number: 5, product:prod
 
       # Should be excluded because the snapshot dates all occur after the date range.
@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
       set_snapshot_value_and_date ol_5, :ordln_po_booked_total_price, 32.5, DateTime.new(2018, 2, 2)
       set_snapshot_value_and_date ol_5, :ordln_po_shipped_total_price, 33.75, DateTime.new(2018, 2, 3)
 
-      order_5 = Factory(:order, order_number: '5551238', vendor:vendor, created_at:DateTime.new(2018, 3, 29))
+      order_5 = FactoryBot(:order, order_number: '5551238', vendor:vendor, created_at:DateTime.new(2018, 3, 29))
       ol_6 = order_5.order_lines.create! line_number: 5, product:prod
 
       # Should be excluded because the highest snapshot date is outside the date range.
@@ -234,10 +234,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
     end
 
     it "runs report based on snapshot date filters with null values" do
-      vendor = Factory(:company, name:'Crudco')
-      order_1 = Factory(:order, order_number: '5551234', vendor:vendor, created_at:DateTime.new(2018, 3, 31))
+      vendor = FactoryBot(:company, name:'Crudco')
+      order_1 = FactoryBot(:order, order_number: '5551234', vendor:vendor, created_at:DateTime.new(2018, 3, 31))
 
-      prod = Factory(:product)
+      prod = FactoryBot(:product)
       ol_1 = order_1.order_lines.create! line_number: 1, product:prod
       set_snapshot_value_and_date ol_1, :ordln_po_create_article, "Article 1", DateTime.new(2018, 1, 11)
       set_snapshot_value_and_date ol_1, :ordln_po_booked_article, "Article 1", DateTime.new(2018, 1, 13)
@@ -335,16 +335,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrep
     end
 
     it "runs report for open orders only" do
-      vendor = Factory(:company, name:'Crudco')
-      order_1 = Factory(:order, order_number: '5551234', vendor:vendor)
+      vendor = FactoryBot(:company, name:'Crudco')
+      order_1 = FactoryBot(:order, order_number: '5551234', vendor:vendor)
 
-      prod = Factory(:product)
+      prod = FactoryBot(:product)
       ol_1 = order_1.order_lines.create! line_number: 1, product:prod
       set_snapshot_value_and_date ol_1, :ordln_po_create_article, "Article 1", DateTime.new(2018, 1, 11)
       set_snapshot_value_and_date ol_1, :ordln_po_booked_article, "Article 1", DateTime.new(2018, 1, 13)
       set_snapshot_value_and_date ol_1, :ordln_po_shipped_article, "Article 2", DateTime.new(2018, 1, 15)
 
-      order_2 = Factory(:order, order_number: '5551235', vendor:vendor, closed_at: DateTime.new(2018, 5, 2))
+      order_2 = FactoryBot(:order, order_number: '5551235', vendor:vendor, closed_at: DateTime.new(2018, 5, 2))
       ol_2 = order_2.order_lines.create! line_number: 2, product:prod
 
       # This would normally show, but the order has been marked closed.  It is excluded.

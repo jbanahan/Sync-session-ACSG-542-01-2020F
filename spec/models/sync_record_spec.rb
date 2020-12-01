@@ -16,7 +16,7 @@ describe SyncRecord do
 
   describe 'problems scope' do
     before :each do
-      @p = Factory(:product)
+      @p = FactoryBot(:product)
     end
     it 'should be a problem if sent more than 1 hour ago and not confirmed after sent time' do
       sr = @p.sync_records.create!(:trading_partner=>'MSLE', :sent_at=>2.hours.ago)

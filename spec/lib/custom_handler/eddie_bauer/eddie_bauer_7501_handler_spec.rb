@@ -1,16 +1,16 @@
 describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
   def create_data
-    country = Factory(:country, iso_code: 'US')
-    class_1 = Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-022-3724"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "8513104000")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-023-2301"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "foo")])
-    Factory(:classification, product: Factory(:product, unique_identifier: "EDDIE-009-0282"), country: country, tariff_records: [Factory(:tariff_record, hts_1: "6104622011")])
-    Factory(:classification, product: class_1.product, country: Factory(:country, iso_code: 'CA'), tariff_records: [Factory(:tariff_record, hts_1: "bar" )])
+    country = FactoryBot(:country, iso_code: 'US')
+    class_1 = FactoryBot(:classification, product: FactoryBot(:product, unique_identifier: "EDDIE-022-3724"), country: country, tariff_records: [FactoryBot(:tariff_record, hts_1: "8513104000")])
+    FactoryBot(:classification, product: FactoryBot(:product, unique_identifier: "EDDIE-023-2301"), country: country, tariff_records: [FactoryBot(:tariff_record, hts_1: "foo")])
+    FactoryBot(:classification, product: FactoryBot(:product, unique_identifier: "EDDIE-009-0282"), country: country, tariff_records: [FactoryBot(:tariff_record, hts_1: "6104622011")])
+    FactoryBot(:classification, product: class_1.product, country: FactoryBot(:country, iso_code: 'CA'), tariff_records: [FactoryBot(:tariff_record, hts_1: "bar" )])
   end
 
   describe "process" do
     before :each do
-      company = with_customs_management_id(Factory(:importer), "EDDIE")
-      @u = Factory(:user, email: "nigel@tufnel.net")
+      company = with_customs_management_id(FactoryBot(:importer), "EDDIE")
+      @u = FactoryBot(:user, email: "nigel@tufnel.net")
 
       @row_0 = ['ExitDocID', 'TxnCode', 'ProductNum', 'StatusCode', 'HtsNum', 'AdValoremRate', 'Value', 'ExitPrintDate']
       @row_1 = ['316-1548927-0', 'ANPC', '022-3724-800-0000', 'N', '8513104000', '0.035', '2.98', '2016-03-30 00:00:00']

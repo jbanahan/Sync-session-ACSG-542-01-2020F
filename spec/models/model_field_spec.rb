@@ -3,11 +3,11 @@ describe ModelField do
 
   describe "Product Custom Defintion On Other Module" do
     before :each do
-      @cd = Factory(:custom_definition, module_type:'Product', data_type:'string')
-      @p = Factory(:product)
+      @cd = FactoryBot(:custom_definition, module_type:'Product', data_type:'string')
+      @p = FactoryBot(:product)
       @p.update_custom_value!(@cd, 'ABC')
-      order_line = Factory(:order_line) # make to ensure that order_lines.id != products.id
-      @order_line = Factory(:order_line, product:@p, order: order_line.order)
+      order_line = FactoryBot(:order_line) # make to ensure that order_lines.id != products.id
+      @order_line = FactoryBot(:order_line, product:@p, order: order_line.order)
       @mf = ModelField.create_and_insert_product_custom_field @cd, CoreModule::ORDER_LINE, 1
       allow(ms).to receive(:order_enabled?).and_return true
     end
@@ -15,18 +15,18 @@ describe ModelField do
       ss = SearchSetup.new(module_type:'Order')
       ss.search_columns.build(model_field_uid:@mf.uid, rank:1)
       ss.search_criterions.build(model_field_uid:@mf.uid, operator:'sw', value:'A')
-      u = Factory(:master_user, order_view:true)
+      u = FactoryBot(:master_user, order_view:true)
       h = SearchQuery.new(ss, u).execute
       expect(h.size).to eq(1)
       expect(h.first[:row_key]).to eq @order_line.order.id
       expect(h.first[:result].first).to eq 'ABC'
     end
     it "should be read only" do
-      expect(@mf.process_import(@order_line, 'DEF', Factory(:user))).to eq "Value ignored. #{@mf.label} is read only."
+      expect(@mf.process_import(@order_line, 'DEF', FactoryBot(:user))).to eq "Value ignored. #{@mf.label} is read only."
       expect(@mf.read_only?).to be_truthy
     end
     it "should export properly" do
-      u = Factory(:master_user, order_view:true)
+      u = FactoryBot(:master_user, order_view:true)
       expect(@mf.process_export(@order_line, u)).to eq 'ABC'
     end
   end
@@ -83,7 +83,7 @@ describe ModelField do
       end
     end
     it "should set read_only for custom_defintion that is read only" do
-      cd = Factory :custom_definition
+      cd = FactoryBot :custom_definition
       ModelField.reload
       fvr = FieldValidatorRule.new
       fvr.read_only = true
@@ -93,7 +93,7 @@ describe ModelField do
       expect(ModelField.find_by_uid("*cf_#{cd.id}")).to be_read_only
     end
     it "should not set read_only for custom_definition that isn't read only" do
-      cd = Factory(:custom_definition)
+      cd = FactoryBot(:custom_definition)
       ModelField.reload
       expect(ModelField.find_by_uid("*cf_#{cd.id}")).not_to be_read_only
     end
@@ -110,47 +110,47 @@ describe ModelField do
   end
   describe "can_view?" do
     it "should default to true" do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_view?(Factory(:user))).to be_truthy
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_view?(FactoryBot(:user))).to be_truthy
     end
     it "should be false when lambda returns false" do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, {:can_view_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, {:can_view_lambda=>lambda {|user| false}}).can_view?(FactoryBot(:user))).to be_falsey
     end
 
     it "allows if view lambda is not set" do
       # edit lambda below is ignored
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, {:can_edit_lambda=>lambda {|user| false}}).can_view?(Factory(:user))).to be_truthy
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, {:can_edit_lambda=>lambda {|user| false}}).can_view?(FactoryBot(:user))).to be_truthy
     end
 
     it "allows viewing when user is in FieldValidatorRule view group" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_truthy
     end
 
     it "allows viewing when user is in FieldValidatorRule edit group" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_truthy
     end
 
     it "prevents viewing if user is in view group but lambda blocks access" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, {:can_view_lambda=>lambda {|user| false}, field_validator_rule: rule}).can_view?(user)).to be_falsey
     end
 
     it "prevents viewing when user is not in a group allowed to view the field" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_falsey
     end
 
     it "allows viewing when allow_everyone_to_view exists on the FieldValidatorRule" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP", allow_everyone_to_view: true
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to eq true
     end
 
@@ -160,85 +160,85 @@ describe ModelField do
       # has that have this exact setup and are likely relying on this behavior, I'm not going to change this.
       # This is the reason that FieldValidatorRule#allow_everyone_to_view exists.
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to eq false
     end
   end
 
   describe "can_mass_edit?" do
     it 'disallows mass_edit by default' do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_mass_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_mass_edit?(FactoryBot(:user))).to be_falsey
     end
 
     it 'allows mass_edit if field is mass_edit, and no groups are provided' do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, mass_edit: true).can_mass_edit?(Factory(:user))).to be_truthy
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, mass_edit: true).can_mass_edit?(FactoryBot(:user))).to be_truthy
     end
 
     it 'disallows mass_edit if field is not user accessible' do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: false, mass_edit: true).can_mass_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: false, mass_edit: true).can_mass_edit?(FactoryBot(:user))).to be_falsey
     end
 
     it 'disallows mass_edit if fields cannot be edited by user' do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: true, mass_edit: true, read_only: true).can_mass_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: true, mass_edit: true, read_only: true).can_mass_edit?(FactoryBot(:user))).to be_falsey
     end
 
     it 'disallows mass_edit if user is not in mass_edit group, if group is provided' do
       rule = FieldValidatorRule.create! module_type: "Order", model_field_uid: 'uid', can_mass_edit_groups: "Group"
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true, field_validator_rule: rule).can_mass_edit?(user)).to be_falsey
     end
 
     it 'allows mass_edit if user is in the mass_edit group, if group is provided' do
       rule = FieldValidatorRule.create! module_type: "Order", model_field_uid: "uid", can_mass_edit_groups: "GROUP1\nGROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true, field_validator_rule: rule).can_mass_edit?(user)).to be_truthy
     end
   end
 
   describe "can_edit?" do
     it "allows edit by default" do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_edit?(Factory(:user))).to be_truthy
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_edit?(FactoryBot(:user))).to be_truthy
     end
 
     it "disallows edit if can_edit_lambda returns false" do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, can_edit_lambda: lambda {|u| false}).can_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, can_edit_lambda: lambda {|u| false}).can_edit?(FactoryBot(:user))).to be_falsey
     end
 
     it "disallows edit if model field is read-only" do
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, read_only: true).can_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, read_only: true).can_edit?(FactoryBot(:user))).to be_falsey
     end
 
     it "uses can_view_lambda if no edit lambda exists" do
       lambda_called = true
-      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(Factory(:user))).to be_falsey
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, can_view_lambda: lambda {|u| lambda_called=true; false}).can_edit?(FactoryBot(:user))).to be_falsey
       expect(lambda_called).to be_truthy
     end
 
     it "it allows edit if user is in edit group" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is not in edit group" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_falsey
     end
 
     it "allows edit if user is in view group when no edit groups exist" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is in view group when edit groups exist" do
       rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
-      user = Factory(:user)
-      user.groups << Factory(:group, system_code: "GROUP")
+      user = FactoryBot(:user)
+      user.groups << FactoryBot(:group, system_code: "GROUP")
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_falsey
     end
   end
@@ -259,7 +259,7 @@ describe ModelField do
     it "retrieves custom values" do
       cd = CustomDefinition.create! data_type: :string, module_type: "Shipment", label: "TEST"
       mf = ModelField.new(1, :x, CoreModule::SHIPMENT, nil, custom_id: cd.id, can_view_lambda: lambda {|u| true})
-      ship = Factory(:shipment)
+      ship = FactoryBot(:shipment)
       ship.update_custom_value! cd, "TESTING!!!"
       expect(mf.custom?).to be_truthy
       expect(mf.process_export ship, User.new).to eq "TESTING!!!"
@@ -302,7 +302,7 @@ describe ModelField do
     it "updates a custom field" do
       cd = CustomDefinition.create! data_type: :string, module_type: "Shipment", label: "TEST"
       mf = ModelField.new(1, :x, CoreModule::SHIPMENT, nil, custom_id: cd.id, can_view_lambda: lambda {|u| true})
-      ship = Factory(:shipment)
+      ship = FactoryBot(:shipment)
       ship.update_custom_value! cd, "BEFORE TEST"
 
       result = mf.process_import ship, "TESTING", User.new
@@ -426,14 +426,14 @@ describe ModelField do
   end
 
   it "should get uid for region" do
-    r = Factory(:region)
+    r = FactoryBot(:region)
     expect(ModelField.uid_for_region(r, "x")).to eq "*r_#{r.id}_x"
   end
 
   context "special cases" do
     describe 'ports' do
-      let (:port) { Factory(:port, name:'MyName') }
-      let (:user) { Factory(:master_user, shipment_view:true) }
+      let (:port) { FactoryBot(:port, name:'MyName') }
+      let (:user) { FactoryBot(:master_user, shipment_view:true) }
       let (:search_setup) {
         ss = SearchSetup.new(module_type:'Shipment', user_id:user.id)
         ss.search_columns.build(model_field_uid: uid, rank: 1)
@@ -484,30 +484,30 @@ describe ModelField do
 
     context "prod_max_component_count" do
       before :each do
-        @ss = SearchSetup.new(module_type:'Product', user_id:Factory(:master_user, product_view:true).id)
+        @ss = SearchSetup.new(module_type:'Product', user_id:FactoryBot(:master_user, product_view:true).id)
         @ss.search_columns(model_field_uid:'prod_uid', rank:1)
         @sc = @ss.search_criterions.build(model_field_uid: 'prod_max_component_count', operator:'eq', value:'0')
         @mf = ModelField.find_by_uid(:prod_max_component_count)
       end
       it "should return number for maximum components" do
         # first record for country 1
-        tr = Factory(:tariff_record)
+        tr = FactoryBot(:tariff_record)
         p = tr.product
         # second record for country 1
-        tr2 = Factory(:tariff_record, classification:tr.classification, line_number:2)
+        tr2 = FactoryBot(:tariff_record, classification:tr.classification, line_number:2)
         # first record for country 2
-        tr3 = Factory(:tariff_record, classification:Factory(:classification, product:p))
+        tr3 = FactoryBot(:tariff_record, classification:FactoryBot(:classification, product:p))
         expect(@mf.process_export(p, nil, true)).to eq 2
         @sc.value = '2'
         expect(@ss.result_keys.to_a).to eq [p.id]
       end
       it "should return 0 when no classifications" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         expect(@mf.process_export(p, nil, true)).to eq 0
         expect(@ss.result_keys.to_a).to eq [p.id]
       end
       it "should return 0 when no components" do
-        c = Factory(:classification)
+        c = FactoryBot(:classification)
         p = c.product
         expect(@mf.process_export(p, nil, true)).to eq 0
         expect(@ss.result_keys.to_a).to eq [p.id]
@@ -515,20 +515,20 @@ describe ModelField do
     end
     context "comments" do
       it "should return comment count" do
-        s = Factory(:shipment)
-        u = Factory(:user)
+        s = FactoryBot(:shipment)
+        u = FactoryBot(:user)
         s.comments.create!(user_id:u.id, subject:"x")
         expect(ModelField.find_by_uid(:shp_comment_count).process_export(s, u, true)).to eq 1
       end
     end
     context "first hts by country" do
       before :each do
-        @c = Factory(:country, :iso_code=>'ZY', :import_location=>true)
+        @c = FactoryBot(:country, :iso_code=>'ZY', :import_location=>true)
         ModelField.reload true
       end
       it "should create fields for each import country" do
-        c2 = Factory(:country, :iso_code=>'ZZ', :import_location=>true)
-        c3 = Factory(:country, :iso_code=>'NO', :import_location=>false)
+        c2 = FactoryBot(:country, :iso_code=>'ZZ', :import_location=>true)
+        c3 = FactoryBot(:country, :iso_code=>'NO', :import_location=>false)
         ModelField.reload true
         (1..3).each do |i|
           c_mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
@@ -540,9 +540,9 @@ describe ModelField do
       end
       it "should allow import" do
         ModelField.reload true
-        p = Factory(:product)
+        p = FactoryBot(:product)
         (1..3).each do |i|
-          Factory(:official_tariff, :country=>@c, :hts_code=>"123456789#{i}")
+          FactoryBot(:official_tariff, :country=>@c, :hts_code=>"123456789#{i}")
           mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
           r = mf.process_import(p, "123456789#{i}", User.new)
           expect(r).to eq "ZY HTS #{i} set to 1234.56.789#{i}"
@@ -557,8 +557,8 @@ describe ModelField do
         expect(tr.hts_3).to eq "1234567893"
       end
       it "should update existing hts" do
-        Factory(:official_tariff, :country=>@c, :hts_code=>"1234567899")
-        tr = Factory(:tariff_record, classification:Factory(:classification, country:@c), hts_1:'0000000000')
+        FactoryBot(:official_tariff, :country=>@c, :hts_code=>"1234567899")
+        tr = FactoryBot(:tariff_record, classification:FactoryBot(:classification, country:@c), hts_1:'0000000000')
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         mf.process_import tr.product, '1234567899', User.new
         tr.product.save!
@@ -566,33 +566,33 @@ describe ModelField do
         expect(tr.hts_1).to eq '1234567899'
       end
       it "should strip non numerics from hts" do
-        Factory(:official_tariff, :country=>@c, :hts_code=>"1234567899")
-        p = Factory(:product)
+        FactoryBot(:official_tariff, :country=>@c, :hts_code=>"1234567899")
+        p = FactoryBot(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         mf.process_import p, '1234.567-899 ', User.new
         expect(p.classifications.first.tariff_records.first.hts_1).to eq '1234567899'
       end
       it "should not allow import of invalid HTS" do
-        Factory(:official_tariff, :country=>@c, :hts_code=>"1234567899")
-        p = Factory(:product)
+        FactoryBot(:official_tariff, :country=>@c, :hts_code=>"1234567899")
+        p = FactoryBot(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         r = mf.process_import p, '0000000000', User.new
         expect(r).to eq "0000000000 is not valid for ZY HTS 1"
       end
       it "should allow any HTS for country withouth official tariffs" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         r = mf.process_import p, '0000000000', User.new
         expect(p.classifications.first.tariff_records.first.hts_1).to eq '0000000000'
       end
       it "should format export" do
-        tr = Factory(:tariff_record, classification:Factory(:classification, country:@c), hts_1:'0000000000')
+        tr = FactoryBot(:tariff_record, classification:FactoryBot(:classification, country:@c), hts_1:'0000000000')
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         expect(mf.process_export(tr.product, nil, true)).to eq '0000000000'.hts_format
       end
       it "should work with query" do
-        u = Factory(:master_user)
-        tr = Factory(:tariff_record, classification:Factory(:classification, country:@c), hts_1:'0000000000')
+        u = FactoryBot(:master_user)
+        tr = FactoryBot(:tariff_record, classification:FactoryBot(:classification, country:@c), hts_1:'0000000000')
         ss = SearchSetup.new(module_type:'Product')
         ss.search_columns.build(model_field_uid:"*fhts_1_#{@c.id}", rank:1)
         ss.search_criterions.build(model_field_uid:"*fhts_1_#{@c.id}", operator:'eq', value:'0000000000')
@@ -608,48 +608,48 @@ describe ModelField do
         @child_mf = ModelField.find_by_uid :prod_bom_children
       end
       it "should not allow imports for parents" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         r = @parent_mf.process_import p, 'abc', User.new
         expect(p).not_to be_on_bill_of_materials
         expect(r).to match(/ignored/)
       end
       it "process_export should return csv of BOM parents" do
-        parent1 = Factory(:product, :unique_identifier=>'bomc1')
-        parent2 = Factory(:product, :unique_identifier=>'bomc2')
-        child = Factory(:product)
+        parent1 = FactoryBot(:product, :unique_identifier=>'bomc1')
+        parent2 = FactoryBot(:product, :unique_identifier=>'bomc2')
+        child = FactoryBot(:product)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id, :quantity=>1)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id, :quantity=>1)
         output = @parent_mf.process_export child, nil, true
         expect(output).to eq "#{parent1.unique_identifier},#{parent2.unique_identifier}"
       end
       it "qualified_field_name should return csv of BOM parents" do
-        parent1 = Factory(:product, :unique_identifier=>'bomc1')
-        parent2 = Factory(:product, :unique_identifier=>'bomc2')
-        child = Factory(:product)
+        parent1 = FactoryBot(:product, :unique_identifier=>'bomc1')
+        parent2 = FactoryBot(:product, :unique_identifier=>'bomc2')
+        child = FactoryBot(:product)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id, :quantity=>1)
         child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id, :quantity=>1)
         r = ActiveRecord::Base.connection.execute "SELECT #{@parent_mf.qualified_field_name} FROM products where id = #{child.id}"
         expect(r.first.first).to eq "#{parent1.unique_identifier},#{parent2.unique_identifier}"
       end
       it "should not allow imports for children" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         r = @child_mf.process_import p, 'abc', User.new
         expect(p).not_to be_on_bill_of_materials
         expect(r).to match(/ignored/)
       end
       it "should return csv of BOM children" do
-        child1 = Factory(:product, :unique_identifier=>'bomc1')
-        child2 = Factory(:product, :unique_identifier=>'bomc2')
-        parent = Factory(:product)
+        child1 = FactoryBot(:product, :unique_identifier=>'bomc1')
+        child2 = FactoryBot(:product, :unique_identifier=>'bomc2')
+        parent = FactoryBot(:product)
         parent.bill_of_materials_children.create!(:child_product_id=>child1.id, :quantity=>1)
         parent.bill_of_materials_children.create!(:child_product_id=>child2.id, :quantity=>1)
         output = @child_mf.process_export parent, nil, true
         expect(output).to eq "#{child1.unique_identifier},#{child2.unique_identifier}"
       end
       it "qualified_field_name should return csv of BOM children" do
-        child1 = Factory(:product, :unique_identifier=>'bomc1')
-        child2 = Factory(:product, :unique_identifier=>'bomc2')
-        parent = Factory(:product)
+        child1 = FactoryBot(:product, :unique_identifier=>'bomc1')
+        child2 = FactoryBot(:product, :unique_identifier=>'bomc2')
+        parent = FactoryBot(:product)
         parent.bill_of_materials_children.create!(:child_product_id=>child1.id, :quantity=>1)
         parent.bill_of_materials_children.create!(:child_product_id=>child2.id, :quantity=>1)
         r = ActiveRecord::Base.connection.execute "SELECT #{@child_mf.qualified_field_name} FROM products where id = #{parent.id}"
@@ -658,9 +658,9 @@ describe ModelField do
     end
     context "classification count" do
       before :each do
-        @user = Factory(:master_user)
-        @p = Factory(:product)
-        @country = Factory(:country)
+        @user = FactoryBot(:master_user)
+        @p = FactoryBot(:product)
+        @country = FactoryBot(:country)
         @ss = SearchSetup.new(:module_type=>'Product')
       end
       it "should reflect 0 if no classifications" do
@@ -688,10 +688,10 @@ describe ModelField do
       end
       it "should reflect proper count with mixed bag" do
         @p.classifications.create!(:country_id=>@country.id).tariff_records.create! # = 0
-        country_2 = Factory(:country)
+        country_2 = FactoryBot(:country)
         @p.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:hts_1=>'123') # = 1
         @p.classifications.find_by(country: country_2).tariff_records.create!(:hts_1=>'123') # = 0 don't add for second component of same classification
-        @p.classifications.create!(:country_id=>Factory(:country).id).tariff_records.create!(:hts_1=>'123') # = 1
+        @p.classifications.create!(:country_id=>FactoryBot(:country).id).tariff_records.create!(:hts_1=>'123') # = 1
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count', :operator=>'eq', :value=>'2')
         sq = SearchQuery.new(@ss, @user)
         r = sq.execute
@@ -701,8 +701,8 @@ describe ModelField do
     end
     context "class_comp_cnt" do
       it "should get count of tariff rows" do
-        tr = Factory(:tariff_record, line_number:1)
-        Factory(:tariff_record, line_number:2, classification:tr.classification)
+        tr = FactoryBot(:tariff_record, line_number:1)
+        FactoryBot(:tariff_record, line_number:2, classification:tr.classification)
         cl = Classification.first
         mf = ModelField.find_by_uid :class_comp_cnt
         expect(mf.process_export(cl, nil, true)).to eq 2
@@ -712,8 +712,8 @@ describe ModelField do
     end
     context "regions" do
       it "should create classification count model fields for existing regions" do
-        r = Factory(:region)
-        r2 = Factory(:region)
+        r = FactoryBot(:region)
+        r2 = FactoryBot(:region)
         ModelField.reload
         expect(ModelField.by_region(r).size).to eq(1)
         expect(ModelField.by_region(r2).size).to eq(1)
@@ -722,16 +722,16 @@ describe ModelField do
         before :each do
           @reg = Region.create!(:name=>"EMEA")
           @mf = ModelField.find_by_uid "*r_#{@reg.id}_class_count"
-          @p = Factory(:product)
-          @c1 = Factory(:country)
-          @c2 = Factory(:country)
+          @p = FactoryBot(:product)
+          @c1 = FactoryBot(:country)
+          @c2 = FactoryBot(:country)
           @reg.countries << @c1
-          tr1 = Factory(:tariff_record, :hts_1=>'12345678', :classification=>Factory(:classification, :country=>@c1, :product=>@p))
-          tr2 = Factory(:tariff_record, :hts_1=>'12345678', :classification=>Factory(:classification, :country=>@c2, :product=>@p))
+          tr1 = FactoryBot(:tariff_record, :hts_1=>'12345678', :classification=>FactoryBot(:classification, :country=>@c1, :product=>@p))
+          tr2 = FactoryBot(:tariff_record, :hts_1=>'12345678', :classification=>FactoryBot(:classification, :country=>@c2, :product=>@p))
           @sc = SearchCriterion.new(:model_field_uid=>@mf.uid, :operator=>'eq', :value=>"1")
 
           # don't find this product because it's classified for a different country
-          Factory(:tariff_record, :hts_1=>'12345678', :classification=>Factory(:classification, :country=>@c2))
+          FactoryBot(:tariff_record, :hts_1=>'12345678', :classification=>FactoryBot(:classification, :country=>@c2))
         end
         it "should have proper label" do
           expect(@mf.label).to eq "Classification Count - EMEA"
@@ -766,7 +766,7 @@ describe ModelField do
     end
     context "PMS Month" do
       before :each do
-        @ent = Factory(:entry, :monthly_statement_due_date=>Date.new(2012, 9, 1))
+        @ent = FactoryBot(:entry, :monthly_statement_due_date=>Date.new(2012, 9, 1))
         @mf = ModelField.find_by_uid :ent_statement_month
       end
       it "should export month" do
@@ -774,7 +774,7 @@ describe ModelField do
       end
       it "should work as search criterion" do
         sc = SearchCriterion.new(:model_field_uid=>'ent_statement_month', :operator=>'eq', :value=>'9')
-        Factory(:entry, :monthly_statement_due_date=>Date.new(2012, 10, 1))
+        FactoryBot(:entry, :monthly_statement_due_date=>Date.new(2012, 10, 1))
         r = sc.apply(Entry.where('1=1'))
         expect(r.entries.size).to eq(1)
         expect(r.first).to eq @ent
@@ -782,7 +782,7 @@ describe ModelField do
     end
     context "Sync Records" do
       before :each do
-        @ent = Factory(:entry)
+        @ent = FactoryBot(:entry)
       end
       it "should show problem" do
         @ent.sync_records.create!(trading_partner:'ABC', sent_at:Date.new(2014, 1, 1), confirmed_at:Date.new(2014, 1, 2), failure_message:'PROBLEM')
@@ -826,15 +826,15 @@ describe ModelField do
     end
     context "duty billed" do
       before :each do
-        @line1 = Factory(:broker_invoice_line, :charge_amount=>10, :charge_code=>'0001', broker_invoice: Factory(:broker_invoice, source_system: "Alliance"))
-        @line2 = Factory(:broker_invoice_line, :charge_amount=>5, :charge_code=>'0001', :broker_invoice=>@line1.broker_invoice)
+        @line1 = FactoryBot(:broker_invoice_line, :charge_amount=>10, :charge_code=>'0001', broker_invoice: FactoryBot(:broker_invoice, source_system: "Alliance"))
+        @line2 = FactoryBot(:broker_invoice_line, :charge_amount=>5, :charge_code=>'0001', :broker_invoice=>@line1.broker_invoice)
         @mf = ModelField.find_by_uid :ent_duty_billed
       end
       it "should total D records at broker invoice line" do
         expect(@mf.process_export(@line1.broker_invoice.entry, nil, true)).to eq 15
       end
       it "should not include records without an 0001 charge code" do
-        line3 = Factory(:broker_invoice_line, :charge_amount=>7, :charge_code=>'0099', :broker_invoice=>@line1.broker_invoice)
+        line3 = FactoryBot(:broker_invoice_line, :charge_amount=>7, :charge_code=>'0099', :broker_invoice=>@line1.broker_invoice)
         expect(@mf.process_export(@line1.broker_invoice.entry, nil, true)).to eq 15
       end
       it "should work as search criterion" do
@@ -843,29 +843,29 @@ describe ModelField do
       end
       it "should total across multiple broker invoices for same entry" do
         ent = @line1.broker_invoice.entry
-        line3 = Factory(:broker_invoice_line, :charge_amount=>20, :charge_code=>'0001', :broker_invoice=>Factory(:broker_invoice, :entry=>ent, :suffix=>'B', :source_system=>"Alliance"))
+        line3 = FactoryBot(:broker_invoice_line, :charge_amount=>20, :charge_code=>'0001', :broker_invoice=>FactoryBot(:broker_invoice, :entry=>ent, :suffix=>'B', :source_system=>"Alliance"))
         expect(@mf.process_export(@line1.broker_invoice.entry, nil, true)).to eq 35
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed', :operator=>'eq', :value=>'35')
         expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry
       end
       it "should only include broker invoices on the entry in question" do
-        line3 = Factory(:broker_invoice_line, :charge_amount=>3, :charge_code=>'0001') # will be on different entry
+        line3 = FactoryBot(:broker_invoice_line, :charge_amount=>3, :charge_code=>'0001') # will be on different entry
         expect(@mf.process_export(@line1.broker_invoice.entry, nil, true)).to eq 15
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed', :operator=>'eq', :value=>'15')
         expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry
       end
       it "should view if broker and can view broker invoices" do
-        u = Factory(:broker_user)
+        u = FactoryBot(:broker_user)
         allow(u).to receive(:view_broker_invoices?).and_return(true)
         expect(@mf.can_view?(u)).to be_truthy
       end
       it "should not view if not broker" do
-        u = Factory(:importer_user)
+        u = FactoryBot(:importer_user)
         allow(u).to receive(:view_broker_invoices?).and_return(true)
         expect(@mf.can_view?(u)).to be_falsey
       end
       it "should not view user cannot view broker invoicees" do
-        u = Factory(:broker_user)
+        u = FactoryBot(:broker_user)
         allow(u).to receive(:view_broker_invoices?).and_return(false)
         expect(@mf.can_view?(u)).to be_falsey
       end
@@ -875,19 +875,19 @@ describe ModelField do
         @mf = ModelField.find_by_uid(:ent_employee_name)
       end
       it "should not view if not broker" do
-        u = Factory(:importer_user)
+        u = FactoryBot(:importer_user)
         expect(@mf.can_view?(u)).to be_falsey
       end
       it "should view if broker" do
-        u = Factory(:broker_user)
+        u = FactoryBot(:broker_user)
         expect(@mf.can_view?(u)).to be_truthy
       end
     end
     context "first HTS code" do
       before :each do
-        country_1 = Factory(:country, :classification_rank=>1)
-        country_2 = Factory(:country, :classification_rank=>2)
-        @p = Factory(:product)
+        country_1 = FactoryBot(:country, :classification_rank=>1)
+        country_2 = FactoryBot(:country, :classification_rank=>2)
+        @p = FactoryBot(:product)
         class_1 = @p.classifications.create!(:country_id=>country_1.id)
         class_2 = @p.classifications.create!(:country_id=>country_2.id)
         t_1 = class_1.tariff_records.create!(:hts_1=>'1234567890')
@@ -935,8 +935,8 @@ describe ModelField do
 
     context "shipment_lines" do
       it "should show container number" do
-        con = Factory(:container, entry:nil, container_number:'CN123')
-        sl = Factory(:shipment_line, container:con)
+        con = FactoryBot(:container, entry:nil, container_number:'CN123')
+        sl = FactoryBot(:shipment_line, container:con)
         mf = ModelField.find_by_uid(:shpln_container_number)
         expect(mf.process_export(sl, nil, true)).to eq 'CN123'
 
@@ -944,8 +944,8 @@ describe ModelField do
         expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
       end
       it "should show container size" do
-        con = Factory(:container, entry:nil, container_size:'40HC')
-        sl = Factory(:shipment_line, container:con)
+        con = FactoryBot(:container, entry:nil, container_size:'40HC')
+        sl = FactoryBot(:shipment_line, container:con)
         mf = ModelField.find_by_uid(:shpln_container_size)
         expect(mf.process_export(sl, nil, true)).to eq '40HC'
 
@@ -957,23 +957,23 @@ describe ModelField do
           @mf = ModelField.find_by_uid(:shpln_container_uid)
         end
         it "should show container uid" do
-          con = Factory(:container, entry:nil)
-          sl = Factory(:shipment_line, container:con)
+          con = FactoryBot(:container, entry:nil)
+          sl = FactoryBot(:shipment_line, container:con)
           expect(@mf.process_export(sl, nil, true)).to eq con.id
 
           sc = SearchCriterion.new(operator:'eq', model_field_uid:'shpln_container_uid', value:con.id.to_s)
           expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
         end
         it "should not allow you to set a container that is already on a different shipment" do
-          con = Factory(:container, shipment:Factory(:shipment))
-          sl = Factory(:shipment_line)
+          con = FactoryBot(:container, shipment:FactoryBot(:shipment))
+          sl = FactoryBot(:shipment_line)
           expect(@mf.process_import(sl, con.id, User.new)).to eq "Container with ID #{con.id} not found. Ignored."
           sl.reload
           expect(sl.container).to be_nil
         end
         it "should allow you to set a container that is already on the shipment" do
-          sl = Factory(:shipment_line)
-          con = Factory(:container, entry:nil, shipment:sl.shipment)
+          sl = FactoryBot(:shipment_line)
+          con = FactoryBot(:container, entry:nil, shipment:sl.shipment)
           expect(@mf.process_import(sl, con.id, User.new)).to eq "#{@mf.label(false)} set to #{con.id}."
           sl.save!
           sl.reload
@@ -987,18 +987,18 @@ describe ModelField do
         allow(ms).to receive(:broker_invoice_enabled).and_return true
       end
       it "should allow you to see broker_invoice_total if you can view broker_invoices" do
-        u = Factory(:user, :broker_invoice_view=>true, :company=>Factory(:company, :master=>true))
+        u = FactoryBot(:user, :broker_invoice_view=>true, :company=>FactoryBot(:company, :master=>true))
         expect(ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u)).to be_truthy
       end
       it "should not allow you to see broker_invoice_total if you can't view broker_invoices" do
-        u = Factory(:user, :broker_invoice_view=>false)
+        u = FactoryBot(:user, :broker_invoice_view=>false)
         expect(ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u)).to be_falsey
       end
     end
     context "broker security" do
       before :each do
-        @broker_user = Factory(:user, :company=>Factory(:company, :broker=>true))
-        @non_broker_user = Factory(:user)
+        @broker_user = FactoryBot(:user, :company=>FactoryBot(:company, :broker=>true))
+        @non_broker_user = FactoryBot(:user)
       end
       it "should allow duty due date if user is broker company" do
         u = @broker_user
@@ -1035,14 +1035,14 @@ describe ModelField do
     end
     context "product last_changed_by" do
       it "should apply search criterion properly" do
-        c = Factory(:company, :master=>true)
-        p = Factory(:product)
-        p2 = Factory(:product)
-        u1 = Factory(:user, :username=>'abcdef', :company=>c)
-        u2 = Factory(:user, :username=>'ghijkl', :company=>c)
+        c = FactoryBot(:company, :master=>true)
+        p = FactoryBot(:product)
+        p2 = FactoryBot(:product)
+        u1 = FactoryBot(:user, :username=>'abcdef', :company=>c)
+        u2 = FactoryBot(:user, :username=>'ghijkl', :company=>c)
         p.update_attributes! last_updated_by: u2
         p2.update_attributes! last_updated_by: u1
-        ss = Factory(:search_setup, :module_type=>'Product', :user=>u1)
+        ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>u1)
         ss.search_criterions.create!(:model_field_uid=>'prod_last_changed_by',
           :operator=>'sw', :value=>'ghi')
         found = ss.search.to_a
@@ -1055,7 +1055,7 @@ describe ModelField do
         @mf = ModelField.find_by_uid(:ent_rule_state)
       end
       it "should show worst state if multiple business_validation_results" do
-        ent = Factory(:entry)
+        ent = FactoryBot(:entry)
         ent.business_validation_results.create!(state:'Pass')
         ent.business_validation_results.create!(state:'Fail')
         expect(@mf.process_export(ent, nil, true)).to eq 'Fail'
@@ -1067,17 +1067,17 @@ describe ModelField do
     end
     context "ent_pdf_count" do
       before :each do
-        @with_pdf = Factory(:entry)
+        @with_pdf = FactoryBot(:entry)
         @with_pdf.attachments.create!(:attached_content_type=>"application/pdf")
-        @without_attachments = Factory(:entry)
-        @with_tif = Factory(:entry)
+        @without_attachments = FactoryBot(:entry)
+        @with_tif = FactoryBot(:entry)
         @with_tif.attachments.create!(:attached_content_type=>"image/tiff")
-        @with_tif_and_2_pdf = Factory(:entry)
+        @with_tif_and_2_pdf = FactoryBot(:entry)
         @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"application/pdf")
         @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"application/pdf")
         @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"image/tiff")
         @mf = ModelField.find_by_uid(:ent_pdf_count)
-        @u = Factory(:user, :company=>Factory(:company, :broker=>true))
+        @u = FactoryBot(:user, :company=>FactoryBot(:company, :broker=>true))
       end
       it "should process_export" do
         expect(@mf.process_export(@with_pdf, @u)).to eq 1
@@ -1115,16 +1115,16 @@ describe ModelField do
 
     context "ent_failed_business_rules" do
       before :each do
-        @entry = Factory(:entry)
-        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
-        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
-        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "A Test")).business_validation_result
-        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test")).business_validation_result
+        @entry = FactoryBot(:entry)
+        @entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: "Fail", business_validation_rule: FactoryBot(:business_validation_rule, name: "Test")).business_validation_result
+        @entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: "Fail", business_validation_rule: FactoryBot(:business_validation_rule, name: "Test")).business_validation_result
+        @entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: "Fail", business_validation_rule: FactoryBot(:business_validation_rule, name: "A Test")).business_validation_result
+        @entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: "Pass", business_validation_rule: FactoryBot(:business_validation_rule, name: "Another Test")).business_validation_result
       end
 
       it "lists failed business rule names on export" do
-        c = Factory(:master_company, show_business_rules:true)
-        expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, Factory(:user, company:c))).to eq "A Test\n Test"
+        c = FactoryBot(:master_company, show_business_rules:true)
+        expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, FactoryBot(:user, company:c))).to eq "A Test\n Test"
       end
 
       it "finds results using failed rules as criterion" do
@@ -1136,13 +1136,13 @@ describe ModelField do
 
     context "ent_attachment_types" do
       before :each do
-        @e = Factory(:entry)
+        @e = FactoryBot(:entry)
         first = @e.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A")
         second = @e.attachments.create!(:attachment_type=>"A", :attached_file_name=>"R")
       end
 
       it "lists attachments on export" do
-        expect(ModelField.find_by_uid(:ent_attachment_types).process_export(@e, Factory(:master_user))).to eq "A\n B"
+        expect(ModelField.find_by_uid(:ent_attachment_types).process_export(@e, FactoryBot(:master_user))).to eq "A\n B"
       end
 
       it "finds results using attachments as criterion" do
@@ -1154,8 +1154,8 @@ describe ModelField do
 
     context "ent_user_notes" do
       let(:user_notes) { ModelField.find_by_uid :ent_user_notes }
-      let(:ent) { Factory(:entry) }
-      let!(:u) { Factory(:master_user, entry_view:true) }
+      let(:ent) { FactoryBot(:entry) }
+      let!(:u) { FactoryBot(:master_user, entry_view:true) }
       let(:ss) { SearchSetup.new(module_type:'Entry', user:u) }
 
       it "returns user-note string with date/time adjusted to user's timezone" do
@@ -1236,7 +1236,7 @@ describe ModelField do
     end
 
     it "returns constant MF associated with search column" do
-      sc = Factory(:search_column, search_setup: Factory(:search_setup, module_type: "Product"))
+      sc = FactoryBot(:search_column, search_setup: FactoryBot(:search_setup, module_type: "Product"))
       # When SearchColumn's MF is a constant, its model_field_uid refers to the temporary uid assigned by the front-end.
       # The "real" model_field_uid is generated dynamically by SearchColumn#model_field.
       sc.update_attributes! model_field_uid: "_const_12345", constant_field_name: "Foo"
@@ -1266,8 +1266,8 @@ describe ModelField do
     it "should create username fields when custom_definition is user" do
       cd = CustomDefinition.create!(label:'User', module_type:'Company', data_type: :integer, is_user: true)
       mf = ModelField.find_by_uid("*uf_#{cd.id}_username")
-      comp = Factory(:company)
-      u = Factory(:admin_user, username:'uname_test', first_name:'Joe', last_name:'Jackson') # using admin to avoid any permissions issues
+      comp = FactoryBot(:company)
+      u = FactoryBot(:admin_user, username:'uname_test', first_name:'Joe', last_name:'Jackson') # using admin to avoid any permissions issues
 
       expect(mf.label).to eq 'User (Username)'
 
@@ -1281,7 +1281,7 @@ describe ModelField do
 
       # query the value
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:u.username)
-      Factory(:company) # don't find this one
+      FactoryBot(:company) # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [comp]
     end
@@ -1289,8 +1289,8 @@ describe ModelField do
     it "should create fullname fields when custom_definition is user" do
       cd = CustomDefinition.create!(label:'User', module_type:'Company', data_type: :integer, is_user: true)
       mf = ModelField.find_by_uid("*uf_#{cd.id}_fullname")
-      comp = Factory(:company)
-      u = Factory(:admin_user, username:'uname_test', first_name:'Joe', last_name:'Jackson') # using admin to avoid any permissions issues
+      comp = FactoryBot(:company)
+      u = FactoryBot(:admin_user, username:'uname_test', first_name:'Joe', last_name:'Jackson') # using admin to avoid any permissions issues
 
       expect(mf.label).to eq 'User (Name)'
 
@@ -1303,7 +1303,7 @@ describe ModelField do
 
       # query the value
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:u.full_name)
-      Factory(:company) # don't find this one
+      FactoryBot(:company) # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [comp]
     end
@@ -1312,7 +1312,7 @@ describe ModelField do
   context "address_custom_definition" do
     before :each do
       @cd = CustomDefinition.create!(is_address: true, label:'Business', module_type:'Company', data_type: :integer)
-      @ad = Factory(:address, name:'MyName', line_1:'234 Market St', line_2:nil, line_3:'5th Floor', city:'Philadelphia', state:'PA', postal_code:'19106', country:Factory(:country, iso_code:'US'))
+      @ad = FactoryBot(:address, name:'MyName', line_1:'234 Market St', line_2:nil, line_3:'5th Floor', city:'Philadelphia', state:'PA', postal_code:'19106', country:FactoryBot(:country, iso_code:'US'))
       @ad.company.update_custom_value!(@cd, @ad.id)
     end
 
@@ -1325,7 +1325,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq @ad.name
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:@ad.name)
-      Factory(:address, name:'Not Me') # don't find this one
+      FactoryBot(:address, name:'Not Me') # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
@@ -1339,7 +1339,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq '234 Market St 5th Floor'
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'co', value:'Market')
-      Factory(:address, line_1:'Not Me') # don't find this one
+      FactoryBot(:address, line_1:'Not Me') # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
@@ -1353,7 +1353,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq @ad.city
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:@ad.city)
-      Factory(:address, city:'Not Me') # don't find this one
+      FactoryBot(:address, city:'Not Me') # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
@@ -1367,7 +1367,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq @ad.state
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:@ad.state)
-      Factory(:address, state:'Not Me') # don't find this one
+      FactoryBot(:address, state:'Not Me') # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
@@ -1381,7 +1381,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq @ad.postal_code
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:@ad.postal_code)
-      Factory(:address, postal_code:'Not Me') # don't find this one
+      FactoryBot(:address, postal_code:'Not Me') # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
@@ -1395,7 +1395,7 @@ describe ModelField do
       expect(mf.process_export(@ad.company, nil, true)).to eq @ad.country.iso_code
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq', value:@ad.country.iso_code)
-      Factory(:address, country:Factory(:country, iso_code:'XY')) # don't find this one
+      FactoryBot(:address, country:FactoryBot(:country, iso_code:'XY')) # don't find this one
       search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end

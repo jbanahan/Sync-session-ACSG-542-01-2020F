@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
                                              :class_ogd_misc_id, :class_ogd_origin, :class_sima_code,
                                              :class_stale_classification]
   end
-  let! (:canada) { Factory(:country, iso_code: 'CA') }
+  let! (:canada) { FactoryBot(:country, iso_code: 'CA') }
 
   describe "generate" do
     subject { described_class.new "XYZ" }
@@ -48,8 +48,8 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   describe "find_products" do
     subject { described_class.new("XYZ") }
 
-    let! (:prod_1) { Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country_id: canada.id)).product }
-    let! (:prod_2) { Factory(:tariff_record, hts_1: '1234567891', classification: Factory(:classification, country_id: canada.id)).product }
+    let! (:prod_1) { FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, country_id: canada.id)).product }
+    let! (:prod_2) { FactoryBot(:tariff_record, hts_1: '1234567891', classification: FactoryBot(:classification, country_id: canada.id)).product }
 
     it "finds products that need sync and have canadian classifications" do
       expect(subject.find_products.to_a).to eq([prod_1, prod_2])
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "excludes products that don't have canada classifications but need sync" do
-      Factory(:tariff_record, hts_1: '1234567891', classification: Factory(:classification)).product
+      FactoryBot(:tariff_record, hts_1: '1234567891', classification: FactoryBot(:classification)).product
       expect(subject.find_products.to_a).to eq([prod_1, prod_2])
     end
 
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   end
 
   describe "make_file" do
-    let! (:prod) { Factory(:product, unique_identifier: 'myuid', name: "Name Description") }
+    let! (:prod) { FactoryBot(:product, unique_identifier: 'myuid', name: "Name Description") }
     let! (:clas) { prod.classifications.create!(country_id: canada.id) }
     let! (:tar) { clas.tariff_records.create!(hts_1: '1234567890') }
 
@@ -213,7 +213,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
     it "only uses the first hts line" do
       h = generator("XYZ")
-      Factory(:tariff_record, hts_1: "12345", classification: clas)
+      FactoryBot(:tariff_record, hts_1: "12345", classification: clas)
       h.make_file([prod]) do |f|
         read = IO.read(f.path)
         expect(read.lines.length).to eq 1

@@ -5,7 +5,7 @@ describe LinkableAttachmentImportRule do
 
   context 'validations' do
     it 'validates unique paths' do
-      Factory("linkable_attachment_import_rule", path: 'f')
+      FactoryBot("linkable_attachment_import_rule", path: 'f')
       should_not_work = described_class.create(path: 'f', model_field_uid: 'prod_uid')
       expect(should_not_work.errors[:path].size).to eq(1)
     end
@@ -48,7 +48,7 @@ describe LinkableAttachmentImportRule do
 
     before do
       # make some that shouldn't match
-      3.times {Factory(:linkable_attachment_import_rule)}
+      3.times {FactoryBot(:linkable_attachment_import_rule)}
     end
 
     after do
@@ -64,7 +64,7 @@ describe LinkableAttachmentImportRule do
       it 'creates linkable attachment' do
         path = '/path/found'
         original_file_name = 'ofn.csv'
-        rule = Factory(:linkable_attachment_import_rule, path: path)
+        rule = FactoryBot(:linkable_attachment_import_rule, path: path)
 
         result = described_class.import file, original_file_name, path
         expect(result).to be_a LinkableAttachment
@@ -78,7 +78,7 @@ describe LinkableAttachmentImportRule do
       let(:path) { '/some/path' }
 
       before do
-        Factory(:linkable_attachment_import_rule, path: path)
+        FactoryBot(:linkable_attachment_import_rule, path: path)
       end
 
       it 'sets by space as first choice' do
@@ -113,7 +113,7 @@ describe LinkableAttachmentImportRule do
     let(:orginal_file_name) { 'ofn.csv' }
 
     before do
-      Factory(:linkable_attachment_import_rule, path: path)
+      FactoryBot(:linkable_attachment_import_rule, path: path)
     end
 
     it "returns an import rule matching the path" do
@@ -140,7 +140,7 @@ describe LinkableAttachmentImportRule do
     end
 
     it "processes a file from s3 with default paths" do
-      Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      FactoryBot(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/path/to/s3file.txt', original_filename: 's3file.txt').and_yield file
 
       described_class.process_from_s3 'bucket', '/path/to/s3file.txt'
@@ -154,7 +154,7 @@ describe LinkableAttachmentImportRule do
     end
 
     it "processes a file from s3 with provided paths" do
-      Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      FactoryBot(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt').and_yield file
 
       described_class.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt', original_path: "/path/to"
@@ -181,7 +181,7 @@ describe LinkableAttachmentImportRule do
 
   describe "after_destroy" do
     it "reloads cache after destroy" do
-      field = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      field = FactoryBot(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(field).to receive(:load_cache).and_call_original
       # The after cleanup above also calls load cache, hence the at_least(:once) here
       expect(described_class).to receive(:load_cache).at_least(:once).and_call_original

@@ -1,9 +1,9 @@
 describe BrokerInvoice do
   describe "hst_amount" do
     it "calculates HST based on existing charge codes" do
-      with_hst_code_1 = Factory(:charge_code, apply_hst: true)
-      with_hst_code_2 = Factory(:charge_code, apply_hst: true)
-      without_hst = Factory(:charge_code, apply_hst: false)
+      with_hst_code_1 = FactoryBot(:charge_code, apply_hst: true)
+      with_hst_code_2 = FactoryBot(:charge_code, apply_hst: true)
+      without_hst = FactoryBot(:charge_code, apply_hst: false)
 
       bi = described_class.new
       bi.broker_invoice_lines.build(charge_code: with_hst_code_1.code, charge_description: with_hst_code_1.description, charge_amount: 10, hst_percent: 0.05)
@@ -33,14 +33,14 @@ describe BrokerInvoice do
       ms
     end
 
-    let!(:importer) { Factory(:company, importer: true) }
-    let!(:importer_user) { Factory(:user, company_id: importer.id, broker_invoice_view: true) }
-    let!(:entry) {  Factory(:entry, importer_id: importer.id) }
-    let!(:inv) { Factory(:broker_invoice, entry_id: entry.id) }
+    let!(:importer) { FactoryBot(:company, importer: true) }
+    let!(:importer_user) { FactoryBot(:user, company_id: importer.id, broker_invoice_view: true) }
+    let!(:entry) {  FactoryBot(:entry, importer_id: importer.id) }
+    let!(:inv) { FactoryBot(:broker_invoice, entry_id: entry.id) }
 
     context 'search secure' do
       before do
-        Factory(:broker_invoice, entry_id: Factory(:entry, importer_id: Factory(:company, importer: true)).id)
+        FactoryBot(:broker_invoice, entry_id: FactoryBot(:entry, importer_id: FactoryBot(:company, importer: true)).id)
       end
 
       it 'restricts non master by entry importer id' do
@@ -50,15 +50,15 @@ describe BrokerInvoice do
       end
 
       it 'allows all for master' do
-        u = Factory(:user, broker_invoice_view: true)
+        u = FactoryBot(:user, broker_invoice_view: true)
         u.company.update!(master: true)
         found = described_class.search_secure(u, described_class)
         expect(found.size).to eq(2)
       end
 
       it 'allows for linked company' do
-        child = Factory(:company, importer: true)
-        i3 = Factory(:broker_invoice, entry: Factory(:entry, importer_id: child.id))
+        child = FactoryBot(:company, importer: true)
+        i3 = FactoryBot(:broker_invoice, entry: FactoryBot(:entry, importer_id: child.id))
         importer.linked_companies << child
         expect(described_class.search_secure(importer_user, described_class).all).to eq([inv, i3])
       end
@@ -69,30 +69,30 @@ describe BrokerInvoice do
     end
 
     it 'is not visible for another importer' do
-      u = Factory(:user, company_id: Factory(:company, importer: true).id, broker_invoice_view: true)
+      u = FactoryBot(:user, company_id: FactoryBot(:company, importer: true).id, broker_invoice_view: true)
       expect(inv.can_view?(u)).to be_falsey
     end
 
     it 'is visible for parent importer' do
-      parent = Factory(:company, importer: true)
+      parent = FactoryBot(:company, importer: true)
       parent.linked_companies << importer
-      u = Factory(:user, company_id: parent.id, broker_invoice_view: true)
+      u = FactoryBot(:user, company_id: parent.id, broker_invoice_view: true)
       expect(inv.can_view?(u)).to be_truthy
     end
 
     it 'is not visible without permission' do
-      u = Factory(:user, broker_invoice_view: false)
+      u = FactoryBot(:user, broker_invoice_view: false)
       u.company.update!(master: true)
       expect(inv.can_view?(u)).to be_falsey
     end
 
     it 'is not visible without company permission' do
-      u = Factory(:user, broker_invoice_view: true)
+      u = FactoryBot(:user, broker_invoice_view: true)
       expect(inv.can_view?(u)).to be_falsey
     end
 
     it 'is visible with permission' do
-      u = Factory(:user, broker_invoice_view: true)
+      u = FactoryBot(:user, broker_invoice_view: true)
       u.company.update!(master: true)
       expect(inv.can_view?(u)).to be_truthy
     end

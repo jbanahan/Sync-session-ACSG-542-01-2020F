@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     let (:user) { User.new }
     let (:hash) { {id: nil} }
     let (:params) { {} }
-    let! (:us) { Factory(:country, iso_code: "US") }
+    let! (:us) { FactoryBot(:country, iso_code: "US") }
 
     it "adds Carb and Lacey statements" do
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator).to receive(:carb_statement).with(order).and_return "carb statement"

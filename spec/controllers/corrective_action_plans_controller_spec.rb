@@ -1,12 +1,12 @@
 describe CorrectiveActionPlansController do
   before :each do
 
-    @u = Factory(:user, first_name:'joe', last_name:'user')
+    @u = FactoryBot(:user, first_name:'joe', last_name:'user')
     sign_in_as @u
   end
   describe "add_comment" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true
     end
     it "should fail if user cannot view" do
@@ -49,7 +49,7 @@ describe CorrectiveActionPlansController do
   end
   describe "show" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
     end
     it "should show if you can view" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true
@@ -83,7 +83,7 @@ describe CorrectiveActionPlansController do
   end
   describe "update" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
       @sr_id = @cap.survey_response_id
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return(true)
     end
@@ -114,7 +114,7 @@ describe CorrectiveActionPlansController do
   end
   describe "create" do
     before :each do
-      @sr = Factory(:survey_response)
+      @sr = FactoryBot(:survey_response)
     end
     it "should fail if user cannot edit survey_response" do
       post :create, survey_response_id:@sr.id.to_s
@@ -132,7 +132,7 @@ describe CorrectiveActionPlansController do
   end
   describe "activate" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
     end
     it "should activate if user can edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(true)
@@ -157,7 +157,7 @@ describe CorrectiveActionPlansController do
   end
   describe "resolve" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
     end
     it "should resolve if user can edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(true)
@@ -177,7 +177,7 @@ describe CorrectiveActionPlansController do
   end
   describe "destroy" do
     before :each do
-      @cap = Factory(:corrective_action_plan)
+      @cap = FactoryBot(:corrective_action_plan)
     end
     it "should allow if user can delete" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_delete?).and_return(true)

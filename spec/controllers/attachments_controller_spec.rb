@@ -2,8 +2,8 @@ describe AttachmentsController do
 
   describe "create" do
     let!(:file) { fixture_file_upload('/files/test.txt', 'text/plain') }
-    let!(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz") }
-    let!(:prod) { Factory(:product) }
+    let!(:user) { FactoryBot(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz") }
+    let!(:prod) { FactoryBot(:product) }
 
     before do
       stub_paperclip
@@ -12,7 +12,7 @@ describe AttachmentsController do
     end
 
     it "calls log_update if base object responds to those methods" do
-      answer = Factory(:answer)
+      answer = FactoryBot(:answer)
       expect_any_instance_of(Answer).to receive(:log_update).with(user)
       expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
 
@@ -28,7 +28,7 @@ describe AttachmentsController do
     end
 
     it "calls attachment_added if base object responds to those methods" do
-      answer = Factory(:answer)
+      answer = FactoryBot(:answer)
       expect_any_instance_of(Answer).to receive(:attachment_added).with(instance_of(Attachment))
       expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
 
@@ -127,8 +127,8 @@ describe AttachmentsController do
 
   describe "send_email_attachable" do
 
-    let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")  }
-    let(:entry) { Factory(:entry) }
+    let(:user) { FactoryBot(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")  }
+    let(:entry) { FactoryBot(:entry) }
 
     before { sign_in_as user }
 
@@ -160,8 +160,8 @@ describe AttachmentsController do
     end
 
     it "checks that attachments are under 10MB" do
-      att_1 = Factory(:attachment, attached_file_size: 5_000_000)
-      att_2 = Factory(:attachment, attached_file_size: 7_000_000)
+      att_1 = FactoryBot(:attachment, attached_file_size: 5_000_000)
+      att_2 = FactoryBot(:attachment, attached_file_size: 7_000_000)
       expect(Attachment).not_to receive(:delay)
       post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
                                    email_body: "This is a test.", ids_to_include: [att_1.id.to_s, att_2.id.to_s], full_name: user.full_name, email: user.email
@@ -183,8 +183,8 @@ describe AttachmentsController do
   end
 
   describe "download_last_integration_file" do
-    let (:user) { Factory(:admin_user) }
-    let (:entry) { Factory(:entry, last_file_path: "path/to/file.json", last_file_bucket: "test") }
+    let (:user) { FactoryBot(:admin_user) }
+    let (:entry) { FactoryBot(:entry, last_file_path: "path/to/file.json", last_file_bucket: "test") }
 
     before do
       sign_in_as user
@@ -199,7 +199,7 @@ describe AttachmentsController do
     end
 
     it "disallows non-admin users" do
-      sign_in_as Factory(:user)
+      sign_in_as FactoryBot(:user)
       allow_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
       get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
       expect(response).to be_redirect
@@ -223,7 +223,7 @@ describe AttachmentsController do
     end
 
     it "handles classes that don't utilize integration files" do
-      product = Factory(:product)
+      product = FactoryBot(:product)
       get :download_last_integration_file, {attachable_type: "product", attachable_id: product.id}
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to download this attachment."
@@ -245,7 +245,7 @@ describe AttachmentsController do
   describe "download" do
     let (:secure_url) { "http://my.secure.url"}
     let (:attachment) { instance_double(Attachment, secure_url: secure_url, attached_file_name: "file.txt") }
-    let! (:user) { u = Factory(:user); sign_in_as(u); u }
+    let! (:user) { u = FactoryBot(:user); sign_in_as(u); u }
 
     it "downloads an attachment via s3 redirect" do
       expect(Attachment).to receive(:find).with("1").and_return attachment
@@ -315,8 +315,8 @@ describe AttachmentsController do
   end
 
   describe "send_last_integration_file_to_test" do
-    let!(:prod) { Factory(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
-    let!(:user) { Factory(:sys_admin_user) }
+    let!(:prod) { FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
+    let!(:user) { FactoryBot(:sys_admin_user) }
 
     before { sign_in_as user }
 
@@ -336,7 +336,7 @@ describe AttachmentsController do
     end
 
     it "errors if not sys admin" do
-      user_not_sys_admin = Factory(:user)
+      user_not_sys_admin = FactoryBot(:user)
       sign_in_as user_not_sys_admin
 
       post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"

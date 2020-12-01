@@ -2,8 +2,8 @@ describe OpenChain::PurgeShipment do
 
   subject { described_class }
 
-  let(:commercial_invoice_line) {Factory(:commercial_invoice_line)}
-  let(:some_product) {Factory(:product)}
+  let(:commercial_invoice_line) {FactoryBot(:commercial_invoice_line)}
+  let(:some_product) {FactoryBot(:product)}
 
   describe "run_schedulable" do
 
@@ -30,9 +30,9 @@ describe OpenChain::PurgeShipment do
 
   describe "purge" do
     it "removes shipments which are older than 2 years from the estimated departure date by default" do
-      shipment = Factory(:shipment, est_departure_date: (2.years.ago - 1.minute))
-      shipment_line = Factory(:shipment_line, shipment: shipment, product: some_product)
-      Factory(:piece_set, shipment_line: shipment_line,
+      shipment = FactoryBot(:shipment, est_departure_date: 2.years.ago)
+      shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: some_product)
+      FactoryBot(:piece_set, shipment_line: shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -41,9 +41,9 @@ describe OpenChain::PurgeShipment do
     end
 
     it "removes shipments of a given age" do
-      young_shipment = Factory(:shipment, est_departure_date: (1.year.ago - 1.minute))
-      young_shipment_line = Factory(:shipment_line, shipment: young_shipment, product: some_product)
-      Factory(:piece_set, shipment_line: young_shipment_line,
+      young_shipment = FactoryBot(:shipment, est_departure_date: 1.year.ago)
+      young_shipment_line = FactoryBot(:shipment_line, shipment: young_shipment, product: some_product)
+      FactoryBot(:piece_set, shipment_line: young_shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -52,9 +52,9 @@ describe OpenChain::PurgeShipment do
     end
 
     it "removes based on created_at if estimated departure date is missing" do
-      shipment = Factory(:shipment, created_at: (1.year.ago - 1.minute))
-      shipment_line = Factory(:shipment_line, shipment: shipment, product: some_product)
-      Factory(:piece_set, shipment_line: shipment_line,
+      shipment = FactoryBot(:shipment, created_at: 2.years.ago)
+      shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: some_product)
+      FactoryBot(:piece_set, shipment_line: shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
       subject.purge older_than: 1.year.ago
@@ -62,9 +62,9 @@ describe OpenChain::PurgeShipment do
     end
 
     it "does not remove newer shipments by created_at date" do
-      shipment = Factory(:shipment, created_at: (2.years.ago + 1.minute))
       shipment_line = Factory(:shipment_line, shipment: shipment, product: some_product)
       Factory(:piece_set, shipment_line: shipment_line,
+      shipment = Factory(:shipment, created_at: (2.years.ago + 1.minute))
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
       subject.purge older_than: 2.years.ago

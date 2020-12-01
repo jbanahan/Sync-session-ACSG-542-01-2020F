@@ -15,10 +15,10 @@ describe OpenChain::CustomHandler::Target::Target820XmlParser do
     end
 
     it "parses XML data to a spreadsheet and emails it" do
-      target = with_customs_management_id(Factory(:importer), "TARGEN")
-      Factory(:mailing_list, company: target, system_code: "Target 820 Report", email_addresses: "a@b.com,c@d.com")
+      target = with_customs_management_id(FactoryBot(:importer), "TARGEN")
+      FactoryBot(:mailing_list, company: target, system_code: "Target 820 Report", email_addresses: "a@b.com,c@d.com")
 
-      Factory(:entry, broker_reference: "23920", entry_number: "31625496331", source_system: Entry::KEWILL_SOURCE_SYSTEM, customer_number: "TARGEN")
+      FactoryBot(:entry, broker_reference: "23920", entry_number: "31625496331", source_system: Entry::KEWILL_SOURCE_SYSTEM, customer_number: "TARGEN")
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         expect(subject.parse(make_document(test_data))).to be_nil
@@ -61,10 +61,10 @@ describe OpenChain::CustomHandler::Target::Target820XmlParser do
       # should contain only one data line rather than two.
       test_data.gsub!("163.37", "")
 
-      Factory(:entry, broker_reference: "23920", entry_number: "31625496331", source_system: Entry::KEWILL_SOURCE_SYSTEM, customer_number: "TARGEN")
+      FactoryBot(:entry, broker_reference: "23920", entry_number: "31625496331", source_system: Entry::KEWILL_SOURCE_SYSTEM, customer_number: "TARGEN")
 
-      target = with_customs_management_id(Factory(:importer), "TARGEN")
-      Factory(:mailing_list, company: target, system_code: "Target 820 Report", email_addresses: "a@b.com,c@d.com")
+      target = with_customs_management_id(FactoryBot(:importer), "TARGEN")
+      FactoryBot(:mailing_list, company: target, system_code: "Target 820 Report", email_addresses: "a@b.com,c@d.com")
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         expect(subject.parse(make_document(test_data))).to be_nil
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::Target::Target820XmlParser do
     end
 
     it "raises error if mailing list not found" do
-      with_customs_management_id(Factory(:importer), "TARGEN")
+      with_customs_management_id(FactoryBot(:importer), "TARGEN")
 
       expect { subject.parse(make_document(test_data)) }.to raise_error("No mailing list exists for 'Target 820 Report' system code.")
 

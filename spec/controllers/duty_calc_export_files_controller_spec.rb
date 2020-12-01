@@ -1,12 +1,12 @@
 describe DutyCalcExportFilesController do
   before :each do
-    @user = Factory(:user)
+    @user = FactoryBot(:user)
 
     sign_in_as @user
   end
   describe "create" do
     before :each do
-      @c = Factory(:company)
+      @c = FactoryBot(:company)
     end
     it "should fail if user cannot edit drawback" do
       allow_any_instance_of(User).to receive(:edit_drawback?).and_return(false)
@@ -24,7 +24,7 @@ describe DutyCalcExportFilesController do
   end
   describe "download" do
     before :each do
-      @d = Factory(:duty_calc_export_file)
+      @d = FactoryBot(:duty_calc_export_file)
     end
     it "should get attachment" do
       allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)

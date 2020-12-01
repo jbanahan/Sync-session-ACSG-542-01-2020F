@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
   end
   describe "sync" do
     def create_product
-      tr = Factory(:tariff_record, schedule_b_1:'1234567890', classification:Factory(:classification, country_id:@us.id))
+      tr = FactoryBot(:tariff_record, schedule_b_1:'1234567890', classification:FactoryBot(:classification, country_id:@us.id))
       tr.product.update_custom_value! @colors_cd, "001"
       tr.product
     end
@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
       rows
     end
     before :each do
-      @us = Factory(:country, iso_code:'US')
+      @us = FactoryBot(:country, iso_code:'US')
       @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
     end
     it "should only return US schedule B" do

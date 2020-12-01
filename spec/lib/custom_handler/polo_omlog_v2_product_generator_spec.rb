@@ -15,9 +15,9 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
   end
 
   let (:csm_def) { CustomDefinition.where(label: "CSM Number", module_type: "Product").first }
-  let (:italy) { Factory(:country, :iso_code=>'IT') }
+  let (:italy) { FactoryBot(:country, :iso_code=>'IT') }
   let (:product) {
-    tr = Factory(:tariff_record, :hts_1=>'1234567890', :hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification, :country=>italy))
+    tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>FactoryBot(:classification, :country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
     prod
@@ -137,7 +137,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
 
     it "should utilize max results" do
       # Create a second product and confirm only a single result was returned.
-      tr = Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
+      tr = FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, country: italy, product: FactoryBot(:product, unique_identifier: "prod2")))
 
       r = Product.connection.execute(described_class.new(max_results: 1).query)
       expect(r.count).to eq(1)
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     it "generates a file using the max_results param" do
       # Create a second product to validate the job is running only 2 times when working down the
       # max result list
-      tr = Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
+      tr = FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, country: italy, product: FactoryBot(:product, unique_identifier: "prod2")))
 
       expect_any_instance_of(described_class).to receive(:ftp_file).exactly(2).times do |instance, file|
         file.close! unless file.nil? || file.closed?

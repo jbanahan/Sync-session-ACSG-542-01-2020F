@@ -2,11 +2,11 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
 
   describe "generate_xml" do
     let (:importer) {
-      with_customs_management_id(Factory(:importer), "ADVAN")
+      with_customs_management_id(FactoryBot(:importer), "ADVAN")
     }
 
     let (:us) {
-      Factory(:country, iso_code: "US")
+      FactoryBot(:country, iso_code: "US")
     }
 
     let (:cdefs) {
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
     }
 
     let (:product) {
-      p = Factory(:product, name: "Part Description")
+      p = FactoryBot(:product, name: "Part Description")
       c = p.classifications.create! country_id: us.id
       c.tariff_records.create! hts_1: "1234509876"
       p.update_custom_value! cdefs[:prod_part_number], "PARTNO"
@@ -22,8 +22,8 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
     }
 
     let (:order) {
-      o = Factory(:order, customer_order_number: "ORDER")
-      l = Factory(:order_line, product: product, order: o, country_of_origin: "CN", price_per_unit: 10)
+      o = FactoryBot(:order, customer_order_number: "ORDER")
+      l = FactoryBot(:order_line, product: product, order: o, country_of_origin: "CN", price_per_unit: 10)
       o
     }
 

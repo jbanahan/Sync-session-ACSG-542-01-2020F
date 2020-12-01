@@ -13,9 +13,9 @@ describe OpenChain::InvoiceGeneratorSupport do
 
   describe "email invoice" do
     it "creates and emails Excel invoice along with optional file" do
-      co = Factory(:company, name: "ACME")
-      inv = Factory(:vfi_invoice, customer: co, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
-      Factory(:vfi_invoice_line, vfi_invoice: inv, line_number: 1, charge_description: "descr", charge_amount: 10, charge_code: "CODE", quantity: 2, unit: "EA", unit_price: 5)
+      co = FactoryBot(:company, name: "ACME")
+      inv = FactoryBot(:vfi_invoice, customer: co, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
+      FactoryBot(:vfi_invoice_line, vfi_invoice: inv, line_number: 1, charge_description: "descr", charge_amount: 10, charge_code: "CODE", quantity: 2, unit: "EA", unit_price: 5)
 
       generator.email_invoice inv, "tufnel@stonehenge.biz", "generator email", "invoice", detail
 

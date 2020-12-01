@@ -1,7 +1,7 @@
 describe HomeController do
 
   before :each do
-    @user = Factory(:master_user, :email=>'a@example.com')
+    @user = FactoryBot(:master_user, :email=>'a@example.com')
     sign_in_as @user
   end
 

@@ -4,10 +4,10 @@ describe DrawbackClaimsController do
   end
   describe "index" do
     before :each do
-      @du = Factory(:drawback_user)
-      @dc = Factory(:drawback_claim, :importer=>@du.company, :sent_to_customs_date=>1.year.ago)
-      @dc2 = Factory(:drawback_claim, :importer=>@du.company)
-      @dc_other = Factory(:drawback_claim, :sent_to_customs_date=>1.day.ago)
+      @du = FactoryBot(:drawback_user)
+      @dc = FactoryBot(:drawback_claim, :importer=>@du.company, :sent_to_customs_date=>1.year.ago)
+      @dc2 = FactoryBot(:drawback_claim, :importer=>@du.company)
+      @dc_other = FactoryBot(:drawback_claim, :sent_to_customs_date=>1.day.ago)
       sign_in_as @du
     end
     it "redirects to advanced search" do
@@ -17,8 +17,8 @@ describe DrawbackClaimsController do
   end
   describe "show" do
     before :each do
-      @d = Factory(:drawback_claim)
-      @u = Factory(:user)
+      @d = FactoryBot(:drawback_claim)
+      @u = FactoryBot(:user)
       sign_in_as @u
     end
     it "should show to user with permission" do
@@ -37,8 +37,8 @@ describe DrawbackClaimsController do
   end
   describe "edit" do
     before :each do
-      @claim = Factory(:drawback_claim)
-      @u = Factory(:user)
+      @claim = FactoryBot(:drawback_claim)
+      @u = FactoryBot(:user)
       sign_in_as @u
     end
     it "should show claim" do
@@ -56,8 +56,8 @@ describe DrawbackClaimsController do
   end
   describe "update" do
     before :each do
-      @u = Factory(:user)
-      @claim = Factory(:drawback_claim)
+      @u = FactoryBot(:user)
+      @claim = FactoryBot(:drawback_claim)
       @h = {'id'=>@claim.id, 'drawback_claim'=>{'dc_name'=>'newname'}}
       sign_in_as @u
     end
@@ -79,8 +79,8 @@ describe DrawbackClaimsController do
   end
   describe "create" do
     before :each do
-      @u = Factory(:user)
-      @c = Factory(:company)
+      @u = FactoryBot(:user)
+      @c = FactoryBot(:company)
       @h = {'drawback_claim'=>{'dc_imp_id'=>@c.id, 'dc_name'=>'nm', 'dc_hmf_claimed'=>'10.04'}}
       sign_in_as @u
     end
@@ -104,10 +104,10 @@ describe DrawbackClaimsController do
   end
   describe "process_report" do
     before :each do
-      @u = Factory(:user)
+      @u = FactoryBot(:user)
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
-      @claim = Factory(:drawback_claim)
-      @att = Factory(:attachment, attachable:@claim)
+      @claim = FactoryBot(:drawback_claim)
+      @att = FactoryBot(:attachment, attachable:@claim)
       sign_in_as @u
     end
     it "should process export history" do
@@ -127,8 +127,8 @@ describe DrawbackClaimsController do
   end
   describe "audit_report" do
     before :each do
-      @u = Factory(:user, company: Factory(:master_company))
-      @claim = Factory(:drawback_claim)
+      @u = FactoryBot(:user, company: FactoryBot(:master_company))
+      @claim = FactoryBot(:drawback_claim)
       sign_in_as @u
     end
 
@@ -155,12 +155,12 @@ describe DrawbackClaimsController do
     }
 
     before :each do
-      @u = Factory(:drawback_user)
+      @u = FactoryBot(:drawback_user)
       @u.company.update_attributes! master: true, show_business_rules: true
       sign_in_as @u
 
-      @dc = Factory(:drawback_claim, name:'test_dc')
-      @rule_result = Factory(:business_validation_rule_result)
+      @dc = FactoryBot(:drawback_claim, name:'test_dc')
+      @rule_result = FactoryBot(:business_validation_rule_result)
       @bvr = @rule_result.business_validation_result
       @bvr.state = 'Fail'
       @bvr.validatable = @dc
@@ -205,9 +205,9 @@ describe DrawbackClaimsController do
   end
   describe 'clear_claim_audits' do
     before :each do
-      @u = Factory(:drawback_user)
+      @u = FactoryBot(:drawback_user)
       sign_in_as @u
-      @c = Factory(:drawback_claim)
+      @c = FactoryBot(:drawback_claim)
       @ca = @c.drawback_claim_audits.create!
     end
     it "should restrict to edit_drawback?" do
@@ -224,9 +224,9 @@ describe DrawbackClaimsController do
   end
   describe 'clear_export_histories' do
     before :each do
-      @u = Factory(:drawback_user)
+      @u = FactoryBot(:drawback_user)
       sign_in_as @u
-      @c = Factory(:drawback_claim)
+      @c = FactoryBot(:drawback_claim)
       @ca = @c.drawback_export_histories.create!
     end
     it "should restrict to edit_drawback?" do

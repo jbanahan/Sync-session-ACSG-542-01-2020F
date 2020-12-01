@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
         end
 
         it "allows non-master user if can view Lumber company" do
-          lumber = Factory(:importer, system_code: "LUMBER")
+          lumber = FactoryBot(:importer, system_code: "LUMBER")
           expect_any_instance_of(Company).to receive(:can_view?).with(user).and_return true
 
           expect(described_class.permission? user).to be_truthy
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
   describe "run" do
     let! (:entry) {
       # Filling in just enough information so that we can tell an end to end test is working
-      entry = Factory(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-08-02")
+      entry = FactoryBot(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-08-02")
       container1 = entry.containers.create! container_number: "CONT1", container_size: "40"
       container2 = entry.containers.create! container_number: "CONT2", container_size: "20"
 
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       entry
     }
 
-    let (:user) { Factory(:master_user, time_zone: "America/New_York") }
+    let (:user) { FactoryBot(:master_user, time_zone: "America/New_York") }
 
     after :each do
       @tempfile.close! if @tempfile && !@tempfile.closed?
@@ -135,7 +135,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
     let (:lading_port) { Port.create! schedule_k_code: "12345", name: "Lading Port" }
     let (:entry) {
       # Filling in just enough information so that we can tell an end to end test is working
-      entry = Factory(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-08-02", export_date: "2016-07-01", entry_port_code: entry_port.schedule_d_code, lading_port_code: lading_port.schedule_k_code, broker_reference: "REF", entry_number: "ENT", carrier_code: "CARR", master_bills_of_lading: "MBOL", vessel: "VESS", eta_date: "2016-08-05", entered_value: BigDecimal("100"))
+      entry = FactoryBot(:entry, customer_number: "LUMBER", source_system: "Alliance", release_date: "2016-08-02", export_date: "2016-07-01", entry_port_code: entry_port.schedule_d_code, lading_port_code: lading_port.schedule_k_code, broker_reference: "REF", entry_number: "ENT", carrier_code: "CARR", master_bills_of_lading: "MBOL", vessel: "VESS", eta_date: "2016-08-05", entered_value: BigDecimal("100"))
       container1 = entry.containers.create! container_number: "CONT1", container_size: "40"
       container2 = entry.containers.create! container_number: "CONT2", container_size: "20"
 

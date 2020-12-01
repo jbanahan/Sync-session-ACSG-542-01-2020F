@@ -1,11 +1,11 @@
 describe Api::V1::TradeLanesController do
   let :prep_countries do
-    us = Factory(:country, iso_code:'US')
-    ca = Factory(:country, iso_code:'CA')
+    us = FactoryBot(:country, iso_code:'US')
+    ca = FactoryBot(:country, iso_code:'CA')
     [us, ca]
   end
   before :each do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return true
     allow_any_instance_of(User).to receive(:edit_trade_lanes?).and_return true
     allow_api_access @u
@@ -13,8 +13,8 @@ describe Api::V1::TradeLanesController do
   describe '#index' do
     it 'should find trade lanes' do
       us, ca = prep_countries
-      Factory(:trade_lane, origin_country:us, destination_country:ca)
-      Factory(:trade_lane, origin_country:ca, destination_country:us)
+      FactoryBot(:trade_lane, origin_country:us, destination_country:ca)
+      FactoryBot(:trade_lane, origin_country:ca, destination_country:us)
 
       get :index
 
@@ -36,7 +36,7 @@ describe Api::V1::TradeLanesController do
 
   describe '#show' do
     it 'should find trade lane' do
-      tl = Factory(:trade_lane)
+      tl = FactoryBot(:trade_lane)
 
       get :show, id: tl.id.to_s
 
@@ -46,7 +46,7 @@ describe Api::V1::TradeLanesController do
     end
     it 'should fail if user cannot view trade lane' do
       allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return false
-      get :show, id: Factory(:trade_lane).id.to_s
+      get :show, id: FactoryBot(:trade_lane).id.to_s
       expect(response).to_not be_success
     end
   end
@@ -90,7 +90,7 @@ describe Api::V1::TradeLanesController do
   describe '#update' do
     let :data_prep do
       prep_countries
-      tl = Factory(:trade_lane)
+      tl = FactoryBot(:trade_lane)
       h = {
         'id' => tl.id.to_s,
         'trade_lane'=>

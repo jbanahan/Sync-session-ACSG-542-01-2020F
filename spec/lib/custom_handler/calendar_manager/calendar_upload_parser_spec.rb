@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::CalendarManager::CalendarUploadParser do
   subject { described_class.new(custom_file) }
 
   let(:ms) { stub_master_setup }
-  let(:user) { Factory(:master_user) }
+  let(:user) { FactoryBot(:master_user) }
 
   let (:file_contents) do
     [
@@ -11,12 +11,12 @@ describe OpenChain::CustomHandler::CalendarManager::CalendarUploadParser do
     ]
   end
   let (:custom_file) do
-    cf = Factory.create(:custom_file, uploaded_by: user, attached_file_name: "test.csv")
+    cf = FactoryBot.create(:custom_file, uploaded_by: user, attached_file_name: "test.csv")
     allow(cf).to receive(:path).and_return "/path/to/file.xlsx"
     cf
   end
 
-  let(:company) {Factory.create(:company, name: "Vandegrift Inc")}
+  let(:company) {FactoryBot.create(:company, name: "Vandegrift Inc")}
 
   describe "process" do
     it 'sends each line of the file to process_row' do
@@ -49,15 +49,15 @@ describe OpenChain::CustomHandler::CalendarManager::CalendarUploadParser do
     end
 
     it "does not add an event if it already exists" do
-      c = Factory(:calendar, year: 2020, calendar_type: "USHol")
-      Factory(:calendar_event, calendar: c, event_date: Date.parse("2020-09-18"), label: "A new event")
+      c = FactoryBot(:calendar, year: 2020, calendar_type: "USHol")
+      FactoryBot(:calendar_event, calendar: c, event_date: Date.parse("2020-09-18"), label: "A new event")
       subject.send(:process_row, file_contents[1], 1, [])
 
       expect(CalendarEvent.count).to eq 1
     end
 
     it "does not add a new calendar if it already exists" do
-      Factory(:calendar, year: 2020, calendar_type: "USHol")
+      FactoryBot(:calendar, year: 2020, calendar_type: "USHol")
       subject.send(:process_row, file_contents[1], 1, [])
 
       expect(Calendar.count).to eq 1

@@ -3,16 +3,16 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
   describe "shipment_vendor_info" do
     subject { described_class }
     let (:order_line) {
-      order_line = Factory(:order_line)
+      order_line = FactoryBot(:order_line)
       o = order_line.order
-      o.order_from_address = Factory(:address, company: o.vendor)
+      o.order_from_address = FactoryBot(:address, company: o.vendor)
       o.save!
 
       order_line
     }
 
     let (:shipment_line) {
-      shipment_line = Factory(:shipment_line, product: order_line.product)
+      shipment_line = FactoryBot(:shipment_line, product: order_line.product)
       shipment_line.linked_order_line_id = order_line.id
       shipment_line.save!
 
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
     }
 
     let (:booking_line) {
-      Factory(:booking_line, order: order_line.order)
+      FactoryBot(:booking_line, order: order_line.order)
     }
 
     it "extracts vendor info from shipment lines" do
@@ -49,17 +49,17 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
     }
 
     let (:shipment) {
-      s = Factory(:shipment, reference: "reference", forwarder: Factory(:company, name: "Forwarder"), requested_equipment: "Equipment", cargo_ready_date: Date.new(2016, 10, 5), mode: "Mode", shipment_type: "Type",
+      s = FactoryBot(:shipment, reference: "reference", forwarder: FactoryBot(:company, name: "Forwarder"), requested_equipment: "Equipment", cargo_ready_date: Date.new(2016, 10, 5), mode: "Mode", shipment_type: "Type",
                   number_of_packages: 20, number_of_packages_uom: "CTNS", gross_weight: BigDecimal(10), volume: BigDecimal(20), lacey_act: true, hazmat: false, marks_and_numbers: "Marks\n And\nNumbers",
-                  first_port_receipt: Factory(:port, name: "Port Name", unlocode: "AAAAA"), importer: Factory(:importer, name: "Importer"))
+                  first_port_receipt: FactoryBot(:port, name: "Port Name", unlocode: "AAAAA"), importer: FactoryBot(:importer, name: "Importer"))
     }
 
     let (:order_line) {
-      order = Factory(:order, customer_order_number: "Order", vendor: Factory(:vendor, name: "Vendor Name"))
-      product = Factory(:product, unique_identifier: "Product")
-      order_line = Factory(:order_line, order: order, product: product, line_number: 2, unit_of_measure: "FT")
+      order = FactoryBot(:order, customer_order_number: "Order", vendor: FactoryBot(:vendor, name: "Vendor Name"))
+      product = FactoryBot(:product, unique_identifier: "Product")
+      order_line = FactoryBot(:order_line, order: order, product: product, line_number: 2, unit_of_measure: "FT")
 
-      order.order_from_address = Factory(:address, company: order.vendor, line_1: "Address 1", line_2: "Address 2", city: "City", state: "State", postal_code: "12345", country: Factory(:country, iso_code: "US", name: "USA"))
+      order.order_from_address = FactoryBot(:address, company: order.vendor, line_1: "Address 1", line_2: "Address 2", city: "City", state: "State", postal_code: "12345", country: FactoryBot(:country, iso_code: "US", name: "USA"))
       order.save!
 
       order_line
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
 
     context "with shipment line" do
       let (:shipment_line) {
-        line = Factory(:shipment_line, shipment: shipment, line_number: 1, quantity: BigDecimal(30), variant: Factory(:variant, variant_identifier: "Variant", product: order_line.product), product: order_line.product)
+        line = FactoryBot(:shipment_line, shipment: shipment, line_number: 1, quantity: BigDecimal(30), variant: FactoryBot(:variant, variant_identifier: "Variant", product: order_line.product), product: order_line.product)
         line.linked_order_line_id = order_line.id
         line.save!
 
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
 
     context "with booking line" do
       let (:booking_line) {
-        Factory(:booking_line, shipment: shipment, line_number: 1, quantity: BigDecimal(30), variant: Factory(:variant, variant_identifier: "Variant", product: order_line.product), product: order_line.product, order_line: order_line, order: order_line.order)
+        FactoryBot(:booking_line, shipment: shipment, line_number: 1, quantity: BigDecimal(30), variant: FactoryBot(:variant, variant_identifier: "Variant", product: order_line.product), product: order_line.product, order_line: order_line, order: order_line.order)
       }
 
       def setup_line_expectations xl

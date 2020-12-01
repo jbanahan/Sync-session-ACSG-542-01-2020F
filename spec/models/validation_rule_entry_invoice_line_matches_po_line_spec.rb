@@ -4,8 +4,8 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
 
     before :each do
       @part_no_cd = subject.custom_definitions[:prod_part_number]
-      @line = Factory(:commercial_invoice_line, po_number: "PONUMBER", part_number: "PARTNUMBER")
-      @line.entry.importer = Factory(:company, importer: true)
+      @line = FactoryBot(:commercial_invoice_line, po_number: "PONUMBER", part_number: "PARTNUMBER")
+      @line.entry.importer = FactoryBot(:company, importer: true)
     end
 
     it "notfies if no PO is found with for the line" do
@@ -13,13 +13,13 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
     end
 
     it "notifies if PO is found without the line" do
-      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      po = FactoryBot(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
       expect(described_class.new.run_child_validation @line).to eq "No Order Line found for PO # #{@line.po_number} and Part # #{@line.part_number}."
     end
 
     it "does not notify if PO and line are found" do
-      po = Factory(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
-      product = Factory(:product, importer: @line.entry.importer)
+      po = FactoryBot(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
+      product = FactoryBot(:product, importer: @line.entry.importer)
       product.update_custom_value! @part_no_cd, @line.part_number
 
       po.order_lines.create! product_id: product.id
@@ -28,8 +28,8 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
     end
 
     it "notifies if extra field does not match" do
-      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
-      product = Factory(:product, importer_id: @line.entry.importer.id)
+      po = FactoryBot(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      product = FactoryBot(:product, importer_id: @line.entry.importer.id)
       product.update_custom_value! @part_no_cd, @line.part_number
 
       po.order_lines.create! product_id: product.id, quantity: 10
@@ -40,8 +40,8 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
     end
 
     it 'does not notify if field matches' do
-      po = Factory(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
-      product = Factory(:product, importer: @line.entry.importer)
+      po = FactoryBot(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
+      product = FactoryBot(:product, importer: @line.entry.importer)
       product.update_custom_value! @part_no_cd, @line.part_number
 
       po.order_lines.create! product_id: product.id, quantity: 10

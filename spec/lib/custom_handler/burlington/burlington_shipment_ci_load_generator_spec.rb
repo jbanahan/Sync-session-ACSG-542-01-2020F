@@ -4,12 +4,12 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     subject.cdefs
   }
 
-  let (:us) { Factory(:country, iso_code: "US")}
+  let (:us) { FactoryBot(:country, iso_code: "US")}
 
-  let (:burlington) { Factory(:importer, system_code: "BURLI")}
+  let (:burlington) { FactoryBot(:importer, system_code: "BURLI")}
 
   let (:product) {
-    product = Factory(:product)
+    product = FactoryBot(:product)
     product.update_custom_value! cdefs[:prod_part_number], "PARTNO"
     c = product.classifications.create! country: us
     c.tariff_records.create! hts_1: "1234567890"
@@ -17,16 +17,16 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
   }
 
   let (:order) {
-    order = Factory(:order, customer_order_number: "PO")
-    order_line = Factory(:order_line, order: order, price_per_unit: BigDecimal("12.99"), product: product)
+    order = FactoryBot(:order, customer_order_number: "PO")
+    order_line = FactoryBot(:order_line, order: order, price_per_unit: BigDecimal("12.99"), product: product)
 
     order.reload
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, importer: burlington, importer_reference: "ImpRef", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01 00:00")
-    shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
-    shipment_line_2 = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 20, gross_kgs: BigDecimal("100.50"), quantity: 198, linked_order_line_id: order.order_lines.first.id)
+    shipment = FactoryBot(:shipment, importer: burlington, importer_reference: "ImpRef", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01 00:00")
+    shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
+    shipment_line_2 = FactoryBot(:shipment_line, shipment: shipment, product: product, carton_qty: 20, gross_kgs: BigDecimal("100.50"), quantity: 198, linked_order_line_id: order.order_lines.first.id)
 
     shipment.reload
   }
@@ -76,8 +76,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     end
 
     it "handles multiple shipments, making each one a new invoice" do
-      shipment2 = Factory(:shipment, importer_reference: "Ref2", master_bill_of_lading: "MASTERBILL")
-      shipment_line_2 = Factory(:shipment_line, shipment: shipment2, product: product, carton_qty: 1, gross_kgs: BigDecimal("10"), quantity: 10, linked_order_line_id: order.order_lines.first.id)
+      shipment2 = FactoryBot(:shipment, importer_reference: "Ref2", master_bill_of_lading: "MASTERBILL")
+      shipment_line_2 = FactoryBot(:shipment_line, shipment: shipment2, product: product, carton_qty: 1, gross_kgs: BigDecimal("10"), quantity: 10, linked_order_line_id: order.order_lines.first.id)
 
       shipment2.reload
 
@@ -154,8 +154,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     end
 
     it "finds shipments already sent with same master bill and resends them" do
-      shipment2 = Factory(:shipment, importer: shipment.importer, importer_reference: "ARef2", master_bill_of_lading: shipment.master_bill_of_lading)
-      shipment_line_2 = Factory(:shipment_line, shipment: shipment2, product: product, carton_qty: 1, gross_kgs: BigDecimal("10"), quantity: 10, linked_order_line_id: order.order_lines.first.id)
+      shipment2 = FactoryBot(:shipment, importer: shipment.importer, importer_reference: "ARef2", master_bill_of_lading: shipment.master_bill_of_lading)
+      shipment_line_2 = FactoryBot(:shipment_line, shipment: shipment2, product: product, carton_qty: 1, gross_kgs: BigDecimal("10"), quantity: 10, linked_order_line_id: order.order_lines.first.id)
       shipment.sync_records.create! trading_partner: "CI Load", sent_at: Time.zone.now
 
       expect(subject).to receive(:kewill_generator).and_return generator
@@ -204,7 +204,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     end
 
     it "groups multiple shipments together by master bill" do
-      shipment2 = Factory(:shipment, importer: burlington, importer_reference: "ImpRef2", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01")
+      shipment2 = FactoryBot(:shipment, importer: burlington, importer_reference: "ImpRef2", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01")
 
       sent = []
       expect(subject).to receive(:generate_and_send) do |shipments|
@@ -236,7 +236,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     end
 
     it "doesn't allow an error in one send to prevent a later send" do
-      shipment2 = Factory(:shipment, importer: burlington, importer_reference: "ImpRef2", master_bill_of_lading: "MASTERBILL2", last_exported_from_source: "2017-01-01")
+      shipment2 = FactoryBot(:shipment, importer: burlington, importer_reference: "ImpRef2", master_bill_of_lading: "MASTERBILL2", last_exported_from_source: "2017-01-01")
 
       e = StandardError.new
       sent = []

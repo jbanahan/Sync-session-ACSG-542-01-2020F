@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder do
   before :each do
-    @ent = Factory(:entry)
-    @ci = Factory(:commercial_invoice, invoice_number: "135A", entry: @ent)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, line_number: 1, part_number: "123456", po_number: "654321")
-    @prod = Factory(:product, unique_identifier: "123456")
-    @ord = Factory(:order, order_number: "654321")
-    @ol = Factory(:order_line, order: @ord, product: @prod )
-    @bvre = Factory(:business_validation_result, validatable: @ord, state: "Pass")
+    @ent = FactoryBot(:entry)
+    @ci = FactoryBot(:commercial_invoice, invoice_number: "135A", entry: @ent)
+    @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: @ci, line_number: 1, part_number: "123456", po_number: "654321")
+    @prod = FactoryBot(:product, unique_identifier: "123456")
+    @ord = FactoryBot(:order, order_number: "654321")
+    @ol = FactoryBot(:order_line, order: @ord, product: @prod )
+    @bvre = FactoryBot(:business_validation_result, validatable: @ord, state: "Pass")
 
     @order_hsh = {"order" => {"id" => @ord.id, "ord_rule_state" => "Pass", "ord_closed_at" => nil, "order_lines" => [{"id" => @ol.id, "ordln_puid" => "123456"}]} }
     @api_client_double = double("OrderApiClient")

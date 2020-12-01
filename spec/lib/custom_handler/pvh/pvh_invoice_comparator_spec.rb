@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Pvh::PvhInvoiceComparator do
   }
 
   let (:ca) {
-    Factory(:country, iso_code: "CA")
+    FactoryBot(:country, iso_code: "CA")
   }
 
   let (:snapshot) {
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Pvh::PvhInvoiceComparator do
     end
 
     it "does not accept non-canadian invoices" do
-      consignee.addresses.first.country = Factory(:country, iso_code: "US")
+      consignee.addresses.first.country = FactoryBot(:country, iso_code: "US")
       expect(subject.accept? snapshot).to eq false
     end
 

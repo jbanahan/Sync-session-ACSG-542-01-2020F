@@ -672,7 +672,7 @@ describe OpenChain::EdiParserSupport do
   describe "find_or_create_company_from_n1_data" do
     let (:n1_loop) { subject.extract_n1_loops(first_transaction_segments, qualifier: "VN").first }
     let (:n1_data) { subject.extract_n1_entity_data n1_loop }
-    let! (:cn) { Factory(:country, iso_code: "CN") }
+    let! (:cn) { FactoryBot(:country, iso_code: "CN") }
     let (:importer) { Company.where(importer: true, system_code: "Test").first }
 
     it "extracts data from an n1 segment into a hash" do
@@ -701,7 +701,7 @@ describe OpenChain::EdiParserSupport do
     end
 
     it "does not update information if company already exists" do
-      existing = Factory(:company, factory: true, system_code: "70289", name: "Test")
+      existing = FactoryBot(:company, factory: true, system_code: "70289", name: "Test")
 
       company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}
 
@@ -720,7 +720,7 @@ describe OpenChain::EdiParserSupport do
     end
 
     it "links to given company" do
-      importer = Factory(:importer)
+      importer = FactoryBot(:importer)
       company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, link_to_company: importer
       expect(importer.linked_companies).to include company
     end
@@ -729,8 +729,8 @@ describe OpenChain::EdiParserSupport do
   describe "find_or_create_address_from_n1_data" do
     let (:n1_loop) { subject.extract_n1_loops(first_transaction_segments, qualifier: "VN").first }
     let (:n1_data) { subject.extract_n1_entity_data n1_loop }
-    let! (:cn) { Factory(:country, iso_code: "CN") }
-    let (:company) { Factory(:importer, system_code: "Test") }
+    let! (:cn) { FactoryBot(:country, iso_code: "CN") }
+    let (:company) { FactoryBot(:importer, system_code: "Test") }
 
     it "creates a new address" do
       expect(Lock).to receive(:acquire).with("Address-70289", yield_in_transaction: false).and_yield

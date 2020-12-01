@@ -6,7 +6,7 @@ describe DataCrossReferencesController do
     hsh
   end
 
-  let(:user) { Factory(:admin_user) }
+  let(:user) { FactoryBot(:admin_user) }
 
   before do
     ms = stub_master_setup
@@ -51,7 +51,7 @@ describe DataCrossReferencesController do
 
   describe "edit" do
     it "shows edit page" do
-      Factory(:importer, importer_products: [Factory(:product)], system_code: 'IMPORTER')
+      FactoryBot(:importer, importer_products: [FactoryBot(:product)], system_code: 'IMPORTER')
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
 
       get :edit, id: xref.id
@@ -73,7 +73,7 @@ describe DataCrossReferencesController do
 
   describe "new" do
     it "shows new page" do
-      Factory(:importer, importer_products: [Factory(:product)], system_code: 'IMPORTER')
+      FactoryBot(:importer, importer_products: [FactoryBot(:product)], system_code: 'IMPORTER')
 
       get :new, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to be_success
@@ -113,7 +113,7 @@ describe DataCrossReferencesController do
     end
 
     it "rejects user without access" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       sign_in_as user
 
       xref = DataCrossReference.create! cross_reference_type: "bogus", key: "KEY", value: "VALUE"
@@ -134,8 +134,8 @@ describe DataCrossReferencesController do
     end
 
     it "doesn't consider identical keys with different importers to be duplicates" do
-      imp = Factory(:importer)
-      imp2 = Factory(:importer)
+      imp = FactoryBot(:importer)
+      imp2 = FactoryBot(:importer)
 
       DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp, key: "KEY", value: "VALUE"
       xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp2, key: "KEY2", value: "VALUE"
@@ -182,8 +182,8 @@ describe DataCrossReferencesController do
     end
 
     it "doesn't consider identical keys with different importers to be duplicates" do
-      imp = Factory(:importer)
-      imp2 = Factory(:importer)
+      imp = FactoryBot(:importer)
+      imp2 = FactoryBot(:importer)
 
       DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp, key: "KEY", value: "VALUE"
 
@@ -287,17 +287,17 @@ describe DataCrossReferencesController do
 
   describe "get_importers" do
     it "returns an array of importers with products, sorted by name" do
-      co_1 = Factory(:company)
-      Factory(:product, importer: co_1)
+      co_1 = FactoryBot(:company)
+      FactoryBot(:product, importer: co_1)
 
-      co_2 = Factory(:importer, name: "Substandard Ltd.", system_code: 'SUBST')
-      Factory(:product, importer: co_2)
+      co_2 = FactoryBot(:importer, name: "Substandard Ltd.", system_code: 'SUBST')
+      FactoryBot(:product, importer: co_2)
 
-      co_3 = Factory(:importer, name: "ACME", system_code: 'ACME')
-      Factory(:product, importer: co_3)
-      Factory(:product, importer: co_3)
+      co_3 = FactoryBot(:importer, name: "ACME", system_code: 'ACME')
+      FactoryBot(:product, importer: co_3)
+      FactoryBot(:product, importer: co_3)
 
-      Factory(:importer, name: "Nothing-to-See")
+      FactoryBot(:importer, name: "Nothing-to-See")
 
       results = described_class.new.get_importers_for(user)
       expect(results.count).to eq 2

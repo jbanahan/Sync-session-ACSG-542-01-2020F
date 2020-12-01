@@ -1,6 +1,6 @@
 describe Api::V1::TppHtsOverridesController do
   before :each do
-    @u = Factory(:user)
+    @u = FactoryBot(:user)
     allow_any_instance_of(User).to receive(:view_tpp_hts_overrides?).and_return true
     allow_any_instance_of(User).to receive(:edit_tpp_hts_overrides?).and_return true
     allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return true
@@ -10,7 +10,7 @@ describe Api::V1::TppHtsOverridesController do
   end
   describe '#index' do
     it 'should find overrides' do
-      o = Factory(:tpp_hts_override, hts_code:'0101010101')
+      o = FactoryBot(:tpp_hts_override, hts_code:'0101010101')
       get :index
       expect(response).to be_success
       h = JSON.parse(response.body)['results']
@@ -26,7 +26,7 @@ describe Api::V1::TppHtsOverridesController do
 
   describe '#show' do
     it 'should get override' do
-      o = Factory(:tpp_hts_override, hts_code:'0101010101')
+      o = FactoryBot(:tpp_hts_override, hts_code:'0101010101')
       get :show, id: o.id.to_s
       expect(response).to be_success
       h = JSON.parse(response.body)
@@ -34,14 +34,14 @@ describe Api::V1::TppHtsOverridesController do
     end
     it "should fail if user cannot view" do
       allow_any_instance_of(TppHtsOverride).to receive(:can_view?).and_return false
-      get :show, id: Factory(:tpp_hts_override).id.to_s
+      get :show, id: FactoryBot(:tpp_hts_override).id.to_s
       expect(response).to_not be_success
     end
   end
 
   describe '#create' do
     let :make_hash do
-      tpp = Factory(:trade_preference_program)
+      tpp = FactoryBot(:trade_preference_program)
       {
         'tpp_hts_override'=>
         {
@@ -82,7 +82,7 @@ describe Api::V1::TppHtsOverridesController do
   end
   describe '#update' do
     before :each do
-      @o = Factory(:tpp_hts_override)
+      @o = FactoryBot(:tpp_hts_override)
       @h = {
         'id' => @o.id.to_s,
         'tpp_hts_override'=>{'id'=>@o.id.to_s, 'tpphtso_note'=>'mynote'}
@@ -96,7 +96,7 @@ describe Api::V1::TppHtsOverridesController do
     end
     it 'should fail if changing preference program' do
       old_tpp = @o.trade_preference_program
-      new_tpp = Factory(:trade_preference_program)
+      new_tpp = FactoryBot(:trade_preference_program)
       @h['tpp_hts_override']['tpphtso_trade_preference_program_id'] = new_tpp.id.to_s
       put :update, @h
       @o.reload

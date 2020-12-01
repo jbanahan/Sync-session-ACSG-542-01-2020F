@@ -13,7 +13,7 @@ describe OpenChain::Report::ReportEmailHelper do
     end
 
     it "parses email addresses and groups from opts" do
-      group = MailingList.create! system_code: "group", name: "Test Email Group", user: Factory(:user), company: Factory(:company)
+      group = MailingList.create! system_code: "group", name: "Test Email Group", user: FactoryBot(:user), company: FactoryBot(:company)
       expect(subject.parse_email_from_opts(full_opts)).to eq({
                                                                to: ["me@there.com", group],
                                                                cc: ["you@there.com"],
@@ -38,7 +38,7 @@ describe OpenChain::Report::ReportEmailHelper do
     end
 
     it "allows using alternate opts key values" do
-      group = MailingList.create! system_code: "group", name: "Test Email Group", user: Factory(:user), company: Factory(:company)
+      group = MailingList.create! system_code: "group", name: "Test Email Group", user: FactoryBot(:user), company: FactoryBot(:company)
       opts = {"x_to" => "me@there.com", "x_group" => "group", "x_cc" => "you@there.com", "x_bcc" => "we@there.com" }
       fields = { to_param: "x_to", group_param: "x_group", cc_param: "x_cc", bcc_param: "x_bcc" }
 
@@ -65,8 +65,8 @@ describe OpenChain::Report::ReportEmailHelper do
   end
 
   describe "parse_email_group" do
-    let (:company) { Factory(:company) }
-    let (:user) { Factory(:user) }
+    let (:company) { FactoryBot(:company) }
+    let (:user) { FactoryBot(:user) }
     let (:mailing_list) { MailingList.create! system_code: "group", name: "Test Email Group", user: user, company: company}
 
     it "validates an email group" do

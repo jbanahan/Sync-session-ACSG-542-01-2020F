@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Hm::HmReceiptFileParser do
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
   let(:custom_file) { double "custom file "}
 
   describe 'can_view?' do
@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::Hm::HmReceiptFileParser do
   end
 
   describe "process" do
-    let!(:importer) { Factory(:company, system_code:'HENNE') }
+    let!(:importer) { FactoryBot(:company, system_code:'HENNE') }
     let!(:master_setup) { stub_master_setup_request_host }
     let(:subject) { described_class.new(custom_file) }
     let(:file_reader) { double "dummy reader" }
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::Hm::HmReceiptFileParser do
     end
 
     it "handles missing values and bad dates" do
-      Factory(:mailing_list, name:'Testing', system_code:'HmReceiptFileParserErrors', user:user, email_addresses:"a@b.com, c@d.com")
+      FactoryBot(:mailing_list, name:'Testing', system_code:'HmReceiptFileParserErrors', user:user, email_addresses:"a@b.com, c@d.com")
 
       row_1 = ["W180", " ", "279635006164001", " ", "South Korea", "10", " ", "164"]
       row_2 = ["W182", "A/BB/CCCC", "279635006164001", "114691", "South Korea", "12", "0279635006004", "163"]
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::Hm::HmReceiptFileParser do
     end
 
     it "handles line-level exceptions" do
-      Factory(:mailing_list, name:'Testing', system_code:'HmReceiptFileParserErrors', user:user, email_addresses:"b@a.com, d@c.com")
+      FactoryBot(:mailing_list, name:'Testing', system_code:'HmReceiptFileParserErrors', user:user, email_addresses:"b@a.com, d@c.com")
 
       row_1 = ["W180", "6/13/2016", "279635006164001", "114690", "South Korea", "10", "0279635006001", "164"]
 

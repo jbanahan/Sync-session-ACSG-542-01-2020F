@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file with matching shipment" do
-      shp = Factory(:shipment, master_bill_of_lading:'OU812', reference: '555')
+      shp = FactoryBot(:shipment, master_bill_of_lading:'OU812', reference: '555')
 
       subject.process_file file, 'A', 'V2OU812.12345.zip', 1
 
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file with matching shipment and existing ODS attachment with newer version" do
-      shp = Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
+      shp = FactoryBot(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
       ods_attach = shp.attachments.create!(attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'V3OOLU2100046990.pdf')
 
       subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file with matching shipment and existing ODS attachment with same version" do
-      shp = Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
+      shp = FactoryBot(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
       ods_attach = shp.attachments.create!(attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'V2OOLU2100046990.pdf')
 
       subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file with matching shipment and existing ODS attachment with older version" do
-      shp = Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
+      shp = FactoryBot(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555')
       ods_attach = shp.attachments.create!(attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'V1OOLU2100046990.pdf')
 
       subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1
@@ -109,8 +109,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file containing no PDF" do
-      user = Factory(:user, first_name:"Nigel", last_name:"Tufnel", company:Factory(:company, name:"ACME"))
-      Factory(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
+      user = FactoryBot(:user, first_name:"Nigel", last_name:"Tufnel", company:FactoryBot(:company, name:"ACME"))
+      FactoryBot(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
 
       unzipped_zip = instance_double(Zip::File)
       expect(Zip::File).to receive(:open).with(zip_path).and_yield(unzipped_zip)
@@ -142,8 +142,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes invalid zip file" do
-      user = Factory(:user, first_name:"Nigel", last_name:"Tufnel", company:Factory(:company, name:"ACME"))
-      Factory(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
+      user = FactoryBot(:user, first_name:"Nigel", last_name:"Tufnel", company:FactoryBot(:company, name:"ACME"))
+      FactoryBot(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
 
       # This is an invalid zip: it's a PDF renamed as a zip.
       file = File.open('spec/fixtures/files/V3OOLU2100046991.zip', 'rb')

@@ -1,7 +1,7 @@
 describe OpenChain::DataCrossReferenceUploader do
   describe "process" do
-    let(:user) { Factory(:user) }
-    let!(:co) { Factory(:company, system_code: "ACME") }
+    let(:user) { FactoryBot(:user) }
+    let!(:co) { FactoryBot(:company, system_code: "ACME") }
     let(:cf) { instance_double "CustomFile" }
     let(:handler) { described_class.new cf }
     let(:row_0) { ['Key', 'Value'] }

@@ -1,5 +1,5 @@
 describe Api::V1::Admin::GroupsController do
-  let (:user) { Factory(:admin_user)}
+  let (:user) { FactoryBot(:admin_user)}
 
   before :each do
     allow_api_user user
@@ -22,7 +22,7 @@ describe Api::V1::Admin::GroupsController do
     end
 
     it "errors if user is not admin" do
-      allow_api_user Factory(:user)
+      allow_api_user FactoryBot(:user)
       post :create, grp_system_code: "GROUP", grp_name: "Name", grp_description: "Description"
       expect(response).not_to be_success
     end
@@ -33,7 +33,7 @@ describe Api::V1::Admin::GroupsController do
     let! (:users) { group.users << user; [user] }
 
     it "updates a group" do
-      user2 = Factory(:user)
+      user2 = FactoryBot(:user)
       put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc", :include=>"users", "users"=>[user2.id]
 
       expect(response).to be_success
@@ -60,7 +60,7 @@ describe Api::V1::Admin::GroupsController do
     end
 
     it "errors if user is not admin" do
-      allow_api_user Factory(:user)
+      allow_api_user FactoryBot(:user)
       put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc"
       expect(response).not_to be_success
     end
@@ -76,7 +76,7 @@ describe Api::V1::Admin::GroupsController do
     end
 
     it "errors if user is not admin" do
-      allow_api_user Factory(:user)
+      allow_api_user FactoryBot(:user)
       delete :destroy, id: group.id
       expect(response).not_to be_success
     end

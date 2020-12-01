@@ -1,12 +1,12 @@
 describe OpenChain::Report::AnnMonthlyBrokerInvoiceReport do
   subject { described_class.new }
 
-  let(:ent) { Factory(:entry, po_numbers: "INV NUM\n INV NUM2", importer: Factory(:company, system_code: "ATAYLOR"), first_entry_sent_date: Date.new(2017, 3, 15)) }
-  let(:inv) { Factory(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM", invoice_total: 100) }
-  let(:line) { Factory(:broker_invoice_line, broker_invoice: inv, charge_description: "Foo Debit", charge_amount: 90) }
-  let(:line2) { Factory(:broker_invoice_line, broker_invoice: inv, charge_description: "Customs Entry", charge_amount: 10) }
-  let(:inv2) { Factory(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM2", invoice_total: -25) }
-  let(:line3) { Factory(:broker_invoice_line, broker_invoice: inv2, charge_description: "Bar Credit", charge_amount: -25) }
+  let(:ent) { FactoryBot(:entry, po_numbers: "INV NUM\n INV NUM2", importer: FactoryBot(:company, system_code: "ATAYLOR"), first_entry_sent_date: Date.new(2017, 3, 15)) }
+  let(:inv) { FactoryBot(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM", invoice_total: 100) }
+  let(:line) { FactoryBot(:broker_invoice_line, broker_invoice: inv, charge_description: "Foo Debit", charge_amount: 90) }
+  let(:line2) { FactoryBot(:broker_invoice_line, broker_invoice: inv, charge_description: "Customs Entry", charge_amount: 10) }
+  let(:inv2) { FactoryBot(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM2", invoice_total: -25) }
+  let(:line3) { FactoryBot(:broker_invoice_line, broker_invoice: inv2, charge_description: "Bar Credit", charge_amount: -25) }
 
   let(:raw_row_1) do
     ["", "1100", "1003709", Date.new(2017, 3, 15), "", "INV NUM", 100, "USD", "", "Foo Debit", Date.new(2017, 3, 15), "USD1",
@@ -26,9 +26,9 @@ describe OpenChain::Report::AnnMonthlyBrokerInvoiceReport do
 
     it "returns expected data" do
       # data for another importer
-      ent2 = Factory(:entry)
-      inv3 = Factory(:broker_invoice, entry: ent2, invoice_date: Date.new(2017, 3, 15), invoice_total: 50)
-      Factory(:broker_invoice_line, broker_invoice: inv3, charge_description: "Customs Entry", charge_amount: 50)
+      ent2 = FactoryBot(:entry)
+      inv3 = FactoryBot(:broker_invoice, entry: ent2, invoice_date: Date.new(2017, 3, 15), invoice_total: 50)
+      FactoryBot(:broker_invoice_line, broker_invoice: inv3, charge_description: "Customs Entry", charge_amount: 50)
 
       q = subject.query(ent.importer.id, '2017-03-01', '2017-03-31')
       res = ActiveRecord::Base.connection.execute q

@@ -1,7 +1,7 @@
 describe ApiSession do
 
-  let(:api_session) { Factory(:api_session, last_server_response: nil, class_name: "OpenChain::CustomHandler::SomeGenerator") }
-  let(:user) { Factory(:user) }
+  let(:api_session) { FactoryBot(:api_session, last_server_response: nil, class_name: "OpenChain::CustomHandler::SomeGenerator") }
+  let(:user) { FactoryBot(:user) }
 
   describe "can_view?" do
     it "allows sys_admin users to view" do
@@ -14,9 +14,9 @@ describe ApiSession do
   end
 
   context "attachments" do
-    let(:req_file) { Factory(:attachment, attachable: api_session, attachment_type: "request", attached_file_name: "req") }
-    let(:resp_file1) { Factory(:attachment, attachable: api_session, attachment_type: "response", attached_file_name: "resp1") }
-    let(:resp_file2) { Factory(:attachment, attachable: api_session, attachment_type: "response", attached_file_name: "resp2") }
+    let(:req_file) { FactoryBot(:attachment, attachable: api_session, attachment_type: "request", attached_file_name: "req") }
+    let(:resp_file1) { FactoryBot(:attachment, attachable: api_session, attachment_type: "response", attached_file_name: "resp1") }
+    let(:resp_file2) { FactoryBot(:attachment, attachable: api_session, attachment_type: "response", attached_file_name: "resp2") }
 
     before do
       req_file; resp_file1; resp_file2
@@ -71,7 +71,7 @@ describe ApiSession do
 
     it "removes anything older than given date" do
       session = nil
-      Timecop.freeze(Time.zone.now - 1.second) { session = Factory(:api_session) }
+      Timecop.freeze(Time.zone.now - 1.second) { session = FactoryBot(:api_session) }
 
       subject.purge Time.zone.now
 
@@ -81,7 +81,7 @@ describe ApiSession do
     it "does not remove items newer than given date" do
       session = nil
       now = Time.zone.now
-      Timecop.freeze(now + 1.second) { session = Factory(:api_session) }
+      Timecop.freeze(now + 1.second) { session = FactoryBot(:api_session) }
 
       subject.purge now
 

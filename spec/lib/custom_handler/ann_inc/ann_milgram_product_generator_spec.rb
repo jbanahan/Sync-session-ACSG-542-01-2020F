@@ -18,12 +18,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
 
   context 'query' do
     before :each do
-      @ca = Factory(:country, :iso_code=>'CA')
+      @ca = FactoryBot(:country, :iso_code=>'CA')
     end
     it "should only send Canadian tariff" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:approved_long], 'PLONG'
-      [@ca, Factory(:country, :iso_code=>'US')].each do |cntry|
+      [@ca, FactoryBot(:country, :iso_code=>'US')].each do |cntry|
         cls = p.classifications.create!(:country_id=>cntry.id)
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -34,22 +34,22 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       expect(r.first).to eq([p.unique_identifier, '', 'PLONG', '', 'CA12345678', 'N', 'N', 'N', 'N'])
     end
     it "should only send approved products" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@ca.id)
       cls.tariff_records.create!(:hts_1=>"0012345678")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_find = Factory(:product)
+      dont_find = FactoryBot(:product)
       dont_find.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should only send products that need sync" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@ca.id)
       cls.tariff_records.create!(:hts_1=>"0012345678")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_find = Factory(:product)
+      dont_find = FactoryBot(:product)
       d_cls = dont_find.classifications.create!(:country_id=>@ca.id)
       d_cls.tariff_records.create!(:hts_1=>"0012345678")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       expect(r.first.first).to eq(p.unique_identifier)
     end
     it "should override long description with country specific version" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@ca.id)
       cls.tariff_records.create!(:hts_1=>"0012345678")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -70,8 +70,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       expect(r.first[2]).to eq('LDOV')
     end
     it "should explode lines that have related styles" do
-      p = Factory(:product)
-      [@ca, Factory(:country, :iso_code=>'US')].each do |cntry|
+      p = FactoryBot(:product)
+      [@ca, FactoryBot(:country, :iso_code=>'US')].each do |cntry|
         cls = p.classifications.create!(:country_id=>cntry.id)
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
 
     context "sets" do
       it "should create 3 rows for two component style" do
-        p = Factory(:product)
+        p = FactoryBot(:product)
         p.update_custom_value! @cdefs[:approved_long], 'LONG'
         cls = p.classifications.create!(:country_id=>@ca.id)
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago

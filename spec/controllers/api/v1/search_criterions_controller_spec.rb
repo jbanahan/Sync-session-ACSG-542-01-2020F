@@ -1,6 +1,6 @@
 describe Api::V1::SearchCriterionsController do
-  let(:user) { Factory(:master_user) }
-  let(:search_setup) { Factory(:search_setup, user: user) }
+  let(:user) { FactoryBot(:master_user) }
+  let(:search_setup) { FactoryBot(:search_setup, user: user) }
   let(:criterion) { search_setup.search_criterions.create! value: "ABC", operator: "gt", model_field_uid: "prod_uid"}
 
   before do
@@ -25,7 +25,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if user can't edit linked object" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       allow_api_access user
 
       post :create, {search_criterion: {linked_object_type: "SearchSetup", linked_object_id: search_setup.id, operator: "eq", value: "1", model_field_uid: "prod_uid"}}
@@ -60,7 +60,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if user can't edit linked object" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       allow_api_access user
 
       put :update, {id: criterion.id, search_criterion: {linked_object_type: "SearchSetup", linked_object_id: criterion.search_setup.id,
@@ -75,7 +75,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if id does not belong to linked object" do
-      another_ss = Factory(:search_setup, user: user)
+      another_ss = FactoryBot(:search_setup, user: user)
 
       put :update, {id: criterion.id, search_criterion: {linked_object_type: "SearchSetup", linked_object_id: another_ss.id,
                                                          operator: "eq", value: "1", model_field_uid: "prod_uid"}}
@@ -101,7 +101,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if user can't edit linked object" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       allow_api_access user
 
       delete :destroy, {id: criterion.id, search_criterion: {linked_object_type: "SearchSetup", linked_object_id: criterion.search_setup.id}}
@@ -114,7 +114,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if id does not belong to linked object" do
-      another_ss = Factory(:search_setup, user: user)
+      another_ss = FactoryBot(:search_setup, user: user)
 
       delete :destroy, {id: criterion.id, search_criterion: {linked_object_type: "SearchSetup", linked_object_id: another_ss.id,
                                                              operator: "eq", value: "1", model_field_uid: "prod_uid"}}
@@ -134,7 +134,7 @@ describe Api::V1::SearchCriterionsController do
     end
 
     it "fails if user can't view linked object" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       allow_api_access user
       get :index, {search_criterion: {linked_object_type: "SearchSetup", linked_object_id: criterion.search_setup.id}}
 

@@ -1,8 +1,8 @@
 describe Comment do
   describe "publish_event" do
     it "publishes event on create" do
-      o = Factory(:order)
-      u = Factory(:user)
+      o = FactoryBot(:order)
+      u = FactoryBot(:user)
       t = Time.zone.now
       allow(Time).to receive(:now).and_return t
       expect(OpenChain::EventPublisher).to receive(:publish) do |type, obj|
@@ -15,14 +15,14 @@ describe Comment do
   end
 
   describe "gather" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
     let(:now) { Time.zone.now }
 
     let(:order) do
       ord = nil
 
       Timecop.freeze(now - 3.hours) do
-        ord = Factory(:order)
+        ord = FactoryBot(:order)
         ord.comments.create!(subject: "Circa 3 hours ago", body: "I said this three hours ago!", user: user)
       end
 

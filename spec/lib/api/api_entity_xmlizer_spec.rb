@@ -38,16 +38,16 @@ describe OpenChain::Api::ApiEntityXmlizer do
       Timecop.return
     end
     it 'should create xml with base tag names' do
-      xml = subject.entity_to_xml(Factory(:admin_user), order, fields)
+      xml = subject.entity_to_xml(FactoryBot(:admin_user), order, fields)
       expect(xml).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample.xml')
     end
     it 'should user xml_tag_overrides from ModelField' do
-      cd = Factory(:custom_definition, module_type:'OrderLine', data_type:'string')
+      cd = FactoryBot(:custom_definition, module_type:'OrderLine', data_type:'string')
       FieldValidatorRule.create!(model_field_uid:cd.model_field_uid, xml_tag_name:'custom-tag')
       ModelField.reload
       order_line.find_and_set_custom_value(cd, 'myval')
       fields << cd.model_field_uid.to_sym
-      expect(subject.entity_to_xml(Factory(:admin_user), order, fields)).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample_custom_tag.xml')
+      expect(subject.entity_to_xml(FactoryBot(:admin_user), order, fields)).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample_custom_tag.xml')
     end
   end
 

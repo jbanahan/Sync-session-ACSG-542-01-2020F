@@ -1,14 +1,14 @@
 describe Api::V1::CompaniesController do
   describe "index" do
     before :each do
-      @c = Factory(:company, name:'c1', importer:true, system_code:'A')
-      @u = Factory(:user, company:@c)
+      @c = FactoryBot(:company, name:'c1', importer:true, system_code:'A')
+      @u = FactoryBot(:user, company:@c)
       allow_api_access @u
     end
     it "should only return self and linked companies" do
-      c2 = Factory(:company, name:'c2', importer:true, system_code:'B')
-      c3 = Factory(:company, name:'a3', vendor:true, system_code:'C')
-      Factory(:company, name:'bad', system_code:'BAD') # don't find this
+      c2 = FactoryBot(:company, name:'c2', importer:true, system_code:'B')
+      c3 = FactoryBot(:company, name:'a3', vendor:true, system_code:'C')
+      FactoryBot(:company, name:'bad', system_code:'BAD') # don't find this
       [c2, c3].each {|c| @c.linked_companies << c}
       get :index
       expect(response).to be_success
@@ -20,11 +20,11 @@ describe Api::V1::CompaniesController do
       expect(j[2]['importer']).to be_truthy
     end
     it "only returns companies linked with company in linked_with param" do
-      c2 = Factory(:company, name:'c2', vendor:true, system_code:'B')
-      c3 = Factory(:company, name:'a3', vendor:true, system_code:'C')
+      c2 = FactoryBot(:company, name:'c2', vendor:true, system_code:'B')
+      c3 = FactoryBot(:company, name:'a3', vendor:true, system_code:'C')
       [c2, c3].each {|c| @c.linked_companies << c}
 
-      master_company = Factory(:importer, name: "Master")
+      master_company = FactoryBot(:importer, name: "Master")
       master_company.linked_companies << c2
 
       get :index, linked_with: master_company.id, roles: "vendor"
@@ -34,7 +34,7 @@ describe Api::V1::CompaniesController do
       expect(j.collect {|c| c['name']}).to eql ['c2']
     end
     it "should only return companies with system codes" do
-      c2 = Factory(:company, name:'c2')
+      c2 = FactoryBot(:company, name:'c2')
       @c.linked_companies << c2
       get :index
       expect(response).to be_success
@@ -45,7 +45,7 @@ describe Api::V1::CompaniesController do
     it "should find all companies for master" do
       @c.master = true
       @c.save!
-      Factory(:company, name:'c2', importer:true, system_code:'c2')
+      FactoryBot(:company, name:'c2', importer:true, system_code:'c2')
       get :index
       expect(response).to be_success
       j = JSON.parse(response.body)['companies']
@@ -53,7 +53,7 @@ describe Api::V1::CompaniesController do
     end
     context "role" do
       it "should return self if matches role" do
-        c2 = Factory(:company, name:'c2', importer:true, system_code:'c2')
+        c2 = FactoryBot(:company, name:'c2', importer:true, system_code:'c2')
         @c.linked_companies << c2
         get :index, roles:'importer'
         expect(response).to be_success
@@ -63,7 +63,7 @@ describe Api::V1::CompaniesController do
         expect(j['importers'].collect {|x| x['id']}).to eq [@c.id, c2.id]
       end
       it "should return multiple roles" do
-        c2 = Factory(:company, name:'c2', importer:true, vendor:true, system_code:'c2')
+        c2 = FactoryBot(:company, name:'c2', importer:true, vendor:true, system_code:'c2')
         @c.linked_companies << c2
         get :index, roles:'importer,vendor'
         expect(response).to be_success

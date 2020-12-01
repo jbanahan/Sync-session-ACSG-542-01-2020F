@@ -2,15 +2,15 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
   describe "process_transaction" do
 
-    let (:importer) { Factory(:importer, system_code: "BURLI") }
+    let (:importer) { FactoryBot(:importer, system_code: "BURLI") }
     let (:cdefs) { subject.cdefs }
-    let (:user) { Factory(:user) }
+    let (:user) { FactoryBot(:user) }
 
     context "standard_order" do
       let (:edi_data) { IO.read 'spec/fixtures/files/burlington_856.edi' }
       let (:transaction) { REX12.each_transaction(StringIO.new(edi_data)).first }
       let! (:order_1) {
-        o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "13347530"
 
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let! (:order_2) {
-        o = Factory(:order, order_number: "BURLI-364985401", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-364985401", importer: importer)
         ol = o.order_lines.create! product: product, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "13347530"
 
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let (:product) {
-        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART1")
       }
 
       let! (:port_lading) { Port.create! unlocode: "HKHKG", name: "HONG KONG" }
@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     context "prepack_order" do
       let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_prepack_856.edi')).first }
       let! (:order_1) {
-        o = Factory(:order, order_number: "BURLI-641585114", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-641585114", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150180"
 
@@ -171,15 +171,15 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let (:product_1) {
-        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART1")
       }
 
       let (:product_2) {
-        p = Factory(:product, unique_identifier: "BURLI-PART2")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART2")
       }
 
       let (:product_3) {
-        p = Factory(:product, unique_identifier: "BURLI-PART3")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART3")
       }
 
       it "parses edi segments into shipments" do
@@ -228,7 +228,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     context "with alernate loop structure" do
       let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_856_alternate_loop.edi')).first }
       let! (:order_1) {
-        o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "13347530"
 
@@ -238,11 +238,11 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let (:product_1) {
-        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART1")
       }
 
       let (:product_2) {
-        p = Factory(:product, unique_identifier: "BURLI-PART2")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART2")
       }
 
       it "parses alternate edi loop structure" do
@@ -276,7 +276,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     context "with alernate loop structure" do
       let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_856_alternate_prepack_loop.edi')).first }
       let! (:order_1) {
-        o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150180"
 
@@ -286,11 +286,11 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let (:product_1) {
-        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART1")
       }
 
       let (:product_2) {
-        p = Factory(:product, unique_identifier: "BURLI-PART2")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART2")
       }
 
       it "parses alternate edi loop prepack structure" do
@@ -324,7 +324,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     context "with prepacks missing SLN segments" do
       let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_prepack_856_missing_sln.edi')).first }
       let! (:order) {
-        o = Factory(:order, order_number: "BURLI-641585114", importer: importer)
+        o = FactoryBot(:order, order_number: "BURLI-641585114", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
         ol.update_custom_value! cdefs[:ord_line_outer_pack_identifier], "PO6415851LN14"
         ol.update_custom_value! cdefs[:ord_line_units_per_inner_pack], 4
@@ -344,19 +344,19 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       let (:product_1) {
-        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART1")
         p.update_custom_value! cdefs[:prod_part_number], "16150180"
         p
       }
 
       let (:product_2) {
-        p = Factory(:product, unique_identifier: "BURLI-PART2")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART2")
         p.update_custom_value! cdefs[:prod_part_number], "16150181"
         p
       }
 
       let (:product_3) {
-        p = Factory(:product, unique_identifier: "BURLI-PART3")
+        p = FactoryBot(:product, unique_identifier: "BURLI-PART3")
         p.update_custom_value! cdefs[:prod_part_number], "16150182"
         p
       }

@@ -33,10 +33,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
     it "generates an ISF XML when ISF sent at changes" do
       shipment = Shipment.new(reference: '555', isf_sent_at:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(isf_sent_at:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))
@@ -78,10 +78,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
       shipment = Shipment.new(reference: '555')
       shipment.save!
       shipment.update_custom_value! isf_revised, '2017-01-01'
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_custom_value! isf_revised, '2018-01-01'
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       expect(subject).to receive(:send_isf_xml).with(shipment)
 
@@ -91,10 +91,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
     it "does not generate an ISF XML when ISF sent at does not change" do
       shipment = Shipment.new(reference: '555', isf_sent_at:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(isf_sent_at:Date.new(2018, 1, 29))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenerator).not_to receive(:generate_xml)
       expect(subject).not_to receive(:ftp_sync_file)
@@ -110,8 +110,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
       shipment = Shipment.new(reference: '555')
       shipment.save!
       shipment.update_custom_value! isf_revised, '2017-01-01'
-      snapshot_old = shipment.create_snapshot Factory(:user)
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       expect(subject).not_to receive(:send_isf_xml).with(shipment)
 
@@ -121,10 +121,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
     it "updates existing sync record if present" do
       shipment = Shipment.new(reference: '555', isf_sent_at:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(isf_sent_at:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       synco = shipment.sync_records.create! trading_partner:'ISF', sent_at:Date.new(2018, 1, 29)
 
@@ -151,10 +151,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
     it "does not generate an ISF XML when the shipment can't be found" do
       shipment = Shipment.new(reference: '555', isf_sent_at:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(isf_sent_at:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       shipment.delete
 
@@ -170,10 +170,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparato
 
       shipment = Shipment.new(reference: '555', isf_sent_at:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(isf_sent_at:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))

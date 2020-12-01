@@ -5,7 +5,7 @@ describe OpenChain::BusinessRulesNotifier do
     instance_double(OpenChain::SlackClient)
   }
   let! (:company) {
-    Factory(:master_company, show_business_rules:true)
+    FactoryBot(:master_company, show_business_rules:true)
   }
 
   before(:each) do
@@ -13,10 +13,10 @@ describe OpenChain::BusinessRulesNotifier do
   end
 
   it "logs all errors" do
-    imp1 = with_customs_management_id(Factory(:importer, slack_channel: 'company1'), '12345' )
-    imp2 = with_customs_management_id(Factory(:company, slack_channel: 'company2'), '23456')
-    Factory(:entry, customer_number:'12345', importer: imp1)
-    Factory(:entry, customer_number:'23456', importer: imp2)
+    imp1 = with_customs_management_id(FactoryBot(:importer, slack_channel: 'company1'), '12345' )
+    imp2 = with_customs_management_id(FactoryBot(:company, slack_channel: 'company2'), '23456')
+    FactoryBot(:entry, customer_number:'12345', importer: imp1)
+    FactoryBot(:entry, customer_number:'23456', importer: imp2)
 
 
     bvt1 = generate_business_rule('12345')
@@ -42,8 +42,8 @@ describe OpenChain::BusinessRulesNotifier do
   end
 
   it "sends to the company's slack channel" do
-    entry = Factory(:entry, customer_number:'12345')
-    company = with_customs_management_id(Factory(:company, slack_channel: 'company1', name: "My Company"), '12345')
+    entry = FactoryBot(:entry, customer_number:'12345')
+    company = with_customs_management_id(FactoryBot(:company, slack_channel: 'company1', name: "My Company"), '12345')
     bvt = generate_business_rule('12345')
 
     bvt.create_results! run_validation: true
@@ -53,7 +53,7 @@ describe OpenChain::BusinessRulesNotifier do
   end
 
   def generate_business_rule(value)
-    bvt = Factory(:business_validation_template)
+    bvt = FactoryBot(:business_validation_template)
     bvt.search_criterions.create!(model_field_uid:'ent_cust_num', operator:'eq', value:value)
     bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat', name: 'Name', description: 'Description', rule_attributes_json:{model_field_uid:'ent_entry_num', regex:'X'}.to_json)
     bvt.reload

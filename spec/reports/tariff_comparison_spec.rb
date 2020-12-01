@@ -3,7 +3,7 @@ require 'spreadsheet'
 
 describe OpenChain::Report::TariffComparison do
   before(:each) do
-    @country = Factory(:country)
+    @country = FactoryBot(:country)
     @old_ts = TariffSet.create!(:country_id=>@country.id, :label=>'a')
     @new_ts = TariffSet.create!(:country_id=>@country.id, :label=>'b')
     @unchanged_hts = '123456789'
@@ -16,7 +16,7 @@ describe OpenChain::Report::TariffComparison do
     end
     @removed = @old_ts.tariff_set_records.create!(:country_id=>@country.id, :hts_code=>'654987321')
     @added = @new_ts.tariff_set_records.create!(:country_id=>@country.id, :hts_code=>'987654321')
-    @user = Factory(:user)
+    @user = FactoryBot(:user)
   end
 
   context 'good process' do

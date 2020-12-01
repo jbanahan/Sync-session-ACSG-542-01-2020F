@@ -1,7 +1,7 @@
 describe ValidationRuleEntryMidMatchesMidList do
 
-  let! (:company) { Factory(:company, system_code: 'ACOMPANY') }
-  let! (:entry) { Factory(:entry, mfids: "1234567890\n ") }
+  let! (:company) { FactoryBot(:company, system_code: 'ACOMPANY') }
+  let! (:entry) { FactoryBot(:entry, mfids: "1234567890\n ") }
 
   subject { ValidationRuleEntryMidMatchesMidList.new(rule_attributes_json: {importer: 'ACOMPANY'}.to_json) }
 

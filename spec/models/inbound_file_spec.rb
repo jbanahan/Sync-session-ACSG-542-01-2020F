@@ -1,7 +1,7 @@
 describe InboundFile do
 
   describe "user permission functions" do
-    let(:user) { Factory(:user) }
+    let(:user) { FactoryBot(:user) }
 
     describe "find_can_view" do
       before do

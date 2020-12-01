@@ -12,8 +12,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   let(:xml) { IO.read 'spec/fixtures/files/ua_article_master_parser.xml'}
   let(:doc) { Nokogiri::XML(xml) }
   let(:cdefs) { subject.cdefs }
-  let!(:ca) { Factory(:country, name: "Canada", iso_code: "CA") }
-  let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
+  let!(:ca) { FactoryBot(:country, name: "Canada", iso_code: "CA") }
+  let!(:imp) { FactoryBot(:importer, name: "Under Armour", system_code: "UAPARTS")}
   let!(:ms) { stub_master_setup }
 
   def include_variants doc, ids
@@ -71,11 +71,11 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       doc_string = include_variants(doc, ["1"])
       expect_any_instance_of(Product).not_to receive(:create_snapshot) # purpose of the test
 
-      p = Factory(:product, importer: imp, unique_identifier: "UAPARTS-art num", name: "art descr")
-      cl = Factory(:classification, product: p, country: ca)
+      p = FactoryBot(:product, importer: imp, unique_identifier: "UAPARTS-art num", name: "art descr")
+      cl = FactoryBot(:classification, product: p, country: ca)
       cl.update_custom_value!(cdefs[:class_customs_description], "customs descr")
-      Factory(:tariff_record, classification: cl, hts_1: "1111111111")
-      var = Factory(:variant, product: p, variant_identifier: "sku 1")
+      FactoryBot(:tariff_record, classification: cl, hts_1: "1111111111")
+      var = FactoryBot(:variant, product: p, variant_identifier: "sku 1")
       var.find_and_set_custom_value(cdefs[:var_upc], "upc num 1")
       var.find_and_set_custom_value(cdefs[:var_article_number], "var art 1")
       var.find_and_set_custom_value(cdefs[:var_description], "var descr 1")
@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     end
 
     let(:prod) {
-      p = Factory(:product, importer: imp)
+      p = FactoryBot(:product, importer: imp)
       p.update_custom_value! cdefs[:prod_part_number], "ARTICLE"
       p
     }
@@ -112,7 +112,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       context "when article number isn't nil" do
 
         it "updates product if it exists and has been changed" do
-          prod = Factory(:product, unique_identifier: "UAPARTS-art num", name: nil, importer: imp)
+          prod = FactoryBot(:product, unique_identifier: "UAPARTS-art num", name: nil, importer: imp)
           subject.create_or_update_product! art_elem, change_flag
           prod.reload
           expect(prod.name).to eq "art descr"
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         end
 
         it "doesn't update product if unchanged" do
-          prod = Factory(:product, unique_identifier: "UAPARTS-art num", name: "art descr", importer: imp)
+          prod = FactoryBot(:product, unique_identifier: "UAPARTS-art num", name: "art descr", importer: imp)
           subject.create_or_update_product! art_elem, change_flag
           prod.reload
           expect(prod.name).to eq "art descr"
@@ -195,9 +195,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       end
 
       context "prepacks" do
-        let(:prepack_prod) { Factory(:product, unique_identifier: 'UAPARTS-1271424-437', importer: prod.importer )}
+        let(:prepack_prod) { FactoryBot(:product, unique_identifier: 'UAPARTS-1271424-437', importer: prod.importer )}
         let!(:var_1) do
-          var = Factory(:variant, variant_identifier: '1271424-43700-SM', product: prepack_prod)
+          var = FactoryBot(:variant, variant_identifier: '1271424-43700-SM', product: prepack_prod)
           var.update_custom_value!(cdefs[:var_upc], 'upc a')
           var.update_custom_value!(cdefs[:var_article_number], 'article a')
           var.update_custom_value!(cdefs[:var_description], 'descr a')
@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
           var
         end
         let!(:var_2) do
-          var = Factory(:variant, variant_identifier: '1271424-43700-LG', product: prepack_prod)
+          var = FactoryBot(:variant, variant_identifier: '1271424-43700-LG', product: prepack_prod)
           var.update_custom_value!(cdefs[:var_upc], 'upc b')
           var.update_custom_value!(cdefs[:var_article_number], 'article b')
           var.update_custom_value!(cdefs[:var_description], 'descr b')
@@ -347,7 +347,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
     describe "create_or_update_classi!" do
       let!(:classi) do
-        c = Factory(:classification, product: prod, country: ca)
+        c = FactoryBot(:classification, product: prod, country: ca)
         c.update_custom_value!(cdefs[:class_customs_description], "old descr")
         c
       end
@@ -381,7 +381,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     end
 
     describe "create_or_update_tariff!" do
-      let!(:classi) { Factory(:classification, product: prod, country: ca)}
+      let!(:classi) { FactoryBot(:classification, product: prod, country: ca)}
 
       context "with single HTS" do
         it "updates classification's tariff if it already exists and has been changed" do
@@ -409,7 +409,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       end
 
       it "removes tariff if given more than one HTS" do
-        Factory(:tariff_record, classification: classi, hts_1: "1111111111")
+        FactoryBot(:tariff_record, classification: classi, hts_1: "1111111111")
         classi.reload
         expect {subject.create_or_update_tariff! classi, ["1111111111", "2222222222"], change_flag}.to change(TariffRecord, :count).from(1).to(0)
         expect(change_flag.value).to eq true
@@ -434,12 +434,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
     describe "pluck_unique_hts_values" do
       let!(:var_1) do
-        v = Factory(:variant, product: prod)
+        v = FactoryBot(:variant, product: prod)
         v.update_custom_value!(cdefs[:var_hts_code], "1111111111")
         v
       end
       let!(:var_2) do
-        v = Factory(:variant, product: prod)
+        v = FactoryBot(:variant, product: prod)
         v.update_custom_value!(cdefs[:var_hts_code], "2222222222")
         v
       end
@@ -449,7 +449,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       end
 
       it "removes duplicates" do
-        v3 = Factory(:variant, product: prod)
+        v3 = FactoryBot(:variant, product: prod)
         v3.update_custom_value!(cdefs[:var_hts_code], "1111111111")
         expect(subject.pluck_unique_hts_values prod).to eq ["1111111111", "2222222222"]
       end
@@ -458,7 +458,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
   describe "error emailing" do
     let! (:user) {
-      u = Factory(:user, email: "me@there.com")
+      u = FactoryBot(:user, email: "me@there.com")
       u.groups << group
       u
     }

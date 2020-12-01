@@ -1,16 +1,16 @@
 describe ValidationRuleEntryInvoiceChargeCode do
     before :each do
-      @entry = Factory(:entry)
-      @inv_no_suffix = Factory(:broker_invoice, entry: @entry)
-      Factory(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '123', charge_amount: 5)
-      Factory(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '456', charge_amount: 10)
+      @entry = FactoryBot(:entry)
+      @inv_no_suffix = FactoryBot(:broker_invoice, entry: @entry)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '123', charge_amount: 5)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '456', charge_amount: 10)
 
-      @inv_suffix = Factory(:broker_invoice, entry: @entry, suffix: 'AB')
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: 5)
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: 10)
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: 15)
+      @inv_suffix = FactoryBot(:broker_invoice, entry: @entry, suffix: 'AB')
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: 5)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: 10)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: 15)
 
-      Factory(:broker_invoice_line, charge_code: '999', charge_amount: 17) # unrelated entry
+      FactoryBot(:broker_invoice_line, charge_code: '999', charge_amount: 17) # unrelated entry
     end
 
   describe "run_validation" do
@@ -28,22 +28,22 @@ describe ValidationRuleEntryInvoiceChargeCode do
 
     it "passes if invoice lines without blacklisted charge codes have a non-zero sum" do
       rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {blacklist_charge_codes: ['123', '456', '789']}.to_json)
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: -20)
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: -25)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: -20)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: -25)
       expect(rule.run_validation(@entry)).to be_nil
     end
 
     it "passes if suffix-filtered invoice lines with white-listed charge codes have a non-zero sum" do
       rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'],
                                                                              filter: 'suffix'}.to_json)
-      Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: -15)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: -15)
       expect(rule.run_validation(@entry)).to be_nil
     end
 
     it "passes if non-suffix-filtered invoice lines with white-listed charge codes have a non-zero sum" do
       rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'],
                                                                              filter: 'no_suffix'}.to_json)
-      Factory(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '456', charge_amount: -10)
+      FactoryBot(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '456', charge_amount: -10)
       expect(rule.run_validation(@entry)).to be_nil
     end
   end

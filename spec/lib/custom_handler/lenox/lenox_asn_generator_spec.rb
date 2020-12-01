@@ -33,20 +33,20 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
   context "needs_data" do
     before :each do
       @cdefs = described_class.prep_custom_definitions [:ord_factory_code, :ord_destination_code, :prod_country_of_origin, :ord_line_destination_code]
-      @lenox = Factory(:company, alliance_customer_number:'LENOX', system_code:'LENOX')
-      @vendor = Factory(:company, system_code:'LENOX-VENCODE')
-      @product = Factory(:product, importer:@lenox, unique_identifier:'LENOX-partnum')
+      @lenox = FactoryBot(:company, alliance_customer_number:'LENOX', system_code:'LENOX')
+      @vendor = FactoryBot(:company, system_code:'LENOX-VENCODE')
+      @product = FactoryBot(:product, importer:@lenox, unique_identifier:'LENOX-partnum')
       @product.update_custom_value!(@cdefs[:prod_country_of_origin], 'CN')
-      @order = Factory(:order, importer:@lenox, order_number:'LENOX-ponum', vendor:@vendor, customer_order_number:'ponum')
+      @order = FactoryBot(:order, importer:@lenox, order_number:'LENOX-ponum', vendor:@vendor, customer_order_number:'ponum')
       @order.update_custom_value!(@cdefs[:ord_destination_code], 'HG')
       @order.update_custom_value!(@cdefs[:ord_factory_code], '0000007')
       # @product.update_custom_value!(@cdefs[:product_units_per_set],2)
-      @order_line = Factory(:order_line, order:@order, product:@product, quantity:100, price_per_unit:100.10)
+      @order_line = FactoryBot(:order_line, order:@order, product:@product, quantity:100, price_per_unit:100.10)
       @order_line.update_custom_value!(@cdefs[:ord_line_destination_code], 'HDC')
-      @shipment = Factory(:shipment, importer:@lenox, house_bill_of_lading:'HBOL',
+      @shipment = FactoryBot(:shipment, importer:@lenox, house_bill_of_lading:'HBOL',
         vessel:'VES', est_departure_date:Date.new(2014, 7, 1),
-        unlading_port:Factory(:port, schedule_d_code:'4321'),
-        lading_port:Factory(:port, schedule_k_code:'12345'),
+        unlading_port:FactoryBot(:port, schedule_d_code:'4321'),
+        lading_port:FactoryBot(:port, schedule_k_code:'12345'),
         )
       @con = @shipment.containers.create!(container_size:"GP40'", container_number:'CN1', seal_number:'SN')
       @shipment_line = @shipment.shipment_lines.build(product_id:@product.id, quantity:10, gross_kgs:50, cbms:70, line_number:2, carton_qty:23)
@@ -55,14 +55,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       @shipment_line.save!
 
 =begin
-      @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
+      @entry = FactoryBot(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
         vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,7,1),
         lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11',container_sizes:'40',broker_invoice_total:1)
-      @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
-      @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
+      @ci = FactoryBot(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
+      @ci_line = FactoryBot(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
         quantity:10, country_origin_code:'CN',part_number:'partnum',unit_price:100.10,line_number:2
       )
-      @container = Factory(:container,entry:@entry,container_number:'CN1',container_size:'40',
+      @container = FactoryBot(:container,entry:@entry,container_number:'CN1',container_size:'40',
         weight:50,fcl_lcl:'F',quantity:23,seal_number:'SN')
 =end
     end
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(described_class.new.find_shipments.to_a).to eq [@shipment]
       end
       it "should not find entries not for lenox" do
-        @shipment.importer = Factory(:importer)
+        @shipment.importer = FactoryBot(:importer)
         @shipment.save!
         expect(described_class.new.find_shipments.to_a).to be_empty
       end

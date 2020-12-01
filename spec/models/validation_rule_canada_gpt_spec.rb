@@ -2,10 +2,10 @@ describe ValidationRuleCanadaGpt do
 
   describe "run_validation" do
     before :each do
-      @t = Factory(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: Factory(:commercial_invoice_line, country_origin_code: "ZZ"))
+      @t = FactoryBot(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: FactoryBot(:commercial_invoice_line, country_origin_code: "ZZ"))
       @l = @t.commercial_invoice_line
       @entry = @l.entry
-      @canada = Factory(:country, iso_code: "CA")
+      @canada = FactoryBot(:country, iso_code: "CA")
       @official_tariff = OfficialTariff.create! country_id: @canada.id, hts_code: @t.hts_code, special_rates: "(GPT)"
     end
 
@@ -34,7 +34,7 @@ describe ValidationRuleCanadaGpt do
 
     it "stops after recording a single error on the tariff" do
       @l.update_attributes! country_origin_code: "AF"
-      t2 =  Factory(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: @l)
+      t2 =  FactoryBot(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: @l)
 
       expect(described_class.new.run_validation @entry).to eq "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{@l.country_origin_code} HTS: #{@t.hts_code}"
     end
@@ -42,13 +42,13 @@ describe ValidationRuleCanadaGpt do
     it "stops after recording an error on the first line" do
       # This is mostly just to confirm that stop_validation is called when iterating over the invoice lines
       @l.update_attributes! country_origin_code: "AF"
-      t = Factory(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: Factory(:commercial_invoice_line, country_origin_code: "AI", commercial_invoice: @l.commercial_invoice))
+      t = FactoryBot(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: FactoryBot(:commercial_invoice_line, country_origin_code: "AI", commercial_invoice: @l.commercial_invoice))
       expect(described_class.new.run_validation @entry).to eq "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{@l.country_origin_code} HTS: #{@t.hts_code}"
     end
 
     it "does not stop if validate_all attribute is used" do
       @l.update_attributes! country_origin_code: "AF"
-      t2 =  Factory(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: @l)
+      t2 =  FactoryBot(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: @l)
       r = described_class.new rule_attributes_json: {validate_all: "true"}.to_json
       expect(r).not_to receive(:stop_validation)
       expect(r.run_validation @entry).to eq "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{@l.country_origin_code} HTS: #{@t.hts_code}"

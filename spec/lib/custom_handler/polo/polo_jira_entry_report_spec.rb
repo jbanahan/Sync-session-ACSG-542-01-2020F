@@ -9,26 +9,26 @@ describe OpenChain::CustomHandler:: Polo::PoloJiraEntryReport do
     end
 
     it "allows access for master users who can view entries" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(u).to receive(:view_entries?).and_return true
       expect(subject.permission? u).to eq true
     end
 
     it "allows access for Polo, non-master users who can view entries" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       u.company.system_code = 'RLMASTER'
       expect(u).to receive(:view_entries?).and_return true
       expect(subject.permission? u).to eq true
     end
 
     it "prevents access by users who can't view entries" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       expect(u).to receive(:view_entries?).and_return false
       expect(subject.permission? u).to eq false
     end
 
     it "prevents access for non-Polo, non-master users who can view entries" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       u.company.system_code = 'Not Polo'
       expect(u).to receive(:view_entries?).and_return true
       expect(subject.permission? u).to eq false

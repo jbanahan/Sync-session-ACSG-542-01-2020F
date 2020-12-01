@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
 
   before :each do
     # Create a J Crew company record (otherwise the process blows up).
-    @j_crew = with_customs_management_id(Factory(:company), "JCREW")
-    @country = Factory(:country, iso_code: 'US')
+    @j_crew = with_customs_management_id(FactoryBot(:company), "JCREW")
+    @country = FactoryBot(:country, iso_code: 'US')
     @cdefs ||= described_class.prep_custom_definitions([:prod_part_number, :prod_country_of_origin])
   end
 
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
 FILE
       file.gsub! "\n", "\r\n"
       file = file.encode("utf-16le")
-      @user = Factory(:master_user)
+      @user = FactoryBot(:master_user)
       @custom_file = nil
       Tempfile.open(['JcrewTest', '.DAT']) do |t|
         t.binmode
@@ -185,7 +185,7 @@ FILE
 
     context "NOT in the main WWW instance" do
       before :each do
-        @new_j_crew = Factory(:company, system_code: "JCREW")
+        @new_j_crew = FactoryBot(:company, system_code: "JCREW")
       end
 
       let! (:master_setup) {
@@ -281,7 +281,7 @@ FILE
 FILE
       file.gsub! "\n", "\r\n"
       file = file.encode("utf-16le")
-			@user = Factory(:master_user)
+			@user = FactoryBot(:master_user)
 			@custom_file = nil
 			Tempfile.open(['JcrewTest', '.DAT']) do |t|
 				t.binmode
@@ -301,12 +301,12 @@ FILE
 
   describe "can_view?" do
     it "should allow master users to view" do
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       expect(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user)).to be_truthy
     end
 
     it "should prevent non-master users from viewing" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       expect(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user)).to be_falsey
     end
   end

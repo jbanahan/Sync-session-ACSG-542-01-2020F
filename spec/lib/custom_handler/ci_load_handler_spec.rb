@@ -290,7 +290,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
 
       let(:custom_file) { CustomFile.new attached_file_name: "test.csv" }
 
-      let (:user) { Factory(:user) }
+      let (:user) { FactoryBot(:user) }
 
       it "parses the custom file and saves results to user messages" do
         results = {bad_row_count: 0, generated_file_numbers: ["12345"]}
@@ -359,7 +359,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       subject { described_class.new file }
 
       let (:file) { CustomFile.new attached_file_name: "testing.csv" }
-      let (:user) { Factory(:user) }
+      let (:user) { FactoryBot(:user) }
       let (:csv_file) { File.open("spec/fixtures/files/test_sheet_3.csv", "r") }
 
       after do
@@ -391,18 +391,18 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       it "allows master users to view" do
-        expect(subject.can_view?(Factory(:master_user))).to be_truthy
+        expect(subject.can_view?(FactoryBot(:master_user))).to be_truthy
       end
 
       it "disallows regular user" do
-        expect(subject.can_view?(Factory(:user))).to be_falsey
+        expect(subject.can_view?(FactoryBot(:user))).to be_falsey
       end
     end
 
     it "disallows access when Kewill CI Upload feature is not enabled" do
        ms = MasterSetup.new
        allow(MasterSetup).to receive(:get).and_return ms
-       expect(subject.can_view?(Factory(:master_user))).to be_falsey
+       expect(subject.can_view?(FactoryBot(:master_user))).to be_falsey
     end
   end
 

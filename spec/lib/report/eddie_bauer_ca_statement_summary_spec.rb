@@ -3,7 +3,7 @@ require 'open_chain/report/eddie_bauer_ca_statement_summary'
 describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "permission?" do
-    let!(:user) { Factory(:user) }
+    let!(:user) { FactoryBot(:user) }
 
     it "allows master users only" do
       expect_any_instance_of(Company).to receive(:master?).and_return true
@@ -18,7 +18,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "run_report" do
     it "runs the report" do
-      user =  Factory(:user)
+      user =  FactoryBot(:user)
       expect_any_instance_of(OpenChain::Report::EddieBauerCaStatementSummary).to receive(:run).with(user, instance_of(HashWithIndifferentAccess))
       OpenChain::Report::EddieBauerCaStatementSummary.run_report user, {}
     end
@@ -45,18 +45,18 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "run" do
     before :each do
-      @entry = Factory(:entry, entry_number: '123456789', customer_number: "EBCC", entry_filed_date: '2014-03-01')
-      @commercial_invoice = Factory(:commercial_invoice, entry: @entry, invoice_number: "A")
-      @cil =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "ABC-123", hmf: 1, prorated_mpf: 2, cotton_fee: 3, country_origin_code: "CN")
+      @entry = FactoryBot(:entry, entry_number: '123456789', customer_number: "EBCC", entry_filed_date: '2014-03-01')
+      @commercial_invoice = FactoryBot(:commercial_invoice, entry: @entry, invoice_number: "A")
+      @cil =  FactoryBot(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "ABC-123", hmf: 1, prorated_mpf: 2, cotton_fee: 3, country_origin_code: "CN")
       @tariff_line = @cil.commercial_invoice_tariffs.create! duty_amount: 5, duty_rate: 0.5
       @tariff_line2 = @cil.commercial_invoice_tariffs.create! duty_amount: 10, duty_rate: 0.05
-      @cil2 =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "DEF-456", hmf: 4, prorated_mpf: 5, cotton_fee: 6, country_origin_code: "CA")
+      @cil2 =  FactoryBot(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "DEF-456", hmf: 4, prorated_mpf: 5, cotton_fee: 6, country_origin_code: "CA")
       @tariff_line3 = @cil2.commercial_invoice_tariffs.create! duty_amount: 20, duty_rate: 0.25
       @tariff_line4 = @cil2.commercial_invoice_tariffs.create! duty_amount: 25, duty_rate: 0.05
 
-      @broker_invoice = Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01')
-      @broker_invoice_line1 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 5)
-      @broker_invoice_line2 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 15, charge_type: "D")
+      @broker_invoice = FactoryBot(:broker_invoice, entry: @entry, invoice_date: '2014-03-01')
+      @broker_invoice_line1 = FactoryBot(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 5)
+      @broker_invoice_line2 = FactoryBot(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 15, charge_type: "D")
 
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
     end
@@ -66,7 +66,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
     end
 
     it "outputs statement information for all entries w/ invoice dates between specified dates" do
-      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run FactoryBot(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
 
       expect(sheet.row(0)).to eq ["Statement #", "ACH #", "Entry #", "PO", "Business", "Invoice", "Duty Rate", "Duty", "Taxes / Fees", "Fees", "ACH Date", "Statement Date", "Release Date", "Unique ID", "Country of Origin", "LINK"]
@@ -77,16 +77,16 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
     end
 
     it "prevents users who do not have access to the entry from seeing them" do
-      @t = described_class.new.run Factory(:user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run FactoryBot(:user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 1
     end
 
     it "excludes invoices outside the start and end date range on an entry" do
-      prior_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-02-01'), charge_amount: 5).broker_invoice
-      post_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-05-01'), charge_amount: 5).broker_invoice
+      prior_invoice = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry, invoice_date: '2014-02-01'), charge_amount: 5).broker_invoice
+      post_invoice = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry, invoice_date: '2014-05-01'), charge_amount: 5).broker_invoice
 
-      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run FactoryBot(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
 
       sheet = Spreadsheet.open(@t.path).worksheet 0
@@ -96,18 +96,18 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
     it "excludes entries with invoices that zero each other out when there's no duty" do
       @broker_invoice_line2.update! charge_type: nil, charge_amount: 0
-      other_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
+      other_invoice = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
 
-      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run FactoryBot(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 1
     end
 
     it "includes entries with invoices that zero each other out when there is duty" do
       @broker_invoice_line2.update! charge_type: "D", charge_amount: 0
-      other_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
+      other_invoice = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
 
-      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run FactoryBot(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 3
     end

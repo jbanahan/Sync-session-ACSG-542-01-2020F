@@ -1,8 +1,8 @@
 describe CustomViewTemplatesController do
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
 
   before do
-    3.times { Factory(:custom_view_template, module_type: "Product") }
+    3.times { FactoryBot(:custom_view_template, module_type: "Product") }
     sign_in_as user
   end
 

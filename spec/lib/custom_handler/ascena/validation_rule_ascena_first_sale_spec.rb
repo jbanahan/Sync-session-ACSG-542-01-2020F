@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
 
   describe "run_validation" do
     let (:entry) {
-      e = Factory(:entry, customer_number: "ASCE", entry_filed_date: Date.new(2017, 4, 21))
+      e = FactoryBot(:entry, customer_number: "ASCE", entry_filed_date: Date.new(2017, 4, 21))
       i = e.commercial_invoices.create! invoice_number: "INV"
       l = i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 10, po_number: '12345', product_line: 'JST'
       l.commercial_invoice_tariffs.create! entered_value: 5
@@ -12,8 +12,8 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     }
 
     before do
-      Factory(:order, vendor: Factory(:company, system_code: "ACME"), factory: Factory(:company, mid: "MID"), order_number: "ASCENA-JST-12345")
-      Factory(:order, vendor: Factory(:company, system_code: "KONVENIENTZ"), factory: Factory(:company, mid: "MID2"), order_number: "ASCENA-JST-54321")
+      FactoryBot(:order, vendor: FactoryBot(:company, system_code: "ACME"), factory: FactoryBot(:company, mid: "MID"), order_number: "ASCENA-JST-12345")
+      FactoryBot(:order, vendor: FactoryBot(:company, system_code: "KONVENIENTZ"), factory: FactoryBot(:company, mid: "MID2"), order_number: "ASCENA-JST-54321")
     end
 
     let! (:mids) {

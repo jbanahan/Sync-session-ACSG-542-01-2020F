@@ -6,18 +6,18 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
   let(:mid) { "MANUFACTURER" }
   let(:coo) { "VN" }
   let(:part_number) {"62974"}
-  let(:crew) { with_customs_management_id(Factory(:importer), "J0000") }
+  let(:crew) { with_customs_management_id(FactoryBot(:importer), "J0000") }
 
   let(:previous_entry) do
-    entry = Factory(:entry, importer: crew, import_country: Factory(:country, iso_code: "US"), release_date: Time.zone.now)
-    inv = Factory(:commercial_invoice, entry: entry, mfid: mid)
-    line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: part_number, country_origin_code: coo)
-    Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: hts_number)
+    entry = FactoryBot(:entry, importer: crew, import_country: FactoryBot(:country, iso_code: "US"), release_date: Time.zone.now)
+    inv = FactoryBot(:commercial_invoice, entry: entry, mfid: mid)
+    line = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, part_number: part_number, country_origin_code: coo)
+    FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: hts_number)
 
     entry
   end
 
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
 
   before do
     previous_entry
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
       it "handles restricted products" do
         import_restricted = described_class.prep_custom_definitions([:prod_import_restricted])[:prod_import_restricted]
-        prod = Factory(:product, importer: crew, unique_identifier: "JCREW-#{part_number}")
+        prod = FactoryBot(:product, importer: crew, unique_identifier: "JCREW-#{part_number}")
         cv = prod.find_and_set_custom_value(import_restricted, true)
         cv.save!
 

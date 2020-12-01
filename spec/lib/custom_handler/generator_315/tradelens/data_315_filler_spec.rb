@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Generator315::Tradelens::Data315Filler do
   let(:data) { {transport_mode_code: 40, master_bills: ["MAEUMBOL1", "MAEUMBOL2"], container_numbers: ["cont_num1", "cont_num2"]} }
   let(:milestone) { OpenStruct.new code: "ms code", date: Date.new(2020, 3, 15), sync_record: SyncRecord.new }
-  let(:entry) { Factory(:entry, entry_port_code: "PORT CODE", import_country: Factory(:country, iso_code: "US"))  }
+  let(:entry) { FactoryBot(:entry, entry_port_code: "PORT CODE", import_country: FactoryBot(:country, iso_code: "US"))  }
 
   describe "create_315_data" do
     it "creates 315" do
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::Generator315::Tradelens::Data315Filler do
 
       it "adds prefixes port code with 'CBSA:' for CA entry" do
         entry.entry_port_code = "12345"
-        entry.import_country = Factory(:country, iso_code: "CA")
+        entry.import_country = FactoryBot(:country, iso_code: "CA")
 
         filler = described_class.new(entry, data, milestone)
         filler.create_315_data.add_entry_port

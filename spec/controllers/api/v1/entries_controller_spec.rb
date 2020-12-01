@@ -1,7 +1,7 @@
 describe Api::V1::EntriesController do
   let(:downloader) { OpenChain::ActivitySummary::EntrySummaryDownload }
-  let(:imp) { Factory(:company) }
-  let(:u) { Factory(:user) }
+  let(:imp) { FactoryBot(:company) }
+  let(:u) { FactoryBot(:user) }
 
   before { allow_api_access u }
 

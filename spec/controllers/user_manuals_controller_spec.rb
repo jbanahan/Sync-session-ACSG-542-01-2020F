@@ -1,7 +1,7 @@
 describe UserManualsController do
 
   def check_admin_secured
-    sign_in_as Factory(:user)
+    sign_in_as FactoryBot(:user)
     yield
     expect(response).to be_redirect
     expect(flash[:errors].size).to eq(1)
@@ -15,9 +15,9 @@ describe UserManualsController do
     end
 
     it "lists all manuals" do
-      um1 = Factory(:user_manual, name: 'X')
-      um2 = Factory(:user_manual, name: 'A')
-      sign_in_as Factory(:admin_user)
+      um1 = FactoryBot(:user_manual, name: 'X')
+      um2 = FactoryBot(:user_manual, name: 'A')
+      sign_in_as FactoryBot(:admin_user)
       get :index
       expect(response).to be_success
       expect(assigns(:user_manuals).to_a).to eq [um1, um2]
@@ -25,7 +25,7 @@ describe UserManualsController do
   end
 
   describe '#update' do
-    let (:user_manual) { Factory(:user_manual, name: 'X') }
+    let (:user_manual) { FactoryBot(:user_manual, name: 'X') }
 
     it "admins secure" do
       check_admin_secured do
@@ -36,7 +36,7 @@ describe UserManualsController do
     end
 
     it "updates manual attributes" do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
       put :update, id: user_manual.id, user_manual: {name: 'Y'}
       expect(response).to redirect_to user_manuals_path
       user_manual.reload
@@ -54,7 +54,7 @@ describe UserManualsController do
     end
 
     it "creates with attachment" do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
       expect { post :create, user_manual: {name: 'X'}, user_manual_file: file}.to change(UserManual, :count).from(0).to(1)
       expect(response).to redirect_to user_manuals_path
       um = UserManual.first
@@ -64,7 +64,7 @@ describe UserManualsController do
   end
 
   describe '#destroy' do
-    let! (:user_manual) { Factory(:user_manual) }
+    let! (:user_manual) { FactoryBot(:user_manual) }
 
     it "admins secure" do
       check_admin_secured do
@@ -73,14 +73,14 @@ describe UserManualsController do
     end
 
     it "deletes" do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
       expect { delete :destroy, id: user_manual.id }.to change(UserManual, :count).from(1).to(0)
       expect(response).to redirect_to user_manuals_path
     end
   end
 
   describe '#edit' do
-    let (:user_manual) { Factory(:user_manual) }
+    let (:user_manual) { FactoryBot(:user_manual) }
 
     it "admins secure" do
       check_admin_secured do
@@ -89,7 +89,7 @@ describe UserManualsController do
     end
 
     it "loads manual" do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
       get :edit, id: user_manual.id
       expect(response).to be_success
       expect(assigns(:user_manual)).to eq user_manual
@@ -98,7 +98,7 @@ describe UserManualsController do
 
   describe '#for_referer' do
     it "returns page" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       # setup dummy data
       m1 = instance_double('manual1')
@@ -124,7 +124,7 @@ describe UserManualsController do
   describe '#download' do
     let! (:master_setup) { stub_master_setup }
     let (:user_manual) do
-      m = Factory(:user_manual)
+      m = FactoryBot(:user_manual)
       allow_any_instance_of(UserManual).to receive(:attachment).and_return attachment
       m
     end
@@ -143,14 +143,14 @@ describe UserManualsController do
       end
 
       it "allows user who can view" do
-        sign_in_as Factory(:user)
+        sign_in_as FactoryBot(:user)
         get :download, id: user_manual.id
         expect(response).to redirect_to "http://secure.url"
       end
     end
 
     it "allows admins" do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
       get :download, id: user_manual.id
       expect(response).to redirect_to "http://secure.url"
     end
@@ -163,7 +163,7 @@ describe UserManualsController do
     end
 
     it "allows if user has portal_redirect" do
-      sign_in_as Factory(:user)
+      sign_in_as FactoryBot(:user)
       allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
 
       allow(master_setup).to receive(:custom_feature?).with("Attachment Mask").and_return true
@@ -178,7 +178,7 @@ describe UserManualsController do
     end
 
     it "uses alternate download approach" do
-      sign_in_as Factory(:user)
+      sign_in_as FactoryBot(:user)
       allow(master_setup).to receive(:custom_feature?).with("Attachment Mask").and_return true
 
       tf = instance_double("Tempfile")

@@ -1,12 +1,12 @@
 describe Api::V1::ShipmentsController do
 
   let! (:user) {
-    u = Factory(:admin_user)
+    u = FactoryBot(:admin_user)
     allow_api_access u
     u
   }
 
-  let! (:shipment) { Factory(:shipment) }
+  let! (:shipment) { FactoryBot(:shipment) }
   let! (:state_toggle_button) { StateToggleButton.create! date_attribute: "shp_isf_sent_at", user_attribute: "shp_isf_sent_by", identifier: "shp_isf_sent", disabled: false, module_type: "Shipment"}
 
   describe "toggle_state_button" do

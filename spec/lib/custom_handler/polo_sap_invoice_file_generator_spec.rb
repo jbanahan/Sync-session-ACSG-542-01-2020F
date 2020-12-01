@@ -1,11 +1,11 @@
 describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
   let (:user) {
-    Factory(:user)
+    FactoryBot(:user)
   }
 
   let (:importer) {
-    with_fenix_id(Factory(:importer), "806167003RM0001")
+    with_fenix_id(FactoryBot(:importer), "806167003RM0001")
   }
 
   let! (:rl_canada_list) {
@@ -28,21 +28,21 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     stub_xml_files @gen
 
     @importer = importer
-    @entry = Factory(:entry, :total_duty_gst => BigDecimal.new("10.99"), :entry_number => '123456789', :total_duty=> BigDecimal.new("5.99"), :total_gst => BigDecimal.new("5.00"), :importer_tax_id => 'BLAHBLAHBLAH', importer: @importer)
-    @commercial_invoice = Factory(:commercial_invoice, :invoice_number => "INV#", :entry => @entry)
-    @cil =  Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("10"))
+    @entry = FactoryBot(:entry, :total_duty_gst => BigDecimal.new("10.99"), :entry_number => '123456789', :total_duty=> BigDecimal.new("5.99"), :total_gst => BigDecimal.new("5.00"), :importer_tax_id => 'BLAHBLAHBLAH', importer: @importer)
+    @commercial_invoice = FactoryBot(:commercial_invoice, :invoice_number => "INV#", :entry => @entry)
+    @cil =  FactoryBot(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("10"))
     @tariff_line = @cil.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
     @tariff_line2 = @cil.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("1.99"))
 
-    @broker_invoice = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV#')
-    @broker_invoice_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
-    @broker_invoice_line2 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("4.00"))
-    @broker_invoice_line3 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("-1.00"))
+    @broker_invoice = FactoryBot(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV#')
+    @broker_invoice_line1 = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
+    @broker_invoice_line2 = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("4.00"))
+    @broker_invoice_line3 = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("-1.00"))
 
     @profit_center = DataCrossReference.create!(:cross_reference_type=>'profit_center', :key=>'ABC', :value=>'Profit', company_id: @importer.id)
 
-    @tradecard_invoice = Factory(:commercial_invoice, vendor_name: "Tradecard", invoice_number: @commercial_invoice.invoice_number)
-    @tradecard_line = Factory(:commercial_invoice_line, :commercial_invoice => @tradecard_invoice, :part_number => 'ABCDEFG', :po_number=>"471234-1", :quantity=> BigDecimal.new("100"))
+    @tradecard_invoice = FactoryBot(:commercial_invoice, vendor_name: "Tradecard", invoice_number: @commercial_invoice.invoice_number)
+    @tradecard_line = FactoryBot(:commercial_invoice_line, :commercial_invoice => @tradecard_invoice, :part_number => 'ABCDEFG', :po_number=>"471234-1", :quantity=> BigDecimal.new("100"))
   end
 
   def get_workbook_sheet attachment
@@ -228,7 +228,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
 
-        inv_line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
+        inv_line_2 = FactoryBot(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
         stub_xml_files gen
 
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       it "should use tradecard invoice line quantity for prepacks and combine like invoice lines" do
         @tradecard_line.update_attributes :unit_of_measure => "AS"
-        inv_line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
+        inv_line_2 = FactoryBot(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -268,7 +268,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         expect(api_client).to receive(:find_by_uid).with(@cil.part_number, ['class_cntry_iso', '*cf_131']).and_return product_json
 
-        inv_line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
+        inv_line_2 = FactoryBot(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>@cil.po_number, :quantity=> BigDecimal.new("20"))
         inv_line_2_tariff = inv_line_2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
 
         stub_xml_files gen
@@ -366,8 +366,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @cil.update_attributes! po_number: "ABCD"
         make_sap_po
 
-        order_line = Factory(:order_line, line_number: "0020", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
-          order: Factory(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
+        order_line = FactoryBot(:order_line, line_number: "0020", product: FactoryBot(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
+          order: FactoryBot(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
         )
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -385,8 +385,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @tradecard_line.update_attributes! unit_of_measure: "AS", quantity: "10"
 
-        order_line = Factory(:order_line, line_number: "0010", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
-          order: Factory(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
+        order_line = FactoryBot(:order_line, line_number: "0010", product: FactoryBot(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
+          order: FactoryBot(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
         )
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -400,7 +400,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       it "skips commercial invoice lines with no duty" do
         # Keep the part number / etc the same, that way we don't have to make any expectation adjustments
-        cil2 =  Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("100"))
+        cil2 =  FactoryBot(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("100"))
         tariff_line = cil2.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("0"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -415,8 +415,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           # create a second broker invoice for the same entry, and make sure it's output in FFI format
           # this also tests making multiple export jobs and attaching multiple files to the email
 
-          @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 02), :invoice_number => 'INV2')
-          @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
+          @broker_invoice2 = FactoryBot(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 02), :invoice_number => 'INV2')
+          @broker_invoice2_line1 = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
 
           @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
@@ -441,7 +441,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       end
 
       it "should generate and email an MM excel file for Club Monaco" do
-        club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
+        club_monaco = with_fenix_id(FactoryBot(:importer), "866806458RM0001")
         @entry.update_attributes! importer: club_monaco
         time = Time.zone.now
         profit_center = DataCrossReference.create!(:cross_reference_type=>'profit_center', :key=>'ABC', :value=>'Profit', company_id: club_monaco.id)
@@ -695,7 +695,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, "/Invoices/Invoice/GLAccountDatas/GLAccountData[3]/AMOUNT")).to eq @broker_invoice_line3.charge_amount.abs.to_s
       end
 
-      it "generates FF invoices for Polo Factory stores" do
+      it "generates FF invoices for Polo FactoryBot stores" do
         @broker_invoice_line3.destroy
         @broker_invoice_line1.update_attributes! charge_code: "22"
         @broker_invoice_line2.update_attributes! charge_code: "250"
@@ -767,8 +767,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         # this also tests making multiple export jobs and attaching multiple files to the email
         make_sap_po
 
-        @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV2')
-        @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
+        @broker_invoice2 = FactoryBot(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV2')
+        @broker_invoice2_line1 = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
@@ -829,7 +829,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
     it "should find broker invoices for Club Monaco after May 23, 2014 that have not been succssfully invoiced" do
       @broker_invoice.update_attributes! invoice_date: '2014-05-24'
-      club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
+      club_monaco = with_fenix_id(FactoryBot(:importer), "866806458RM0001")
       @broker_invoice.entry.update_attributes! importer: club_monaco
 
       # the default invoice should be found
@@ -854,7 +854,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
 
     it "should not find Club Monaco invoices prior to May 23, 2014" do
-      club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
+      club_monaco = with_fenix_id(FactoryBot(:importer), "866806458RM0001")
       @broker_invoice.entry.update_attributes! importer: club_monaco
 
       @broker_invoice.update_attributes(:invoice_date => Date.new(2014, 5, 22))

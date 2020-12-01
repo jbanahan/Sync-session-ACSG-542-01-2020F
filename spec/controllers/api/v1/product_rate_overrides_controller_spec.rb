@@ -1,7 +1,7 @@
 describe Api::V1::ProductRateOverridesController do
   let :make_hash do
-    Factory(:country, iso_code:'CA')
-    Factory(:country, iso_code:'US')
+    FactoryBot(:country, iso_code:'CA')
+    FactoryBot(:country, iso_code:'US')
     {
       'product_rate_override'=>
       {
@@ -15,7 +15,7 @@ describe Api::V1::ProductRateOverridesController do
     }
   end
   before :each do
-    @u = Factory(:master_user)
+    @u = FactoryBot(:master_user)
     allow_api_access @u
 
     allow_any_instance_of(ProductRateOverride).to receive(:can_view?).and_return true
@@ -24,7 +24,7 @@ describe Api::V1::ProductRateOverridesController do
   end
   describe '#index' do
     it 'should get object' do
-      pro = Factory(:product_rate_override, rate:0.21)
+      pro = FactoryBot(:product_rate_override, rate:0.21)
       get :index
       expect(response).to be_success
       h = JSON.parse(response.body)['results']
@@ -35,7 +35,7 @@ describe Api::V1::ProductRateOverridesController do
   end
   describe '#show' do
     it 'should get object' do
-      pro = Factory(:product_rate_override, rate:0.21)
+      pro = FactoryBot(:product_rate_override, rate:0.21)
       get :show, id: pro.id.to_s
       expect(response).to be_success
       h = JSON.parse(response.body)['product_rate_override']
@@ -43,14 +43,14 @@ describe Api::V1::ProductRateOverridesController do
     end
     it 'should not get object without permission' do
       allow_any_instance_of(ProductRateOverride).to receive(:can_view?).and_return false
-      pro = Factory(:product_rate_override, rate:0.21)
+      pro = FactoryBot(:product_rate_override, rate:0.21)
       get :show, id: pro.id.to_s
       expect(response).to_not be_success
     end
   end
   describe '#update' do
     it 'should update object' do
-      pro = Factory(:product_rate_override, rate:0.21)
+      pro = FactoryBot(:product_rate_override, rate:0.21)
       h = make_hash
       h['id'] = pro.id.to_s
       h['product_rate_override']['id'] = h['id']
@@ -64,7 +64,7 @@ describe Api::V1::ProductRateOverridesController do
     end
     it 'should not update object without permission' do
       allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return false
-      pro = Factory(:product_rate_override, rate:0.21)
+      pro = FactoryBot(:product_rate_override, rate:0.21)
       h = make_hash
       h['id'] = pro.id.to_s
       h['product_rate_override']['id'] = h['id']
@@ -76,7 +76,7 @@ describe Api::V1::ProductRateOverridesController do
   end
   describe '#create' do
     before :each do
-      @p = Factory(:product)
+      @p = FactoryBot(:product)
       @h = make_hash
       @h['product_rate_override']['pro_product_id'] = @p.id.to_s
     end

@@ -1,7 +1,7 @@
 describe Api::V1::OneTimeAlertsController do
-  let(:user) { Factory(:user) }
-  let(:mailing_list) { Factory(:mailing_list, company: user.company, email_addresses: "tufnel@stonehenge.biz") }
-  let!(:alert) { Factory(:one_time_alert, mailing_list: mailing_list, name: "OTA name", module_type: "Product") }
+  let(:user) { FactoryBot(:user) }
+  let(:mailing_list) { FactoryBot(:mailing_list, company: user.company, email_addresses: "tufnel@stonehenge.biz") }
+  let!(:alert) { FactoryBot(:one_time_alert, mailing_list: mailing_list, name: "OTA name", module_type: "Product") }
 
   before do
     allow_api_user user
@@ -20,14 +20,14 @@ describe Api::V1::OneTimeAlertsController do
       mf_collection = [{mfid: :prod_attachment_count, label: "Attachment Count", datatype: :integer},
                        {mfid: :prod_attachment_types, label: "Attachment Types", datatype: :string}]
       alert = OneTimeAlert.first
-      alert.search_criterions << Factory(:search_criterion)
+      alert.search_criterions << FactoryBot(:search_criterion)
       get :edit, id: alert.id
       expect(response.body).to eq({alert: alert, mailing_lists: [{"id" => nil, "label" => ""}, {"id" => mailing_list.id, "label" => mailing_list.name }],
                                    criteria: alert.search_criterions.map { |sc| sc.json(user) }, model_fields: mf_collection}.to_json)
     end
 
     it "prevents access by other users" do
-      allow_api_access Factory(:user)
+      allow_api_access FactoryBot(:user)
       get :edit, id: alert.id
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
@@ -39,13 +39,13 @@ describe Api::V1::OneTimeAlertsController do
     let(:time2) { DateTime.new 2018, 3, 16 }
     let(:time3) { DateTime.new 2018, 3, 17 }
     let(:time4) { DateTime.new 2018, 3, 18 }
-    let(:user2) { Factory(:user) }
+    let(:user2) { FactoryBot(:user) }
 
     before do
       alert.update(module_type: "original module_type", blind_copy_me: false, expire_date: time1, email_addresses: "tufnel@stonehenge.biz",
                    email_body: "original body", email_subject: "original subject", enabled_date: time2, mailing_list: nil,
                    name: "original name", user_id: user2.id)
-      alert.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator" => "eq", "value" => "w", "include_empty" => true)
+      alert.search_criterions << FactoryBot(:search_criterion, model_field_uid: "ent_brok_ref", "operator" => "eq", "value" => "w", "include_empty" => true)
     end
 
     it "replaces basic fields and search criterions for a permitted user, leaves module_type unchanged" do
@@ -53,7 +53,7 @@ describe Api::V1::OneTimeAlertsController do
 
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "sthubbins@hellhole.co.uk",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
       alert.reload
       criteria = alert.search_criterions
@@ -80,7 +80,7 @@ describe Api::V1::OneTimeAlertsController do
       expect_any_instance_of(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time1, email_addresses: "sthubbins@hellhole.co.uk",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
 
       alert.reload
@@ -92,7 +92,7 @@ describe Api::V1::OneTimeAlertsController do
 
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
 
       expect(JSON.parse(response.body)["error"]).to eq "Could not save due to missing or invalid email."
@@ -105,7 +105,7 @@ describe Api::V1::OneTimeAlertsController do
 
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4, mailing_list_id: mailing_list.id,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
 
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
@@ -118,7 +118,7 @@ describe Api::V1::OneTimeAlertsController do
 
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "abc.com",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
 
       expect(JSON.parse(response.body)["error"]).to eq "Could not save due to missing or invalid email."
@@ -131,7 +131,7 @@ describe Api::V1::OneTimeAlertsController do
 
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "abc@abc.com",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "", user_id: Factory(:user).id},
+                                         name: "", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
 
       expect(JSON.parse(response.body)["error"]).to eq "You must include a name."
@@ -142,7 +142,7 @@ describe Api::V1::OneTimeAlertsController do
     it "blocks other users" do
       put :update, id: alert.id, alert: {module_type: "new module_type", blind_copy_me: true, expire_date: time3, email_addresses: "sthubbins@hellhole.co.uk",
                                          email_body: "new body", email_subject: "new subject", enabled_date: time4,
-                                         name: "new name", user_id: Factory(:user).id},
+                                         name: "new name", user_id: FactoryBot(:user).id},
                    criteria: alert_new_criteria
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
       alert.reload
@@ -180,7 +180,7 @@ describe Api::V1::OneTimeAlertsController do
     end
 
     it "allows changes by admin users" do
-      allow_api_user Factory(:admin_user)
+      allow_api_user FactoryBot(:admin_user)
       post :update_reference_fields, fields: { "Entry" => [{"mfid" => "ent_entry_num", "label" => "Entry Number"},
                                                            {"mfid" => "ent_release_date", "label" => "Release Date"}],
                                                "Product" => [{"mfid" => "prod_ent_type", "label" => "Product Type"}] }

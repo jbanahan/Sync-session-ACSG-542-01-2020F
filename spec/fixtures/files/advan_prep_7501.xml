@@ -858,7 +858,7 @@
         <ItemNumber>11401806</ItemNumber>
         <OriginCountry Code="CN">China</OriginCountry>
         <PartyInfo>
-          <Type>Factory</Type>
+          <Type>FactoryBot</Type>
           <Code>None</Code>
           <Name>SHANDONG LONGJI MACHINERY</Name>
           <AddressLine1>CO.,LTD.</AddressLine1>
@@ -911,7 +911,7 @@
         <CommodityDescription>Painted rotor 1 EA CQPRT</CommodityDescription>
         <TotalCubicMeters ANSICode="CR" Unit="CBMS">.64</TotalCubicMeters>
         <ShipTerms Code="FOB">Free on Board</ShipTerms>
-        <FactoryCountry>China</FactoryCountry>
+        <FactoryBotCountry>China</FactoryBotCountry>
         <CustomsAmount Currency="USD">826.4</CustomsAmount>
         <FinalDestination>
           <LocationCode>11</LocationCode>
@@ -991,7 +991,7 @@
         <ItemNumber>11402124</ItemNumber>
         <OriginCountry Code="CN">China</OriginCountry>
         <PartyInfo>
-          <Type>Factory</Type>
+          <Type>FactoryBot</Type>
           <Code>None</Code>
           <Name>SHANDONG LONGJI MACHINERY</Name>
           <AddressLine1>CO.,LTD.</AddressLine1>
@@ -1044,7 +1044,7 @@
         <CommodityDescription>Painted rotor 1 EA CQPRT</CommodityDescription>
         <TotalCubicMeters ANSICode="CR" Unit="CBMS">.87</TotalCubicMeters>
         <ShipTerms Code="FOB">Free on Board</ShipTerms>
-        <FactoryCountry>China</FactoryCountry>
+        <FactoryBotCountry>China</FactoryBotCountry>
         <CustomsAmount Currency="USD">1375.76</CustomsAmount>
         <FinalDestination>
           <LocationCode>11</LocationCode>
@@ -1126,7 +1126,7 @@
       <TotalCartons>2057</TotalCartons>
       <PickupType>None</PickupType>
       <PickupOrDropoffFlag>Pickup</PickupOrDropoffFlag>
-      <FactoryIsShipper>false</FactoryIsShipper>
+      <FactoryBotIsShipper>false</FactoryBotIsShipper>
       <ShippingDeclaration1 Label="Shipping Order Declaration 1">false</ShippingDeclaration1>
       <ShippingDeclaration2 Label="Shipping Order Declaration 2">false</ShippingDeclaration2>
       <ShippingDeclaration3 Label="Shipping Order Declaration 3">false</ShippingDeclaration3>

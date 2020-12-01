@@ -1,26 +1,26 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
   let (:entry) do
-    entry = Factory(:entry)
+    entry = FactoryBot(:entry)
     c1 = entry.containers.create! container_number: "12345"
     c2 = entry.containers.create! container_number: "98765"
 
-    invoice = Factory(:commercial_invoice, entry: entry)
-    line1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, container: c1, po_number: "PO1", prorated_mpf: 25, hmf: 10, cotton_fee: 5)
-    Factory(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 100)
-    Factory(:commercial_invoice_tariff, hts_code: "99038815", commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 20)
+    invoice = FactoryBot(:commercial_invoice, entry: entry)
+    line1 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, container: c1, po_number: "PO1", prorated_mpf: 25, hmf: 10, cotton_fee: 5)
+    FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 100)
+    FactoryBot(:commercial_invoice_tariff, hts_code: "99038815", commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 20)
 
-    line2 = Factory(:commercial_invoice_line, commercial_invoice: invoice, container: c2, po_number: "PO2", add_duty_amount: 25, cvd_duty_amount: 75)
-    Factory(:commercial_invoice_tariff, commercial_invoice_line: line2, entered_value: 100, duty_amount: 50, gross_weight: 50)
+    line2 = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, container: c2, po_number: "PO2", add_duty_amount: 25, cvd_duty_amount: 75)
+    FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line2, entered_value: 100, duty_amount: 50, gross_weight: 50)
 
     entry.reload
   end
 
   let (:invoice) do
-    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123", invoice_date: Date.new(2016, 3, 1), customer_number: "LUMBER", source_system: "Alliance")
-    Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: 290)
-    Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0004", charge_amount: 99.99)
-    Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0005", charge_amount: 150)
+    invoice = FactoryBot(:broker_invoice, entry: entry, invoice_number: "INV123", invoice_date: Date.new(2016, 3, 1), customer_number: "LUMBER", source_system: "Alliance")
+    FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: 290)
+    FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0004", charge_amount: 99.99)
+    FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0005", charge_amount: 150)
 
     invoice.reload
   end
@@ -31,8 +31,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
   end
 
   let (:invoice_2) do
-    invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123A", invoice_date: Date.new(2016, 3, 2), customer_number: "LUMBER", source_system: "Alliance")
-    Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: -150)
+    invoice = FactoryBot(:broker_invoice, entry: entry, invoice_number: "INV123A", invoice_date: Date.new(2016, 3, 2), customer_number: "LUMBER", source_system: "Alliance")
+    FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: -150)
 
     invoice.reload
   end

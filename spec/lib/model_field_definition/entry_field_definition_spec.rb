@@ -5,10 +5,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "is first billed date when multiple bills" do
-      bi = Factory(:broker_invoice, invoice_date: Date.new(2016, 10, 1))
-      Factory(:broker_invoice, invoice_date: Date.new(2016, 10, 2), entry: bi.entry)
+      bi = FactoryBot(:broker_invoice, invoice_date: Date.new(2016, 10, 1))
+      FactoryBot(:broker_invoice, invoice_date: Date.new(2016, 10, 2), entry: bi.entry)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_first_billed_date', operator: 'eq', value: '2016-10-01')
       expect(ss.result_keys).to eq [bi.entry.id]
 
@@ -17,9 +17,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "is nil when no bills" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_first_billed_date', operator: 'null')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -38,8 +38,8 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns 0 if no containers" do
-      ent = Factory(:entry)
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ent = FactoryBot(:entry)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_container_count', operator: 'eq', value: '0')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -48,10 +48,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns container count" do
-      ent = Factory(:entry)
-      2.times {|_i| Factory(:container, entry: ent)}
+      ent = FactoryBot(:entry)
+      2.times {|_i| FactoryBot(:container, entry: ent)}
       ent.reload
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_container_count', operator: 'eq', value: '2')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -66,9 +66,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns nil if no entry number" do
-      ent = Factory(:entry, entry_number: nil)
+      ent = FactoryBot(:entry, entry_number: nil)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_filer', operator: 'null')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -76,10 +76,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns first five characters of entry number if Canadian" do
-      country = Factory(:country, iso_code: 'CA')
-      ent = Factory(:entry, entry_number: '1324657980', import_country: country)
+      country = FactoryBot(:country, iso_code: 'CA')
+      ent = FactoryBot(:entry, entry_number: '1324657980', import_country: country)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_filer', operator: 'eq', value: '13246')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -87,10 +87,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns first three characters of entry number if USA" do
-      country = Factory(:country, iso_code: 'US')
-      ent = Factory(:entry, entry_number: '1324657980', import_country: country)
+      country = FactoryBot(:country, iso_code: 'US')
+      ent = FactoryBot(:entry, entry_number: '1324657980', import_country: country)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_filer', operator: 'eq', value: '132')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -98,9 +98,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns first three characters of entry number if no import country specified" do
-      ent = Factory(:entry, entry_number: '1324657980', import_country: nil)
+      ent = FactoryBot(:entry, entry_number: '1324657980', import_country: nil)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_filer', operator: 'eq', value: '132')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -114,13 +114,13 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns discount sum" do
-      ent = Factory(:entry)
-      inv = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: inv, miscellaneous_discount: 10.25)
-      Factory(:commercial_invoice_line, commercial_invoice: inv, miscellaneous_discount: 5.50)
+      ent = FactoryBot(:entry)
+      inv = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: inv, miscellaneous_discount: 10.25)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: inv, miscellaneous_discount: 5.50)
       ent.reload
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_total_miscellaneous_discount', operator: 'eq', value: '15.75')
       expect(ss.result_keys).to eq [ent.id]
 
@@ -134,14 +134,14 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns concatenated exception codes" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_exceptions.create! code: "D", resolved_date: nil
       ent.entry_exceptions.create! code: "B", resolved_date: nil
       ent.entry_exceptions.create! code: "C", resolved_date: Date.new(2020, 1, 1)
       ent.entry_exceptions.create! code: "A", resolved_date: nil
       ent.entry_exceptions.create! code: "D", resolved_date: nil
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_open_exception_codes', operator: 'eq', value: "D\nB\nA")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -155,14 +155,14 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns concatenated exception codes" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_exceptions.create! code: "D", resolved_date: Date.new(2020, 1, 1)
       ent.entry_exceptions.create! code: "B", resolved_date: Date.new(2020, 2, 2)
       ent.entry_exceptions.create! code: "C", resolved_date: nil
       ent.entry_exceptions.create! code: "A", resolved_date: Date.new(2020, 3, 3)
       ent.entry_exceptions.create! code: "D", resolved_date: Date.new(2020, 4, 4)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_resolved_exception_codes', operator: 'eq', value: "D\nB\nA")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -177,10 +177,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
           uid = "ent_pga_#{agency_code.downcase}"
           mf = ModelField.find_by_uid(uid.to_sym)
 
-          ent = Factory(:entry)
+          ent = FactoryBot(:entry)
           ent.entry_pga_summaries.create!(agency_code: agency_code)
 
-          ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+          ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
           ss.search_criterions.build(model_field_uid: uid, operator: "eq", value: true)
           expect(ss.result_keys).to eq [ent.id]
 
@@ -191,9 +191,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
           uid = "ent_pga_#{agency_code.downcase}"
           mf = ModelField.find_by_uid(uid.to_sym)
 
-          ent = Factory(:entry)
+          ent = FactoryBot(:entry)
 
-          ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+          ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
           ss.search_criterions.build(model_field_uid: uid, operator: "eq", value: false)
           expect(ss.result_keys).to eq [ent.id]
 
@@ -209,7 +209,7 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns concatenated exception comments" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_exceptions.create! code: "A", comments: "Arguments, agreements, advice, answers, articulate announcements"
       ent.entry_exceptions.create! code: "A", comments: "Babble, burble, banter, bicker bicker bicker"
       ent.entry_exceptions.create! code: "A", comments: "   "
@@ -221,7 +221,7 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
                      "Babble, burble, banter, bicker bicker bicker\n" +
                      "Brouhaha, balderdash, ballyhoo"
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_exception_notes', operator: 'eq', value: expected_val)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -235,10 +235,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns lading port name" do
-      port = Factory(:port, schedule_k_code: "59687", name: "Innsmouth")
-      ent = Factory(:entry, lading_port: port)
+      port = FactoryBot(:port, schedule_k_code: "59687", name: "Innsmouth")
+      ent = FactoryBot(:entry, lading_port: port)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_lading_port_name', operator: 'eq', value: "Innsmouth")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -246,17 +246,17 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "updates port code by name" do
-      Factory(:port, schedule_k_code: "59687", name: "Innsmouth")
-      ent = Factory(:entry)
+      FactoryBot(:port, schedule_k_code: "59687", name: "Innsmouth")
+      ent = FactoryBot(:entry)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Lading Port set to Innsmouth"
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Lading Port set to Innsmouth"
       expect(ent.lading_port_code).to eq "59687"
     end
 
     it "returns error message on import when port not found" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
       expect(ent.lading_port_code).to be_nil
     end
   end
@@ -267,10 +267,10 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns unlading port name" do
-      port = Factory(:port, schedule_d_code: "5968", name: "Innsmouth")
-      ent = Factory(:entry, unlading_port: port)
+      port = FactoryBot(:port, schedule_d_code: "5968", name: "Innsmouth")
+      ent = FactoryBot(:entry, unlading_port: port)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_unlading_port_name', operator: 'eq', value: "Innsmouth")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -278,17 +278,17 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "updates port code by name" do
-      Factory(:port, schedule_d_code: "5968", name: "Innsmouth")
-      ent = Factory(:entry)
+      FactoryBot(:port, schedule_d_code: "5968", name: "Innsmouth")
+      ent = FactoryBot(:entry)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Unlading Port set to Innsmouth"
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Unlading Port set to Innsmouth"
       expect(ent.unlading_port_code).to eq "5968"
     end
 
     it "returns error message on import when port not found" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
       expect(ent.unlading_port_code).to be_nil
     end
   end
@@ -299,11 +299,11 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns entry port name for Kewill" do
-      port = Factory(:port, schedule_d_code: "5968", name: "Innsmouth")
-      import_country = Factory(:country, iso_code: "US")
-      ent = Factory(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM, us_entry_port: port, import_country: import_country)
+      port = FactoryBot(:port, schedule_d_code: "5968", name: "Innsmouth")
+      import_country = FactoryBot(:country, iso_code: "US")
+      ent = FactoryBot(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM, us_entry_port: port, import_country: import_country)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_port_name', operator: 'eq', value: "Innsmouth")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -311,11 +311,11 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns entry port name for Fenix" do
-      port = Factory(:port, cbsa_port: "5968", name: "Innsmouth")
-      import_country = Factory(:country, iso_code: "CA")
-      ent = Factory(:entry, source_system: Entry::FENIX_SOURCE_SYSTEM, ca_entry_port: port, import_country: import_country)
+      port = FactoryBot(:port, cbsa_port: "5968", name: "Innsmouth")
+      import_country = FactoryBot(:country, iso_code: "CA")
+      ent = FactoryBot(:entry, source_system: Entry::FENIX_SOURCE_SYSTEM, ca_entry_port: port, import_country: import_country)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_entry_port_name', operator: 'eq', value: "Innsmouth")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -323,25 +323,25 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "updates port code by name for Kewill" do
-      Factory(:port, schedule_d_code: "5968", name: "Innsmouth")
-      ent = Factory(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM)
+      FactoryBot(:port, schedule_d_code: "5968", name: "Innsmouth")
+      ent = FactoryBot(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Entry Port set to Innsmouth"
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Entry Port set to Innsmouth"
       expect(ent.entry_port_code).to eq "5968"
     end
 
     it "updates port code by name for Fenix" do
-      Factory(:port, cbsa_port: "5968", name: "Innsmouth")
-      ent = Factory(:entry, source_system: Entry::FENIX_SOURCE_SYSTEM)
+      FactoryBot(:port, cbsa_port: "5968", name: "Innsmouth")
+      ent = FactoryBot(:entry, source_system: Entry::FENIX_SOURCE_SYSTEM)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Entry Port set to Innsmouth"
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Entry Port set to Innsmouth"
       expect(ent.entry_port_code).to eq "5968"
     end
 
     it "returns error message on import when port not found" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
 
-      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
+      expect(mf.process_import(ent, "Innsmouth", FactoryBot(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
       expect(ent.entry_port_code).to be_nil
     end
   end
@@ -352,14 +352,14 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns number of commercial invoice lines" do
-      ent = Factory(:entry)
-      ci_1 = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: ci_1)
-      Factory(:commercial_invoice_line, commercial_invoice: ci_1)
-      ci_2 = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: ci_2)
+      ent = FactoryBot(:entry)
+      ci_1 = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci_1)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci_1)
+      ci_2 = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci_2)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_ci_line_count', operator: 'eq', value: "3")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -373,18 +373,18 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns number of PDF attachments" do
-      ent = Factory(:entry)
-      Factory(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/pdf", attached_file_name: "A.ZIP")
-      Factory(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/zip", attached_file_name: "A.PDF")
+      ent = FactoryBot(:entry)
+      FactoryBot(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/pdf", attached_file_name: "A.ZIP")
+      FactoryBot(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/zip", attached_file_name: "A.PDF")
       # This attachment should not be included because its filename and content type don't match.
-      Factory(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/zip", attached_file_name: "A.ZIP")
+      FactoryBot(:attachment, attachable_id: ent.id, attachable_type: "Entry", attached_content_type: "application/zip", attached_file_name: "A.ZIP")
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_pdf_count', operator: 'eq', value: "2")
       expect(ss.result_keys).to eq []
 
       # Results are shown for brokers only, for whatever reason.
-      broker_user = Factory(:broker_user)
+      broker_user = FactoryBot(:broker_user)
       ss.user_id = broker_user.id
       ent.update!(broker_id: broker_user.company.id)
 
@@ -400,14 +400,14 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns user notes, excluding system/etc. comments" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_comments.create!(username: "arf", generated_at: ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2020-08-31 10:37:06'), body: "Some text")
       ent.entry_comments.create!(username: "arg", body: "Some more text")
       ent.entry_comments.create!(username: "SYSTEM", body: "System comment")
 
       expected_val = "Some text (2020-08-31 14:37 - arf)\nSome more text (arg)"
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_user_notes', operator: 'eq', value: expected_val)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -421,18 +421,18 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns computed first sale savings" do
-      ent = Factory(:entry)
-      ci = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, contract_amount: 500, value: 200, commercial_invoice: ci,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10),
-                                                                    Factory(:commercial_invoice_tariff, duty_amount: 40, entered_value: 15)])
-      Factory(:commercial_invoice_line, contract_amount: 300, value: 100, commercial_invoice: ci,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 50, entered_value: 20)])
+      ent = FactoryBot(:entry)
+      ci = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, contract_amount: 500, value: 200, commercial_invoice: ci,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10),
+                                                                    FactoryBot(:commercial_invoice_tariff, duty_amount: 40, entered_value: 15)])
+      FactoryBot(:commercial_invoice_line, contract_amount: 300, value: 100, commercial_invoice: ci,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 50, entered_value: 20)])
       # Excluded because the line has no contract amount.
-      Factory(:commercial_invoice_line, contract_amount: 0, value: 100, commercial_invoice: ci,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 50, entered_value: 20)])
+      FactoryBot(:commercial_invoice_line, contract_amount: 0, value: 100, commercial_invoice: ci,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 50, entered_value: 20)])
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_first_sale_savings', operator: 'eq', value: 1400)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -446,9 +446,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns sum of total duty, taxes, fees and penalties" do
-      ent = Factory(:entry, total_duty: 1, total_taxes: 2, total_fees: 3, total_cvd: 4, total_add: 5)
+      ent = FactoryBot(:entry, total_duty: 1, total_taxes: 2, total_fees: 3, total_cvd: 4, total_add: 5)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_total_duty_taxes_fees_penalties', operator: 'eq', value: 15)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -456,9 +456,9 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "handles nil values" do
-      ent = Factory(:entry, total_duty: nil, total_taxes: nil, total_fees: nil, total_cvd: nil, total_add: nil)
+      ent = FactoryBot(:entry, total_duty: nil, total_taxes: nil, total_fees: nil, total_cvd: nil, total_add: nil)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_total_duty_taxes_fees_penalties', operator: 'eq', value: 0)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -472,13 +472,13 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns true when any line contains post summary correction date" do
-      ent = Factory(:entry)
-      ci = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
-      Factory(:commercial_invoice_line, commercial_invoice: ci, psc_date: Date.new(2020, 8, 1))
-      Factory(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
+      ent = FactoryBot(:entry)
+      ci = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci, psc_date: Date.new(2020, 8, 1))
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_post_summary_exists', operator: 'eq', value: true)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -486,11 +486,11 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns false when no lines contain post summary correction date" do
-      ent = Factory(:entry)
-      ci = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
+      ent = FactoryBot(:entry)
+      ci = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: ci, psc_date: nil)
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_post_summary_exists', operator: 'eq', value: false)
       expect(ss.result_keys).to eq [ent.id]
 
@@ -504,12 +504,12 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns concatenated currencies" do
-      ent = Factory(:entry)
-      Factory(:commercial_invoice, entry: ent, currency: "USD")
-      Factory(:commercial_invoice, entry: ent, currency: "CAD")
-      Factory(:commercial_invoice, entry: ent, currency: "USD")
+      ent = FactoryBot(:entry)
+      FactoryBot(:commercial_invoice, entry: ent, currency: "USD")
+      FactoryBot(:commercial_invoice, entry: ent, currency: "CAD")
+      FactoryBot(:commercial_invoice, entry: ent, currency: "USD")
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_currencies', operator: 'eq', value: "USD\nCAD")
       expect(ss.result_keys).to eq [ent.id]
 
@@ -523,12 +523,12 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
 
     it "returns concatenated broker invoice numbers" do
-      ent = Factory(:entry)
-      Factory(:broker_invoice, entry: ent, invoice_number: "123")
-      Factory(:broker_invoice, entry: ent, invoice_number: "567")
+      ent = FactoryBot(:entry)
+      FactoryBot(:broker_invoice, entry: ent, invoice_number: "123")
+      FactoryBot(:broker_invoice, entry: ent, invoice_number: "567")
       # Invoice numbers cannot be duplicated under an entry.
 
-      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss = SearchSetup.new(module_type: 'Entry', user_id: FactoryBot(:admin_user).id)
       ss.search_criterions.build(model_field_uid: 'ent_broker_invoice_list', operator: 'eq', value: "123\n567")
       expect(ss.result_keys).to eq [ent.id]
 

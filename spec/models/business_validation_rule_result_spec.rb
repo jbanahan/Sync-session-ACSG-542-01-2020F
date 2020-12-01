@@ -5,39 +5,39 @@ end
 describe BusinessValidationRuleResult do
   describe "can_view" do
     it "allows users who can view results" do
-      u = Factory(:master_user)
+      u = FactoryBot(:master_user)
       u.company.update(show_business_rules: true)
       expect(described_class.new.can_view?(u)).to be_truthy
     end
 
     it "does not allow who can't view results" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(described_class.new.can_view?(u)).to be_falsey
     end
   end
 
   describe "can_edit" do
-    let(:group) { Factory(:group) }
-    let(:business_validation_rule) { Factory(:business_validation_rule, group: group) }
-    let(:business_validation_rule_result) { Factory(:business_validation_rule_result, business_validation_rule: business_validation_rule) }
+    let(:group) { FactoryBot(:group) }
+    let(:business_validation_rule) { FactoryBot(:business_validation_rule, group: group) }
+    let(:business_validation_rule_result) { FactoryBot(:business_validation_rule_result, business_validation_rule: business_validation_rule) }
 
     it "allows users who belong to rule's override group" do
-      u = Factory(:user, groups: [group])
+      u = FactoryBot(:user, groups: [group])
       expect(business_validation_rule_result.can_edit?(u)).to be true
     end
 
     it "allows users who are admins" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       expect(business_validation_rule_result.can_edit?(u)).to be true
     end
 
     it "does not allow users who aren't admins or don't belong to rule's override group" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       expect(business_validation_rule_result.can_edit?(u)).to be false
     end
 
     it "allows users who aren't admins if no group has been assigned" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       allow(u).to receive(:edit_business_validation_rule_results?).and_return true
       business_validation_rule.group = nil
       business_validation_rule.save!
@@ -126,7 +126,7 @@ describe BusinessValidationRuleResult do
       json = {model_field_uid: :ord_ord_num, regex: 'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(name: "Name", description: "Description", rule_attributes_json: json)
       expect(vr).to receive(:active?).and_return false
-      rule = Factory(:business_validation_rule_result)
+      rule = FactoryBot(:business_validation_rule_result)
       rule.business_validation_rule = vr
       rule.state = 'X'
       rule.business_validation_rule.save!
@@ -219,7 +219,7 @@ describe BusinessValidationRuleResult do
   end
 
   describe "after_destroy" do
-    let(:business_validation_rule_result) { Factory(:business_validation_rule_result) }
+    let(:business_validation_rule_result) { FactoryBot(:business_validation_rule_result) }
     let(:business_validation_result) { business_validation_rule_result.business_validation_result }
 
     it "destroys parent object if destroyed and without siblings" do
@@ -228,7 +228,7 @@ describe BusinessValidationRuleResult do
     end
 
     it "does nothing if destroyed with at least one sibling" do
-      bvrr_2 = Factory(:business_validation_rule_result, business_validation_result: business_validation_result)
+      bvrr_2 = FactoryBot(:business_validation_rule_result, business_validation_result: business_validation_result)
       bvrr_2.destroy
       expect(BusinessValidationResult.where(id: business_validation_result.id).count).to eq 1
     end
@@ -237,7 +237,7 @@ describe BusinessValidationRuleResult do
   describe "cancel_override" do
     it "sets overridden_at, overridden_by, and note to nil" do
       u = User.new
-      r = Factory(:business_validation_rule_result, overridden_at: Time.zone.now, overridden_by: u, note: "Some message.")
+      r = FactoryBot(:business_validation_rule_result, overridden_at: Time.zone.now, overridden_by: u, note: "Some message.")
       r.cancel_override
       expect(r.overridden_by).to eq nil
       expect(r.overridden_at).to eq nil

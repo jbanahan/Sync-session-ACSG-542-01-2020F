@@ -1,11 +1,11 @@
 describe OpenChain::ModelFieldDefinition::PlantVariantAssignmentFieldDefinition do
   context "foreign key relationships" do
     before :each do
-      @vendor = Factory(:vendor, name:'ABCVendor')
-      @user = Factory(:user, company:@vendor)
-      @plant = Factory(:plant, name:'ABCPlant', company:@vendor)
-      @product = Factory(:product, name:'ABCProduct', unique_identifier:'ABC123')
-      @variant = Factory(:variant, variant_identifier:'ABCVariant', product:@product)
+      @vendor = FactoryBot(:vendor, name:'ABCVendor')
+      @user = FactoryBot(:user, company:@vendor)
+      @plant = FactoryBot(:plant, name:'ABCPlant', company:@vendor)
+      @product = FactoryBot(:product, name:'ABCProduct', unique_identifier:'ABC123')
+      @variant = FactoryBot(:variant, variant_identifier:'ABCVariant', product:@product)
       @pva = PlantVariantAssignment.create!(variant:@variant, plant:@plant)
     end
     def find_keys_by_search_criterion model_field, val

@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule do
   let(:rule) { described_class.new }
-  let(:imp) { Factory(:company, system_code: "ATAYLOR") }
-  let(:ci) { Factory(:commercial_invoice, entry: Factory(:entry, importer: imp), invoice_number: "INV123") }
-  let!(:cil) { Factory(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, po_number: "PO123", part_number: "PART123", non_dutiable_amount: nil)}
+  let(:imp) { FactoryBot(:company, system_code: "ATAYLOR") }
+  let(:ci) { FactoryBot(:commercial_invoice, entry: FactoryBot(:entry, importer: imp), invoice_number: "INV123") }
+  let!(:cil) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, po_number: "PO123", part_number: "PART123", non_dutiable_amount: nil)}
   let(:cust_inv) { Invoice.create!(importer: imp, invoice_number: "INV123") }
   let!(:cust_il) { InvoiceLine.create!(invoice: cust_inv, po_number: "PO123", part_number: "PART123", line_number: 1, middleman_charge: nil, air_sea_discount: nil, trade_discount: nil, early_pay_discount: nil) }
 

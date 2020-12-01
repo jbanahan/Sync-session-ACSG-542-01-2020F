@@ -3,8 +3,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
     expect(product.custom_value(@cdefs[code])).to eq val
   end
   before :each do
-    @imp = Factory(:importer, system_code:'LENOX')
-    @u = Factory(:master_user)
+    @imp = FactoryBot(:importer, system_code:'LENOX')
+    @u = FactoryBot(:master_user)
     @row = "    00200GB           ODIN 5 PC PLACE SET BOXED               A                         0003METALS         03STAINLESS           02DANSK               7                                    0010FINE STAINLESS FLATWARE       004METALS                        O002ODIN                          F0047FORMAL STAINLESS    61867            1387534          VN 55224                    1 FIRST     0004GLENN DESTEFANO               0004ANTHONY BADESSA               25 JOE GILSON               97 MADELINE LUMA                      MADELINE_LUMA@LENOX.COM       267-525-5153                  005"
   end
   let (:log) { InboundFile.new }

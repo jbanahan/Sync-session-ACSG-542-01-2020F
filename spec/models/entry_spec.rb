@@ -3,19 +3,19 @@ describe Entry do
   context "tracking_status" do
     context "fenix" do
       it "defaults to created" do
-        expect(Factory(:entry, source_system: 'Fenix').tracking_status).to eq(Entry::TRACKING_STATUS_CREATED)
+        expect(FactoryBot(:entry, source_system: 'Fenix').tracking_status).to eq(Entry::TRACKING_STATUS_CREATED)
       end
 
       it "uses open for all non-V type entries with across_sent_date" do
-        expect(Factory(:entry, source_system: 'Fenix', across_sent_date: Time.zone.now).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
+        expect(FactoryBot(:entry, source_system: 'Fenix', across_sent_date: Time.zone.now).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
 
       it "uses open for all V type entries" do
-        expect(Factory(:entry, source_system: 'Fenix', entry_type: 'V').tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
+        expect(FactoryBot(:entry, source_system: 'Fenix', entry_type: 'V').tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
 
       it "does not override closed" do
-        ent = Factory(:entry, source_system: 'Fenix', tracking_status: Entry::TRACKING_STATUS_CLOSED)
+        ent = FactoryBot(:entry, source_system: 'Fenix', tracking_status: Entry::TRACKING_STATUS_CLOSED)
         ent.release_date = Time.zone.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -24,15 +24,15 @@ describe Entry do
 
     context "alliance" do
       it "uses created for base entry" do
-        Factory(:entry, source_system: 'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
+        FactoryBot(:entry, source_system: 'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
       end
 
       it "uses open for entries that have been filed" do
-        Factory(:entry, source_system: 'Alliance', entry_filed_date: Time.zone.now).tracking_status == Entry::TRACKING_STATUS_OPEN
+        FactoryBot(:entry, source_system: 'Alliance', entry_filed_date: Time.zone.now).tracking_status == Entry::TRACKING_STATUS_OPEN
       end
 
       it "does not override closed" do
-        ent = Factory(:entry, source_system: 'Alliance', tracking_status: Entry::TRACKING_STATUS_CLOSED)
+        ent = FactoryBot(:entry, source_system: 'Alliance', tracking_status: Entry::TRACKING_STATUS_CLOSED)
         ent.entry_filed_date = Time.zone.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -41,11 +41,11 @@ describe Entry do
 
     context "other" do
       it "defaults to open" do
-        expect(Factory(:entry).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
+        expect(FactoryBot(:entry).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
 
       it "does not override closed" do
-        ent = Factory(:entry, tracking_status: Entry::TRACKING_STATUS_CLOSED)
+        ent = FactoryBot(:entry, tracking_status: Entry::TRACKING_STATUS_CLOSED)
         ent.entry_filed_date = Time.zone.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -54,7 +54,7 @@ describe Entry do
   end
 
   describe "link_broker_invoices" do
-    subject { Factory(:entry, broker_reference: '5555', source_system: 'ABC') }
+    subject { FactoryBot(:entry, broker_reference: '5555', source_system: 'ABC') }
 
     it 'matches' do
       bi = BrokerInvoice.create!(broker_reference: '5555', invoice_number: 'notbrokref', source_system: 'ABC')
@@ -118,15 +118,15 @@ describe Entry do
       allow(ms).to receive(:entry_enabled).and_return true
       ms
     end
-    let (:importer) { Factory(:importer) }
+    let (:importer) { FactoryBot(:importer) }
     let (:linked_importer) do
-      child_importer = Factory(:importer)
+      child_importer = FactoryBot(:importer)
       importer.linked_companies << child_importer
       child_importer
     end
-    let (:entry) { Factory(:entry, importer: importer) }
+    let (:entry) { FactoryBot(:entry, importer: importer) }
     let (:importer_user) do
-      user = Factory(:user, company: importer)
+      user = FactoryBot(:user, company: importer)
       allow(user).to receive(:view_entries?).and_return true
       user
     end
@@ -138,11 +138,11 @@ describe Entry do
       end
 
       it "does not allow different company" do
-        expect(described_class.can_view_importer?(Factory(:company), importer_user)).to eq false
+        expect(described_class.can_view_importer?(FactoryBot(:company), importer_user)).to eq false
       end
 
       it "allows master" do
-        master_user = Factory(:master_user)
+        master_user = FactoryBot(:master_user)
         expect(master_user).to receive(:view_entries?).and_return(true)
         expect(described_class.can_view_importer?(importer, master_user)).to eq true
       end
@@ -156,20 +156,20 @@ describe Entry do
       end
 
       it "does not allow master user access to nil importer by default" do
-        master_user = Factory(:master_user)
+        master_user = FactoryBot(:master_user)
         expect(master_user).to receive(:view_entries?).and_return(true)
         expect(described_class.can_view_importer?(nil, master_user)).to eq false
       end
 
       it "allows master user access to nil importer if requested" do
-        master_user = Factory(:master_user)
+        master_user = FactoryBot(:master_user)
         expect(master_user).to receive(:view_entries?).and_return(true)
         expect(described_class.can_view_importer?(nil, master_user, allow_nil_importer: true)).to eq true
       end
     end
 
     context 'search secure' do
-      let! (:entry_2) { Factory(:entry, importer: Factory(:company, importer: true)) }
+      let! (:entry_2) { FactoryBot(:entry, importer: FactoryBot(:company, importer: true)) }
 
       before do
         entry
@@ -182,16 +182,16 @@ describe Entry do
       end
 
       it "allows linked company for non master" do
-        importer2 = Factory(:company, importer: true)
+        importer2 = FactoryBot(:company, importer: true)
         importer.linked_companies << importer2
-        e2 = Factory(:entry, importer_id: importer.id)
+        e2 = FactoryBot(:entry, importer_id: importer.id)
         entries = described_class.search_secure(importer_user, described_class).all.to_a
         expect(entries).to include entry
         expect(entries).to include e2
       end
 
       it 'allows all for master' do
-        u = Factory(:user, entry_view: true)
+        u = FactoryBot(:user, entry_view: true)
         u.company.update!(master: true)
         found = described_class.search_secure(u, described_class).all
         expect(found.entries.size).to eq(2)
@@ -207,8 +207,8 @@ describe Entry do
     end
 
     it 'allows importer from parent company to view/edit/comment/attach' do
-      parent_company = Factory(:company, importer: true)
-      parent_user = Factory(:user, company: parent_company, entry_view: true, entry_comment: true, entry_edit: true, entry_attach: true)
+      parent_company = FactoryBot(:company, importer: true)
+      parent_user = FactoryBot(:user, company: parent_company, entry_view: true, entry_comment: true, entry_edit: true, entry_attach: true)
       parent_company.linked_companies << importer
       expect(entry.can_view?(parent_user)).to eq true
       expect(entry.can_edit?(parent_user)).to eq false # hard coded to false
@@ -217,7 +217,7 @@ describe Entry do
     end
 
     it 'does not allow a user from a different company with overall permission to view/edit/comment/attach' do
-      u = Factory(:user, entry_view: true, entry_comment: true, entry_edit: true, entry_attach: true)
+      u = FactoryBot(:user, entry_view: true, entry_comment: true, entry_edit: true, entry_attach: true)
       u.company.update!(importer: true)
       expect(entry.can_view?(u)).to eq false
       expect(entry.can_edit?(u)).to eq false
@@ -226,7 +226,7 @@ describe Entry do
     end
 
     it 'allows master user to view' do
-      u = Factory(:user, entry_view: true)
+      u = FactoryBot(:user, entry_view: true)
       u.company.update!(master: true)
       expect(entry.can_view?(u)).to eq true
     end
@@ -238,61 +238,61 @@ describe Entry do
 
     it "allows master user to view importerless entry" do
       entry.update! importer_id: nil
-      u = Factory(:master_user, entry_view: true)
+      u = FactoryBot(:master_user, entry_view: true)
 
       expect(entry.can_view?(u)).to eq true
     end
 
     it 'allows user to comment' do
-      u = Factory(:user, entry_comment: true)
+      u = FactoryBot(:user, entry_comment: true)
       u.company.update!(master: true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, importer: Factory(:company, importer: true)).can_comment?(u)).to eq true
+      expect(FactoryBot(:entry, importer: FactoryBot(:company, importer: true)).can_comment?(u)).to eq true
     end
 
     it 'does not allow user w/o permission to comment' do
-      u = Factory(:user, entry_comment: false)
+      u = FactoryBot(:user, entry_comment: false)
       u.company.update!(master: true)
-      expect(Factory(:entry, importer: Factory(:company, importer: true)).can_comment?(u)).to eq false
+      expect(FactoryBot(:entry, importer: FactoryBot(:company, importer: true)).can_comment?(u)).to eq false
     end
 
     it 'allows user to attach' do
-      u = Factory(:user, entry_attach: true)
+      u = FactoryBot(:user, entry_attach: true)
       u.company.update!(master: true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, importer: Factory(:company, importer: true)).can_attach?(u)).to eq true
+      expect(FactoryBot(:entry, importer: FactoryBot(:company, importer: true)).can_attach?(u)).to eq true
     end
 
     it 'does not allow user w/o permisstion to attach' do
-      u = Factory(:user, entry_attach: false)
+      u = FactoryBot(:user, entry_attach: false)
       u.company.update!(master: true)
-      expect(Factory(:entry, importer: Factory(:company, importer: true)).can_attach?(u)).to eq false
+      expect(FactoryBot(:entry, importer: FactoryBot(:company, importer: true)).can_attach?(u)).to eq false
     end
   end
 
   context 'ports' do
-    let (:port) { Factory(:port) }
+    let (:port) { FactoryBot(:port) }
 
     it 'finds matching lading port' do
-      ent = Factory(:entry, lading_port_code: port.schedule_k_code)
+      ent = FactoryBot(:entry, lading_port_code: port.schedule_k_code)
       expect(ent.lading_port).to eq(port)
     end
 
     it 'finds matching unlading port' do
-      expect(Factory(:entry, unlading_port_code: port.schedule_d_code).unlading_port).to eq(port)
+      expect(FactoryBot(:entry, unlading_port_code: port.schedule_d_code).unlading_port).to eq(port)
     end
 
     it 'finds matching entry port' do
-      expect(Factory(:entry, entry_port_code: port.schedule_d_code).entry_port).to eq(port)
+      expect(FactoryBot(:entry, entry_port_code: port.schedule_d_code).entry_port).to eq(port)
     end
 
     it 'finds matching us exit port' do
-      expect(Factory(:entry, us_exit_port_code: port.schedule_d_code).us_exit_port).to eq(port)
+      expect(FactoryBot(:entry, us_exit_port_code: port.schedule_d_code).us_exit_port).to eq(port)
     end
   end
 
   context "update_k84_month" do
-    subject { Factory(:entry) }
+    subject { FactoryBot(:entry) }
 
     it "sets k84 month" do
       subject.update! cadex_accept_date: Time.zone.parse("2013-01-01")
@@ -331,8 +331,8 @@ describe Entry do
     end
 
     it "uses k84 month and due date to find the payment due date" do
-      calendar = Factory(:calendar, calendar_type: 'K84Due', year: 2013)
-      Factory(:calendar_event, event_date: Date.parse('2013-01-29'), calendar_id: calendar.id)
+      calendar = FactoryBot(:calendar, calendar_type: 'K84Due', year: 2013)
+      FactoryBot(:calendar_event, event_date: Date.parse('2013-01-29'), calendar_id: calendar.id)
 
       subject.update! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "V", cadex_accept_date: Time.zone.now
       expect(subject.k84_month).to eq 1
@@ -350,19 +350,19 @@ describe Entry do
 
   describe "value_for_tax" do
     let(:ci1) do
-      Factory(:commercial_invoice, commercial_invoice_lines:
-      [Factory(:commercial_invoice_line,
-               commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)]),
-      Factory(:commercial_invoice_line,
-              commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      FactoryBot(:commercial_invoice, commercial_invoice_lines:
+      [FactoryBot(:commercial_invoice_line,
+               commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)]),
+      FactoryBot(:commercial_invoice_line,
+              commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
       ])
     end
     let(:ci2) do
-      Factory(:commercial_invoice, commercial_invoice_lines:
-      [Factory(:commercial_invoice_line,
-               commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: nil)]),
-      Factory(:commercial_invoice_line,
-              commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      FactoryBot(:commercial_invoice, commercial_invoice_lines:
+      [FactoryBot(:commercial_invoice_line,
+               commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: nil)]),
+      FactoryBot(:commercial_invoice_line,
+              commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
       ])
     end
 
@@ -456,8 +456,8 @@ describe Entry do
   end
 
   describe "purge!" do
-    let (:entry) { Factory(:entry, broker_reference: "12345", source_system: "SOURCE", import_country: country)}
-    let (:country) { Factory(:country, iso_code: "ZZ") }
+    let (:entry) { FactoryBot(:entry, broker_reference: "12345", source_system: "SOURCE", import_country: country)}
+    let (:country) { FactoryBot(:country, iso_code: "ZZ") }
 
     it "purges entries" do
       now = Time.zone.now
@@ -491,25 +491,25 @@ describe Entry do
 
   describe "first_sale_savings" do
     it "returns the sum of first-sale savings on all child invoices" do
-      ent = Factory(:entry)
-      inv = Factory(:commercial_invoice, entry: ent)
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 500, value: 200,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 250, value: 100,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: nil, value: 100,
-                                        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
+      ent = FactoryBot(:entry)
+      inv = FactoryBot(:commercial_invoice, entry: ent)
+      FactoryBot(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 500, value: 200,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
+      FactoryBot(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 250, value: 100,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
+      FactoryBot(:commercial_invoice_line, commercial_invoice: inv, contract_amount: nil, value: 100,
+                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
       expect(ent.first_sale_savings).to eq 1350
     end
   end
 
   context "hold date / hold release date" do
     context "US" do
-      let(:co) { Factory(:country, iso_code: "US") }
+      let(:co) { FactoryBot(:country, iso_code: "US") }
 
       describe "hold_attributes" do
         it "returns list of matching PGA hold and release dates" do
-          e = Factory(:entry)
+          e = FactoryBot(:entry)
           expect(e.hold_attributes).to eq([{hold: :ams_hold_date, release: :ams_hold_release_date},
                                            {hold: :aphis_hold_date, release: :aphis_hold_release_date},
                                            {hold: :atf_hold_date, release: :atf_hold_release_date},
@@ -531,7 +531,7 @@ describe Entry do
         it "returns list of hashes containing hold/release-date pairs where the hold date is populated" do
           now = DateTime.now
           yesterday = DateTime.now - 1.day
-          e = Factory(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
+          e = FactoryBot(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
           expect(e.populated_holds).to eq [{hold: { mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: yesterday},
                                             release: { mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: yesterday}},
                                             {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: now},
@@ -543,7 +543,7 @@ describe Entry do
         it "returns list of hashes containing hold-release_date pairs where the hold date is populated but the hold release is not" do
           now = DateTime.now
           yesterday = DateTime.now - 1.day
-          e = Factory(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
+          e = FactoryBot(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
           expect(e.active_holds).to eq [{hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: now},
                                          release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: nil}}]
         end
@@ -551,25 +551,25 @@ describe Entry do
     end
 
     context "CA" do
-      let(:co) { Factory(:country, iso_code: "CA") }
+      let(:co) { FactoryBot(:country, iso_code: "CA") }
 
       describe "populated_holds" do
         it "throws exception" do
-          e = Factory(:entry, import_country: co)
+          e = FactoryBot(:entry, import_country: co)
           expect {e.populated_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
 
       describe "active_holds" do
         it "throws_exception" do
-          e = Factory(:entry, import_country: co)
+          e = FactoryBot(:entry, import_country: co)
           expect {e.active_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
 
       describe "hold_attributes" do
         it "throws exception" do
-          e = Factory(:entry, import_country: co)
+          e = FactoryBot(:entry, import_country: co)
           expect {e.hold_attributes}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
@@ -606,7 +606,7 @@ describe Entry do
   end
 
   describe "split_shipment_date=" do
-    let(:ent) { Factory(:entry, split_shipment_date: nil, split_shipment: nil) }
+    let(:ent) { FactoryBot(:entry, split_shipment_date: nil, split_shipment: nil) }
     let(:dt) { DateTime.new(2018, 3, 15, 15, 0) }
 
     it "also sets split_shipment flag to True when assigned" do
@@ -719,7 +719,7 @@ describe Entry do
 
   describe "destroy_commercial_invoices" do
     it "destroys all commercial invoices under the entry" do
-      entry = Factory(:entry)
+      entry = FactoryBot(:entry)
       invoice_1 = entry.commercial_invoices.build
       line_1a = invoice_1.commercial_invoice_lines.build
       invoice_1.commercial_invoice_lines.build
@@ -765,12 +765,12 @@ describe Entry do
   describe "total_duty_billed_subquery" do
 
     let (:entry) do
-      Factory(:entry, broker_reference: "1234")
+      FactoryBot(:entry, broker_reference: "1234")
     end
 
     context "with Customs Management entries" do
       let! (:invoice) do
-        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Alliance")
+        broker_invoice = FactoryBot(:broker_invoice, entry: entry, source_system: "Alliance")
         broker_invoice.broker_invoice_lines.create! charge_code: "0001", charge_amount: "100", charge_description: "DUTY"
         broker_invoice.broker_invoice_lines.create! charge_code: "0002", charge_amount: "200", charge_description: "NOT DUTY"
         broker_invoice
@@ -791,7 +791,7 @@ describe Entry do
 
     context "with Fenix entries" do
       let! (:invoice) do
-        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Fenix")
+        broker_invoice = FactoryBot(:broker_invoice, entry: entry, source_system: "Fenix")
         broker_invoice.broker_invoice_lines.create! charge_code: "1", charge_amount: "100", charge_description: "DUTY"
         broker_invoice.broker_invoice_lines.create! charge_code: "2", charge_amount: "200", charge_description: "NOT DUTY"
         broker_invoice
@@ -812,7 +812,7 @@ describe Entry do
 
     context "with Cargowise entries" do
       let! (:invoice) do
-        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Cargowise")
+        broker_invoice = FactoryBot(:broker_invoice, entry: entry, source_system: "Cargowise")
         broker_invoice.broker_invoice_lines.create! charge_code: "200", charge_amount: "100", charge_description: "DUTY"
         broker_invoice.broker_invoice_lines.create! charge_code: "221", charge_amount: "200", charge_description: "MPF"
         broker_invoice.broker_invoice_lines.create! charge_code: "222", charge_amount: "300", charge_description: "HMF"
@@ -880,7 +880,7 @@ describe Entry do
 
   describe "includes_pga_summary_for_agency?" do
     it "returns true when agency code is found in PGA summaries, false when it's not" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_pga_summaries.build(agency_code: "FDA", total_claimed_pga_lines: 0)
       ent.entry_pga_summaries.build(agency_code: "epa", total_claimed_pga_lines: 0)
 
@@ -897,7 +897,7 @@ describe Entry do
     end
 
     it "factors total claimed PGA line count into the comparison when told to do so" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_pga_summaries.build(agency_code: "FDA", total_claimed_pga_lines: 1)
       ent.entry_pga_summaries.build(agency_code: "EPA", total_claimed_pga_lines: 0)
 
@@ -909,7 +909,7 @@ describe Entry do
 
   describe "matching_entry_comments?" do
     it "returns true when a comments record matches a pattern" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ent.entry_comments.build(body: "STMNT DATA ACCEPTED AS REQUESTED Type 6 08/31/20")
       ent.entry_comments.build(body: "EPA TS1 Ln 1 PG 1 Dsp: 07 MAY PROCEED", username: "CUSTOMS")
       ent.entry_comments.build(username: "KC Abi Send")
@@ -926,41 +926,41 @@ describe Entry do
 
     subject { described_class }
 
-    let (:importer) { Factory(:importer) }
-    let (:broker) { Factory(:broker) }
-    let! (:entry) { Factory(:entry, importer: importer, broker: broker) }
+    let (:importer) { FactoryBot(:importer) }
+    let (:broker) { FactoryBot(:broker) }
+    let! (:entry) { FactoryBot(:entry, importer: importer, broker: broker) }
 
     it "returns a where clause that will return an entry linked to an importer user's company" do
-      user = Factory(:user, company: importer)
+      user = FactoryBot(:user, company: importer)
       expect(described_class.where(subject.search_where_by_company_id(user.company.id)).to_a).to include entry
     end
 
     it "returns a where clause that will return an entry linked to an importer user's linked company" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       user.company.linked_companies << importer
 
       expect(described_class.where(subject.search_where_by_company_id(user.company.id)).to_a).to include entry
     end
 
     it "returns a where clause that will return an entry linked to a broker user's company" do
-      user = Factory(:user, company: broker)
+      user = FactoryBot(:user, company: broker)
       expect(described_class.where(subject.search_where_by_company_id(user.company.id)).to_a).to include entry
     end
 
     it "returns a where clause that will return an entry linked to an broker user's linked company" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       user.company.linked_companies << broker
 
       expect(described_class.where(subject.search_where_by_company_id(user.company.id)).to_a).to include entry
     end
 
     it "returns a where clause that will return any entry if user belongs to the master company" do
-      user = Factory(:master_user)
+      user = FactoryBot(:master_user)
       expect(described_class.where(subject.search_where_by_company_id(user.company.id)).to_a).to include entry
     end
 
     it "returns a where clause that will not return a match if user doesn't match importer / broker companies" do
-      expect(described_class.where(subject.search_where_by_company_id(Factory(:user).company.id)).to_a).to be_blank
+      expect(described_class.where(subject.search_where_by_company_id(FactoryBot(:user).company.id)).to_a).to be_blank
     end
   end
 
@@ -976,14 +976,14 @@ describe Entry do
     end
 
     let! (:user) do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       allow(user).to receive(:view_entries?).and_return true
       user
     end
 
-    let (:importer) { Factory(:importer) }
-    let (:broker) { Factory(:broker) }
-    let! (:entry) { Factory(:entry, importer: importer, broker: broker) }
+    let (:importer) { FactoryBot(:importer) }
+    let (:broker) { FactoryBot(:broker) }
+    let! (:entry) { FactoryBot(:entry, importer: importer, broker: broker) }
 
     it "returns false if user is not related to parties on the entry" do
       expect(subject.can_view?(user)).to eq false
@@ -1023,34 +1023,34 @@ describe Entry do
 
   describe "entry_filer" do
     it "returns first 3 chars of US entry number" do
-      ent = Factory(:entry, entry_number: "12345678")
+      ent = FactoryBot(:entry, entry_number: "12345678")
       expect(ent).to receive(:canadian?).and_return false
 
       expect(ent.entry_filer).to eq "123"
     end
 
     it "returns first 5 chars of Canada entry number" do
-      ent = Factory(:entry, entry_number: "12345678")
+      ent = FactoryBot(:entry, entry_number: "12345678")
       expect(ent).to receive(:canadian?).and_return true
 
       expect(ent.entry_filer).to eq "12345"
     end
 
     it "returns all chars of a short entry number" do
-      ent = Factory(:entry, entry_number: "12")
+      ent = FactoryBot(:entry, entry_number: "12")
       expect(ent).to receive(:canadian?).and_return false
 
       expect(ent.entry_filer).to eq "12"
     end
 
     it "returns nil for a nil entry number" do
-      ent = Factory(:entry, entry_number: nil)
+      ent = FactoryBot(:entry, entry_number: nil)
 
       expect(ent.entry_filer).to be_nil
     end
 
     it "returns nil for a blank entry number" do
-      ent = Factory(:entry, entry_number: "         ")
+      ent = FactoryBot(:entry, entry_number: "         ")
 
       expect(ent.entry_filer).to be_nil
     end
@@ -1058,7 +1058,7 @@ describe Entry do
 
   describe "post_summary_correction?" do
     it "returns true when 1+ commercial invoice line under an entry has PSC date set" do
-      ent = Factory(:entry)
+      ent = FactoryBot(:entry)
       ci_1 = ent.commercial_invoices.create!
       ci_1.commercial_invoice_lines.create! psc_date: nil
       cil_1b = ci_1.commercial_invoice_lines.create! psc_date: Time.zone.now

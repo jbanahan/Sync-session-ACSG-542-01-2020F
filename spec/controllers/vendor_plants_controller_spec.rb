@@ -1,18 +1,18 @@
 describe VendorPlantsController do
   before :each do
-    sign_in_as Factory(:user)
+    sign_in_as FactoryBot(:user)
   end
   describe "show" do
     it "should not show if user cannot view plant" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return false
-      p = Factory(:plant)
+      p = FactoryBot(:plant)
       get :show, vendor_id: p.company_id, id: p.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/view/)
     end
     it "should show if vendor can view plant" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return true
-      p = Factory(:plant)
+      p = FactoryBot(:plant)
       get :show, vendor_id: p.company_id, id: p.id
       expect(response).to be_success
       expect(assigns(:plant)).to eq p
@@ -29,7 +29,7 @@ describe VendorPlantsController do
   describe "update" do
     it "should not update if user cannot edit plant" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return false
-      p = Factory(:plant, name:'original')
+      p = FactoryBot(:plant, name:'original')
       expect {put :update, vendor_id: p.company_id, id: p.id, plant:{plant_name:'newname'}}.to_not change(p, :updated_at)
       expect(flash[:errors].size).to eq 1
       p.reload
@@ -37,8 +37,8 @@ describe VendorPlantsController do
     end
     it "should update if user can update plant" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return true
-      cd = Factory(:custom_definition, module_type:'Plant', data_type:'string')
-      p = Factory(:plant)
+      cd = FactoryBot(:custom_definition, module_type:'Plant', data_type:'string')
+      p = FactoryBot(:plant)
       update_hash = {
         'plant_name'=> 'MyPlant',
         "*cf_#{cd.id}"=>'cval'
@@ -56,14 +56,14 @@ describe VendorPlantsController do
   describe "create" do
     it "should not create if user cannot edit vendor" do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return false
-      c = Factory(:company)
+      c = FactoryBot(:company)
       expect {post :create, vendor_id: c.id, plant:{plant_name:'MyPlant'}}.to_not change(Plant, :count)
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq 1
     end
     it "should create and redirect to edit page" do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
-      c = Factory(:company)
+      c = FactoryBot(:company)
       expect {post :create, vendor_id: c.id, plant:{plant_name:'MyPlant'}}.to change(c.plants, :count).from(0).to(1)
       expect(response).to be_redirect
       expect(flash[:notices].size).to eq 1
@@ -73,15 +73,15 @@ describe VendorPlantsController do
   describe "unassigned_product_groups" do
     it "should error if cannot view plant" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return(false)
-      plant = Factory(:plant)
+      plant = FactoryBot(:plant)
       get :unassigned_product_groups, id: plant.id, vendor_id: plant.company_id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq 1
     end
     it "should show unassigned groups" do
       allow_any_instance_of(Plant).to receive(:can_view?).and_return(true)
-      pg = Factory(:product_group, name:'PGX')
-      plant = Factory(:plant)
+      pg = FactoryBot(:product_group, name:'PGX')
+      plant = FactoryBot(:plant)
       allow_any_instance_of(Plant).to receive(:unassigned_product_groups).and_return [pg]
 
       get :unassigned_product_groups, id: plant.id, vendor_id: plant.company_id
@@ -95,16 +95,16 @@ describe VendorPlantsController do
   describe "assign_product_group" do
     it "should error if cannot edit plant" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return false
-      plant = Factory(:plant)
-      pg = Factory(:product_group)
+      plant = FactoryBot(:plant)
+      pg = FactoryBot(:product_group)
       expect {post :assign_product_group, id: plant.id, vendor_id: plant.company_id, product_group_id: pg.id}.to_not change(PlantProductGroupAssignment, :count)
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq 1
     end
     it "should assign product_group" do
       allow_any_instance_of(Plant).to receive(:can_edit?).and_return true
-      plant = Factory(:plant)
-      pg = Factory(:product_group)
+      plant = FactoryBot(:plant)
+      pg = FactoryBot(:product_group)
       expect {post :assign_product_group, id: plant.id, vendor_id: plant.company_id, product_group_id: pg.id}.
         to change(plant.plant_product_group_assignments.where(product_group_id:pg.id), :count).
           from(0).to(1)

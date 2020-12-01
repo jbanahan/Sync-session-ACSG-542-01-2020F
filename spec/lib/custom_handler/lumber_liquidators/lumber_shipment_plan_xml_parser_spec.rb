@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParse
     it "should update shipment" do
       opts = {key:'the_filename.xml'}
       shipment = Shipment.create!(reference:'2010371040')
-      importer = Factory(:importer, system_code:'LUMBER')
+      importer = FactoryBot(:importer, system_code:'LUMBER')
 
       doc = REXML::Document.new(test_data)
 

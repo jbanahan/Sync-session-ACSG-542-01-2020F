@@ -11,13 +11,13 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
 
     let (:cdefs) { subject.send(:cdefs) }
     let (:assortment_product) do
-      p = Factory(:product, unique_identifier: "032020738-106879518")
+      p = FactoryBot(:product, unique_identifier: "032020738-106879518")
       p.update_custom_value! cdefs[:prod_type], "Assortment"
       p
     end
-    let (:us) { Factory(:country, iso_code: "US") }
+    let (:us) { FactoryBot(:country, iso_code: "US") }
     let (:xvv_product) do
-      p = Factory(:product, unique_identifier: "032020738-106879518")
+      p = FactoryBot(:product, unique_identifier: "032020738-106879518")
       p.update_custom_value! cdefs[:prod_type], "Set"
       c = p.classifications.create! country: us
       t = c.tariff_records.create! hts_1: "7323930045"

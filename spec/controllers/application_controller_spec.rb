@@ -2,7 +2,7 @@ describe ApplicationController do
 
   describe "advanced_search" do
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
       allow(controller).to receive(:current_user).and_return(@u)
     end
     it "should build default search if no search runs" do
@@ -11,25 +11,25 @@ describe ApplicationController do
       expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to advanced search with page" do
-      ss = Factory(:search_setup, :module_type=>'Product', :user=>@u)
+      ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>@u)
       sr = ss.search_runs.create!(:page=>3, :per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/advanced_search#!/#{ss.id}/3")
     end
     it "should redirect to advanced search without page" do
-      ss = Factory(:search_setup, :module_type=>'Product', :user=>@u)
+      ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>@u)
       sr = ss.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to advanced search if force_search is set to true" do
-      ss = Factory(:search_setup, :module_type=>'Product', :user=>@u)
+      ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>@u)
       sr = ss.search_runs.create!
 
-      f = Factory(:imported_file, :module_type=>'Product', :user=>@u)
+      f = FactoryBot(:imported_file, :module_type=>'Product', :user=>@u)
       f.search_runs.create!
 
-      other_module = Factory(:search_setup, :module_type=>'OfficialTariff', :user=>@u)
+      other_module = FactoryBot(:search_setup, :module_type=>'OfficialTariff', :user=>@u)
       other_module.search_runs.create!
 
       # make sure the search setup run is older
@@ -38,9 +38,9 @@ describe ApplicationController do
       expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to most recent search run" do
-      ss = Factory(:search_setup, :module_type=>'Product', :user=>@u)
+      ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>@u)
       sr = ss.search_runs.create!
-      f = Factory(:imported_file, :module_type=>'Product', :user=>@u)
+      f = FactoryBot(:imported_file, :module_type=>'Product', :user=>@u)
       fsr = f.search_runs.create!
       # make sure the search setup run is older
       SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
@@ -48,25 +48,25 @@ describe ApplicationController do
       expect(r).to eq("/imported_files/show_angular#!/#{f.id}")
     end
     it "should redirect to imported file with page" do
-      f = Factory(:imported_file, :module_type=>'Product', :user=>@u)
+      f = FactoryBot(:imported_file, :module_type=>'Product', :user=>@u)
       fsr = f.search_runs.create!(:page=>7)
       r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/imported_files/show_angular#!/#{f.id}/7")
     end
     it "should redirect to imported file without page" do
-      f = Factory(:imported_file, :module_type=>'Product', :user=>@u)
+      f = FactoryBot(:imported_file, :module_type=>'Product', :user=>@u)
       fsr = f.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/imported_files/show_angular#!/#{f.id}")
     end
     it "should redirect to custom file" do
-      f = Factory(:custom_file, :uploaded_by=>@u, :module_type=>'Product')
+      f = FactoryBot(:custom_file, :uploaded_by=>@u, :module_type=>'Product')
       fsr = f.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/custom_files/#{f.id}")
     end
     it "inserts clearSelection parameter if instructed" do
-      ss = Factory(:search_setup, :module_type=>'Product', :user=>@u)
+      ss = FactoryBot(:search_setup, :module_type=>'Product', :user=>@u)
       sr = ss.search_runs.create!(:page=>3, :per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT, false, true)
       expect(r).to eq("/advanced_search#!/#{ss.id}/3?clearSelection=true")
@@ -112,7 +112,7 @@ describe ApplicationController do
     end
 
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
 
       sign_in_as @u
       # Since we're using an anonymous controller we also need to define a route
@@ -170,7 +170,7 @@ describe ApplicationController do
     end
 
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
 
       sign_in_as @u
       @routes.draw {
@@ -196,7 +196,7 @@ describe ApplicationController do
     end
 
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
       sign_in_as @u
       @routes.draw {
         resources :anonymous
@@ -223,7 +223,7 @@ describe ApplicationController do
     end
 
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
       sign_in_as @u
       @routes.draw {
         resources :anonymous
@@ -252,7 +252,7 @@ describe ApplicationController do
     end
 
     before :each do
-      @u = Factory(:master_user)
+      @u = FactoryBot(:master_user)
       sign_in_as @u
       @routes.draw {
         resources :anonymous
@@ -299,15 +299,15 @@ describe ApplicationController do
     end
 
     it "supplies logged in user as current_user" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :show, :id => 1
       expect(response.body).to eq u.username
     end
 
     it "delegates current_user to the user set in run_as" do
-      u = Factory(:user)
-      run_as = Factory(:user, run_as: u)
+      u = FactoryBot(:user)
+      run_as = FactoryBot(:user, run_as: u)
       sign_in_as u
       u.run_as = run_as
       u.save!
@@ -338,7 +338,7 @@ describe ApplicationController do
         resources :anonymous
       }
 
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
     end
 
@@ -438,7 +438,7 @@ describe ApplicationController do
     end
 
     let! (:user) {
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as(u)
       u
     }
@@ -508,7 +508,7 @@ describe ApplicationController do
 
     it "yields in db_lock if request is a mutable request type" do
       allow(request).to receive(:get?).and_return false
-      object = Factory(:product)
+      object = FactoryBot(:product)
 
       expect(Lock).to receive(:db_lock).with(object).and_yield
       yielded = false
@@ -518,7 +518,7 @@ describe ApplicationController do
 
     it "does not yield in db_lock if request is a nonmutable request type" do
       expect(request).to receive(:get?).and_return true
-      object = Factory(:product)
+      object = FactoryBot(:product)
 
       expect(Lock).not_to receive(:db_lock)
       yielded = false
@@ -528,7 +528,7 @@ describe ApplicationController do
 
     it "yields in db_lock if request is a nonmutable request type if forced" do
       expect(request).to receive(:get?).and_return true
-      object = Factory(:product)
+      object = FactoryBot(:product)
 
       expect(Lock).to receive(:db_lock).with(object).and_yield
       yielded = false
@@ -588,7 +588,7 @@ describe ApplicationController do
 
   describe "group_secure" do
     before :each do
-      @u = Factory(:user)
+      @u = FactoryBot(:user)
       sign_in_as(@u)
       @u
     end

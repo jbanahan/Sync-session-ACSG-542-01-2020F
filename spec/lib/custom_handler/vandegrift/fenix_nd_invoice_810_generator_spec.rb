@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
 
-  let (:us) { Factory(:country, iso_code: "US") }
-  let (:cn) { Factory(:country, iso_code: "CN") }
+  let (:us) { FactoryBot(:country, iso_code: "US") }
+  let (:cn) { FactoryBot(:country, iso_code: "CN") }
 
   let (:importer) {
     Company.new name: "Importer", addresses: [Address.new(line_1: "123 Importer St.", line_2: "Suite 123", city: "Fakesville", state: "PA", postal_code: "12345", country: us)]

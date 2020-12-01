@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonBillingReport do
     end
 
     it "generates and emails spreadsheet" do
-      entry_1 = Factory(:entry, entry_number: "entry-cb-1", source_system: "Alliance", po_numbers: "A\n B",
+      entry_1 = FactoryBot(:entry, entry_number: "entry-cb-1", source_system: "Alliance", po_numbers: "A\n B",
                                 destination_state: "NJ", entry_filed_date: Date.new(2018, 12, 23),
                                 container_numbers: "C\n D", broker_invoice_total: BigDecimal("18.12"))
       # This first invoice falls outside the date window for this report.
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonBillingReport do
       bi_1d = entry_1.broker_invoices.create! customer_number: "BURLI", invoice_number: "bi_1d", invoice_date: Date.new(2019, 9, 30)
       bi_1d.broker_invoice_lines.create! charge_code: "0125", charge_description: "FISH & WILDLIFE CHARGES", charge_amount: BigDecimal("2.17")
 
-      entry_2 = Factory(:entry, entry_number: "entry-ab-2", source_system: "Alliance", po_numbers: "C",
+      entry_2 = FactoryBot(:entry, entry_number: "entry-ab-2", source_system: "Alliance", po_numbers: "C",
                                 destination_state: "CA", entry_filed_date: Date.new(2018, 12, 24),
                                 container_numbers: "E", broker_invoice_total: BigDecimal("19.13"))
       bi_2 = entry_2.broker_invoices.create! customer_number: "BURLI", invoice_number: "bi_2", invoice_date: Date.new(2019, 9, 25)
@@ -58,21 +58,21 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonBillingReport do
       bi_2.broker_invoice_lines.create! charge_code: "0739", charge_description: "PIER PASS CHARGE", charge_amount: BigDecimal("1")
 
       # This broker invoice should be excluded because its source system is not Alliance.
-      entry_3 = Factory(:entry, entry_number: "entry-ef-3", source_system: "Axis", po_numbers: "D",
+      entry_3 = FactoryBot(:entry, entry_number: "entry-ef-3", source_system: "Axis", po_numbers: "D",
                                 destination_state: "MO", entry_filed_date: Date.new(2018, 12, 25),
                                 container_numbers: "F", broker_invoice_total: BigDecimal("20.14"))
       bi_3 = entry_3.broker_invoices.create! customer_number: "BURLI", invoice_number: "bi_3", invoice_date: Date.new(2019, 9, 26)
       bi_3.broker_invoice_lines.create! charge_code: "0007", charge_description: "CUSTOMS ENTRY", charge_amount: BigDecimal("4.54")
 
       # This entry isn't Burlington's.  Excluded, obviously.
-      entry_4 = Factory(:entry, entry_number: "entry-gh-4", source_system: "Alliance", po_numbers: "E",
+      entry_4 = FactoryBot(:entry, entry_number: "entry-gh-4", source_system: "Alliance", po_numbers: "E",
                                 destination_state: "MI", entry_filed_date: Date.new(2018, 12, 26),
                                 container_numbers: "G", broker_invoice_total: BigDecimal("21.15"))
       bi_4 = entry_4.broker_invoices.create! customer_number: "HURLI", invoice_number: "bi_4", invoice_date: Date.new(2019, 9, 26)
       bi_4.broker_invoice_lines.create! charge_code: "0007", charge_description: "CUSTOMS ENTRY", charge_amount: BigDecimal("4.54")
 
       # Although this invoice's only charge is in the "ignored" category, the entry should still appear on the report.
-      entry_5 = Factory(:entry, entry_number: "entry-ij-5", source_system: "Alliance", po_numbers: "F",
+      entry_5 = FactoryBot(:entry, entry_number: "entry-ij-5", source_system: "Alliance", po_numbers: "F",
                                 destination_state: "NV", entry_filed_date: Date.new(2018, 12, 27),
                                 container_numbers: "H", broker_invoice_total: BigDecimal("22.16"))
       bi_5 = entry_5.broker_invoices.create! customer_number: "BURLI", invoice_number: "bi_5", invoice_date: Date.new(2019, 9, 24)
@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonBillingReport do
     end
 
     it "uses custom date range when provided" do
-      entry_1 = Factory(:entry, entry_number: "entry-cb-1", source_system: "Alliance", po_numbers: "A",
+      entry_1 = FactoryBot(:entry, entry_number: "entry-cb-1", source_system: "Alliance", po_numbers: "A",
                                 destination_state: "NJ", entry_filed_date: Date.new(2018, 12, 23),
                                 container_numbers: "C\n D", broker_invoice_total: BigDecimal("18.12"))
       # This invoice date is outside the default range.  If it's included in the output, it means that the report is

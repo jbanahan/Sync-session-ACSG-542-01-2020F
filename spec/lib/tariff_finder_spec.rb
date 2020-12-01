@@ -1,14 +1,14 @@
 describe OpenChain::TariffFinder do
 
   def build_entry hts, part, coo, imp_id, country_id, release_date, mid_code
-    cit = Factory(:commercial_invoice_tariff,
+    cit = FactoryBot(:commercial_invoice_tariff,
                   hts_code: hts,
-                  commercial_invoice_line: Factory(:commercial_invoice_line,
+                  commercial_invoice_line: FactoryBot(:commercial_invoice_line,
                                                    part_number: part,
                                                    country_origin_code: coo,
-                                                   commercial_invoice: Factory(:commercial_invoice,
+                                                   commercial_invoice: FactoryBot(:commercial_invoice,
                                                                                mfid: mid_code,
-                                                                               entry: Factory(:entry,
+                                                                               entry: FactoryBot(:entry,
                                                                                               importer_id: imp_id,
                                                                                               import_country_id: country_id,
                                                                                               release_date: release_date))))
@@ -16,8 +16,8 @@ describe OpenChain::TariffFinder do
   end
 
   describe "find_by_style" do
-    let(:importer) { Factory(:company) }
-    let(:country) { Factory(:country) }
+    let(:importer) { FactoryBot(:company) }
+    let(:country) { FactoryBot(:country) }
 
     it "finds by style with nil country of origin" do
       build_entry '123456789', 'p1', 'ZZ', importer.id, country.id, 1.day.ago, 'q'
@@ -48,7 +48,7 @@ describe OpenChain::TariffFinder do
 
     it "skips entries with wrong importer" do
       build_entry '123456789', 'p1', 'ZZ', importer.id, country.id, 1.day.ago, 'q'
-      expect(described_class.new(country.iso_code, [Factory(:company)]).by_style('p1', 'ZZ')).to be_nil
+      expect(described_class.new(country.iso_code, [FactoryBot(:company)]).by_style('p1', 'ZZ')).to be_nil
     end
   end
 end

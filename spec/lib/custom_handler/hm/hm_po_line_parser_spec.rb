@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
   let!(:handler) { described_class.new cf }
 
   describe 'process' do
-    let(:user) { Factory(:master_user) }
+    let(:user) { FactoryBot(:master_user) }
 
     before :each do
       allow(cf).to receive(:attached).and_return cf
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
   end
 
   describe "process_excel" do
-    let!(:co) { Factory(:company, system_code: "HENNE") }
+    let!(:co) { FactoryBot(:company, system_code: "HENNE") }
     let!(:row_0) { ['PO NUMBER', 'PART NUMBER', 'COAST', 'HTS NUMBER', 'MID', 'C/O', 'QTY', 'REPORTING QTY', 'REPORTING UOM', 'NET WT', 'GROSS WT', 'CARTONS', 'UNIT COST', 'CURRENCY', 'INV VALUE', 'ADJUSTED VALUE', 'DOCS RCVD', 'DOCS OK', 'ISSUE CODES', 'COMMENTS'] }
     let!(:row_1) { ['424913', 'HM-1234', 'East', '1111111111', 'BDIRIFABGAZ', 'US', '1', '2', 'ea', nil, '4', '5', '6', 'USD', '7', '8', '2016-08-01', '2016-08-02', 'ABCD', 'no comment'] }
     let!(:row_2) { ['319424', 'HM-4321', 'West', '2222222222', 'BDNIATEX27DHA', 'CA', '2', '3', 'ea', '4', '5', '6', '7', 'CAD', '8', '9', '2016-09-01', '2016-09-02', 'DCBA', 'nothing to see here'] }
@@ -111,10 +111,10 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
     end
 
     context "with already existing record" do
-      let!(:ci) { Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'West', mfid: 'ZAGBAFIRIDB', total_quantity: 7, invoice_value_foreign: 9,
+      let!(:ci) { FactoryBot(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'West', mfid: 'ZAGBAFIRIDB', total_quantity: 7, invoice_value_foreign: 9,
                      docs_received_date: '2016-10-02', docs_ok_date: '2016-10-02', issue_codes: 'BADC', rater_comments: 'no comments', total_quantity_uom: 'CTNS') }
-      let!(:cil) { Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: 'HM-1234' , country_origin_code: 'UK', quantity: 3, unit_price: 8, currency: 'GBP', value_foreign: 10, line_number: 1) }
-      let!(:cit) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '3333333333', gross_weight: 6, classification_qty_2: nil, classification_uom_2: nil) }
+      let!(:cil) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci, part_number: 'HM-1234' , country_origin_code: 'UK', quantity: 3, unit_price: 8, currency: 'GBP', value_foreign: 10, line_number: 1) }
+      let!(:cit) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '3333333333', gross_weight: 6, classification_qty_2: nil, classification_uom_2: nil) }
 
       it "adds POs with an existing PO number but a different fingerprint" do
         allow(cf).to receive(:path).and_return "file.xlsx"

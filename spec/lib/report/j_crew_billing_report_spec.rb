@@ -8,31 +8,31 @@ describe OpenChain::Report::JCrewBillingReport do
 
     it "allows access to master companies for www users" do
       ms
-      expect(described_class.permission? Factory(:master_user)).to eq true
+      expect(described_class.permission? FactoryBot(:master_user)).to eq true
     end
 
     it "denies access to non-master users" do
       ms
-      expect(described_class.permission? Factory(:user)).to eq false
+      expect(described_class.permission? FactoryBot(:user)).to eq false
     end
 
     it "denies access to non-www systems" do
-      expect(described_class.permission? Factory(:master_user)).to eq false
+      expect(described_class.permission? FactoryBot(:master_user)).to eq false
     end
   end
 
   describe "run" do
     let! (:entry) {
-      entry = Factory(:commercial_invoice_tariff, duty_amount: BigDecimal.new("50"),
-                          commercial_invoice_line: Factory(:commercial_invoice_line, po_number: "123", prorated_mpf: BigDecimal.new("1.50"), hmf: BigDecimal.new("2.25"), cotton_fee: BigDecimal.new("3.50"),
-                            commercial_invoice: Factory(:commercial_invoice,
-                              entry: Factory(:entry, entry_number: "12345")
+      entry = FactoryBot(:commercial_invoice_tariff, duty_amount: BigDecimal.new("50"),
+                          commercial_invoice_line: FactoryBot(:commercial_invoice_line, po_number: "123", prorated_mpf: BigDecimal.new("1.50"), hmf: BigDecimal.new("2.25"), cotton_fee: BigDecimal.new("3.50"),
+                            commercial_invoice: FactoryBot(:commercial_invoice,
+                              entry: FactoryBot(:entry, entry_number: "12345")
                           )
                         )
                       ).commercial_invoice_line.commercial_invoice.entry
 
-      line = Factory(:broker_invoice_line, charge_type: "R", charge_amount: BigDecimal.new("100"),
-        broker_invoice: Factory(:broker_invoice, customer_number: 'JCREW', invoice_date: '2014-01-01', invoice_number: "Inv#", entry: entry)
+      line = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: BigDecimal.new("100"),
+        broker_invoice: FactoryBot(:broker_invoice, customer_number: 'JCREW', invoice_date: '2014-01-01', invoice_number: "Inv#", entry: entry)
       )
       entry
     }
@@ -195,16 +195,16 @@ describe OpenChain::Report::JCrewBillingReport do
 
     it "splits data into multiple tabs / files if number of lines exceeds max" do
       # just create a second entry, and mock out the max line method such that each entry should appear on its own tab
-      entry2 = Factory(:commercial_invoice_tariff, duty_amount: BigDecimal.new("25"),
-                          commercial_invoice_line: Factory(:commercial_invoice_line, po_number: "123", prorated_mpf: BigDecimal.new("1.50"), hmf: BigDecimal.new("2.25"), cotton_fee: BigDecimal.new("3.50"),
-                            commercial_invoice: Factory(:commercial_invoice,
-                              entry: Factory(:entry, entry_number: "98765")
+      entry2 = FactoryBot(:commercial_invoice_tariff, duty_amount: BigDecimal.new("25"),
+                          commercial_invoice_line: FactoryBot(:commercial_invoice_line, po_number: "123", prorated_mpf: BigDecimal.new("1.50"), hmf: BigDecimal.new("2.25"), cotton_fee: BigDecimal.new("3.50"),
+                            commercial_invoice: FactoryBot(:commercial_invoice,
+                              entry: FactoryBot(:entry, entry_number: "98765")
                           )
                         )
                       ).commercial_invoice_line.commercial_invoice.entry
 
-      invoice_line2 = Factory(:broker_invoice_line, charge_type: "R", charge_amount: BigDecimal.new("50"),
-        broker_invoice: Factory(:broker_invoice, customer_number: 'JCREW', invoice_date: '2014-01-01', invoice_number: "Inv#2", entry: entry2)
+      invoice_line2 = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: BigDecimal.new("50"),
+        broker_invoice: FactoryBot(:broker_invoice, customer_number: 'JCREW', invoice_date: '2014-01-01', invoice_number: "Inv#2", entry: entry2)
       )
 
       expect(subject).to receive(:max_row_count).at_least(1).times.and_return 4

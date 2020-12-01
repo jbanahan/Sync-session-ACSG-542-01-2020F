@@ -18,21 +18,21 @@ describe SecurityFiling do
   context "security" do
     describe "search secure" do
       before :each do
-        @sf = Factory(:security_filing)
-        @sf2 = Factory(:security_filing)
-        @sf3 = Factory(:security_filing)
+        @sf = FactoryBot(:security_filing)
+        @sf2 = FactoryBot(:security_filing)
+        @sf3 = FactoryBot(:security_filing)
       end
       it "should limit importers to their own items" do
-        r = SecurityFiling.search_secure(Factory(:importer_user, :company=>@sf.importer), SecurityFiling)
+        r = SecurityFiling.search_secure(FactoryBot(:importer_user, :company=>@sf.importer), SecurityFiling)
         expect(r.to_a).to eq([@sf])
       end
       it "should show linked importers" do
         @sf.importer.linked_companies << @sf2.importer
-        r = SecurityFiling.search_secure(Factory(:importer_user, :company=>@sf.importer), SecurityFiling)
+        r = SecurityFiling.search_secure(FactoryBot(:importer_user, :company=>@sf.importer), SecurityFiling)
         expect(r.to_a).to eq([@sf, @sf2])
       end
       it "should allow all for master" do
-        r = SecurityFiling.search_secure(Factory(:master_user), SecurityFiling)
+        r = SecurityFiling.search_secure(FactoryBot(:master_user), SecurityFiling)
         expect(r.to_a).to eq([@sf, @sf2, @sf3])
       end
     end
@@ -43,8 +43,8 @@ describe SecurityFiling do
         allow_any_instance_of(User).to receive(:edit_security_filings?).and_return(true)
         allow_any_instance_of(User).to receive(:comment_security_filings?).and_return(true)
         allow_any_instance_of(User).to receive(:attach_security_filings?).and_return(true)
-        u = Factory(:master_user)
-        sf = Factory(:security_filing)
+        u = FactoryBot(:master_user)
+        sf = FactoryBot(:security_filing)
         expect(sf.can_edit?(u)).to be_truthy
         expect(sf.can_attach?(u)).to be_truthy
         expect(sf.can_comment?(u)).to be_truthy
@@ -53,8 +53,8 @@ describe SecurityFiling do
         allow_any_instance_of(User).to receive(:edit_security_filings?).and_return(true)
         allow_any_instance_of(User).to receive(:comment_security_filings?).and_return(true)
         allow_any_instance_of(User).to receive(:attach_security_filings?).and_return(true)
-        u = Factory(:importer_user)
-        sf = Factory(:security_filing, :importer=>u.company)
+        u = FactoryBot(:importer_user)
+        sf = FactoryBot(:security_filing, :importer=>u.company)
         expect(sf.can_edit?(u)).to be_falsey
         expect(sf.can_attach?(u)).to be_falsey
         expect(sf.can_comment?(u)).to be_falsey
@@ -66,26 +66,26 @@ describe SecurityFiling do
           allow_any_instance_of(User).to receive(:view_security_filings?).and_return(true)
         end
         it "should allow if master company" do
-          expect(Factory(:security_filing).can_view?(Factory(:master_user))).to be_truthy
+          expect(FactoryBot(:security_filing).can_view?(FactoryBot(:master_user))).to be_truthy
         end
         it "should allow if importer = current user" do
-          sf = Factory(:security_filing)
-          expect(sf.can_view?(Factory(:user, :company=>sf.importer))).to be_truthy
+          sf = FactoryBot(:security_filing)
+          expect(sf.can_view?(FactoryBot(:user, :company=>sf.importer))).to be_truthy
         end
         it "should allow if importer linked to current_user company" do
-          u = Factory(:importer_user)
-          sf = Factory(:security_filing)
+          u = FactoryBot(:importer_user)
+          sf = FactoryBot(:security_filing)
           u.company.linked_companies << sf.importer
           expect(sf.can_view?(u)).to be_truthy
         end
         it "should not allow if not master & importer!=current user" do
-          u = Factory(:importer_user)
-          sf = Factory(:security_filing)
+          u = FactoryBot(:importer_user)
+          sf = FactoryBot(:security_filing)
           expect(sf.can_view?(u)).to be_falsey
         end
       end
       it "should not allow if user cannot view security filings" do
-        u = Factory(:master_user)
+        u = FactoryBot(:master_user)
         allow(u).to receive(:view_security_filings?).and_return(false)
         expect(SecurityFiling.new.can_view?(u)).to be_falsey
       end

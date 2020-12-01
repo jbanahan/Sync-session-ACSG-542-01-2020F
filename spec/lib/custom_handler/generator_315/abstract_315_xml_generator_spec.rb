@@ -11,10 +11,10 @@ describe OpenChain::CustomHandler::Generator315::Abstract315XmlGenerator do
     end.new
   end
 
-  let (:us) { Factory(:country, iso_code: "US")}
-  let (:port_entry) { Factory(:port, schedule_d_code: "1234", name: "Entry Port", address: Factory(:full_address, country: us, line_2: "Line 2", line_3: "Line 3")) }
-  let (:port_unlading) { Factory(:port, schedule_d_code: "9876", name: "Unlading Port", address: Factory(:full_address, country: us)) }
-  let (:port_lading) { Factory(:port, schedule_k_code: "65433", name: "Lading Port", address: Factory(:full_address, country: us)) }
+  let (:us) { FactoryBot(:country, iso_code: "US")}
+  let (:port_entry) { FactoryBot(:port, schedule_d_code: "1234", name: "Entry Port", address: FactoryBot(:full_address, country: us, line_2: "Line 2", line_3: "Line 3")) }
+  let (:port_unlading) { FactoryBot(:port, schedule_d_code: "9876", name: "Unlading Port", address: FactoryBot(:full_address, country: us)) }
+  let (:port_lading) { FactoryBot(:port, schedule_k_code: "65433", name: "Lading Port", address: FactoryBot(:full_address, country: us)) }
 
   let (:data) do
     data = described_class::Data315.new "ref", "ent", 10, "LCL", "SCAC", "ves", "voy", "1234", port_entry, "65433", port_lading, "9876",
@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::Generator315::Abstract315XmlGenerator do
     end
 
     it "detects unlocodes for LocationCodeType" do
-      locode = Factory(:port, unlocode: "CNABC", name: "Chinese Port")
+      locode = FactoryBot(:port, unlocode: "CNABC", name: "Chinese Port")
       data.port_of_lading = "CNABC"
       data.port_of_lading_location = locode
 
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::Generator315::Abstract315XmlGenerator do
     end
 
     it "detects IATA codes for LocationCodeType" do
-      locode = Factory(:port, iata_code: "YYZ", name: "Toronto Pearson Airport")
+      locode = FactoryBot(:port, iata_code: "YYZ", name: "Toronto Pearson Airport")
       data.port_of_lading = "YYZ"
       data.port_of_lading_location = locode
 
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::Generator315::Abstract315XmlGenerator do
     end
 
     it "detects CBSA codes for LocationCodeType" do
-      locode = Factory(:port, cbsa_port: "9999", name: "Sarnia")
+      locode = FactoryBot(:port, cbsa_port: "9999", name: "Sarnia")
       data.port_of_lading = "9999"
       data.port_of_lading_location = locode
 

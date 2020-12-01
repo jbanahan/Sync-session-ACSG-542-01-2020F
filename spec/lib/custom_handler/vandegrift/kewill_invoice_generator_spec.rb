@@ -2,9 +2,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
 
   describe "generate_invoice" do
     let (:importer) {
-      with_customs_management_id(Factory(:importer), "IMP")
+      with_customs_management_id(FactoryBot(:importer), "IMP")
     }
-    let (:other_importer) { with_customs_management_id(Factory(:importer), "AHH")}
+    let (:other_importer) { with_customs_management_id(FactoryBot(:importer), "AHH")}
 
     let (:coo) {
       c = Country.new
@@ -18,9 +18,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
       c
     }
 
-    let! (:prs) { Factory(:unit_of_measure, uom: "PRS", description: "Pairs") }
-    let! (:pcs) { Factory(:unit_of_measure, uom: "PCS", description: "Pieces") }
-    let! (:too) { Factory(:unit_of_measure, uom: "TOO", description: "Alsoness") }
+    let! (:prs) { FactoryBot(:unit_of_measure, uom: "PRS", description: "Pairs") }
+    let! (:pcs) { FactoryBot(:unit_of_measure, uom: "PCS", description: "Pieces") }
+    let! (:too) { FactoryBot(:unit_of_measure, uom: "TOO", description: "Alsoness") }
     let! (:data_cross_reference) { DataCrossReference.create! cross_reference_type: "unit_of_measure", key: pcs.uom,
       value: prs.uom, company: importer }
     let! (:another_data_cross_reference) { DataCrossReference.create! cross_reference_type: "unit_of_measure", key: prs.uom,

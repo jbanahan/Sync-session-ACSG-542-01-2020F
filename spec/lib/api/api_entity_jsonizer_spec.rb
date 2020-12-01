@@ -2,17 +2,17 @@ describe OpenChain::Api::ApiEntityJsonizer do
 
   describe '#entity_to_json' do
     before :each do
-      @country_1 = Factory(:country)
-      @country_2 = Factory(:country)
+      @country_1 = FactoryBot(:country)
+      @country_2 = FactoryBot(:country)
 
-      @product = Factory(:product)
-      @classification = Factory(:classification, country: @country_1, product: @product)
-      @tariff_record = Factory(:tariff_record, classification: @classification, hts_1: '1234567890')
+      @product = FactoryBot(:product)
+      @classification = FactoryBot(:classification, country: @country_1, product: @product)
+      @tariff_record = FactoryBot(:tariff_record, classification: @classification, hts_1: '1234567890')
 
-      @classification_2 = Factory(:classification, country: @country_2, product: @product)
-      @tariff_record_2 = Factory(:tariff_record, classification: @classification_2, hts_1: '1234567890')
+      @classification_2 = FactoryBot(:classification, country: @country_2, product: @product)
+      @tariff_record_2 = FactoryBot(:tariff_record, classification: @classification_2, hts_1: '1234567890')
 
-      @user = Factory(:master_user)
+      @user = FactoryBot(:master_user)
     end
 
     it 'renders jsonized output for model fields requested' do
@@ -104,7 +104,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
     it 'sends nil/null for values not present in the entity at each level' do
       # There's no real nullable values in a product at the classification / tariff level
       # so we'll use an entry for this test
-      line = Factory(:commercial_invoice_line)
+      line = FactoryBot(:commercial_invoice_line)
       entry = line.entry
       json = OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, entry, ['ent_div_num', 'ci_total_quantity_uom', 'cil_po_number']
       hash = {
@@ -142,9 +142,9 @@ describe OpenChain::Api::ApiEntityJsonizer do
 
     context "with custom fields" do
       before :each do
-        @p_def = Factory(:custom_definition)
-        @c_def = Factory(:custom_definition, module_type: "Classification", data_type: 'date')
-        @t_def = Factory(:custom_definition, module_type: "TariffRecord", data_type: 'decimal')
+        @p_def = FactoryBot(:custom_definition)
+        @c_def = FactoryBot(:custom_definition, module_type: "Classification", data_type: 'date')
+        @t_def = FactoryBot(:custom_definition, module_type: "TariffRecord", data_type: 'decimal')
 
         @product.update_custom_value! @p_def, "Value1"
         @classification.update_custom_value! @c_def, Date.new(2013, 12, 20)
@@ -182,7 +182,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
 
   describe 'model_field_list_to_json' do
     before :each do
-      @user = Factory(:master_user)
+      @user = FactoryBot(:master_user)
     end
 
     it 'should list all model fields for Product' do

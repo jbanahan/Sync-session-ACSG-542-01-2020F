@@ -1,13 +1,13 @@
 describe BusinessValidationTemplatesController do
   describe "index" do
-    let!(:business_validation_templates) { [Factory(:business_validation_template)] }
+    let!(:business_validation_templates) { [FactoryBot(:business_validation_template)] }
 
     before do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
     end
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :index
       expect(response).to be_redirect
@@ -21,7 +21,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "skips templates with delete_pending flag set" do
-      Factory(:business_validation_template, delete_pending: true)
+      FactoryBot(:business_validation_template, delete_pending: true)
       get :index
       expect(response).to be_success
       expect(assigns(:bv_templates).count).to eq 1
@@ -29,10 +29,10 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "show" do
-    let(:business_validation_template) { Factory(:business_validation_template) }
+    let(:business_validation_template) { FactoryBot(:business_validation_template) }
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :show, id: business_validation_template.id
       expect(response).to be_redirect
@@ -40,7 +40,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "loads templates" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :show, id: business_validation_template.id
       expect(response).to be_success
@@ -49,10 +49,10 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "new" do
-    let(:business_validation_template) { Factory(:business_validation_template) }
+    let(:business_validation_template) { FactoryBot(:business_validation_template) }
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :new, id: business_validation_template.id
       expect(response).to be_redirect
@@ -60,7 +60,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "loads the correct template" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :new, id: business_validation_template.id
       expect(response).to be_success
@@ -72,7 +72,7 @@ describe BusinessValidationTemplatesController do
   describe "create" do
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       expect { post :create, business_validation_template: { module_type: "Entry"} }.not_to change(BusinessValidationTemplate, :count)
       expect(response).to be_redirect
@@ -80,14 +80,14 @@ describe BusinessValidationTemplatesController do
     end
 
     it "creates the correct template" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       expect { post :create, business_validation_template: { module_type: "Entry"} }.to change(BusinessValidationTemplate, :count).from(0).to(1)
       expect(response).to be_redirect
     end
 
     it "errors if validation fails" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       expect { post :create, business_validation_template: { module_type: nil } }.not_to change(BusinessValidationTemplate, :count)
       expect(response).to be_redirect
@@ -97,10 +97,10 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "update" do
-    let(:business_validation_template) { Factory(:business_validation_template, module_type: "Product") }
+    let(:business_validation_template) { FactoryBot(:business_validation_template, module_type: "Product") }
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       post :update, id: business_validation_template.id
       expect(response).to be_redirect
@@ -108,7 +108,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "updates only main attributes when search_criterions_only not set" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :update,
            id: business_validation_template.id,
@@ -127,7 +127,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "onlies update criteria when search_criterions_only is set" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :update,
            id: business_validation_template.id,
@@ -141,7 +141,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "errors if validation fails" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       post :update,
            id: business_validation_template.id,
@@ -157,10 +157,10 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "edit" do
-    let(:business_validation_template) { Factory(:business_validation_template) }
+    let(:business_validation_template) { FactoryBot(:business_validation_template) }
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       get :edit, id: business_validation_template.id
       expect(response).to be_redirect
@@ -168,7 +168,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "loads the correct template" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :edit, id: business_validation_template.id
       expect(response).to be_success
@@ -178,14 +178,14 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "destroy" do
-    let(:business_validation_template) { Factory(:business_validation_template) }
+    let(:business_validation_template) { FactoryBot(:business_validation_template) }
 
     before do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
     end
 
     it "requires admin" do
-      u = Factory(:user)
+      u = FactoryBot(:user)
       sign_in_as u
       post :destroy, id: business_validation_template.id
       expect(response).to be_redirect
@@ -202,8 +202,8 @@ describe BusinessValidationTemplatesController do
     end
 
     it "marks rules as delete_pending" do
-      Factory(:business_validation_rule, business_validation_template: business_validation_template)
-      Factory(:business_validation_rule, business_validation_template: business_validation_template)
+      FactoryBot(:business_validation_rule, business_validation_template: business_validation_template)
+      FactoryBot(:business_validation_rule, business_validation_template: business_validation_template)
       post :destroy, id: business_validation_template.id
       expect(BusinessValidationRule.pluck(:delete_pending)).to eq [true, true]
     end
@@ -211,7 +211,7 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "upload", :disable_delayed_jobs do
-    let(:user) { Factory(:admin_user) }
+    let(:user) { FactoryBot(:admin_user) }
     let(:file) { instance_double("file") }
     let(:cf) { instance_double("custom file") }
     let(:uploader) { OpenChain::BusinessRulesCopier::TemplateUploader }
@@ -228,7 +228,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "only allows admin" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       sign_in_as user
       expect(CustomFile).not_to receive(:create!)
     end
@@ -241,8 +241,8 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "copy", :disable_delayed_jobs do
-    let(:user) { Factory(:admin_user) }
-    let(:bvt) { Factory(:business_validation_template) }
+    let(:user) { FactoryBot(:admin_user) }
+    let(:bvt) { FactoryBot(:business_validation_template) }
 
     before { sign_in_as user }
 
@@ -254,7 +254,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "only allows admin" do
-      user = Factory(:user)
+      user = FactoryBot(:user)
       sign_in_as user
       expect(OpenChain::BusinessRulesCopier).not_to receive(:copy_template)
       post :copy, id: bvt.id
@@ -262,11 +262,11 @@ describe BusinessValidationTemplatesController do
   end
 
   describe "edit_angular" do
-    let(:search_criterion) { Factory(:search_criterion) }
-    let(:business_validation_template) { Factory(:business_validation_template, module_type: "Entry", search_criterions: [search_criterion]) }
+    let(:search_criterion) { FactoryBot(:search_criterion) }
+    let(:business_validation_template) { FactoryBot(:business_validation_template, module_type: "Entry", search_criterions: [search_criterion]) }
 
     it "renders the correct model_field and business_template json" do
-      u = Factory(:admin_user)
+      u = FactoryBot(:admin_user)
       sign_in_as u
       get :edit_angular, id: business_validation_template.id
       r = JSON.parse(response.body)

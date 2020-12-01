@@ -1,8 +1,8 @@
 describe AttachmentProcessJob do
   before :each do
-    @s = Factory(:shipment)
-    @u = Factory(:user)
-    @a = Factory(:attachment)
+    @s = FactoryBot(:shipment)
+    @u = FactoryBot(:user)
+    @a = FactoryBot(:attachment)
   end
   describe "validations" do
     it "should fail on unknown job name" do

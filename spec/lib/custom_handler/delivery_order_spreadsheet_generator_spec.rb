@@ -164,8 +164,8 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
   end
 
   describe "generate_and_send_delivery_orders" do
-    let (:entry) { Factory(:entry, broker_reference: "12345") }
-    let (:user) { Factory(:user) }
+    let (:entry) { FactoryBot(:entry, broker_reference: "12345") }
+    let (:user) { FactoryBot(:user) }
     let (:temp1) {
       @tf = Tempfile.new("file")
       @tf << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails

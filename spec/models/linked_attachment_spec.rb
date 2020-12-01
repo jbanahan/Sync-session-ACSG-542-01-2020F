@@ -1,29 +1,29 @@
 describe LinkedAttachment do
   context 'validations' do
     it 'should require an attachable' do
-      a = LinkedAttachment.create(:linkable_attachment=>Factory(:linkable_attachment))
+      a = LinkedAttachment.create(:linkable_attachment=>FactoryBot(:linkable_attachment))
       expect(a.errors.full_messages.size).to eq(1)
     end
     it 'should require a linkable attachment' do
-      a = LinkedAttachment.create(:attachable=>Factory(:product))
+      a = LinkedAttachment.create(:attachable=>FactoryBot(:product))
       expect(a.errors.full_messages.size).to eq(1)
     end
     it 'should save with an attachable and linkable attachment' do
-      a = LinkedAttachment.create(:attachable=>Factory(:product), :linkable_attachment=>Factory(:linkable_attachment))
+      a = LinkedAttachment.create(:attachable=>FactoryBot(:product), :linkable_attachment=>FactoryBot(:linkable_attachment))
       expect(a.errors).to be_empty
     end
   end
 
   describe 'static creators' do
     before(:each) do
-      non_matching_linkable = Factory(:linkable_attachment)
-      non_matching_attachable = Factory(:product)
+      non_matching_linkable = FactoryBot(:linkable_attachment)
+      non_matching_attachable = FactoryBot(:product)
     end
 
 
     describe 'create_from_attachable_by_class_and_id' do
       it "should load object and pass" do
-        prod_id = Factory(:product).id
+        prod_id = FactoryBot(:product).id
         expect(LinkedAttachment).to receive(:create_from_attachable).with(instance_of(Product)).and_return('x')
         LinkedAttachment.create_from_attachable_by_class_and_id Product, prod_id
       end
@@ -31,15 +31,15 @@ describe LinkedAttachment do
 
     describe 'create_from_attachable' do
       before(:each) do
-        @product = Factory(:product, :unit_of_measure=>'uom')
+        @product = FactoryBot(:product, :unit_of_measure=>'uom')
       end
       it 'should do nothing with no matching linkable attachments' do
-        r = LinkedAttachment.create_from_attachable(Factory(:product))
+        r = LinkedAttachment.create_from_attachable(FactoryBot(:product))
         expect(r.size).to eq(0)
         expect(LinkedAttachment.all.size).to eq(0)
       end
       it 'should create 1 with 1 matching linkable attachment' do
-        linkable = Factory(:linkable_attachment, :model_field_uid=>'prod_uid', :value=>@product.unique_identifier)
+        linkable = FactoryBot(:linkable_attachment, :model_field_uid=>'prod_uid', :value=>@product.unique_identifier)
         r = LinkedAttachment.create_from_attachable(@product)
         expect(r.size).to eq(1)
         linked = r.first
@@ -48,7 +48,7 @@ describe LinkedAttachment do
       end
       it 'should create 2 with 2 matching linkable attachments on different model fields' do
         linkables = []
-        {'prod_uid'=>@product.unique_identifier, 'prod_uom'=>@product.unit_of_measure}.each {|k, v| linkables << Factory(:linkable_attachment, :model_field_uid=>k, :value=>v)}
+        {'prod_uid'=>@product.unique_identifier, 'prod_uom'=>@product.unit_of_measure}.each {|k, v| linkables << FactoryBot(:linkable_attachment, :model_field_uid=>k, :value=>v)}
         r = LinkedAttachment.create_from_attachable(@product)
         expect(r.size).to eq(2)
         r.each do |linked|
@@ -57,7 +57,7 @@ describe LinkedAttachment do
         end
       end
       it 'should do nothing if already linked to all potential matches' do
-        2.times {|i| Factory(:linkable_attachment, :model_field_uid=>'prod_uid', :value=>@product.unique_identifier)}
+        2.times {|i| FactoryBot(:linkable_attachment, :model_field_uid=>'prod_uid', :value=>@product.unique_identifier)}
         LinkedAttachment.create_from_attachable(@product) # first time does matching
         expect(LinkedAttachment.create_from_attachable(@product)).to be_empty  # second time does nothing
         expect(LinkedAttachment.all.size).to eq(2)
@@ -70,8 +70,8 @@ describe LinkedAttachment do
     end
     describe 'create_from_linkable_attachment' do
       before(:each) do
-        @product = Factory(:product, :unit_of_measure=>'uomx')
-        @linkable = Factory(:linkable_attachment, :model_field_uid=>'prod_uom', :value=>@product.unit_of_measure)
+        @product = FactoryBot(:product, :unit_of_measure=>'uomx')
+        @linkable = FactoryBot(:linkable_attachment, :model_field_uid=>'prod_uom', :value=>@product.unit_of_measure)
       end
       it 'should create 1 with 1 matching attachable' do
         found = LinkedAttachment.create_from_linkable_attachment @linkable
@@ -80,7 +80,7 @@ describe LinkedAttachment do
         found.first.linkable_attachment == @linkable
       end
       it 'should create 2 with 2 matching attachables' do
-        p2 = Factory(:product, :unit_of_measure=>@product.unit_of_measure)
+        p2 = FactoryBot(:product, :unit_of_measure=>@product.unit_of_measure)
         found = LinkedAttachment.create_from_linkable_attachment @linkable
         expect(found.size).to eq(2)
         products = [@product, p2]

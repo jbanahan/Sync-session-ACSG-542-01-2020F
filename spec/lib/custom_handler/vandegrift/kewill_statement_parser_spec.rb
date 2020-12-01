@@ -62,9 +62,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     }
   }
 
-  let (:test_importer) { with_customs_management_id(Factory(:importer), "TEST") }
-  let (:user) { Factory(:user) }
-  let (:port) { Factory(:port, schedule_d_code: "4103")}
+  let (:test_importer) { with_customs_management_id(FactoryBot(:importer), "TEST") }
+  let (:user) { FactoryBot(:user) }
+  let (:port) { FactoryBot(:port, schedule_d_code: "4103")}
   let (:log) { InboundFile.new }
 
   describe "process_daily_statement" do
@@ -73,10 +73,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       daily_statement
     }
 
-    let! (:entry) { Factory(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "2316567") }
+    let! (:entry) { FactoryBot(:entry, source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: "2316567") }
     let! (:broker_invoice) {
-      inv_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: entry), charge_code: "0001", charge_amount: 100)
-      inv_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: entry), charge_code: "0002", charge_amount: 100)
+      inv_line = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: entry), charge_code: "0001", charge_amount: 100)
+      inv_line = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: entry), charge_code: "0002", charge_amount: 100)
       inv_line.broker_invoice
     }
     let! (:monthly_statement) { MonthlyStatement.create! statement_number: "0411P128031", importer_id: test_importer.id}

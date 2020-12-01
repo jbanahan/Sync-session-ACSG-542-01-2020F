@@ -2,11 +2,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
   subject { described_class }
   let(:helper) { OpenChain::CustomHandler::Ascena::AscenaReportHelper }
-  let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
-  let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
-  let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
-  let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
-  let! (:user) { Factory(:master_user) }
+  let! (:ascena) { with_customs_management_id(FactoryBot(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+  let! (:ann) { with_customs_management_id(FactoryBot(:importer, name: "Ann"), "ATAYLOR") }
+  let! (:maurices) { with_customs_management_id(FactoryBot(:importer, name: "Maurices"), "MAUR") }
+  let! (:ascena_master) { with_customs_management_id(FactoryBot(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+  let! (:user) { FactoryBot(:master_user) }
   let (:cdefs) { described_class::Query.new.cdefs }
 
   describe "permissions" do
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
     it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
       user.company.update master: false
-      g = Factory(:group, system_code: "ASCE_TRADE_ASSOC")
+      g = FactoryBot(:group, system_code: "ASCE_TRADE_ASSOC")
       user.groups << g
       expect(subject.permissions user).to eq(cust_descriptions)
     end
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
   end
 
   describe "fiscal_month" do
-    let (:fiscal_month) { Factory(:fiscal_month, company: ascena, year: 2017, month_number: 3) }
+    let (:fiscal_month) { FactoryBot(:fiscal_month, company: ascena, year: 2017, month_number: 3) }
 
     it "parses fiscal month descriptor and returns fiscal month record" do
       fiscal_month
@@ -77,8 +77,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
   end
 
   describe "run_schedulable" do
-    let!(:current_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018, 3, 15), end_date: Date.new(2018, 4, 15), year: 2018, month_number: 2) }
-    let!(:previous_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018, 2, 15), end_date: Date.new(2018, 3, 14), year: 2018, month_number: 1) }
+    let!(:current_fm) { FactoryBot(:fiscal_month, company: ascena, start_date: Date.new(2018, 3, 15), end_date: Date.new(2018, 4, 15), year: 2018, month_number: 2) }
+    let!(:previous_fm) { FactoryBot(:fiscal_month, company: ascena, start_date: Date.new(2018, 2, 15), end_date: Date.new(2018, 3, 14), year: 2018, month_number: 1) }
 
     it "runs report for previous fiscal month on fourth day of fiscal month" do
       Tempfile.open(["hi", ".xls"]) do |t|
@@ -297,7 +297,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
   end
 
   describe "run_report" do
-    let! (:fiscal_month) { Factory(:fiscal_month, company: ascena, year: 2017, month_number: 3, start_date: Date.new(2017, 3, 1), end_date: Date.new(2017, 4, 1)) }
+    let! (:fiscal_month) { FactoryBot(:fiscal_month, company: ascena, year: 2017, month_number: 3, start_date: Date.new(2017, 3, 1), end_date: Date.new(2017, 4, 1)) }
     let (:data_sheet_header) do
       ["Broker Reference Number", "Importer", "First Sale", "Supplier", "Manufacturer", "Transactions Related", "Mode of Transport", "Fiscal Month", "Release Date",
        "Filer", "Entry No.", "7501 Line Number", "Invoice Number", "Product Code", "PO Number", "Brand", "Order Type", "Country of Origin", "Country of Export",
@@ -442,7 +442,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     # This integration test verifies that the essential wiring is in place. It's too cumbersome to do more than spot-check
     context "with actual data" do
       let! (:entry) do
-        e = Factory(:entry, importer: ascena, import_country: Factory(:country), customer_number: "ASCE", source_system: "Alliance", fiscal_date: Date.new(2017, 3, 1), broker_reference: "REF", transport_mode_code: "40", fiscal_year: 2017, fiscal_month: 3, release_date: DateTime.new(2017, 3, 1, 5, 0))
+        e = FactoryBot(:entry, importer: ascena, import_country: FactoryBot(:country), customer_number: "ASCE", source_system: "Alliance", fiscal_date: Date.new(2017, 3, 1), broker_reference: "REF", transport_mode_code: "40", fiscal_year: 2017, fiscal_month: 3, release_date: DateTime.new(2017, 3, 1, 5, 0))
         ci = e.commercial_invoices.create! invoice_number: "INV"
         cil = ci.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", product_line: "JST", non_dutiable_amount: 20, entered_value_7501: BigDecimal("10"), value: BigDecimal("10"), contract_amount: 0
         cit = cil.commercial_invoice_tariffs.create! hts_code: "1234567890", tariff_description: "DESC", entered_value_7501: BigDecimal("10"), spi_primary: "", duty_rate: BigDecimal("0.1"), duty_amount: BigDecimal("1")
@@ -454,7 +454,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       end
 
       let! (:order) do
-        order = Factory(:order, order_number: "ASCENA-JST-PO")
+        order = FactoryBot(:order, order_number: "ASCENA-JST-PO")
         order.update_custom_value! cdefs[:ord_type], "AGS"
         order
       end
@@ -590,7 +590,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     end
 
     describe "calculate_spi" do
-      let(:ot) { Factory(:official_tariff, common_rate_decimal: 0.3) }
+      let(:ot) { FactoryBot(:official_tariff, common_rate_decimal: 0.3) }
       before do
         row.official_tariff = ot
         row[:cil_entered_value_7501] = 10
@@ -975,8 +975,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let(:klass) { described_class::FieldFiller }
 
     describe "fill_missing_fields" do
-      let(:us) { Factory(:country, iso_code: "US")}
-      let!(:ot) { Factory(:official_tariff, country: us, hts_code: "123456789", general_rate: "2%")}
+      let(:us) { FactoryBot(:country, iso_code: "US")}
+      let!(:ot) { FactoryBot(:official_tariff, country: us, hts_code: "123456789", general_rate: "2%")}
       let(:results) do
         row = described_class::Wrapper.new []
         row[:e_id] = 1
@@ -1057,9 +1057,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     context "EntFieldHelper" do
       let(:helper) { klass::EntFieldHelper }
       let(:ent) do
-        e = Factory(:entry, entry_number: "123456789")
-        e.unlading_port =  Factory(:port, name: "unl port", schedule_d_code: "1234")
-        e.us_entry_port = Factory(:port, name: "ent port", schedule_d_code: "4321")
+        e = FactoryBot(:entry, entry_number: "123456789")
+        e.unlading_port =  FactoryBot(:port, name: "unl port", schedule_d_code: "1234")
+        e.us_entry_port = FactoryBot(:port, name: "ent port", schedule_d_code: "4321")
         e.save!
         e
       end
@@ -1081,9 +1081,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     context "InvFieldHelper" do
       let(:helper) { klass::InvFieldHelper }
       let(:cil) do
-        cil = Factory(:commercial_invoice_line, contract_amount: 5, quantity: 10, value: 1)
-        Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: 2)
-        Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: 6)
+        cil = FactoryBot(:commercial_invoice_line, contract_amount: 5, quantity: 10, value: 1)
+        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: 2)
+        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: 6)
         cil
       end
       let(:results) do
@@ -1103,11 +1103,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
     context "TariffFieldHelper" do
       let(:helper) { klass::TariffFieldHelper }
-      let(:us) { Factory(:country, iso_code: "US") }
-      let(:ca) { Factory(:country, iso_code: "CA") }
-      let!(:ot_1) { Factory(:official_tariff, hts_code: "123456789", country: us )}
-      let!(:ot_2) { Factory(:official_tariff, hts_code: "987654321", country: us )}
-      let!(:ot_3) { Factory(:official_tariff, hts_code: "246810121", country: ca )}
+      let(:us) { FactoryBot(:country, iso_code: "US") }
+      let(:ca) { FactoryBot(:country, iso_code: "CA") }
+      let!(:ot_1) { FactoryBot(:official_tariff, hts_code: "123456789", country: us )}
+      let!(:ot_2) { FactoryBot(:official_tariff, hts_code: "987654321", country: us )}
+      let!(:ot_3) { FactoryBot(:official_tariff, hts_code: "246810121", country: ca )}
       let(:results) do
         row_1 = described_class::Wrapper.new []
         row_1[:hts_code] = "123456789"
@@ -1603,8 +1603,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       end
 
       context "OfficialTariff calculations" do
-        let(:co) { Factory(:country)}
-        let!(:ot) { Factory(:official_tariff, country: co, hts_code: "1111", general_rate: "2%")}
+        let(:co) { FactoryBot(:country)}
+        let!(:ot) { FactoryBot(:official_tariff, country: co, hts_code: "1111", general_rate: "2%")}
         before { row[:import_country_id] = co.id }
 
         describe "original_duty_rate" do
@@ -2110,37 +2110,37 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
   describe "Query" do
     subject { report = described_class::Query.new }
 
-    let!(:ann) { Factory(:importer, alliance_customer_number: "ATAYLOR") }
-    let!(:us) { Factory(:country)}
+    let!(:ann) { FactoryBot(:importer, alliance_customer_number: "ATAYLOR") }
+    let!(:us) { FactoryBot(:country)}
 
-    let!(:e_asce) { Factory(:entry, importer: ascena, import_country_id: us.id, customer_name: "Ascena", customer_number: "ASCE", source_system: "Alliance", broker_reference: "ascena broker ref", transport_mode_code: "40", fiscal_date: "2018-03-16", fiscal_month: 1, release_date: "2018-03-10", entry_number: "asce ent number", arrival_date: "2018-03-08", import_date: "2018-03-06", unlading_port_code:"1234", entry_port_code: "4321", fish_and_wildlife_transmitted_date: "2018-03-06")}
-    let!(:ci_asce) { Factory(:commercial_invoice, entry: e_asce, invoice_number: "inv num asce") }
-    let!(:cil_asce) { Factory(:commercial_invoice_line, commercial_invoice: ci_asce, contract_amount: 5, related_parties: true, customs_line_number: 1, part_number: "part asce", po_number: "po asce", entered_value_7501: 5, product_line: "brand asce", country_origin_code: "AM", country_export_code: "country export asce", unit_price: 1, quantity: 2, unit_of_measure: "uom asce", value: 1, non_dutiable_amount: 2) }
-    let!(:cit_asce) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_asce, hts_code: "hts code", duty_rate: 1.1, tariff_description: "tar descr asce", duty_amount: 2, entered_value_7501: 4, spi_primary: "spi asce", special_tariff:true) }
-    let!(:vend_asce) { Factory(:vendor, name: "asce vend") }
-    let!(:fact_asce) { Factory(:factory, name: "asce fact") }
+    let!(:e_asce) { FactoryBot(:entry, importer: ascena, import_country_id: us.id, customer_name: "Ascena", customer_number: "ASCE", source_system: "Alliance", broker_reference: "ascena broker ref", transport_mode_code: "40", fiscal_date: "2018-03-16", fiscal_month: 1, release_date: "2018-03-10", entry_number: "asce ent number", arrival_date: "2018-03-08", import_date: "2018-03-06", unlading_port_code:"1234", entry_port_code: "4321", fish_and_wildlife_transmitted_date: "2018-03-06")}
+    let!(:ci_asce) { FactoryBot(:commercial_invoice, entry: e_asce, invoice_number: "inv num asce") }
+    let!(:cil_asce) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci_asce, contract_amount: 5, related_parties: true, customs_line_number: 1, part_number: "part asce", po_number: "po asce", entered_value_7501: 5, product_line: "brand asce", country_origin_code: "AM", country_export_code: "country export asce", unit_price: 1, quantity: 2, unit_of_measure: "uom asce", value: 1, non_dutiable_amount: 2) }
+    let!(:cit_asce) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_asce, hts_code: "hts code", duty_rate: 1.1, tariff_description: "tar descr asce", duty_amount: 2, entered_value_7501: 4, spi_primary: "spi asce", special_tariff:true) }
+    let!(:vend_asce) { FactoryBot(:vendor, name: "asce vend") }
+    let!(:fact_asce) { FactoryBot(:factory, name: "asce fact") }
     let!(:ord_asce) do
-      order = Factory(:order, order_number: "ASCENA-brand asce-po asce", vendor: vend_asce, factory: fact_asce)
+      order = FactoryBot(:order, order_number: "ASCENA-brand asce-po asce", vendor: vend_asce, factory: fact_asce)
       order.update_custom_value! cdefs[:ord_type], "ord type asce"
       order
     end
 
-    let!(:official_tariff) { Factory(:official_tariff, country: us, hts_code: "hts code", general_rate: "2%") }
-    let!(:port_arrival) { Factory(:port, schedule_d_code: "1234", name: "arrival port")}
-    let!(:port_entry) { Factory(:port, schedule_d_code: "4321", name: "entry port")}
+    let!(:official_tariff) { FactoryBot(:official_tariff, country: us, hts_code: "hts code", general_rate: "2%") }
+    let!(:port_arrival) { FactoryBot(:port, schedule_d_code: "1234", name: "arrival port")}
+    let!(:port_entry) { FactoryBot(:port, schedule_d_code: "4321", name: "entry port")}
 
-    let!(:e_ann) { Factory(:entry, importer: ann, import_country_id: us.id, customer_name: "Ann", customer_number: "ATAYLOR", source_system: "Alliance", broker_reference: "ann broker ref", transport_mode_code: "40", fiscal_date: "2018-03-16", fiscal_month: 2, release_date: "2018-03-11", entry_number: "ann ent number", arrival_date: "2018-03-09", import_date: "2018-03-07", unlading_port_code: "1234", entry_port_code: "4321")}
-    let!(:ci_ann) { Factory(:commercial_invoice, entry: e_ann, invoice_number: "inv num ann") }
-    let!(:cil_ann) { Factory(:commercial_invoice_line, commercial_invoice: ci_ann, contract_amount: 6, related_parties: true, customs_line_number: 1, part_number: "part ann", po_number: "po ann", entered_value_7501: 6, product_line: "brand ann", country_origin_code: "AM", country_export_code: "country export ann", unit_price: 3, quantity: 4, unit_of_measure: "uom ann", value: 1, non_dutiable_amount: 4, miscellaneous_discount: 2, other_amount: -1) }
-    let!(:cit_ann) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_ann, hts_code: "hts code", duty_rate: 1.3, tariff_description: "tar descr ann", duty_amount: 3, entered_value_7501: 5, spi_primary: "spi ann", special_tariff: true) }
-    let!(:vend_ann_810) { Factory(:vendor, name: "ann vend 810") }
-    let!(:fact_ann_810) { Factory(:factory, name: "ann fact 810") }
-    let!(:vend_ann_ord) { Factory(:vendor, name: "ann vend ord") }
-    let!(:fact_ann_ord) { Factory(:factory, name: "ann fact ord") }
-    let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann", vendor: vend_ann_810, factory: fact_ann_810) }
-    let!(:il) { Factory(:invoice_line, invoice: i, po_number: "po ann", part_number: "part ann", part_description: "part descr", air_sea_discount: 4, early_pay_discount: 2, trade_discount: 6, middleman_charge: 8)}
+    let!(:e_ann) { FactoryBot(:entry, importer: ann, import_country_id: us.id, customer_name: "Ann", customer_number: "ATAYLOR", source_system: "Alliance", broker_reference: "ann broker ref", transport_mode_code: "40", fiscal_date: "2018-03-16", fiscal_month: 2, release_date: "2018-03-11", entry_number: "ann ent number", arrival_date: "2018-03-09", import_date: "2018-03-07", unlading_port_code: "1234", entry_port_code: "4321")}
+    let!(:ci_ann) { FactoryBot(:commercial_invoice, entry: e_ann, invoice_number: "inv num ann") }
+    let!(:cil_ann) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci_ann, contract_amount: 6, related_parties: true, customs_line_number: 1, part_number: "part ann", po_number: "po ann", entered_value_7501: 6, product_line: "brand ann", country_origin_code: "AM", country_export_code: "country export ann", unit_price: 3, quantity: 4, unit_of_measure: "uom ann", value: 1, non_dutiable_amount: 4, miscellaneous_discount: 2, other_amount: -1) }
+    let!(:cit_ann) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_ann, hts_code: "hts code", duty_rate: 1.3, tariff_description: "tar descr ann", duty_amount: 3, entered_value_7501: 5, spi_primary: "spi ann", special_tariff: true) }
+    let!(:vend_ann_810) { FactoryBot(:vendor, name: "ann vend 810") }
+    let!(:fact_ann_810) { FactoryBot(:factory, name: "ann fact 810") }
+    let!(:vend_ann_ord) { FactoryBot(:vendor, name: "ann vend ord") }
+    let!(:fact_ann_ord) { FactoryBot(:factory, name: "ann fact ord") }
+    let!(:i) { FactoryBot(:invoice, importer: ann, invoice_number: "inv num ann", vendor: vend_ann_810, factory: fact_ann_810) }
+    let!(:il) { FactoryBot(:invoice_line, invoice: i, po_number: "po ann", part_number: "part ann", part_description: "part descr", air_sea_discount: 4, early_pay_discount: 2, trade_discount: 6, middleman_charge: 8)}
     let!(:ord_ann) do
-      order = Factory(:order, order_number: "ATAYLOR-po ann", vendor: vend_ann_ord, factory: fact_ann_ord)
+      order = FactoryBot(:order, order_number: "ATAYLOR-po ann", vendor: vend_ann_ord, factory: fact_ann_ord)
       order.update_custom_value! cdefs[:ord_type], "ord type ann"
       order
     end

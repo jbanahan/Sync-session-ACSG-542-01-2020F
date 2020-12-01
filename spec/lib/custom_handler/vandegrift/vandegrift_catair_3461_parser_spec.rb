@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
   end
 
   let! (:importer) do
-    with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
+    with_customs_management_id(FactoryBot(:importer, irs_number: "30-0641353"), "CUSTNO")
   end
 
   describe "process_file" do
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
     it "checks all importers that share EIN numbers for a CMUS identifier to use" do
       importer.system_identifiers.delete_all
       # Create an alternate importer to show that we use the one w/ the actual system identifier
-      with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "ALTERNATE")
+      with_customs_management_id(FactoryBot(:importer, irs_number: "30-0641353"), "ALTERNATE")
 
       shipments = subject.process_file data
       shipment = shipments.first

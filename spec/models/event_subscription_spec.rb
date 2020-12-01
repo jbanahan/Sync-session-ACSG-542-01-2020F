@@ -3,22 +3,22 @@ describe EventSubscription do
 
   describe "subscriptions_for_event" do
     context "*_COMMENT_CREATE" do
-      let (:order) { Factory(:order, importer: Factory(:company, importer: true)) }
-      let (:user) { Factory(:user, company: order.importer, order_view: true) }
-      let! (:subscription) { Factory(:event_subscription, user: user, event_type: 'ORDER_COMMENT_CREATE', email: true) }
+      let (:order) { FactoryBot(:order, importer: FactoryBot(:company, importer: true)) }
+      let (:user) { FactoryBot(:user, company: order.importer, order_view: true) }
+      let! (:subscription) { FactoryBot(:event_subscription, user: user, event_type: 'ORDER_COMMENT_CREATE', email: true) }
 
       before do
         allow(master_setup).to receive(:order_enabled).and_return true
       end
 
       it "finds subscriptions who can view parent object" do
-        c = order.comments.create!(user_id: Factory(:user).id, body: 'abc')
+        c = order.comments.create!(user_id: FactoryBot(:user).id, body: 'abc')
 
         # this is for a user who can't view the order
-        Factory(:event_subscription, event_type: 'ORDER_COMMENT_CREATE', email: true)
+        FactoryBot(:event_subscription, event_type: 'ORDER_COMMENT_CREATE', email: true)
 
         # this is for a user who hasn't subscribed to email
-        Factory(:event_subscription, user: Factory(:user, company: order.importer, order_view: true), event_type: 'ORDER_COMMENT_CREATE', email: false)
+        FactoryBot(:event_subscription, user: FactoryBot(:user, company: order.importer, order_view: true), event_type: 'ORDER_COMMENT_CREATE', email: false)
 
         s = described_class.subscriptions_for_event 'ORDER_COMMENT_CREATE', 'email', object_id: c.id
         expect(s.to_a).to eq [subscription]
@@ -39,7 +39,7 @@ describe EventSubscription do
       end
 
       it "returns blank array if comment isn't found" do
-        Factory(:event_subscription, user: Factory(:user, company: order.importer, order_view: true), event_type: 'ORDER_COMMENT_CREATE', email: false)
+        FactoryBot(:event_subscription, user: FactoryBot(:user, company: order.importer, order_view: true), event_type: 'ORDER_COMMENT_CREATE', email: false)
         expect(described_class.subscriptions_for_event('ORDER_COMMENT_CREATE', 'email', object_id: -1)).to eq []
       end
     end

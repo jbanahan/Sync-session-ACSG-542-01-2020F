@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
   before :each do
-    @importer = Factory(:company, master: true, importer: true)
+    @importer = FactoryBot(:company, master: true, importer: true)
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @xl_client = double('xl_client')
     @s3_path = 'abc'

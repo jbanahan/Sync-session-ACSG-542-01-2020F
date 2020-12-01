@@ -3,8 +3,8 @@ describe CustomReportTieredEntryInvoiceBreakdown do
   context "static methods" do
     before :each do
       @kls = CustomReportTieredEntryInvoiceBreakdown
-      @master_user = Factory(:master_user)
-      @importer_user = Factory(:importer_user)
+      @master_user = FactoryBot(:master_user)
+      @importer_user = FactoryBot(:importer_user)
     end
     it "should have all column fields available from BROKER_INVOICE that the user can see " do
       fields = @kls.column_fields_available @master_user
@@ -31,14 +31,14 @@ describe CustomReportTieredEntryInvoiceBreakdown do
   end
 
   it "produces report" do
-    master_user = Factory(:master_user)
+    master_user = FactoryBot(:master_user)
     allow(master_user).to receive(:view_broker_invoices?).and_return(true)
-    invoice_line = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.12)
+    invoice_line = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.12)
     invoice_line.broker_invoice.entry.update_attributes(:entry_number=>"31612345678", :broker_reference=>"1234567")
-    Factory(:broker_invoice_line, :broker_invoice=>invoice_line.broker_invoice, :charge_description=>"CD2", :charge_amount=>55)
-    broker_invoice_2 = Factory(:broker_invoice, entry: invoice_line.broker_invoice.entry)
-    Factory(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3", :charge_amount=>50.02)
-    Factory(:broker_invoice_line, :broker_invoice=> broker_invoice_2, :charge_description=>"CD4", :charge_amount=>26.40)
+    FactoryBot(:broker_invoice_line, :broker_invoice=>invoice_line.broker_invoice, :charge_description=>"CD2", :charge_amount=>55)
+    broker_invoice_2 = FactoryBot(:broker_invoice, entry: invoice_line.broker_invoice.entry)
+    FactoryBot(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3", :charge_amount=>50.02)
+    FactoryBot(:broker_invoice_line, :broker_invoice=> broker_invoice_2, :charge_description=>"CD4", :charge_amount=>26.40)
 
     rpt = described_class.create!
     rpt.search_columns.create!(:model_field_uid=>:bi_entry_num, :rank=>1)

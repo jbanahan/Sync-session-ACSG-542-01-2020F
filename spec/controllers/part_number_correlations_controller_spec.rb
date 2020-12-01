@@ -4,7 +4,7 @@ describe PartNumberCorrelationsController do
     let(:file) { fixture_file_upload('/files/some_products.xls', "application/vnd.ms-excel") }
 
     before do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
     end
 
     it "creates a new PNC" do
@@ -44,7 +44,7 @@ describe PartNumberCorrelationsController do
 
   describe "index" do
     before do
-      sign_in_as Factory(:admin_user)
+      sign_in_as FactoryBot(:admin_user)
     end
 
     it "renders if you have permission" do

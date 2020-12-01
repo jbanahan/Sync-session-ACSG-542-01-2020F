@@ -1,6 +1,6 @@
 describe CustomReportContainerListing do
   before :each do
-    @u = Factory(:master_user)
+    @u = FactoryBot(:master_user)
     @u.company.update_attributes(:broker=>true)
     allow(@u).to receive(:view_entries?).and_return true
   end
@@ -21,7 +21,7 @@ describe CustomReportContainerListing do
 
   describe "run" do
     it "should make a row for each container" do
-      ent = Factory(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
+      ent = FactoryBot(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
       rpt = described_class.new
       rpt.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       arrays = rpt.to_arrays @u
@@ -36,7 +36,7 @@ describe CustomReportContainerListing do
       allow(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:request_host).and_return "localhost"
 
-      ent = Factory(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
+      ent = FactoryBot(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
       rpt = described_class.new include_links: true
       rpt.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
 

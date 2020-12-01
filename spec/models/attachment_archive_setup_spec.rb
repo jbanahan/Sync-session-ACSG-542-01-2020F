@@ -1,10 +1,10 @@
 describe AttachmentArchiveSetup do
-  let (:importer) { Factory(:company) }
-  let (:entry) { Factory(:entry, importer: importer, arrival_date: 1.month.ago, broker_reference: "REF") }
+  let (:importer) { FactoryBot(:company) }
+  let (:entry) { FactoryBot(:entry, importer: importer, arrival_date: 1.month.ago, broker_reference: "REF") }
   let (:archive_setup) { importer.create_attachment_archive_setup(start_date: 1.year.ago) }
   let (:attachment) { entry.attachments.create!(attached_file_name: 'a.pdf', attached_file_size: 100) }
   let (:attachment_2) { entry.attachments.create!(attached_file_name: 'b.pdf', attached_file_size: 100, is_private: false)}
-  let (:invoice) { Factory(:broker_invoice, entry: entry, invoice_date: (Time.current.midnight - 30.days) - 1.second) }
+  let (:invoice) { FactoryBot(:broker_invoice, entry: entry, invoice_date: (Time.current.midnight - 30.days) - 1.second) }
 
   describe "create_entry_archive!" do
 
@@ -40,7 +40,7 @@ describe AttachmentArchiveSetup do
     end
 
     it "does not include attachments for other importers" do
-      e2 = Factory(:entry)
+      e2 = FactoryBot(:entry)
       e2.attachments.create(attached_file_name: 'c.txt', attached_file_size: 1)
       archive = archive_setup.create_entry_archive!("my name", 1000)
       expect(archive.attachments.length).to eq(2)
@@ -58,13 +58,13 @@ describe AttachmentArchiveSetup do
     end
 
     it "includes attachments that have one invoice newer than 30 days ago" do
-      Factory(:broker_invoice, entry: entry, invoice_date: Time.current)
+      FactoryBot(:broker_invoice, entry: entry, invoice_date: Time.current)
       expect(archive_setup.create_entry_archive!("my name", 1000).attachments.length).to eq(2)
     end
 
     it "includes attachments only once" do
       # This is really just to verify distinct is being used
-      Factory(:broker_invoice, entry: entry, invoice_date: 40.days.ago)
+      FactoryBot(:broker_invoice, entry: entry, invoice_date: 40.days.ago)
       expect(archive_setup.create_entry_archive!("my name", 1000).attachments.length).to eq(2)
     end
 
@@ -218,7 +218,7 @@ describe AttachmentArchiveSetup do
     end
 
     it "creates multiple archives when there are too many files for one archive" do
-      entry_2 = Factory(:entry, broker_reference: "file2", importer: importer, arrival_date: Time.zone.now.to_date)
+      entry_2 = FactoryBot(:entry, broker_reference: "file2", importer: importer, arrival_date: Time.zone.now.to_date)
       attachment_3 = entry_2.attachments.create!(attached_file_name: '3.pdf', attached_file_size: 100)
 
       archives = subject.create_entry_archives_for_reference_numbers! 200, importer, [entry.broker_reference, entry_2.broker_reference]
@@ -285,9 +285,9 @@ describe AttachmentArchiveSetup do
   describe "setups_for" do
     subject { described_class }
 
-    let (:company) { Factory(:company) }
+    let (:company) { FactoryBot(:company) }
     let (:parent) do
-      p = Factory(:company)
+      p = FactoryBot(:company)
       p.linked_companies << company
       p
     end

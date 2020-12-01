@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
           updated_ex_factory: '2014-03-01'
         }
 
-        @importer = with_fenix_id(Factory(:company), "806167003RM0001")
+        @importer = with_fenix_id(FactoryBot(:company), "806167003RM0001")
 
         @xml_lambda = lambda do
           xml = "<Orders>
@@ -204,7 +204,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
       it "handles Club Monaco buyer" do
         @buyer_id = "0200011987"
-        @importer = with_fenix_id(Factory(:company), "866806458RM0001")
+        @importer = with_fenix_id(FactoryBot(:company), "866806458RM0001")
 
         subject.parse_file @xml_lambda.call, log
 
@@ -212,9 +212,9 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         expect(order).not_to be_nil
       end
 
-      it "handles Polo Factory Stores buyer" do
+      it "handles Polo FactoryBot Stores buyer" do
         @buyer_id = "0200016789"
-        @importer = with_fenix_id(Factory(:company), "806167003RM0002")
+        @importer = with_fenix_id(FactoryBot(:company), "806167003RM0002")
 
         subject.parse_file @xml_lambda.call, log
 
@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @po_number = "PO"
         @merchandise_division = "MERCH"
         @buyer_id = "0200011989"
-        @importer = with_fenix_id(Factory(:company), "806167003RM0001")
+        @importer = with_fenix_id(FactoryBot(:company), "806167003RM0001")
         @style = "Style"
         @merchandise_division_desc = "MERCH"
         @cdefs = described_class.prep_custom_definitions [:ord_division]

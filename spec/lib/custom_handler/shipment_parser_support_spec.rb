@@ -2,14 +2,14 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
 
   subject { described_class }
 
-  let(:prod1) { Factory(:product) }
-  let(:prod2) { Factory(:product) }
-  let(:ship1) { Factory(:shipment, reference: "REF1", booking_mode: "Ocean - FCL") }
-  let(:ship2) { Factory(:shipment, reference: "REF2", booking_mode: "Ocean") }
-  let(:ord1) { Factory(:order, order_number: "ORD1", customer_order_number: "CUSTORD1", mode: "Air", approval_status: "Accepted") }
-  let(:ord2) { Factory(:order, order_number: "ORD2", customer_order_number: "CUSTORD2", mode: "Ocean", approval_status: "Accepted") }
-  let(:ordln_1) { Factory(:order_line, order: ord1, product: prod1)}
-  let(:ordln_2) { Factory(:order_line, order: ord2, product: prod2)}
+  let(:prod1) { FactoryBot(:product) }
+  let(:prod2) { FactoryBot(:product) }
+  let(:ship1) { FactoryBot(:shipment, reference: "REF1", booking_mode: "Ocean - FCL") }
+  let(:ship2) { FactoryBot(:shipment, reference: "REF2", booking_mode: "Ocean") }
+  let(:ord1) { FactoryBot(:order, order_number: "ORD1", customer_order_number: "CUSTORD1", mode: "Air", approval_status: "Accepted") }
+  let(:ord2) { FactoryBot(:order, order_number: "ORD2", customer_order_number: "CUSTORD2", mode: "Ocean", approval_status: "Accepted") }
+  let(:ordln_1) { FactoryBot(:order_line, order: ord1, product: prod1)}
+  let(:ordln_2) { FactoryBot(:order_line, order: ord2, product: prod2)}
 
   context "errors" do
     describe "flag_unaccepted" do
@@ -24,11 +24,11 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
   context "warnings" do
     describe "orders_with_mismatched_transport_mode" do
       it "returns customer-order numbers with mismatched transportation mode" do
-        imp = Factory(:company)
+        imp = FactoryBot(:company)
         ship1.update_attributes importer: imp
         ord1.update_attributes importer: imp
         ord2.update_attributes importer: imp
-        Factory(:order, importer: imp, order_number: "ORD3", customer_order_number: "CUSTORD3", mode: "Air")
+        FactoryBot(:order, importer: imp, order_number: "ORD3", customer_order_number: "CUSTORD3", mode: "Air")
 
         results = subject.orders_with_mismatched_transport_mode ["ORD1", "ORD2", "ORD3"], ship1
         expect(results).to eq(["CUSTORD1", "CUSTORD3"])
@@ -36,8 +36,8 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
     end
 
     context "manifests" do
-      let(:shipln_1) {Factory(:shipment_line, shipment: ship1, product: prod1)}
-      let(:shipln_2) {Factory(:shipment_line, shipment: ship2, product: prod2)}
+      let(:shipln_1) {FactoryBot(:shipment_line, shipment: ship1, product: prod1)}
+      let(:shipln_2) {FactoryBot(:shipment_line, shipment: ship2, product: prod2)}
       let!(:ps_1) { PieceSet.create! quantity: 1, order_line: ordln_1, shipment_line: shipln_1 }
       let!(:ps_2) { PieceSet.create! quantity: 1, order_line: ordln_2, shipment_line: shipln_2 }
 
@@ -84,8 +84,8 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
     end
 
     context "bookings" do
-      let!(:booking_1) { Factory(:booking_line, shipment: ship1, order_line: ordln_1, product: prod1) }
-      let!(:booking_2) { Factory(:booking_line, shipment: ship2, order_line: ordln_2, product: prod2) }
+      let!(:booking_1) { FactoryBot(:booking_line, shipment: ship1, order_line: ordln_1, product: prod1) }
+      let!(:booking_2) { FactoryBot(:booking_line, shipment: ship2, order_line: ordln_2, product: prod2) }
 
       describe "multi_booking_qry" do
         it "returns customer-order numbers with matched shipment references" do

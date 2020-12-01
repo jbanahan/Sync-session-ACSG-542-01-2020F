@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentComparator do
+describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackShipmentComparator do
   let(:cdef) { described_class.prep_custom_definitions([:shp_factory_pack_revised_date])[:shp_factory_pack_revised_date] }
 
   describe "accept?" do
@@ -25,13 +25,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       shipment = Shipment.new(reference: '555', packing_list_sent_date: Date.new(2018, 1, 29))
       shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       csv = "A,B,C"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
       csv_output_file = nil
       synced = nil
       ftp_info_hash = nil
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synced)
-      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
+      expect(sr.trading_partner).to eq 'FactoryBot Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
 
@@ -70,13 +70,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_custom_value!(cdef, Date.new(2018, 2, 21))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       csv = "A,B,C"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
       csv_output_file = nil
       synced = nil
       ftp_info_hash = nil
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synced)
-      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
+      expect(sr.trading_partner).to eq 'FactoryBot Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
 
@@ -115,11 +115,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).not_to receive(:generate_csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).not_to receive(:generate_csv)
       expect(subject).not_to receive(:ftp_sync_file)
 
       subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
@@ -132,14 +132,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     it "updates existing sync record if present" do
       shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
-      synco = shipment.sync_records.create! trading_partner:'Factory Pack Declaration', sent_at:Date.new(2018, 1, 29)
+      synco = shipment.sync_records.create! trading_partner:'FactoryBot Pack Declaration', sent_at:Date.new(2018, 1, 29)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
       expect(subject).to receive(:ftp_sync_file).with(instance_of(Tempfile), synco, instance_of(Hash))
 
       now = Time.zone.now
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synco)
-      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
+      expect(sr.trading_partner).to eq 'FactoryBot Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
     end
@@ -161,14 +161,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     it "does not generate CSV when the shipment can't be found" do
       shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
       shipment.delete
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).not_to receive(:generate_csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).not_to receive(:generate_csv)
       expect(subject).not_to receive(:ftp_sync_file)
 
       subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
@@ -180,12 +180,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
 
       shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
+      snapshot_old = shipment.create_snapshot FactoryBot(:user)
 
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
+      snapshot_new = shipment.create_snapshot FactoryBot(:user)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
       ftp_info_hash = nil
       expect(subject).to receive(:ftp_sync_file) { |file_arg, sync_arg, opt_arg|
         ftp_info_hash = opt_arg

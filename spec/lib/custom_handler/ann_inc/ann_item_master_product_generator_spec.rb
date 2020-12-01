@@ -2,44 +2,44 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   subject { described_class.new "gpg_secrets_key" => 'vfitrack_passphraseless' }
 
   let(:cdefs) { subject.cdefs }
-  let(:us) { Factory(:country, iso_code: "US") }
-  let(:ca) { Factory(:country, iso_code: "CA") }
+  let(:us) { FactoryBot(:country, iso_code: "US") }
+  let(:ca) { FactoryBot(:country, iso_code: "CA") }
   let(:product_1) do
-    prod = Factory(:product, unique_identifier: "uid 1")
+    prod = FactoryBot(:product, unique_identifier: "uid 1")
     prod.find_and_set_custom_value cdefs[:approved_long], "approved\u00A0\r\n|\"long 1\"\r"
     prod.find_and_set_custom_value cdefs[:related_styles], "uid 3\nuid 4"
     prod.save!
     prod
   end
   let(:classi_1_1) do
-    cl = Factory(:classification, product: product_1, country: us)
+    cl = FactoryBot(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.find_and_set_custom_value cdefs[:long_desc_override], "long\r\ndescr 1 1\r"
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.save!
-    t = Factory(:tariff_record, classification: cl, hts_1: "123456789", line_number: 1)
+    t = FactoryBot(:tariff_record, classification: cl, hts_1: "123456789", line_number: 1)
     t.update_custom_value! cdefs[:set_qty], 5
-    Factory(:tariff_record, classification: cl, hts_1: "987654321", line_number: 2)
+    FactoryBot(:tariff_record, classification: cl, hts_1: "987654321", line_number: 2)
     cl
   end
   let(:classi_1_2) do
-    cl = Factory(:classification, product: product_1, country: ca)
+    cl = FactoryBot(:classification, product: product_1, country: ca)
     cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
-    Factory(:tariff_record, classification: cl, hts_1: "135791011", line_number: 1)
+    FactoryBot(:tariff_record, classification: cl, hts_1: "135791011", line_number: 1)
     cl
   end
   let(:product_2) do
-    prod = Factory(:product, unique_identifier: "uid 2")
+    prod = FactoryBot(:product, unique_identifier: "uid 2")
     prod.update_custom_value! cdefs[:approved_long], "approved long 2"
     prod
   end
   let(:classi_2_1) do
-    cl = Factory(:classification, product: product_2, country: us)
+    cl = FactoryBot(:classification, product: product_2, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
     cl.find_and_set_custom_value cdefs[:long_desc_override], "long descr 2 1"
     cl.save!
-    Factory(:tariff_record, classification: cl, hts_1: "24681012", line_number: 1)
+    FactoryBot(:tariff_record, classification: cl, hts_1: "24681012", line_number: 1)
     cl
   end
 

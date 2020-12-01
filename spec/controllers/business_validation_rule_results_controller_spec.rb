@@ -1,12 +1,12 @@
 describe BusinessValidationRuleResultsController do
 
   let(:user) do
-    au = Factory(:admin_user)
+    au = FactoryBot(:admin_user)
     au.company.update(show_business_rules: true)
     au
   end
 
-  let(:entry) { Factory(:entry, broker_reference: "REF") }
+  let(:entry) { FactoryBot(:entry, broker_reference: "REF") }
 
   before do
     sign_in_as user

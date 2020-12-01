@@ -1,18 +1,18 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator do
   subject { described_class.new }
-  let(:e) { Factory(:entry, entry_number: "12345", customer_number: "CUSTNUM", importer: Factory(:company)) }
+  let(:e) { FactoryBot(:entry, entry_number: "12345", customer_number: "CUSTNUM", importer: FactoryBot(:company)) }
 
   describe "accept?" do
-    let!(:snap) { Factory(:entity_snapshot, recordable: e) }
-    let!(:bi) { Factory(:broker_invoice, entry: e, invoice_date: Date.new(2018, 1, 1)) }
-    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
+    let!(:snap) { FactoryBot(:entity_snapshot, recordable: e) }
+    let!(:bi) { FactoryBot(:broker_invoice, entry: e, invoice_date: Date.new(2018, 1, 1)) }
+    let!(:aas) { FactoryBot(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
 
     it "returns true for entries with 'real time' flag enabled" do
       expect(described_class.accept? snap).to eq true
     end
 
     it "returns true for entries with importer parent setups with 'real time' flag enabled" do
-      parent = Factory(:company)
+      parent = FactoryBot(:company)
       parent.linked_companies << e.importer
       aas.update! company_id: parent.id
 
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
     end
 
     it "return false for non-entries" do
-      snap.update_attributes! recordable: Factory(:product)
+      snap.update_attributes! recordable: FactoryBot(:product)
       expect(described_class.accept? snap).to eq false
     end
 
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
   end
 
   describe "compare" do
-    let(:att) { Factory(:attachment, attachable: e) }
+    let(:att) { FactoryBot(:attachment, attachable: e) }
     let(:old_entry) do
       {"entity" => {"core_module" => "Entry", "children" =>
         [{"entity" => {"core_module" => "Attachment", "record_id" => att.id - 1, "model_fields" => {"att_attachment_type" => "Archive Packet"}}},
@@ -78,8 +78,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
   end
 
   describe "ftp_archive" do
-    let(:att) { Factory(:attachment, attachable: e, attachment_type: "Archive Packet") }
-    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
+    let(:att) { FactoryBot(:attachment, attachable: e, attachment_type: "Archive Packet") }
+    let!(:aas) { FactoryBot(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
 
 
     it "FTPs attachment using entry's customer number for file name and destination path" do

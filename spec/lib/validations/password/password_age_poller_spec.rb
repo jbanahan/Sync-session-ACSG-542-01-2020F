@@ -1,7 +1,7 @@
 describe OpenChain::Validations::Password::PasswordAgePoller do
   before do
-    @not_old_password = Factory.create(:user, password_changed_at: Time.zone.now)
-    @old_password = Factory.create(:user, password_changed_at: 90.days.ago)
+    @not_old_password = FactoryBot.create(:user, password_changed_at: Time.zone.now)
+    @old_password = FactoryBot.create(:user, password_changed_at: 90.days.ago)
   end
 
   describe '#expired_passwords' do

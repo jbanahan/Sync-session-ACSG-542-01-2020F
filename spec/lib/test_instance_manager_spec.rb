@@ -17,7 +17,7 @@ describe OpenChain::TestInstanceManager do
   end
   describe "clear_scheduled_reports" do
     it "should clear scheduled reports" do
-      ss = Factory(:search_schedule)
+      ss = FactoryBot(:search_schedule)
       described_class.new.clear_scheduled_reports!
       expect(SearchSchedule.all).to be_empty
     end
@@ -56,7 +56,7 @@ describe OpenChain::TestInstanceManager do
   end
   describe "update_users" do
     it "should clear tariff_subscribed flags" do
-      u = Factory(:user, tariff_subscribed:true)
+      u = FactoryBot(:user, tariff_subscribed:true)
       described_class.new.update_users! "localhost"
       u.reload
       expect(u).not_to be_tariff_subscribed

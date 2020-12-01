@@ -3,17 +3,17 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
     let(:rule) { described_class.new(name: "rule name", description: "rule desc") }
 
     let(:cdefs) { described_class.new.cdefs }
-    let(:imp) { Factory(:company) }
-    let(:entry) { Factory(:entry, importer: imp) }
-    let(:invoice_1) { Factory(:commercial_invoice, entry: entry, invoice_number: "123456")}
-    let!(:line_1) { Factory(:commercial_invoice_line, commercial_invoice: invoice_1, line_number: 1) }
-    let(:invoice_2) { Factory(:commercial_invoice, entry: entry, invoice_number: "654321") }
-    let!(:line_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 1) }
-    let!(:line_2_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 2) }
+    let(:imp) { FactoryBot(:company) }
+    let(:entry) { FactoryBot(:entry, importer: imp) }
+    let(:invoice_1) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "123456")}
+    let!(:line_1) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_1, line_number: 1) }
+    let(:invoice_2) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "654321") }
+    let!(:line_2) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 1) }
+    let!(:line_2_2) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 2) }
 
-    let!(:product_1) { Factory(:product, importer: imp, unique_identifier: "attr_part_1")}
-    let!(:product_2) { Factory(:product, importer: imp, unique_identifier: "attr_part_2")}
-    let!(:product_3) { Factory(:product, importer: imp, unique_identifier: "attr_part_3")}
+    let!(:product_1) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_1")}
+    let!(:product_2) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_2")}
+    let!(:product_3) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_3")}
     let(:cdef_fw) { cdefs[:prod_fish_wildlife] }
     let!(:cval_fw_1) { CustomValue.create! custom_definition: cdef_fw, customizable: product_1, boolean_value: true }
     let!(:cval_fw_2) { CustomValue.create! custom_definition: cdef_fw, customizable: product_2, boolean_value: true }
@@ -38,7 +38,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
       end
 
       it "uses different importer for products, if specified" do
-        imp = Factory(:company, system_code: "ACME")
+        imp = FactoryBot(:company, system_code: "ACME")
         product_2.update_attributes! importer_id: imp.id
 
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!
@@ -72,7 +72,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
       end
 
       it "uses different importer for products, if specified" do
-        imp = Factory(:company, system_code: "ACME")
+        imp = FactoryBot(:company, system_code: "ACME")
         product_2.update_attributes! importer_id: imp.id
 
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!

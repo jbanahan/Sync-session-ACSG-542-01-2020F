@@ -1,9 +1,9 @@
 describe FiscalMonthsController do
-  let(:user) { Factory(:sys_admin_user) }
-  let(:co) { Factory(:company, fiscal_reference: "release_date") }
-  let(:fm_1) { Factory(:fiscal_month, company: co) }
-  let(:fm_2) { Factory(:fiscal_month, company: co) }
-  let(:fm_3) { Factory(:fiscal_month) }
+  let(:user) { FactoryBot(:sys_admin_user) }
+  let(:co) { FactoryBot(:company, fiscal_reference: "release_date") }
+  let(:fm_1) { FactoryBot(:fiscal_month, company: co) }
+  let(:fm_2) { FactoryBot(:fiscal_month, company: co) }
+  let(:fm_3) { FactoryBot(:fiscal_month) }
 
   before { sign_in_as(user) }
 

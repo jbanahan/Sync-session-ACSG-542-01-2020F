@@ -13,8 +13,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     @tmp.unlink if @tmp
   end
   before :each do
-    @us = Factory(:country, :iso_code=>'US')
-    @ca = Factory(:country, :iso_code=>'CA')
+    @us = FactoryBot(:country, :iso_code=>'US')
+    @ca = FactoryBot(:country, :iso_code=>'CA')
     @cdefs = described_class.prep_custom_definitions [:approved_date, :approved_long, :long_desc_override, :related_styles]
   end
   describe "sync_csv" do
@@ -37,9 +37,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
   end
   describe "query" do
     it "should sort US then CA and not include other countries" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:approved_long], "My Long Description"
-      [@ca, @us, Factory(:country, :iso_code=>'CN')].each_with_index do |cntry, i|
+      [@ca, @us, FactoryBot(:country, :iso_code=>'CN')].each_with_index do |cntry, i|
         cls = p.classifications.create!(:country_id=>cntry.id)
         cls.tariff_records.create!(:hts_1=>"123456789#{i}")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -50,24 +50,24 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[1][4]).to eq('CA')
     end
     it "should not send classifications that aren't approved" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>'1234567899')
 
-      dont_include = Factory(:product)
+      dont_include = FactoryBot(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should not send record with empty HTS" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include = Factory(:product)
+      dont_include = FactoryBot(:product)
       d_cls = dont_include.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -76,11 +76,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[0][0]).to eq(p.unique_identifier)
     end
     it "should not send record that doesn't need sync" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include = Factory(:product)
+      dont_include = FactoryBot(:product)
       d_cls = dont_include.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -93,11 +93,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
 
     it "should send record if it has not yet been confirmed" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p2 = Factory(:product)
+      p2 = FactoryBot(:product)
       d_cls = p2.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -110,11 +110,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
 
     it "should send record for unconfirmed product if it was sent 8 hours ago" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p2 = Factory(:product)
+      p2 = FactoryBot(:product)
       d_cls = p2.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -127,11 +127,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
 
     it "should not send record for unconfirmed product if it was sent less than 8 hours ago" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p2 = Factory(:product)
+      p2 = FactoryBot(:product)
       d_cls = p2.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
 
     it "should use long description override from classification if it exists" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.update_custom_value! @cdefs[:long_desc_override], "Other long description"
@@ -155,7 +155,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[0][1]).to eq("Other long description")
     end
     it "should not send multiple lines for sets" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       # creating tariff_records out of order to ensure we always get the lowest line number
       cls.tariff_records.create!(:hts_1=>"1234444444", :line_number=>2)
@@ -167,7 +167,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[0][2]).to eq('1234567890')
     end
     it "should handle sending multiple lines for related styles" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890", :line_number=>1)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[2][0]).to eq("P-Style")
     end
     it "should ensure multiple country lines for related styles are ordered together by style value" do
-      p = Factory(:product)
+      p = FactoryBot(:product)
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890", :line_number=>1)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -208,8 +208,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[5][4]).to eq("CA")
     end
     it "handles multiple product records" do
-      p = Factory(:product)
-      p2 = Factory(:product)
+      p = FactoryBot(:product)
+      p2 = FactoryBot(:product)
 
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890", :line_number=>1)

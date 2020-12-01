@@ -1,9 +1,9 @@
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
-  let(:hm) { with_customs_management_id(Factory(:company, name: "H&M"), "HENNE") }
-  let(:country) { Factory(:country, iso_code: "CA") }
+  let(:hm) { with_customs_management_id(FactoryBot(:company, name: "H&M"), "HENNE") }
+  let(:country) { FactoryBot(:country, iso_code: "CA") }
   let(:cdef) { described_class.prep_custom_definitions([:prod_po_numbers])[:prod_po_numbers] }
   let(:prod) do
-    p = Factory(:product, importer: hm)
+    p = FactoryBot(:product, importer: hm)
     p.update_custom_value! cdef, "0123456\n 1234567"
     p
   end
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       billables_to_be_skipped = double "billables to be skipped"
       detail_tmp = double "detail temp file"
       new_billables = {to_be_invoiced: billables_to_be_invoiced, to_be_skipped: billables_to_be_skipped}
-      invoice = Factory(:vfi_invoice, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
-      Factory(:vfi_invoice_line, vfi_invoice: invoice, line_number: 1, charge_description: "descr", charge_amount: 5, charge_code: "code", quantity: 2, unit: "ea", unit_price: 2.50)
+      invoice = FactoryBot(:vfi_invoice, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
+      FactoryBot(:vfi_invoice_line, vfi_invoice: invoice, line_number: 1, charge_description: "descr", charge_amount: 5, charge_code: "code", quantity: 2, unit: "ea", unit_price: 2.50)
       generator = instance_double(described_class)
       report_generator = instance_double(described_class::ReportGenerator)
       cdefs = double("cdefs")
@@ -36,20 +36,20 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
   describe "get_new_billables" do
     it "returns hash separating billables to be invoiced from those to be skipped" do
-      cl1 = Factory(:classification, product: prod, country: country)
-      prod_2 = Factory(:product, importer: hm)
+      cl1 = FactoryBot(:classification, product: prod, country: country)
+      prod_2 = FactoryBot(:product, importer: hm)
       prod_2.update_custom_value! cdef, "0123456\n 1234567"
-      cl2 = Factory(:classification, product: prod_2, country: country)
+      cl2 = FactoryBot(:classification, product: prod_2, country: country)
 
-      be_invoiced = Factory(:billable_event, billable_eventable: cl1)
-      Factory(:invoiced_event, billable_event: be_invoiced, invoice_generator_name: "HmInvoiceGenerator")
+      be_invoiced = FactoryBot(:billable_event, billable_eventable: cl1)
+      FactoryBot(:invoiced_event, billable_event: be_invoiced, invoice_generator_name: "HmInvoiceGenerator")
 
-      be_non_invoiced = Factory(:billable_event, billable_eventable: cl2)
-      Factory(:non_invoiced_event, billable_event: be_non_invoiced, invoice_generator_name: "HmInvoiceGenerator")
+      be_non_invoiced = FactoryBot(:billable_event, billable_eventable: cl2)
+      FactoryBot(:non_invoiced_event, billable_event: be_non_invoiced, invoice_generator_name: "HmInvoiceGenerator")
 
-      be_new_1 = Factory(:billable_event, billable_eventable: cl1) # skipped because assoc prod already invoiced
-      be_new_2 = Factory(:billable_event, billable_eventable: cl2)
-      be_new_3 = Factory(:billable_event, billable_eventable: cl2) # skipped because invoices same prod as be_new_2
+      be_new_1 = FactoryBot(:billable_event, billable_eventable: cl1) # skipped because assoc prod already invoiced
+      be_new_2 = FactoryBot(:billable_event, billable_eventable: cl2)
+      be_new_3 = FactoryBot(:billable_event, billable_eventable: cl2) # skipped because invoices same prod as be_new_2
 
       r = subject.get_new_billables
       expect(r[:to_be_invoiced]).to eq [be_new_2]
@@ -58,9 +58,9 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   end
 
   describe "all_new_billables" do
-    let(:prod) { Factory(:product, importer: hm) }
-    let(:classi) { Factory(:classification, product: prod, country: country) }
-    let!(:billable) { Factory(:billable_event, billable_eventable: classi, event_type: "classification_new") }
+    let(:prod) { FactoryBot(:product, importer: hm) }
+    let(:classi) { FactoryBot(:classification, product: prod, country: country) }
+    let!(:billable) { FactoryBot(:billable_event, billable_eventable: classi, event_type: "classification_new") }
 
     it "returns expected result" do
       expect(subject.all_new_billables).to eq [billable]
@@ -72,48 +72,48 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
 
     it "returns no results if event not associated with a classification" do
-      billable.update!(billable_eventable: Factory(:entry))
+      billable.update!(billable_eventable: FactoryBot(:entry))
       expect(subject.all_new_billables).to be_empty
     end
 
     it "returns no results if associated importer isn't H&M" do
-      prod.update!(importer: Factory(:company))
+      prod.update!(importer: FactoryBot(:company))
       expect(subject.all_new_billables).to be_empty
     end
 
     it "returns result if billable has an associated invoiced_event from another generator" do
-      Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
+      FactoryBot(:invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
       expect(subject.all_new_billables).to eq [billable]
     end
 
     it "returns no results if billable has an associated invoiced_event from this generator" do
-      Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
+      FactoryBot(:invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
       expect(subject.all_new_billables).to be_empty
     end
 
     it "returns result if billable has an associated non_invoiced_event from another generator" do
-      Factory(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
+      FactoryBot(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
       expect(subject.all_new_billables).to eq [billable]
     end
 
     it "returns no results if billable has an associated non_invoiced_event from this generator" do
-      Factory(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
+      FactoryBot(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
       expect(subject.all_new_billables).to be_empty
     end
   end
 
   describe "partition_by_order_type" do
     let(:prod2) do
-      p = Factory(:product, importer: hm)
+      p = FactoryBot(:product, importer: hm)
       p.update_custom_value! cdef, "0123456\n 2345678"
       p
     end
 
     it "splits billables according to whether associated product has at least one PO number beginning with 1" do
-      cl = Factory(:classification, product: prod)
-      cl2 = Factory(:classification, product: prod2)
-      billable = Factory(:billable_event, billable_eventable: cl)
-      billable2 = Factory(:billable_event, billable_eventable: cl2)
+      cl = FactoryBot(:classification, product: prod)
+      cl2 = FactoryBot(:classification, product: prod2)
+      billable = FactoryBot(:billable_event, billable_eventable: cl)
+      billable2 = FactoryBot(:billable_event, billable_eventable: cl2)
       starts_with_one, doesnt_start_with_one = subject.partition_by_order_type [billable, billable2]
       expect(starts_with_one).to eq [billable]
       expect(doesnt_start_with_one).to eq [billable2]
@@ -156,9 +156,9 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
   describe "write_invoiced_events" do
     it "creates an invoiced event for each new billable" do
-      inv_line = Factory(:vfi_invoice_line)
-      be_1 = Factory(:billable_event)
-      be_2 = Factory(:billable_event)
+      inv_line = FactoryBot(:vfi_invoice_line)
+      be_1 = FactoryBot(:billable_event)
+      be_2 = FactoryBot(:billable_event)
       new_billables = [{id: be_1.id},
                        {id: be_2.id}]
 
@@ -173,8 +173,8 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
   describe "write_non_invoiced_events" do
     it "create a non-invoiced event for each new billable" do
-      be_1 = Factory(:billable_event)
-      be_2 = Factory(:billable_event)
+      be_1 = FactoryBot(:billable_event)
+      be_2 = FactoryBot(:billable_event)
       new_billables = [{id: be_1.id},
                        {id: be_2.id}]
 
@@ -189,11 +189,11 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
   describe "partition_with_unique_product" do
     it "takes one event per product, marks the rest 'to be skipped'" do
-      p1 = Factory(:product)
-      p2 = Factory(:product)
-      be1 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
-      be2 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
-      be3 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p2))
+      p1 = FactoryBot(:product)
+      p2 = FactoryBot(:product)
+      be1 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p1))
+      be2 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p1))
+      be3 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p2))
 
       unique, to_be_skipped = subject.partition_with_unique_product [be1, be2, be3]
       expect(unique).to eq [be1, be3]
@@ -203,12 +203,12 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
   describe "partition_with_uninvoiced_product" do
     it "takes events belonging to products that have not been previously invoiced, marks the rest 'to be skipped'" do
-      p1 = Factory(:product)
-      p2 = Factory(:product)
-      be1 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
-      be2 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
-      Factory(:invoiced_event, billable_event: be2, invoice_generator_name: "HMInvoiceGenerator")
-      be3 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p2))
+      p1 = FactoryBot(:product)
+      p2 = FactoryBot(:product)
+      be1 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p1))
+      be2 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p1))
+      FactoryBot(:invoiced_event, billable_event: be2, invoice_generator_name: "HMInvoiceGenerator")
+      be3 = FactoryBot(:billable_event, billable_eventable: FactoryBot(:classification, product: p2))
 
       uninvoiced, to_be_skipped = subject.partition_with_uninvoiced_product [be1, be2, be3]
       expect(uninvoiced).to eq [be3]
@@ -222,7 +222,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     describe "create_report_for_invoice" do
       it "creates and attaches spreadsheet to invoice" do
         stub_paperclip
-        inv = Factory(:vfi_invoice, invoice_number: "inv-num")
+        inv = FactoryBot(:vfi_invoice, invoice_number: "inv-num")
         billables = double "billable events"
         workbook_double = XlsMaker.create_workbook 'workbook_double'
         expect(generator).to receive(:create_workbook).with(billables, "inv-num").and_return workbook_double
@@ -240,20 +240,20 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
         generator.cdefs = subject.cdefs
         cdef = subject.cdefs[:prod_part_number]
 
-        p1 = Factory(:product)
+        p1 = FactoryBot(:product)
         p1.update_custom_value! cdef, "23456"
-        cl1 = Factory(:classification, product: p1)
-        be1 = Factory(:billable_event, billable_eventable: cl1)
+        cl1 = FactoryBot(:classification, product: p1)
+        be1 = FactoryBot(:billable_event, billable_eventable: cl1)
 
-        p2 = Factory(:product)
+        p2 = FactoryBot(:product)
         p2.update_custom_value! cdef, "12345"
-        cl2 = Factory(:classification, product: p2)
-        be2 = Factory(:billable_event, billable_eventable: cl2)
+        cl2 = FactoryBot(:classification, product: p2)
+        be2 = FactoryBot(:billable_event, billable_eventable: cl2)
 
-        p3 = Factory(:product)
+        p3 = FactoryBot(:product)
         p3.update_custom_value! cdef, "34567"
-        cl3 = Factory(:classification, product: p3)
-        Factory(:billable_event, billable_eventable: cl3)
+        cl3 = FactoryBot(:classification, product: p3)
+        FactoryBot(:billable_event, billable_eventable: cl3)
 
         wb = generator.create_workbook([be1, be2], "inv num")
         sheet = wb.worksheets[0]

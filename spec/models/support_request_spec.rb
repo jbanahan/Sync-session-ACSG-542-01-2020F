@@ -1,6 +1,6 @@
 describe SupportRequest do
 
-  let(:user) { Factory(:user) }
+  let(:user) { FactoryBot(:user) }
 
   let(:support_request) {
     r = SupportRequest.new user: user, created_at: Time.zone.parse("2015-12-29 15:00"), referrer_url: "http://www.vfitrack.net", body: "Help!", severity: "OMG!!!", ticket_number: "Ticket", external_link: "Link"

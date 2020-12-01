@@ -1,7 +1,7 @@
 describe SummaryStatementsController do
   before(:each) do
-    @u = Factory(:user)
-    @ss = Factory(:summary_statement)
+    @u = FactoryBot(:user)
+    @ss = FactoryBot(:summary_statement)
     sign_in_as @u
   end
 
@@ -31,11 +31,11 @@ describe SummaryStatementsController do
 
     it "renders" do
       allow(@u).to receive(:view_summary_statements?).and_return true
-      us_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'US'))
-      ca_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'CA'))
-      bi_1 = Factory(:broker_invoice, entry: us_entry)
-      bi_2 = Factory(:broker_invoice, entry: ca_entry)
-      bi_3 = Factory(:broker_invoice, entry: ca_entry)
+      us_entry = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: 'US'))
+      ca_entry = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: 'CA'))
+      bi_1 = FactoryBot(:broker_invoice, entry: us_entry)
+      bi_2 = FactoryBot(:broker_invoice, entry: ca_entry)
+      bi_3 = FactoryBot(:broker_invoice, entry: ca_entry)
       @ss.broker_invoices << [bi_1, bi_2, bi_3]
 
       get :show, id: @ss
@@ -56,11 +56,11 @@ describe SummaryStatementsController do
 
     it "renders" do
       allow(@u).to receive(:edit_summary_statements?).and_return true
-      us_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'US'))
-      ca_entry = Factory(:entry, import_country: Factory(:country, iso_code: 'CA'))
-      bi_1 = Factory(:broker_invoice, entry: us_entry)
-      bi_2 = Factory(:broker_invoice, entry: ca_entry)
-      bi_3 = Factory(:broker_invoice, entry: ca_entry)
+      us_entry = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: 'US'))
+      ca_entry = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: 'CA'))
+      bi_1 = FactoryBot(:broker_invoice, entry: us_entry)
+      bi_2 = FactoryBot(:broker_invoice, entry: ca_entry)
+      bi_3 = FactoryBot(:broker_invoice, entry: ca_entry)
       @ss.broker_invoices << [bi_1, bi_2, bi_3]
 
       get :edit, id: @ss
@@ -80,11 +80,11 @@ describe SummaryStatementsController do
     end
 
     it "limits the choice of companies to those with entries, sorts by name" do
-      c1 = Factory(:company, name: "B")
-      c2 = Factory(:company, name: "A")
-      Factory(:company, name: "D")
-      Factory(:entry, importer: c1)
-      Factory(:entry, importer: c2)
+      c1 = FactoryBot(:company, name: "B")
+      c2 = FactoryBot(:company, name: "A")
+      FactoryBot(:company, name: "D")
+      FactoryBot(:entry, importer: c1)
+      FactoryBot(:entry, importer: c2)
 
       get :new
       assigned_companies = []
@@ -103,8 +103,8 @@ describe SummaryStatementsController do
   describe "create" do
     before(:each) do
       allow(@u).to receive(:edit_summary_statements?).and_return true
-      @co_1 = Factory(:company, importer: true)
-      @co_2 = Factory(:company)
+      @co_1 = FactoryBot(:company, importer: true)
+      @co_2 = FactoryBot(:company)
 
     end
 
@@ -157,9 +157,9 @@ describe SummaryStatementsController do
 
     context "removing invoices" do
       before(:each) do
-        @bi_1 = Factory(:broker_invoice, summary_statement: @ss).id.to_s
-        @bi_2 = Factory(:broker_invoice, summary_statement: @ss).id.to_s
-        Factory(:broker_invoice, summary_statement: @ss).id.to_s
+        @bi_1 = FactoryBot(:broker_invoice, summary_statement: @ss).id.to_s
+        @bi_2 = FactoryBot(:broker_invoice, summary_statement: @ss).id.to_s
+        FactoryBot(:broker_invoice, summary_statement: @ss).id.to_s
       end
 
       it "removes invoices from statement" do
@@ -170,7 +170,7 @@ describe SummaryStatementsController do
       end
 
       it "makes no change and displays error if an invoice marked for removal doesn't belong to the statement" do
-        bi_other = Factory(:broker_invoice, invoice_number: "123456789").id.to_s
+        bi_other = FactoryBot(:broker_invoice, invoice_number: "123456789").id.to_s
 
         put :update, id: @ss, selected: {to_remove: [@bi_1, bi_other]}
         expect(@ss.broker_invoices.count).to eq 3
@@ -181,14 +181,14 @@ describe SummaryStatementsController do
 
     context "adding invoices" do
       before(:each) do
-        @company = Factory(:company)
+        @company = FactoryBot(:company)
         @ss.customer = @company
         @ss.save!
       end
 
       it "adds invoices to statement" do
-        Factory(:broker_invoice, invoice_number: '123456789', entry: Factory(:entry, importer: @company))
-        Factory(:broker_invoice, invoice_number: '987654321', entry: Factory(:entry, importer: @company))
+        FactoryBot(:broker_invoice, invoice_number: '123456789', entry: FactoryBot(:entry, importer: @company))
+        FactoryBot(:broker_invoice, invoice_number: '987654321', entry: FactoryBot(:entry, importer: @company))
         put :update, id: @ss, selected: {to_add: "123456789\n987654321"}
 
         expect(@ss.broker_invoices.count).to eq 2
@@ -196,7 +196,7 @@ describe SummaryStatementsController do
       end
 
       it "makes no change and displays error if an invoice is ineligible to be added" do
-        Factory(:broker_invoice, invoice_number: '123456789', entry: Factory(:entry, importer: Factory(:company))).id.to_s
+        FactoryBot(:broker_invoice, invoice_number: '123456789', entry: FactoryBot(:entry, importer: FactoryBot(:company))).id.to_s
         put :update, id: @ss, selected: {to_add: "123456789"}
 
         expect(@ss.broker_invoices.count).to eq 0

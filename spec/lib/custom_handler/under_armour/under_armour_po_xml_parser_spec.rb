@@ -5,8 +5,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
   let (:xml) { REXML::Document.new(data).root.get_elements("Orders").first }
   let (:prepack_xml) { REXML::Document.new(prepack_data).root.get_elements("Orders").first}
   let (:user) { User.integration }
-  let! (:ua) { Factory(:importer, system_code: "UNDAR")}
-  let! (:ua_parts) { Factory(:importer, system_code: "UAPARTS")}
+  let! (:ua) { FactoryBot(:importer, system_code: "UNDAR")}
+  let! (:ua_parts) { FactoryBot(:importer, system_code: "UAPARTS")}
 
   let! (:ms) do
     s = stub_master_setup
@@ -125,8 +125,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     end
 
     it "handles updating orders" do
-      order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
-      line = Factory(:order_line, order: order, line_number: 10, sku: nil)
+      order = FactoryBot(:order, importer: ua, order_number: "UNDAR-4200001923")
+      line = FactoryBot(:order_line, order: order, line_number: 10, sku: nil)
 
       subject.process_order xml, user, "bucket", "file.xml", log
 
@@ -143,8 +143,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     end
 
     context "with line missing from XML" do
-      let!(:order) { Factory(:order, importer: ua, order_number: "UNDAR-4200001923") }
-      let!(:line) { Factory(:order_line, order: order, line_number: 30) }
+      let!(:order) { FactoryBot(:order, importer: ua, order_number: "UNDAR-4200001923") }
+      let!(:line) { FactoryBot(:order_line, order: order, line_number: 30) }
 
       it "deletes order line if unshipped" do
         subject.process_order xml, user, "bucket", "file.xml", log
@@ -153,9 +153,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       end
 
       it "ignores order line if shipped" do
-        prod = Factory(:product)
+        prod = FactoryBot(:product)
         line.update! product: prod
-        PieceSet.create quantity: 1, order_line: line, shipment_line: Factory(:shipment_line, product: prod)
+        PieceSet.create quantity: 1, order_line: line, shipment_line: FactoryBot(:shipment_line, product: prod)
         subject.process_order xml, user, "bucket", "file.xml", log
         expect(order.order_lines.length).to eq 3
       end
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     end
 
     it "doesn't update order if file's revision is older than the current one" do
-      order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
+      order = FactoryBot(:order, importer: ua, order_number: "UNDAR-4200001923")
       order.update_custom_value! cdefs[:ord_revision], 208_237
 
       subject.process_order xml, user, "bucket", "file.xml", log

@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
   before :each do
-    @le_company = Factory(:company)
+    @le_company = FactoryBot(:company)
     @p = described_class.new @le_company
     @data = "\"IMPORT / CM ENTRY / NO.\",\"PORT CODE\",\"IMPORT DATE\",\"DATE REC'D\",HTS,DESCRIPTION OF MERCHANDISE,Quantity,Column16,UNIT VALUE,Duty Rate
 23105002004,3901,10/10/2009,N,10/11/2009,6106100030,2740747 - SHIRT,1,EA,$5,19.70%
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
   end
   it "should not update line already put in a download file" do
     @p.parse @data
-    d = Factory(:duty_calc_import_file)
+    d = FactoryBot(:duty_calc_import_file)
     DrawbackImportLine.all.each {|dil| d.duty_calc_import_file_lines.create!(drawback_import_line_id:dil.id)}
     @p.parse @data
     r = DrawbackImportLine.where(importer_id:@le_company.id, part_number:'2769247', entry_number:'23105002004')
@@ -56,8 +56,8 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     expect(r.last.quantity).to eq(2)
   end
   it "should not update line for different company" do
-    p = Factory(:product, unique_identifier:'LANDSEND-2740747')
-    d = DrawbackImportLine.create(importer_id:Factory(:company).id, product_id:p.id, part_number:'2740747', entry_number:'23105002004', quantity:10)
+    p = FactoryBot(:product, unique_identifier:'LANDSEND-2740747')
+    d = DrawbackImportLine.create(importer_id:FactoryBot(:company).id, product_id:p.id, part_number:'2740747', entry_number:'23105002004', quantity:10)
     @p.parse @data
     expect(DrawbackImportLine.count).to eq(4)
     d.reload

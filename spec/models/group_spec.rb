@@ -1,27 +1,27 @@
 describe Group do
   describe "visible_to_user" do
     before :each do
-      @master_only = Factory(:group)
+      @master_only = FactoryBot(:group)
     end
     it "should show all to master" do
-      expect(Group.visible_to_user(Factory(:master_user)).to_a).to eq [@master_only]
+      expect(Group.visible_to_user(FactoryBot(:master_user)).to_a).to eq [@master_only]
     end
     it "should show user groups he is in" do
-      u = Factory(:user)
-      g2 = Factory(:group)
+      u = FactoryBot(:user)
+      g2 = FactoryBot(:group)
       g2.users << u
       expect(Group.visible_to_user(u).to_a).to eq [g2]
     end
     it "should show user groups other users from same company are in" do
-      u = Factory(:user)
-      g2 = Factory(:group)
-      g2.users << Factory(:user, company:u.company)
+      u = FactoryBot(:user)
+      g2 = FactoryBot(:group)
+      g2.users << FactoryBot(:user, company:u.company)
       expect(Group.visible_to_user(u).to_a).to eq [g2]
     end
     it "should show user groups other users from linked company are in" do
-      u = Factory(:user)
-      u2 = Factory(:user)
-      g2 = Factory(:group)
+      u = FactoryBot(:user)
+      u2 = FactoryBot(:user)
+      g2 = FactoryBot(:group)
       g2.users << u2
       u.company.linked_companies << u2.company
       expect(Group.visible_to_user(u).to_a).to eq [g2]
@@ -37,7 +37,7 @@ describe Group do
       expect(g.errors.messages[:system_code]).to include "can't be blank"
     end
     it "should validate uniqueness of system_code, if it exists" do
-      Factory(:group, system_code: "ABCDE")
+      FactoryBot(:group, system_code: "ABCDE")
       g = Group.new(name: "g2", system_code: "ABCDE")
       g.save
       expect(g.errors.messages.count).to eq 1
@@ -78,13 +78,13 @@ describe Group do
   describe "user_emails" do
     let (:group) { Group.use_system_group "TEST", name: "Test" }
     let! (:user_1) {
-      u = Factory(:user, email: "me@there.com")
+      u = FactoryBot(:user, email: "me@there.com")
       group.users << u
       u
     }
 
     let! (:user_2) {
-      u = Factory(:user, email: "you@there.com")
+      u = FactoryBot(:user, email: "you@there.com")
       group.users << u
       u
     }

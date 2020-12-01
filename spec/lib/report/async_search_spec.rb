@@ -57,12 +57,12 @@ describe OpenChain::Report::AsyncSearch do
   end
 
   describe "run_and_email_report" do
-    let (:company) { Factory(:company) }
-    let (:user) { Factory(:user, company: company) }
-    let (:search_setup) { Factory(:search_setup, name: "Test", user: user, download_format: "xlsx") }
+    let (:company) { FactoryBot(:company) }
+    let (:user) { FactoryBot(:user, company: company) }
+    let (:search_setup) { FactoryBot(:search_setup, name: "Test", user: user, download_format: "xlsx") }
 
     it "runs report and emails it to a mailing list" do
-      mailing_list = Factory(:mailing_list, user: user, company: company, email_addresses: 'report@report.com')
+      mailing_list = FactoryBot(:mailing_list, user: user, company: company, email_addresses: 'report@report.com')
 
       expect(Tempfile).to receive(:open).and_yield tempfile
       expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
@@ -103,8 +103,8 @@ describe OpenChain::Report::AsyncSearch do
   end
 
   describe "run_report" do
-    let (:user) { Factory(:user) }
-    let (:search_setup) { Factory(:search_setup, name: "Test", user: user, download_format: "xlsx") }
+    let (:user) { FactoryBot(:user) }
+    let (:search_setup) { FactoryBot(:search_setup, name: "Test", user: user, download_format: "xlsx") }
 
     it "looks up the search setup and passes it to run" do
       expect(subject).to receive(:run).with(user, search_setup, {"search_setup_id" => search_setup.id})

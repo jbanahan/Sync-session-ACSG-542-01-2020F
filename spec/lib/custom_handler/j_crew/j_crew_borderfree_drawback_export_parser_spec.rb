@@ -55,10 +55,10 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       r
     end
 
-    let(:importer) { Factory(:company) }
-    let(:usa) { Factory(:country, iso_code: 'US') }
-    let(:j_crew1) { Factory(:company, alliance_customer_number: 'J0000') }
-    let(:j_crew2) { Factory(:company, alliance_customer_number: 'JCREW') }
+    let(:importer) { FactoryBot(:company) }
+    let(:usa) { FactoryBot(:country, iso_code: 'US') }
+    let(:j_crew1) { FactoryBot(:company, alliance_customer_number: 'J0000') }
+    let(:j_crew2) { FactoryBot(:company, alliance_customer_number: 'JCREW') }
 
     it 'checks for 17 columns (A through Q)' do
       r = make_row
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it "creates line" do
       vals = default_vals
 
-      # this mock could probably be eliminated and replaced with a Factory(:product, ...) if necessary
+      # this mock could probably be eliminated and replaced with a FactoryBot(:product, ...) if necessary
       expect_any_instance_of(OpenChain::TariffFinder).to receive(:by_style).with('123456789-ABCDEF').and_return "1234567890"
       d = described_class.parse_csv_line(make_row, 1, importer)
 

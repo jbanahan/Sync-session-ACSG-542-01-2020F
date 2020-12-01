@@ -8,17 +8,17 @@ describe OpenChain::Report::HmStatisticsReport do
     after { @temp.close! if @temp }
 
     it "runs report with basic info" do
-      u = Factory(:user, time_zone: "Eastern Time (US & Canada)")
-      ent = Factory(:entry, entry_number: "ent num", export_country_codes: "US", master_bills_of_lading: "master", house_bills_of_lading: "house", release_date: assigned_day, customer_number: "HENNE", transport_mode_code: "40")
-      ci = Factory(:commercial_invoice, entry: ent, invoice_number: "123456")
-      cil = Factory(:commercial_invoice_line, commercial_invoice: ci, hmf: 1, prorated_mpf: 2, cotton_fee: 3)
-      cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, entered_value: 1, duty_amount: 2)
+      u = FactoryBot(:user, time_zone: "Eastern Time (US & Canada)")
+      ent = FactoryBot(:entry, entry_number: "ent num", export_country_codes: "US", master_bills_of_lading: "master", house_bills_of_lading: "house", release_date: assigned_day, customer_number: "HENNE", transport_mode_code: "40")
+      ci = FactoryBot(:commercial_invoice, entry: ent, invoice_number: "123456")
+      cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, hmf: 1, prorated_mpf: 2, cotton_fee: 3)
+      cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, entered_value: 1, duty_amount: 2)
 
-      ent_2 = Factory(:entry, entry_number: "ent num", export_country_codes: "US", master_bills_of_lading: "master", house_bills_of_lading: "house", release_date: assigned_day, customer_number: "HENNE", transport_mode_code: "10")
-      ci_2 = Factory(:commercial_invoice, entry: ent_2, invoice_number: "123456")
-      cil_2 = Factory(:commercial_invoice_line, commercial_invoice: ci_2, hmf: 1, prorated_mpf: 2, cotton_fee: 3)
-      cit_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_2, entered_value: 1, duty_amount: 2)
-      con = Factory(:container, entry: ent_2, container_number: "cont num")
+      ent_2 = FactoryBot(:entry, entry_number: "ent num", export_country_codes: "US", master_bills_of_lading: "master", house_bills_of_lading: "house", release_date: assigned_day, customer_number: "HENNE", transport_mode_code: "10")
+      ci_2 = FactoryBot(:commercial_invoice, entry: ent_2, invoice_number: "123456")
+      cil_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci_2, hmf: 1, prorated_mpf: 2, cotton_fee: 3)
+      cit_2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_2, entered_value: 1, duty_amount: 2)
+      con = FactoryBot(:container, entry: ent_2, container_number: "cont num")
 
       @temp = described_class.run_report(u, {'start_date' => '2016-01-01', 'end_date' => '2016-02-01'})
       wb = Spreadsheet.open @temp.path
@@ -47,7 +47,7 @@ describe OpenChain::Report::HmStatisticsReport do
 
   describe "run" do
     it "makes timezone conversions" do
-      u = Factory(:user, time_zone: "Eastern Time (US & Canada)")
+      u = FactoryBot(:user, time_zone: "Eastern Time (US & Canada)")
       wb = double("spreadsheet")
       adjusted_start = "2016-01-01 05:00:00"
       adjusted_end = "2016-02-01 05:00:00"
@@ -61,8 +61,8 @@ describe OpenChain::Report::HmStatisticsReport do
   end
 
   describe "raw_air_query" do
-    let!(:ent) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", house_bills_of_lading: "house", master_bills_of_lading: "master", transport_mode_code: "40", release_date: assigned_day, entry_number: "entry num")}
-    let!(:ci) {Factory(:commercial_invoice, entry: ent, invoice_number: "123456")}
+    let!(:ent) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", house_bills_of_lading: "house", master_bills_of_lading: "master", transport_mode_code: "40", release_date: assigned_day, entry_number: "entry num")}
+    let!(:ci) {FactoryBot(:commercial_invoice, entry: ent, invoice_number: "123456")}
 
     it "returns ecc, hbols, mbols, transport code, release date, inv num, entry num" do
       query = described_class.new.raw_air_query(day_before, day_after)
@@ -107,9 +107,9 @@ describe OpenChain::Report::HmStatisticsReport do
   end
 
   describe "raw_ocean_query" do
-    let!(:ent) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day, entry_number: "entry num")}
-    let!(:ci) {Factory(:commercial_invoice, entry: ent, invoice_number: "123456")}
-    let!(:con) {Factory(:container, entry: ent, container_number: "cont num")}
+    let!(:ent) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day, entry_number: "entry num")}
+    let!(:ci) {FactoryBot(:commercial_invoice, entry: ent, invoice_number: "123456")}
+    let!(:con) {FactoryBot(:container, entry: ent, container_number: "cont num")}
 
     it "returns ecc, transport mode code, release date, invoice number, container number, entry number" do
       query = described_class.new.raw_ocean_query(day_before, day_after)
@@ -153,11 +153,11 @@ describe OpenChain::Report::HmStatisticsReport do
   end
 
   describe "ocean_tu_query" do
-    let!(:ent) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day, entry_number: "entry num")}
-    let!(:ci) {Factory(:commercial_invoice, entry: ent, invoice_number: "123456")}
-    let!(:con_1) {Factory(:container, entry: ent, container_number: "cont num 1")}
-    let!(:con_2) {Factory(:container, entry: ent, container_number: "cont num 2")}
-    let!(:con_3) {Factory(:container, entry: ent, container_number: "cont num 2")}
+    let!(:ent) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day, entry_number: "entry num")}
+    let!(:ci) {FactoryBot(:commercial_invoice, entry: ent, invoice_number: "123456")}
+    let!(:con_1) {FactoryBot(:container, entry: ent, container_number: "cont num 1")}
+    let!(:con_2) {FactoryBot(:container, entry: ent, container_number: "cont num 2")}
+    let!(:con_3) {FactoryBot(:container, entry: ent, container_number: "cont num 2")}
 
     it "returns ecc, total distinct container numbers" do
       query = described_class.new.ocean_tu_query(day_before, day_after)
@@ -197,16 +197,16 @@ describe OpenChain::Report::HmStatisticsReport do
   end
 
   describe "orders_query" do
-    let!(:ent_1) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day)}
-    let!(:ent_2) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "11", release_date: assigned_day)}
-    let!(:ent_3) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "40", release_date: assigned_day)}
-    let!(:ent_4) {Factory(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "41", release_date: assigned_day)}
-    let!(:ent_5) {Factory(:entry, customer_number: "HENNE", export_country_codes: "US", transport_mode_code: "10", release_date: assigned_day)}
-    let!(:ci_1) {Factory(:commercial_invoice, entry: ent_1, invoice_number: "123456")}
-    let!(:ci_2) {Factory(:commercial_invoice, entry: ent_2, invoice_number: "1234567")}
-    let!(:ci_3) {Factory(:commercial_invoice, entry: ent_3, invoice_number: "1234568")}
-    let!(:ci_4) {Factory(:commercial_invoice, entry: ent_4, invoice_number: "123456-7")}
-    let!(:ci_5) {Factory(:commercial_invoice, entry: ent_5, invoice_number: "1234567-8")}
+    let!(:ent_1) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "10", release_date: assigned_day)}
+    let!(:ent_2) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "11", release_date: assigned_day)}
+    let!(:ent_3) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "40", release_date: assigned_day)}
+    let!(:ent_4) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "DE", transport_mode_code: "41", release_date: assigned_day)}
+    let!(:ent_5) {FactoryBot(:entry, customer_number: "HENNE", export_country_codes: "US", transport_mode_code: "10", release_date: assigned_day)}
+    let!(:ci_1) {FactoryBot(:commercial_invoice, entry: ent_1, invoice_number: "123456")}
+    let!(:ci_2) {FactoryBot(:commercial_invoice, entry: ent_2, invoice_number: "1234567")}
+    let!(:ci_3) {FactoryBot(:commercial_invoice, entry: ent_3, invoice_number: "1234568")}
+    let!(:ci_4) {FactoryBot(:commercial_invoice, entry: ent_4, invoice_number: "123456-7")}
+    let!(:ci_5) {FactoryBot(:commercial_invoice, entry: ent_5, invoice_number: "1234567-8")}
 
     it "returns ecc, mode, total invoices" do
       query = described_class.new.orders_query(day_before, day_after)
@@ -249,12 +249,12 @@ describe OpenChain::Report::HmStatisticsReport do
   end
 
   describe "totals_query" do
-    let!(:ent) {Factory(:entry, release_date: assigned_day, customer_number: "HENNE")}
-    let!(:ci) {Factory(:commercial_invoice, entry: ent, invoice_number: "123456")}
-    let!(:cil) {Factory(:commercial_invoice_line, commercial_invoice: ci, hmf: 1, prorated_mpf: 2, cotton_fee: 3)}
-    let!(:cit) {Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, entered_value: 1, duty_amount: 2)}
-    let!(:cil_2) {Factory(:commercial_invoice_line, commercial_invoice: ci, hmf: 4, prorated_mpf: 5, cotton_fee: 6)}
-    let!(:cit_2) {Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_2, entered_value: 3, duty_amount: 4)}
+    let!(:ent) {FactoryBot(:entry, release_date: assigned_day, customer_number: "HENNE")}
+    let!(:ci) {FactoryBot(:commercial_invoice, entry: ent, invoice_number: "123456")}
+    let!(:cil) {FactoryBot(:commercial_invoice_line, commercial_invoice: ci, hmf: 1, prorated_mpf: 2, cotton_fee: 3)}
+    let!(:cit) {FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, entered_value: 1, duty_amount: 2)}
+    let!(:cil_2) {FactoryBot(:commercial_invoice_line, commercial_invoice: ci, hmf: 4, prorated_mpf: 5, cotton_fee: 6)}
+    let!(:cit_2) {FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil_2, entered_value: 3, duty_amount: 4)}
 
     it "sums tariff entered_value, fees" do
       query = described_class.new.totals_query(day_before, day_after)

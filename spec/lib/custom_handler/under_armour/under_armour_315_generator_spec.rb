@@ -23,11 +23,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
   end
 
   describe "receive" do
-    let (:entry) { Factory(:entry, cadex_sent_date: Time.zone.now, release_date: Time.zone.now + 1.day, first_do_issued_date: Time.zone.now + 2.days) }
-    let (:invoice) { Factory(:commercial_invoice, entry: entry) }
-    let! (:inv_line_1) { Factory(:commercial_invoice_line, customer_reference: "ABC", commercial_invoice: invoice) }
-    let! (:inv_line_2) { Factory(:commercial_invoice_line, customer_reference: "ABC", commercial_invoice: invoice) }
-    let! (:inv_line_3) { Factory(:commercial_invoice_line, customer_reference: "DEF", commercial_invoice: invoice) }
+    let (:entry) { FactoryBot(:entry, cadex_sent_date: Time.zone.now, release_date: Time.zone.now + 1.day, first_do_issued_date: Time.zone.now + 2.days) }
+    let (:invoice) { FactoryBot(:commercial_invoice, entry: entry) }
+    let! (:inv_line_1) { FactoryBot(:commercial_invoice_line, customer_reference: "ABC", commercial_invoice: invoice) }
+    let! (:inv_line_2) { FactoryBot(:commercial_invoice_line, customer_reference: "ABC", commercial_invoice: invoice) }
+    let! (:inv_line_3) { FactoryBot(:commercial_invoice_line, customer_reference: "DEF", commercial_invoice: invoice) }
 
     before :each do
       allow(subject).to receive(:delay).and_return subject
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
     end
 
     it "pulls IBD number from shipment data" do
-      Factory(:shipment, reference: "UNDAR-#{entry_data[:shipment_identifier]}", booking_number: "IBDNUMBER")
+      FactoryBot(:shipment, reference: "UNDAR-#{entry_data[:shipment_identifier]}", booking_number: "IBDNUMBER")
 
       subject.generate_and_send entry_data
       expect(REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment_IBD/@Id").value).to eq entry_data[:shipment_identifier]
