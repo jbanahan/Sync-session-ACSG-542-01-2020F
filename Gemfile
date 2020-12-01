@@ -1,11 +1,11 @@
 source 'https://rubygems.org'
 
 # BEGIN Rails Default gems
-gem "rails", "4.2.11.3"
+gem "rails", "5.0.7.2"
 # Use SCSS for stylesheets
-gem 'sass-rails', "5.0.7"
+gem 'sass-rails', "6.0.0"
 # Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', "4.1.20"
+gem 'uglifier', "4.2.0"
 # Use CoffeeScript for .coffee assets and views
 gem 'coffee-rails', "4.2.2"
 # Use jquery as the JavaScript library
@@ -13,45 +13,45 @@ gem 'jquery-rails', '4.3.3'
 # END RAILS DEFAULT GEMS
 
 # AWS gems - only utilize gems required for specific services referenced by the project
-gem 'aws-sdk-ec2', '1.70.0'
-gem 'aws-sdk-ssm', '1.36.0'
-gem 'aws-sdk-rds', '1.43.0'
-gem 'aws-sdk-sqs', '1.10.0'
-gem 'aws-sdk-s3', '1.30.1'
-gem 'aws-sdk-cloudwatch', '1.13.0'
+gem 'aws-sdk-ec2', '1.212.0'
+gem 'aws-sdk-ssm', '1.98.0'
+gem 'aws-sdk-rds', '1.106.0'
+gem 'aws-sdk-sqs', '1.34.0'
+gem 'aws-sdk-s3', '1.85.0'
+gem 'aws-sdk-cloudwatch', '1.46.0'
 
 gem 'jquery-ui-rails', '6.0.1'
-gem 'mysql2', '0.5.2'
-gem 'will_paginate', '3.1.6'
+gem 'mysql2', '0.5.3'
+gem 'will_paginate', '3.3.0'
 gem 'paperclip', '6.1.0'
 gem 'uuidtools', '2.1.4'
-gem 'spreadsheet', '1.2.0'
-gem 'caxlsx', '3.0.1'
-gem 'axlsx_rails', '0.6'
-gem 'exception_notification', '4.3.0'
-gem 'rufus-scheduler', '3.5.0'
+gem 'spreadsheet', '1.2.6'
+gem 'caxlsx', '3.0.2'
+gem 'axlsx_rails', '0.6.1'
+gem 'exception_notification', '4.4.3'
+gem 'rufus-scheduler', '3.6.0'
 # The fugit gem is what rufus now uses behind the scenes for all the date/time/cron parsing stuff
 # Figured we'd also just use it directly to handle cron / duration handling too.
-gem 'fugit', '1.1.8'
-gem 'delayed_job_active_record', '4.1.3'
-gem 'delayed_job', '4.1.5'
+gem 'fugit', '1.4.1'
+gem 'delayed_job_active_record', '4.1.4'
+gem 'delayed_job', '4.1.8'
 # daemons is needed for the delayed job command line
 gem 'daemons', '1.3.1'
-gem 'dalli', '2.7.10'
+gem 'dalli', '2.7.11'
 gem 'dalli-elasticache', '~> 0.2'
-gem 'postmark-rails', '0.19.0'
-gem 'rubyzip', '2.0'
+gem 'postmark-rails', '0.20.0'
+gem 'rubyzip', '2.3.0'
 
-gem 'newrelic_rpm', '~> 6.0.0'
+gem 'newrelic_rpm', '~> 6.14.0'
 
 # text processing/encoding stuff
 gem 'RedCloth', '4.3.2'
 
 # PDF Generator
-gem 'prawn', '2.2.2'
+gem 'prawn', '2.3.0'
 gem 'prawn-table', '0.2.2'
 # Prawn doesn't support pdf templates, so use another lib to combine two pdfs together, one being the template the other the actual content
-gem 'combine_pdf', '~> 0.2'
+gem 'combine_pdf', '~> 1.0.0'
 # Barcode Generator
 gem 'barby', '~> 0.6'
 # Required for generating Barcodes as PNG images
@@ -60,33 +60,33 @@ gem 'chunky_png', '~> 1.3.10'
 # javascript environment, we will compile assets during deployment
 # so we need these on the production servers as well
 gem 'execjs', '2.7.0'
-gem 'mini_racer', '0.2.4'
+gem 'mini_racer', '0.3.1'
 gem 'browser', '2.5.3'
 
-gem "google-api-client", "0.28.4"
+gem "google-api-client", "0.50.0"
 # LRU Redux provides an LRU (optionally timebased) cache...it's used to cache google drive paths
 gem 'lru_redux', '~> 1.1.0'
-gem "omniauth-google-oauth2", '0.6.0'
-gem "omniauth-saml", '1.10.1'
+gem "omniauth-google-oauth2", '0.8.0'
+gem "omniauth-saml", '1.10.3'
 gem 'omniauth-azure-oauth2', '~> 0.0.10'
 gem 'omniauth-rails_csrf_protection', '~> 0.1.2'
-gem 'concurrent-ruby', '1.1.4'
+gem 'concurrent-ruby', '1.1.7'
 
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically needs this.
 gem "mono_logger", '1.1.0'
-gem "net-sftp", '2.1.2'
+gem "net-sftp", '3.0.0'
 # Can update to net-ssh 5 when we're using a Ruby version > 2.2.5
-gem "net-ssh", '4.2.0'
-gem "clearance", '1.16.1'
+gem "net-ssh", '6.1.0'
+gem "clearance", '2.0.0'
 
-gem 'connection_pool', '2.2.2'
+gem 'connection_pool', '2.2.3'
 gem 'redlock', '1.2.0'
 
-gem 'jsonpath', '1.0.1'
+gem 'jsonpath', '1.0.6'
 
 # Slack.com integration
-gem 'slack-ruby-client', '0.13.1'
+gem 'slack-ruby-client', '0.15.1'
 
 gem 'email_validator', '1.6.0'
 
@@ -106,12 +106,12 @@ gem "activerecord-import", '1.0.0'
 gem 'transaction_retry', '1.0.3'
 
 # Distribute database reads across replicas
-gem "distribute_reads", '0.2.4'
+gem "distribute_reads", '0.3.3'
 
 # Google reCaptcha support
-gem "recaptcha", '~> 4.13.1'
+gem "recaptcha", '~> 5.6.0'
 
-gem 'dry-core', '0.4.7'
+gem 'dry-core', '0.4.10'
 
 gem 'brillo'
 
@@ -121,11 +121,11 @@ gem 'clamby'
 
 gem 'fuzzy_match'
 
-gem 'get_process_mem', '0.2.5'
+gem 'get_process_mem', '0.2.7'
 
-gem 'nonschema_migrations', '1.0.1'
+gem 'nonschema_migrations', '2.0.1'
 
-gem 'nokogiri', '1.10.9'
+gem 'nokogiri', '1.10.10'
 
 gem 'content_disposition', '1.0.0'
 
@@ -139,7 +139,7 @@ group :development, :test do
   # This is here exclusively so we can validate the xlsx files we produce.
   # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
   # read them.  So we need to use a different solution for reading them in test cases.
-  gem 'rubyXL', '3.4.6'
+  gem 'rubyXL', '3.4.16'
   gem 'jasmine'
   gem 'brakeman'
   gem 'rubocop', '0.81.0', require: false
@@ -155,12 +155,12 @@ group :development do
 end
 
 group :test do
-  gem 'rspec-rails', '3.8.2'
+  gem 'rspec-rails', '4.0.1'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
-  gem 'factory_girl', '2.5.2'
-  gem 'rspec_junit_formatter', '~> 0.2.3' # circle-ci formatting
+  gem 'factory_girl', '4.9.0'
+  gem 'rspec_junit_formatter', '~> 0.4.1' # circle-ci formatting
   gem 'test-unit'
   gem 'webmock'
-  gem 'timecop', '~> 0.8.0'
+  gem 'timecop', '~> 0.9.0'
   gem 'database_cleaner'
 end
