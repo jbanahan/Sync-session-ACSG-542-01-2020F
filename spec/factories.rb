@@ -495,7 +495,7 @@ end
   end
 
   factory :support_ticket do
-    association :requestor, :factory => :user
+    association :requestor, factory: :user
     add_attribute(:subject) { "at least 10 characters" }
   end
 
@@ -523,270 +523,301 @@ end
   end
 
   factory :duty_calc_import_file do
-    association :importer, :factory => :company
+    association :importer, factory: :company
   end
 
   factory :duty_calc_export_file do
-    association :importer, :factory => :company
+    association :importer, factory: :company
   end
 
-  factory :charge_code do |f|
-    f.sequence :code
-    f.description "cc description"
+  factory :charge_code do
+    sequence :code
+    description { "cc description" }
   end
-  factory :drawback_claim do |f|
-    f.name "dname"
-    f.association :importer, :factory => :company
-  end
-  factory :security_filing do |f|
-    f.association :importer, :factory => :company
-  end
-  factory :schedulable_job do |f|
-    f.log_runtime false
-  end
-  factory :project do |f|
 
+  factory :drawback_claim do
+    name { "dname" }
+    association :importer, factory: :company
   end
-  factory :project_update do |f|
-    f.association :project
+
+  factory :security_filing do
+    association :importer, factory: :company
   end
-  factory :project_deliverable do |f|
-    f.association :project
+
+  factory :schedulable_job do
+    log_runtime { false }
   end
-  factory :project_set do |f|
-    f.sequence :name
+
+  factory :project do
   end
-  factory :business_validation_template do |f|
-    f.module_type 'Entry'
+
+  factory :project_update do
+    project
   end
-  factory :business_validation_rule do |f|
-    f.association :business_validation_template
-    f.sequence :name
-    f.sequence :description
+
+  factory :project_deliverable do
+    project
   end
-  factory :business_validation_result do |f|
-    f.association :business_validation_template
+
+  factory :project_set do
+    name
   end
-  factory :business_validation_rule_result do |f|
-    f.association :business_validation_rule
-    f.after_create {|rr|
+
+  factory :business_validation_template do
+    module_type { 'Entry' }
+  end
+
+  factory :business_validation_rule do
+    business_validation_template
+    sequence :name
+    sequence :description
+  end
+
+  factory :business_validation_result do
+    business_validation_template
+  end
+
+  factory :business_validation_rule_result do
+    business_validation_rule
+    after_create do |rr|
       bvt = rr.business_validation_rule.business_validation_template
       rr.business_validation_result = bvt.business_validation_results.create!
       rr.save!
-    }
+    end
   end
-  factory :business_validation_rule_result_without_callback, class: BusinessValidationRuleResult do |c|
+
+  factory :business_validation_rule_result_without_callback, class: BusinessValidationRuleResult do
   end
-  factory :container do |f|
-    f.container_number {FactoryBot.next :alpha_numeric}
-    f.association :entry
+
+  factory :container do
+    container_number { FactoryBot.next(:alpha_numeric) }
+    entry
   end
-  factory :event_subscription do |f|
-    f.association :user
-    f.event_type 'ORDER_COMMENT_CREATE'
+
+  factory :event_subscription do
+    user
+    event_type { 'ORDER_COMMENT_CREATE' }
   end
-  factory :email, class: OpenStruct do |f|
+
+  factory :email, class: OpenStruct do
     # Assumes Griddler.configure.to is :hash (default)
-    f.to [{ full: 'to_user@email.com', email: 'to_user@email.com', token: 'to_user', host: 'email.com', name: nil }]
-    f.from 'user@email.com'
-    f.subject 'email subject'
-    f.body 'Hello!'
-    f.attachments {[]}
+    to { [{ full: 'to_user@email.com', email: 'to_user@email.com', token: 'to_user', host: 'email.com', name: nil }] }
+    from { 'user@email.com' }
+    add_attribute(:subject) { 'email subject' }
+    body { 'Hello!' }
+    attachments { [] }
   end
 
-  factory :group do |f|
-    f.sequence(:system_code) {|c| "code#{c}"}
-    f.name "Group Name"
+  factory :group do
+    sequence(:system_code) { |c| "code#{c}" }
+    name { "Group Name" }
   end
 
-  factory :mailing_list do |f|
-    f.sequence(:system_code) { |c| "code#{c}"}
-    f.name "Mailing List Name"
-    f.association :user
-    f.association :company
+  factory :mailing_list do
+    sequence(:system_code) { |c| "code#{c}" }
+    name { "Mailing List Name" }
+    user
+    company
   end
 
-  factory :state_toggle_button do |f|
-
+  factory :state_toggle_button do
   end
 
-  factory :plant do |f|
-    f.sequence(:name) { |n| "pname#{n}"}
-    f.association :company
-  end
-  factory :plant_product_group_assignment do |f|
-    f.association :plant
-    f.association :product_group
+  factory :plant do
+    sequence(:name) { |n| "pname#{n}"}
+    company
   end
 
-  factory :sent_email do |f|
-    f.sequence(:email_subject) { |n| "subject#{n}" }
-    f.sequence(:email_to) { |n| "recipient#{n}" }
-    f.sequence(:email_from) { |n| "sender#{n}" }
+  factory :plant_product_group_assignment do
+    plant
+    product_group
   end
 
-  factory :summary_statement do |f|
-    f.sequence(:statement_number) { |n| "statement_#{n}" }
-    f.association :customer, :factory => :company
+  factory :sent_email do
+    sequence(:email_subject) { |n| "subject#{n}" }
+    sequence(:email_to) { |n| "recipient#{n}" }
+    sequence(:email_from) { |n| "sender#{n}" }
   end
 
-  factory :user_manual do |f|
-    f.name "MyManual"
+  factory :summary_statement do
+    sequence(:statement_number) { |n| "statement_#{n}" }
+    association :customer, :factory => :company
   end
 
-  factory :product_vendor_assignment do |f|
-    f.association :product
-    f.association :vendor
+  factory :user_manual do
+    name { "MyManual" }
   end
 
-  factory :custom_view_template do |f|
-    f.module_type "Entry"
-    f.sequence(:template_identifier) {|n| "template_identifier_#{n}"}
-    f.sequence(:template_path) {|n| "/path/to/template_#{n}"}
+  factory :product_vendor_assignment do
+    product
+    vendor
   end
 
-  factory :bulk_process_log do |f|
-    f.association :user
-  end
-  factory :trade_lane do |f|
-    f.association :origin_country, factory: :country
-    f.association :destination_country, factory: :country
+  factory :custom_view_template do
+    module_type { "Entry" }
+    sequence(:template_identifier) { |n| "template_identifier_#{n}" }
+    sequence(:template_path) { |n| "/path/to/template_#{n}" }
   end
 
-  factory :trade_preference_program do |f|
-    f.name 'TPP'
-    f.association :origin_country, factory: :country
-    f.association :destination_country, factory: :country
+  factory :bulk_process_log do
+    user
   end
 
-  factory :tpp_hts_override do |f|
-    f.association :trade_preference_program
-    f.hts_code '1234567890'
-    f.start_date Date.new(1900, 1, 1)
-    f.end_date Date.new(2999, 12, 31)
+  factory :trade_lane do
+    association :origin_country, factory: :country
+    association :destination_country, factory: :country
   end
 
-  factory :product_trade_preference_program do |f|
-    f.association :product
-    f.association :trade_preference_program
+  factory :trade_preference_program do
+    name { 'TPP' }
+    association :origin_country, factory: :country
+    association :destination_country, factory: :country
   end
 
-  factory :spi_rate do |f|
-    f.association :country
-    f.special_rate_key 'ABC'
-    f.rate_text 'SOMETEXT'
+  factory :tpp_hts_override do
+    trade_preference_program
+    hts_code { '1234567890' }
+    start_date { Date.new(1900, 1, 1) }
+    end_date { Date.new(2999, 12, 31) }
   end
 
-  factory :product_rate_override do |f|
-    f.association :product
-    f.start_date Date.new(1900, 1, 1)
-    f.end_date Date.new(2999, 12, 31)
+  factory :product_trade_preference_program do
+    product
+    trade_preference_program
   end
 
-  factory :entity_snapshot do |f|
-    f.association :recordable, :factory => :entry
-    f.association :user
+  factory :spi_rate do
+    country
+    special_rate_key { 'ABC' }
+    rate_text { 'SOMETEXT' }
   end
 
-  factory :billable_event do |f|
-    f.association :billable_eventable, :factory => :entry
-    f.association :entity_snapshot
+  factory :product_rate_override do
+    product
+    start_date { Date.new(1900, 1, 1) }
+    end_date { Date.new(2999, 12, 31) }
   end
 
-  factory :invoiced_event do |f|
-    f.association :billable_event
+  factory :entity_snapshot do
+    association :recordable, :factory => :entry
+    association :user
   end
 
-  factory :non_invoiced_event do |f|
-    f.association :billable_event
+  factory :billable_event do
+    association :billable_eventable, :factory => :entry
+    entity_snapshot
   end
 
-  factory :vfi_invoice do |f|
-    f.association :customer, :factory=>:company
-    f.sequence :invoice_number
+  factory :invoiced_event do
+    billable_event
   end
 
-  factory :vfi_invoice_line do |f|
-    f.association :vfi_invoice
-    f.sequence :line_number
-    f.charge_description {FactoryBot.next :alpha_numeric}
-    f.unit_price 5
-    f.quantity 1
-    f.charge_amount 1
-  end
-  factory :search_table_config do |f|
-    f.name 'stc'
-    f.sequence :page_uid
+  factory :non_invoiced_event do
+    billable_event
   end
 
-  factory :folder do |f|
-    f.base_object :order
-    f.created_by :user
+  factory :vfi_invoice do
+    association :customer, :factory=>:company
+    sequence :invoice_number
   end
-  factory :aws_backup_session do |f|
+
+  factory :vfi_invoice_line do
+    vfi_invoice
+    sequence :line_number
+    charge_description { FactoryBot.next(:alpha_numeric) }
+    unit_price { 5 }
+    quantity { 1 }
+    charge_amount { 1 }
   end
+
+  factory :search_table_config do
+    name { 'stc' }
+    page_uid
+  end
+
+  factory :folder do
+    base_object factory: :order
+    created_by factory: :user
+  end
+
+  factory :aws_backup_session do
+  end
+
   factory :aws_snapshot do |f|
-    f.association :aws_backup_session
-  end
-  factory :fiscal_month do |f|
-    f.association :company
-  end
-  factory :attachment_archive_setup do |f|
-    f.association :company
-    f.output_path ''
-  end
-  factory :random_audit do |f|
-    f.association :user
-    f.association :search_setup
+    aws_backup_session
   end
 
-  factory :business_validation_scheduled_job do |f|
-    f.validatable :entry
-  end
-  factory :business_validation_schedule do |f|
-    f.name 'schedule'
-    f.module_type "Entry"
+  factory :fiscal_month do
+    company
   end
 
-  factory :one_time_alert do |f|
-    f.association :user
-  end
-  factory :one_time_alert_log_entry do |f|
-    f.association :one_time_alert
+  factory :attachment_archive_setup do
+    company
+    output_path { '' }
   end
 
-  factory :tariff_classification do |f|
-    f.association :country
-  end
-  factory :tariff_classification_rate do |f|
-    f.association :tariff_classification
-  end
-  factory :monthly_statement do |f|
-  end
-  factory :daily_statement do |f|
-    f.association :monthly_statement
-  end
-  factory :daily_statement_entry do |f|
-    f.association :daily_statement
-  end
-  factory :unit_of_measure do |f|
-    f.uom 'foo'
-    f.description 'bar'
-    f.system 'Customs Management'
-  end
-  factory :announcement do |f|
-    f.title 'title'
-    f.start_at DateTime.new(2020, 3, 15, 12, 0)
-    f.end_at DateTime.new(2020, 3, 20, 15, 0)
-  end
-  factory :user_announcement do |f|
-  end
-  factory :user_announcement_marker do |f|
+  factory :random_audit do
+    user
+    search_setup
   end
 
-  factory :runtime_log do |l|
+  factory :business_validation_scheduled_job do
+    validatable factory: :entry
   end
 
-  factory :inbound_file do |file|
+  factory :business_validation_schedule do
+    name { 'schedule' }
+    module_type { "Entry" }
+  end
+
+  factory :one_time_alert do
+    user
+  end
+
+  factory :one_time_alert_log_entry do
+    one_time_alert
+  end
+
+  factory :tariff_classification do
+    country
+  end
+
+  factory :tariff_classification_rate do
+    tariff_classification
+  end
+
+  factory :monthly_statement do
+  end
+
+  factory :daily_statement do
+    monthly_statement
+  end
+
+  factory :daily_statement_entry do
+    daily_statement
+  end
+
+  factory :unit_of_measure do
+    uom { 'foo' }
+    description { 'bar' }
+    system { 'Customs Management' }
+  end
+
+  factory :announcement do
+    title { 'title' }
+    start_at { DateTime.new(2020, 3, 15, 12, 0) }
+    end_at { DateTime.new(2020, 3, 20, 15, 0) }
+  end
+
+  factory :user_announcement do
+  end
+
+  factory :user_announcement_marker do
+  end
+
+  factory :runtime_log do
+  end
+
+  factory :inbound_file do
   end
 end

@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryBotParser do
+describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
   before :each do
     @cf = double('custom_file')
   end

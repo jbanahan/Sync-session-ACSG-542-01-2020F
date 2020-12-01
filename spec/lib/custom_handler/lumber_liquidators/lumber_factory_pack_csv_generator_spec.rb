@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackCsvGenerator do
+describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator do
 
   describe 'generate_csv' do
     let :vendor_address do

@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryBotPackShipmentComparator do
+describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentComparator do
   let(:cdef) { described_class.prep_custom_definitions([:shp_factory_pack_revised_date])[:shp_factory_pack_revised_date] }
 
   describe "accept?" do

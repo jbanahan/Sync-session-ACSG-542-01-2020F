@@ -63,11 +63,11 @@ gem 'execjs', '2.7.0'
 gem 'mini_racer', '0.3.1'
 gem 'browser', '2.5.3'
 
-gem "google-api-client", "0.50.0"
+gem "google-api-client", "0.28.4"
 # LRU Redux provides an LRU (optionally timebased) cache...it's used to cache google drive paths
 gem 'lru_redux', '~> 1.1.0'
-gem "omniauth-google-oauth2", '0.8.0'
-gem "omniauth-saml", '1.10.3'
+gem "omniauth-google-oauth2", '0.6.0'
+gem "omniauth-saml", '1.10.1'
 gem 'omniauth-azure-oauth2', '~> 0.0.10'
 gem 'omniauth-rails_csrf_protection', '~> 0.1.2'
 gem 'concurrent-ruby', '1.1.7'
@@ -78,7 +78,7 @@ gem "mono_logger", '1.1.0'
 gem "net-sftp", '3.0.0'
 # Can update to net-ssh 5 when we're using a Ruby version > 2.2.5
 gem "net-ssh", '6.1.0'
-gem "clearance", '2.0.0'
+gem "clearance", '1.16.1'
 
 gem 'connection_pool', '2.2.3'
 gem 'redlock', '1.2.0'
@@ -86,7 +86,7 @@ gem 'redlock', '1.2.0'
 gem 'jsonpath', '1.0.6'
 
 # Slack.com integration
-gem 'slack-ruby-client', '0.15.1'
+gem 'slack-ruby-client', '0.13.1'
 
 gem 'email_validator', '1.6.0'
 
@@ -109,7 +109,7 @@ gem 'transaction_retry', '1.0.3'
 gem "distribute_reads", '0.3.3'
 
 # Google reCaptcha support
-gem "recaptcha", '~> 5.6.0'
+gem "recaptcha", '~> 4.13.1'
 
 gem 'dry-core', '0.4.10'
 

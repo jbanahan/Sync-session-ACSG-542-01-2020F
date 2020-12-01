@@ -14,7 +14,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
-  skip_before_filter :require_login
+  skip_before_filter :require_login, raise: false
   before_filter :chainio_redirect
   before_filter :prep_model_fields
   before_filter :new_relic
