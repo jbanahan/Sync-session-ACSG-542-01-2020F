@@ -27,7 +27,7 @@ gem 'paperclip', '6.1.0'
 gem 'uuidtools', '2.1.4'
 gem 'spreadsheet', '1.2.6'
 gem 'caxlsx', '3.0.2'
-gem 'axlsx_rails', '0.6.1'
+gem 'caxlsx_rails', '0.6.2'
 gem 'exception_notification', '4.4.3'
 gem 'rufus-scheduler', '3.6.0'
 # The fugit gem is what rufus now uses behind the scenes for all the date/time/cron parsing stuff
