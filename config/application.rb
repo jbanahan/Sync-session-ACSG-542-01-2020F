@@ -122,8 +122,9 @@ module OpenChain
     end
 
     require 'open_chain/rack_request_inflater'
-    config.middleware.insert_before ActionDispatch::ParamsParser, OpenChain::RackRequestInflater
+    config.middleware.insert_before ActionDispatch::Flash, OpenChain::RackRequestInflater
 
     config.hostname = `hostname`.strip
+    config.action_mailer.deliver_later_queue_name = 'default'
   end
 end

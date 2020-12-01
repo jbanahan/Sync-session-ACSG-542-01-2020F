@@ -184,7 +184,7 @@ class MasterSetup < ActiveRecord::Base
 
   def self.master_setup_initialized?
     @@initialized ||= begin
-      ActiveRecord::Base.connection.table_exists?("master_setups") && !MasterSetup.first.nil?
+      ActiveRecord::Base.connection.data_source_exists?("master_setups") && !MasterSetup.first.nil?
     end
   end
 

@@ -8,7 +8,7 @@ require 'open_chain/entity_compare/business_rule_comparator/business_rule_notifi
 require 'open_chain/entity_compare/timed_business_rule_comparator'
 require 'open_chain/entity_compare/one_time_alerts_comparator'
 
-if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setups')
+if !Rails.env.test? && ActiveRecord::Base.connection.data_source_exists?('master_setups')
 
   # Setup the comparator registries
   entity_snapshot_comparators_to_register = [OpenChain::EntityCompare::TimedBusinessRuleComparator, OpenChain::EntityCompare::OneTimeAlertsComparator]

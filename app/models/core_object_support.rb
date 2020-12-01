@@ -27,11 +27,11 @@ module CoreObjectSupport
     after_save :process_linked_attachments
 
     # Allow new instances to start up (prior to migrations run will not have histories or item change subscriptions tables)
-    if ActiveRecord::Base.connection.table_exists?('histories') && History.column_names.include?(self.name.foreign_key)
+    if ActiveRecord::Base.connection.data_source_exists?('histories') && History.column_names.include?(self.name.foreign_key)
       has_many :histories, dependent: :destroy
     end
 
-    if ActiveRecord::Base.connection.table_exists?('item_change_subscriptions') && ItemChangeSubscription.column_names.include?(self.name.foreign_key)
+    if ActiveRecord::Base.connection.data_source_exists?('item_change_subscriptions') && ItemChangeSubscription.column_names.include?(self.name.foreign_key)
       has_many :item_change_subscriptions, dependent: :destroy
     end
 

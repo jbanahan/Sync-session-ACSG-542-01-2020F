@@ -8,7 +8,7 @@ if !OpenChain::LoadEnvironment.running_from_console? && MasterSetup.master_setup
   ms = MasterSetup.first
   ms.update_cache
 
-  if MasterSetup.production_env? && ActiveRecord::Base.connection.table_exists?('instance_informations')
+  if MasterSetup.production_env? && ActiveRecord::Base.connection.data_source_exists?('instance_informations')
     InstanceInformation.check_in
   end
 end

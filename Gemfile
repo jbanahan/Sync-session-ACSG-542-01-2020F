@@ -157,7 +157,7 @@ end
 group :test do
   gem 'rspec-rails', '4.0.1'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
-  gem 'factory_girl', '4.9.0'
+  gem 'factory_bot', '6.1.0'
   gem 'rspec_junit_formatter', '~> 0.4.1' # circle-ci formatting
   gem 'test-unit'
   gem 'webmock'
