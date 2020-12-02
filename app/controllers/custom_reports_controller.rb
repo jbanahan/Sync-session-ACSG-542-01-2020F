@@ -173,16 +173,13 @@ class CustomReportsController < ApplicationController
                                             :id, :include_empty, :_destroy, :custom_definition_id, :descending,
                                             :model_field_uid, :rank, :search_setup_id, :value, :operator
                                           ],
-                                          sort_criterions_attributes: [
-                                            :custom_definition_id, :descending, :model_field_uid, :rank, :search_setup_id
-                                          ],
                                           search_columns_attributes: [
                                             :constant_field_name, :constant_field_value,
                                             :custom_definition_id, :custom_report_id, :imported_file_id,
                                             :model_field_uid, :rank, :search_setup_id
                                           ],
                                           search_schedules_attributes: [
-                                            :custom_report_id, :custom_report, :day_of_month, :disabled,
+                                            :id, :_destroy, :custom_report_id, :custom_report, :day_of_month, :disabled,
                                             :download_format, :email_addresses, :exclude_file_timestamp,
                                             :ftp_password, :ftp_port, :ftp_server, :ftp_subfolder, :ftp_username,
                                             :last_finish_time, :last_start_time, :mailing_list_id, :protocol,

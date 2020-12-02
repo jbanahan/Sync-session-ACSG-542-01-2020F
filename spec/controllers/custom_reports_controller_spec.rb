@@ -168,6 +168,29 @@ describe CustomReportsController do
       expect(response).to be_redirect
       expect(flash[:errors]).to include "All reports with schedules must have at least one parameter."
     end
+
+    it "does not duplicate schedules" do
+      ss = Factory(:search_schedule, custom_report: report, email_addresses: "ntufnel@stonehenge.biz")
+
+      put :update, {id: report.id, custom_report: {name: 'ABC', type: 'CustomReportEntryInvoiceBreakdown',
+                                                   search_columns_attributes: {'0' => {rank: '0', model_field_uid: 'bi_entry_num'}},
+                                                   search_criterions_attributes: {'0' => {model_field_uid: 'bi_brok_ref', operator: 'eq', value: '123'}},
+                                                   search_schedules_attributes: {ss.id.to_s => {"id" => ss.id.to_s, "email_addresses" => "ntufnel@stonehenge.biz"}}}}
+      report.reload
+      expect(report.search_schedules.count).to eq 1
+      expect(report.search_schedules.first).to eq ss
+    end
+
+    it "deletes removed schedules" do
+      ss = Factory(:search_schedule, custom_report: report, email_addresses: "ntufnel@stonehenge.biz")
+      put :update, {id: report.id, custom_report: {name: 'ABC', type: 'CustomReportEntryInvoiceBreakdown',
+                                                   search_columns_attributes: {'0' => {rank: '0', model_field_uid: 'bi_entry_num'}},
+                                                   search_criterions_attributes: {'0' => {model_field_uid: 'bi_brok_ref', operator: 'eq', value: '123'}},
+                                                   search_schedules_attributes: {ss.id.to_s => {"id" => ss.id.to_s, "email_addresses" => "ntufnel@stonehenge.biz",
+                                                                                                "_destroy" => "true"}}}}
+      report.reload
+      expect(report.search_schedules.count).to eq 0
+    end
   end
 
   describe "preview" do
