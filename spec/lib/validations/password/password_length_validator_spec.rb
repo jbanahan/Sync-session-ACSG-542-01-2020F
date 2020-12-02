@@ -1,5 +1,5 @@
 describe OpenChain::Validations::Password::PasswordLengthValidator do
-  let!(:user) { create.build(:user) }
+  let!(:user) { build(:user) }
 
   it 'is valid if the password is at least 8 characters in length and user is not an admin' do
     expect(user).to receive(:admin?).and_return false

@@ -132,7 +132,7 @@ describe Order do
   end
 
   describe 'close' do
-    let(:time) { Time.zone.now }
+    let(:time) { time_now }
     let(:order) { create(:order) }
     let(:user) { create(:user) }
 

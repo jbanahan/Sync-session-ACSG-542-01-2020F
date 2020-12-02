@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def process check_register, invoices, user = nil
-    users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
+    users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).to_a
     if user.present?
       # Something about a blank ActiveRecord result doesn't play nicely with the uniq below.
       # This is hacky, but gets the job done.  We're looking for all of the accounting group

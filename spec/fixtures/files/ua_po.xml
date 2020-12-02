@@ -41,7 +41,7 @@
         <Date DateQualifier="CancelDate">00000000</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-createDate">20161219</Date>
+        <Date DateQualifier="Ex-FactoryDate">20161219</Date>
       </DateTime>
       <Price>
         <Amount Type="Net">1.00</Amount>
@@ -86,7 +86,7 @@
         <Date DateQualifier="CancelDate">00000000</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-createDate">20161219</Date>
+        <Date DateQualifier="Ex-FactoryDate">20161219</Date>
       </DateTime>
       <Price>
         <Amount Type="Net">1.00</Amount>

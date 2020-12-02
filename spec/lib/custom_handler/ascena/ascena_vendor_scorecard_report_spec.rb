@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet.row(4)).to eq [2, "Ascena Vendor 2", 1.67, 1.67, 0.14, 1]
       expect(sheet.row(5)).to eq [nil, "TOTAL", 9.87, 8.66, 0.4, 0.88]
 
-      expect(sheet = wb.worksheet("Vendor create Pair")).not_to be_nil
+      expect(sheet = wb.worksheet("Vendor Factory Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Summary by vendor / factory pair>", nil, nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "REMARKS"]
@@ -187,7 +187,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet = wb.worksheet("Vendor")).not_to be_nil
       expect(sheet.rows.count).to eq 6
 
-      expect(sheet = wb.worksheet("Vendor create Pair")).not_to be_nil
+      expect(sheet = wb.worksheet("Vendor Factory Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil

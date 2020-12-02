@@ -20,10 +20,6 @@ RSpec.configure do |config|
   config.before(:all) do
     DatabaseCleaner.strategy = :deletion
     WebMock.disable!
-    # Several hundred test cases expect there to be a MasterSetup record present, rather than stub'ing
-    # it.  We're creating this record for those, but they SHOULDN'T be relying on it.  We'll have to leave
-    # this in until such point in time where we can amend those test cases.
-    MasterSetup.init_test_setup
     # load "#{Rails.root}/config/routes.rb"
     ModelField.reload
   end
@@ -42,6 +38,12 @@ RSpec.configure do |config|
     CustomDefinition.skip_reload_trigger = true
     Time.zone = ActiveSupport::TimeZone["UTC"]
     LinkableAttachmentImportRule.clear_cache
+
+    # Several hundred test cases expect there to be a MasterSetup record present, rather than stub'ing
+    # it.  We're creating this record for those, but they SHOULDN'T be relying on it.  We'll have to leave
+    # this in until such point in time where we can amend those test cases.
+    MasterSetup.init_test_setup
+
     # What the following does is totally prevent any specs from accidentally saving to S3 via
     # the paperclip gem.  This shaves off a fair bit of runtime on the specs as well as not having
     # to rely on the AWS services in the test cases.

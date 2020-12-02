@@ -465,4 +465,9 @@ module Helpers
     add_system_identifier(company, "Cargowise", code)
   end
 
+  # Use this for any Timecop related freezing.
+  # Rails 5 inserts dates into the database with the miliseconds set to 0. This causes problems when comparing to Time.zone.now
+  def time_now
+    Time.zone.now.change(usec: 0)
+  end
 end

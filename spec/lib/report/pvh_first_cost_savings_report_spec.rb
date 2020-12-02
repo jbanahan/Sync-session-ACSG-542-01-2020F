@@ -272,7 +272,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       detail_sheet = reader["Detail"]
       expect(detail_sheet).not_to be_nil
       expect(detail_sheet.length).to eq 3
-      expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "create Name", "PO Number", "PO Line Number",
+      expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number",
                                      "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code",
                                      "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
       expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0,
@@ -283,7 +283,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).not_to be_nil
       expect(summary_sheet.length).to eq 3
-      expect(summary_sheet[0]).to eq ["Vendor Name", "create Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
       expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO-A", "entry-1", 40.2, 9.0, 31.2, 10.39]
       expect(summary_sheet[2]).to eq ["Vendco-2", "factory-2", "IN", "PO-C", "entry-2", 72.22, 35, 37.22, 18.61]
     end
@@ -357,7 +357,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       detail_sheet = reader["Detail"]
       expect(detail_sheet).not_to be_nil
       expect(detail_sheet.length).to eq 2
-      expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "create Name", "PO Number", "PO Line Number",
+      expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number",
                                      "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code",
                                      "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
       expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", nil, "PO-A", nil, "cont-1", nil, nil,
@@ -366,7 +366,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).not_to be_nil
       expect(summary_sheet.length).to eq 2
-      expect(summary_sheet[0]).to eq ["Vendor Name", "create Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
       expect(summary_sheet[1]).to eq ["Vendco", nil, "CN", "PO-A", "entry-1", 0.0, 0.0, 0.0, 0.0]
     end
 

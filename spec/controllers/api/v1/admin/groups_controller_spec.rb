@@ -29,12 +29,12 @@ describe Api::V1::Admin::GroupsController do
   end
 
   describe "update" do
-    let! (:group) { Group.create! system_code: "GROUP", name: "Name", description: "Description" }
-    let! (:users) { group.users << user; [user] }
+    let!(:group) { Group.create! system_code: "GROUP", name: "Name", description: "Description" }
+    let!(:users) { group.users << user; [user] }
 
     it "updates a group" do
       user2 = create(:user)
-      put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc", :include=>"users", "users"=>[user2.id]
+      put :update, params: { id: group.id, grp_name: "Update", grp_description: "Upd. Desc", include: "users", users: [user2.id] }
 
       expect(response).to be_success
       json = JSON.parse response.body

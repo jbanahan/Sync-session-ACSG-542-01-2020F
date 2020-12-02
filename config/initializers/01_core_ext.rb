@@ -39,8 +39,10 @@ String.class_eval do
 
   # Returns true for any value considered true by ActiveRecord when coercing user data to the database
   # False for everything else
+  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'on', 'ON'].to_set.freeze
+
   def to_boolean
-    ActiveModel::Type::Boolean.new.cast(self.upcase)
+    TRUE_VALUES.include?(self.upcase)
   end
 
   # Like String#strip but removes a wider variety of characters, including non-breaking space

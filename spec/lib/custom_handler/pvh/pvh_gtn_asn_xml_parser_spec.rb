@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(s.importer).to eq pvh
       expect(s.reference).to eq "PVH-5093094M01"
       expect(s.importer_reference).to eq "5093094M01"
-      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.060-07:00")
+      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.000-07:00")
       expect(s.last_file_bucket).to eq "bucket"
       expect(s.last_file_path).to eq "key"
       expect(s.voyage).to eq "EK0543"

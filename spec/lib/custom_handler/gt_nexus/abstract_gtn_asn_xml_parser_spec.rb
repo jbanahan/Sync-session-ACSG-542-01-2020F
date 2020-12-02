@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
       expect(s.importer).to eq importer
       expect(s.reference).to eq "SYS-5093094M01"
       expect(s.importer_reference).to eq "5093094M01"
-      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.060-07:00")
+      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.000-07:00")
       expect(s.last_file_bucket).to eq "bucket"
       expect(s.last_file_path).to eq "key"
       expect(s.voyage).to eq "EK0543"
@@ -302,7 +302,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
       s = subject.process_asn_cancel asn_xml, user, "bucket", "key"
       expect(s).to eq shipment
-      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.060-07:00")
+      expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-23T06:19:56.000-07:00")
       expect(s.last_file_bucket).to eq "bucket"
       expect(s.last_file_path).to eq "key"
     end

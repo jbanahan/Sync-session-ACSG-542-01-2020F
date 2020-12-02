@@ -71,10 +71,12 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
       expect(sched.module_type).to eq "Entry"
     end
 
-    it "errors if fields missing" do
+    it "errors if name is missing" do
       expect { post :create, schedule: {name: "", module_type: "Entry"} }.not_to change(BusinessValidationSchedule, :count)
       expect(JSON.parse(response.body)["errors"]).to eq ["Name cannot be blank."]
+    end
 
+    it "errors if module type is missing" do
       expect { post :create, schedule: {name: "sched name", module_type: ""} }.not_to change(BusinessValidationSchedule, :count)
       expect(JSON.parse(response.body)["errors"]).to eq ["Module Type cannot be blank."]
     end
@@ -116,17 +118,21 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
 
-    it "errors if fields missing" do
+    it "errors if search criterions are missing" do
       put :update, id: schedule.id, schedule: {model_field_uid: "new mf uid", name: "new name", operator: "new operator", num_days: 10}, criteria: []
       schedule.reload
       expect(schedule.search_criterions.count).to eq 1
       expect(JSON.parse(response.body)["errors"]).to eq ["Schedule must include search criterions."]
+    end
 
+    it "errors if name is missing" do
       put :update, id: schedule.id, schedule: {model_field_uid: "new mf uid", name: "", operator: "new operator", num_days: 10}, criteria: schedule_new_criteria
       schedule.reload
       expect(schedule.name).to eq "original name"
       expect(JSON.parse(response.body)["errors"]).to eq ["Name cannot be blank."]
+    end
 
+    it "errors if date is not complete" do
       put :update, id: schedule.id, schedule: {model_field_uid: "", name: "new name", operator: "new operator", num_days: 10}, criteria: schedule_new_criteria
       schedule.reload
       expect(schedule.model_field_uid).to eq "original mf uid"

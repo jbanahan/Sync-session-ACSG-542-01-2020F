@@ -5,15 +5,15 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   context 'with valid data' do
-    let!(:importer) { createGirl.create :company, importer:true, system_code:'SYSTEM'}
-    let!(:product) { createGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
-    let!(:shipment) { createGirl.create(:shipment, importer_id:importer.id) }
-    let!(:first_order) { createGirl.create :order, order_number: 2502377, customer_order_number: 1502377, importer_id:importer.id, approval_status: "Accepted"}
-    let!(:second_order) { createGirl.create :order, order_number: 2502396, customer_order_number: 1502396, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:third_order) { createGirl.create :order, order_number: 2502397, customer_order_number: 1502397, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:fourth_order) { createGirl.create :order, order_number: 2502398, customer_order_number: 1502398, importer_id:importer.id, approval_status: "Accepted" }
-    let!(:order_lines) { [createGirl.create(:order_line, order_id: first_order.id, sku: 32248678), createGirl.create(:order_line, order_id: first_order.id, sku: 32248654), createGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
-    let!(:user) { createGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
+    let!(:importer) { create :company, importer:true, system_code:'SYSTEM'}
+    let!(:product) { create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
+    let!(:shipment) { create(:shipment, importer_id:importer.id) }
+    let!(:first_order) { create :order, order_number: 2502377, customer_order_number: 1502377, importer_id:importer.id, approval_status: "Accepted"}
+    let!(:second_order) { create :order, order_number: 2502396, customer_order_number: 1502396, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:third_order) { create :order, order_number: 2502397, customer_order_number: 1502397, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:fourth_order) { create :order, order_number: 2502398, customer_order_number: 1502398, importer_id:importer.id, approval_status: "Accepted" }
+    let!(:order_lines) { [create(:order_line, order_id: first_order.id, sku: 32248678), create(:order_line, order_id: first_order.id, sku: 32248654), create(:order_line, order_id: second_order.id, sku: 32248838)]}
+    let!(:user) { create(:master_user, shipment_edit: true, shipment_view: true) }
     let(:form_data) { StandardBookingFormSpecData.form_lines }
 
     before do
@@ -137,14 +137,14 @@ describe OpenChain::CustomHandler::GenericBookingParser do
   context 'with incomplete data' do
     let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
     let(:importer) { create(:importer) }
-    let(:shipment) { createGirl.build :shipment, importer_id:importer.id }
+    let(:shipment) { build :shipment, importer_id:importer.id }
     let (:product) {
       p = create(:product, importer: importer)
       p.update_custom_value! cdefs[:prod_part_number], "WPT028531"
       p
     }
-    let!(:purchase_order) { createGirl.create(:order, customer_order_number: 1502377, importer_id:importer.id)}
-    let!(:order_lines) { [createGirl.create(:order_line, order_id: purchase_order.id, sku: 32248678, product_id: product.id)]}
+    let!(:purchase_order) { create(:order, customer_order_number: 1502377, importer_id:importer.id)}
+    let!(:order_lines) { [create(:order_line, order_id: purchase_order.id, sku: 32248678, product_id: product.id)]}
     let(:row) { [nil, "LIGHT & EASY LINEN-STRETCH PANTS (53% LINEN / 45% VISCOSE / 2% SPANDEX)", 1502377.0, "WPT028531", 32248678.0, "6204.69.9044", 200.0, 5000.0, nil, 5.322, 2142.2, "PH"] }
 
     it 'does not add a line when PO Number is not provided' do

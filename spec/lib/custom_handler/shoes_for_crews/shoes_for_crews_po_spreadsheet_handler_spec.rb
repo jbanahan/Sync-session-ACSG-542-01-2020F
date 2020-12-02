@@ -234,8 +234,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Name").text).to eq s[:forwarder][:name]
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Forwarder']/Address").cdatas[0].value).to eq s[:forwarder][:address]
 
-      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'create']/Name").text).to eq s[:factory][:name]
-      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'create']/Address").cdatas[0].value).to eq s[:factory][:address]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Name").text).to eq s[:factory][:name]
+      expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Factory']/Address").cdatas[0].value).to eq s[:factory][:address]
 
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Name").text).to eq s[:consignee][:name]
       expect(REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Consignee']/Address").cdatas[0].value).to eq s[:consignee][:address]

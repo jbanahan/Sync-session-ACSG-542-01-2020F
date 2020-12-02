@@ -23,7 +23,7 @@ describe ChargeCategoriesController do
   describe "create" do
     it "should require user to be admin" do
       sign_in_as create(:user)
-      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x', 'category'=>'y'}
+      post :create, params: {company_id: @c.id, charge_category: {charge_code: 'x', category: 'y'}}
       expect(response).to redirect_to request.referrer
       expect(flash[:errors].size).to eq(1)
       @c.reload

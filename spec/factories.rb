@@ -739,7 +739,7 @@ end
 
   factory :search_table_config do
     name { 'stc' }
-    page_uid
+    sequence :page_uid
   end
 
   factory :folder do

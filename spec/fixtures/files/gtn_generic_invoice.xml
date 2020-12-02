@@ -24,7 +24,7 @@
         <invoiceDateValue>2018-08-06</invoiceDateValue>
       </invoiceDate>
       <invoiceDate>
-        <invoiceDateTypeCode>Excreate</invoiceDateTypeCode>
+        <invoiceDateTypeCode>ExFactory</invoiceDateTypeCode>
         <invoiceDateValue>2018-07-07</invoiceDateValue>
       </invoiceDate>
       <incotermCode>FOB</incotermCode>
@@ -55,7 +55,7 @@
       <partyRoleCode>Buyer</partyRoleCode>
       <memberId>5717988960002119</memberId>
       <divisionUid>82685</divisionUid>
-       <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
+      <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
       <identification>
         <type>PVH_Buyer_Party_ID</type>
         <value>FBTFE</value>
@@ -120,7 +120,7 @@
     <party>
       <partyRoleCode>BuyersAgent</partyRoleCode>
       <memberId>5717988960036332</memberId>
-       <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
+      <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
       <identification>
         <type>PVH_Agent_Party_ID</type>
         <value>LF-SHAA</value>
@@ -149,7 +149,7 @@
       <partyUid>63480155067</partyUid>
       <partyRoleCode>LogisticsProvider</partyRoleCode>
       <memberId>5717989018169477</memberId>
-       <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
+      <!-- JH NOTE : There can actually be hundreds of these identification elements...I trimmed most out from the sample given. -->
       <identification>
         <type>PVH_LSP_Party_ID</type>
         <value>SGTDHL</value>

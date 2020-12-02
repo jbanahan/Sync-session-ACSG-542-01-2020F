@@ -1019,10 +1019,11 @@ describe User do
     end
 
     it "sets password_changed_at" do
-      Timecop.freeze(Time.zone.now) do
+      now = Time.zone.now
+      Timecop.freeze(now) do
         user.update_user_password 'newpassword', 'newpassword'
         expect(described_class.authenticate(user.username, 'newpassword')).to eq user
-        expect(user.password_changed_at).to eql(Time.zone.now)
+        expect(user.password_changed_at).to eql(now)
       end
     end
 
@@ -1167,7 +1168,7 @@ describe User do
       u.update(email: list)
       u.reload
       expect(u.email).to eq list
-      expect(u.errors.messages[:email]).to be_nil
+      expect(u.errors.messages[:email]).to be_empty
     end
 
     it "does not update email field if any member of semicolon/comma-separated list fails to match regex pattern" do

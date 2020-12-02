@@ -114,10 +114,10 @@ describe AdvancedSearchController do
 
     it "should recreate columns" do
       @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
-      put :update, :id=>@ss.id, :search_setup=>{:search_columns=>[{:mfid=>'prod_uid', :label=>"UID", :rank=>2},
-        {:mfid=>'prod_name', :rank=>1, :label=>'m'},
-        {:mfid=>'_constsomeotherjunk', :label=> 'Broker', :constant_field_value => 'Vandegrift', :rank=> 3}
-      ]}
+      put :update, params: {id: @ss.id, search_setup: {search_columns: [{mfid: 'prod_uid', label: "UID", rank: 2},
+                                                                         {mfid: 'prod_name', rank: 1, label: 'm'},
+                                                                         {mfid: '_constsomeotherjunk', label: 'Broker', "constant_field_value" => 'Vandegrift', rank: 3}]
+      }}
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_columns.size).to eq(3)

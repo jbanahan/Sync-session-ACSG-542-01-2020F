@@ -71,7 +71,7 @@ describe AnnouncementsController do
       expect(response).to be_ok
       expect(assigns(:announcements)).to eq "announcements"
       expect(assigns(:user)).to eq user
-      expect(assigns(:no_confirm)).to eq true
+      expect(assigns(:no_confirm)).to eq "true"
     end
 
     it "renders, showing specified announcements" do

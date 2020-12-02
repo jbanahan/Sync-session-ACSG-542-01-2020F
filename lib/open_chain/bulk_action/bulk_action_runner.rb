@@ -5,7 +5,9 @@ module OpenChain; module BulkAction; class BulkActionRunner
   def self.process_from_parameters user, params, action_class, opts
     if params['sr_id'] && params['sr_id'].to_s.match(/^[0-9]+$/)
       self.process_search_run user, SearchRun.find(params['sr_id']), action_class, opts
-    elsif params['pk'].is_a?(Hash) && params['pk'].length > 0
+    # params['pk'] will no longer be a hash but rather a Parameters object.
+    # Parameters act identically to hashes.
+    elsif params['pk'].is_a?(ActionController::Parameters) && params['pk'].length > 0
       self.process_object_ids user, params['pk'].values, action_class, opts
     else
       raise "Invalid parameters, missing sr_id or pk array: #{params.to_s}"

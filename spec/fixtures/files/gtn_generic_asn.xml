@@ -350,7 +350,7 @@
           <Type>RetailCostPrice</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createPostalCode</Type>
+          <Type>FactoryPostalCode</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BillToCountryCode</Type>
@@ -381,7 +381,7 @@
           <Value>001</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCode</Type>
+          <Type>FactoryCode</Type>
           <Value>23894509</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -455,7 +455,7 @@
           <Value>1892.16</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createName</Type>
+          <Type>FactoryName</Type>
           <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -463,15 +463,15 @@
           <Value>FOB</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createAddressLine2</Type>
+          <Type>FactoryAddressLine2</Type>
           <Value>EETTIVEERAMPALAYAM</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createAddressLine1</Type>
+          <Type>FactoryAddressLine1</Type>
           <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCountryCode</Type>
+          <Type>FactoryCountryCode</Type>
           <Value>IN</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -487,14 +487,14 @@
           <Value>52% COTTON 48% MODAL</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCityName</Type>
+          <Type>FactoryCityName</Type>
           <Value>TIRUPPUR</Value>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BoxEndCode</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createState</Type>
+          <Type>FactoryState</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>PaymentTerms</Type>
@@ -782,7 +782,7 @@
                 <CountryCode>IN</CountryCode>
               </City>
               <Comments>COMPLETE SHIPMENT DEPARTED ON FLIGHT#
-EK0543  08/12   MAA-DXB</Comments>
+                EK0543  08/12   MAA-DXB</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25123</MilestoneTypeCode>
@@ -811,7 +811,7 @@ EK0543  08/12   MAA-DXB</Comments>
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>1908</MilestoneTypeCode>
@@ -946,10 +946,10 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>ESTIMATED FLIGHT PLAN:
-EK0543    08/12  MAA-DXB
-EK0011    08/13  DXB-LGW
-EK4192T  08/14  LGW-LHR
-AC865      08/17  LHR-YUL</Comments>
+                EK0543    08/12  MAA-DXB
+                EK0011    08/13  DXB-LGW
+                EK4192T  08/14  LGW-LHR
+                AC865      08/17  LHR-YUL</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25391</MilestoneTypeCode>
@@ -981,7 +981,7 @@ AC865      08/17  LHR-YUL</Comments>
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25</MilestoneTypeCode>
@@ -998,7 +998,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>20491</MilestoneTypeCode>
@@ -1187,7 +1187,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Type>RetailCostPrice</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createPostalCode</Type>
+          <Type>FactoryPostalCode</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BillToCountryCode</Type>
@@ -1218,7 +1218,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>004</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCode</Type>
+          <Type>FactoryCode</Type>
           <Value>23894509</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1292,7 +1292,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>1681.92</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createName</Type>
+          <Type>FactoryName</Type>
           <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1300,15 +1300,15 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>FOB</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createAddressLine2</Type>
+          <Type>FactoryAddressLine2</Type>
           <Value>EETTIVEERAMPALAYAM</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createAddressLine1</Type>
+          <Type>FactoryAddressLine1</Type>
           <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCountryCode</Type>
+          <Type>FactoryCountryCode</Type>
           <Value>IN</Value>
         </ItemAttributes>
         <ItemAttributes>
@@ -1324,14 +1324,14 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
           <Value>52% COTTON 48% MODAL</Value>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createCityName</Type>
+          <Type>FactoryCityName</Type>
           <Value>TIRUPPUR</Value>
         </ItemAttributes>
         <ItemAttributes>
           <Type>BoxEndCode</Type>
         </ItemAttributes>
         <ItemAttributes>
-          <Type>createState</Type>
+          <Type>FactoryState</Type>
         </ItemAttributes>
         <ItemAttributes>
           <Type>PaymentTerms</Type>
@@ -1653,7 +1653,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
                 <CountryCode>IN</CountryCode>
               </City>
               <Comments>COMPLETE SHIPMENT DEPARTED ON FLIGHT#
-EK0543  08/12   MAA-DXB</Comments>
+                EK0543  08/12   MAA-DXB</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25123</MilestoneTypeCode>
@@ -1682,7 +1682,7 @@ EK0543  08/12   MAA-DXB</Comments>
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>1908</MilestoneTypeCode>
@@ -1809,10 +1809,10 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>ESTIMATED FLIGHT PLAN:
-EK0543    08/12  MAA-DXB
-EK0011    08/13  DXB-LGW
-EK4192T  08/14  LGW-LHR
-AC865      08/17  LHR-YUL</Comments>
+                EK0543    08/12  MAA-DXB
+                EK0011    08/13  DXB-LGW
+                EK4192T  08/14  LGW-LHR
+                AC865      08/17  LHR-YUL</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25391</MilestoneTypeCode>
@@ -1844,7 +1844,7 @@ AC865      08/17  LHR-YUL</Comments>
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <MilestoneTypeCode>25</MilestoneTypeCode>
@@ -1861,7 +1861,7 @@ ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=014498673
                 <CountryCode>CA</CountryCode>
               </City>
               <Comments>SCAC: 8459
-ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+                ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
             </MilestoneInfo>
             <MilestoneInfo>
               <ProcessingStatus>Newly Posted</ProcessingStatus>

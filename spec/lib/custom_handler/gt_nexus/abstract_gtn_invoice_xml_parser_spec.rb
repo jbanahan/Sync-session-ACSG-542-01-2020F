@@ -216,7 +216,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
       i = p.process_invoice invoice_xml, user, "bucket", "key"
 
       expect(i.vendor).to have_system_identifier("GTN Vendor", "vendor-code")
-      expect(i.factory).to have_system_identifier("GTN create", "factory-code")
+      expect(i.factory).to have_system_identifier("GTN Factory", "factory-code")
       expect(i.importer.addresses.first.system_code).to eq "GTN Ship To-ship_to-code"
     end
 
