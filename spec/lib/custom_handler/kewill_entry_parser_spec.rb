@@ -3,13 +3,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   let (:tz) {ActiveSupport::TimeZone["Eastern Time (US & Canada)"]}
 
   describe "process_entry" do
-    let! (:us) { FactoryBot(:country, iso_code: "US")}
+    let! (:us) { create(:country, iso_code: "US")}
 
     let! (:tariff_classification) {
       # Use a duty computation that includes all the rate types
-      c = FactoryBot(:tariff_classification, country: us, tariff_number: "1234567890", effective_date_start: Date.new(2001, 1, 1), unit_of_measure_1: "CM", unit_of_measure_2: "KG", duty_computation: "6")
-      rate_1 = FactoryBot(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.50"), rate_specific: BigDecimal("1.25"), rate_additional: BigDecimal("3.55"), special_program_indicator: "JO")
-      rate_2 = FactoryBot(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.15"), rate_specific: BigDecimal("0.25"), rate_additional: BigDecimal("1.55"), special_program_indicator: "MX")
+      c = create(:tariff_classification, country: us, tariff_number: "1234567890", effective_date_start: Date.new(2001, 1, 1), unit_of_measure_1: "CM", unit_of_measure_2: "KG", duty_computation: "6")
+      rate_1 = create(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.50"), rate_specific: BigDecimal("1.25"), rate_additional: BigDecimal("3.55"), special_program_indicator: "JO")
+      rate_2 = create(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.15"), rate_specific: BigDecimal("0.25"), rate_additional: BigDecimal("1.55"), special_program_indicator: "MX")
       c
     }
 
@@ -559,7 +559,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       }
     end
 
-    let! (:broker) { add_system_identifier(FactoryBot(:company, broker: true, name: "The Broker"), "Filer Code", "316") }
+    let! (:broker) { add_system_identifier(create(:company, broker: true, name: "The Broker"), "Filer Code", "316") }
 
     it "creates an entry using json data" do
       expect(subject).to receive(:process_special_tariffs)
@@ -1220,7 +1220,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "uses earliest it date value" do
       # Put an actual Date value in the entry here so that we're also making sure that
       # the earliest value is handing comparison against the actual entry itself
-      e = FactoryBot(:entry, broker_reference: @e['file_no'], source_system: "Alliance", first_it_date: Date.new(2016, 1, 1))
+      e = create(:entry, broker_reference: @e['file_no'], source_system: "Alliance", first_it_date: Date.new(2016, 1, 1))
       entry = subject.process_entry @e
       expect(entry.first_it_date).to eq tz.parse("201503011000").to_date
     end
@@ -1228,13 +1228,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "updates an entry using json data" do
       # Make sure the entry has all the components of an existing entry, and that they're
       # all wiped
-      t = FactoryBot(:commercial_invoice_tariff)
+      t = create(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
       e.update_attributes! source_system: "Alliance", broker_reference: "REF"
       @e['file_no'] = e.broker_reference
 
-      line = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: e, invoice_number: "12345A"))
-      FactoryBot(:container, entry: e, container_number: "CONT1")
+      line = create(:broker_invoice_line, broker_invoice: create(:broker_invoice, entry: e, invoice_number: "12345A"))
+      create(:container, entry: e, container_number: "CONT1")
       e.entry_comments.create! body: "Testing"
       e.entry_exceptions.create! code: "TEST"
       e.entry_pga_summaries.create! agency_code: "TEST"
@@ -1259,19 +1259,19 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "copies sync records from existing broker invoice to newly created one" do
-      e = FactoryBot(:entry, source_system: "Alliance", broker_reference: @e['file_no'])
-      line = FactoryBot(:broker_invoice_line, broker_invoice: FactoryBot(:broker_invoice, entry: e, invoice_number: "12345A", customer_number: "CUST1", invoice_total: BigDecimal.new("100.99"), invoice_date: Date.new(2015, 4, 1)),
+      e = create(:entry, source_system: "Alliance", broker_reference: @e['file_no'])
+      line = create(:broker_invoice_line, broker_invoice: create(:broker_invoice, entry: e, invoice_number: "12345A", customer_number: "CUST1", invoice_total: BigDecimal.new("100.99"), invoice_date: Date.new(2015, 4, 1)),
                         charge_code: "0001", charge_description: "DUTY", charge_amount: BigDecimal("-100.00"), vendor_name: "VENDOR NAME", vendor_reference: "VENDOR", charge_type: "D")
-      line_2 = FactoryBot(:broker_invoice_line, broker_invoice: line.broker_invoice, charge_code: "0100", charge_description: "OUTLAY", charge_amount: BigDecimal("0.99"), vendor_name: "", vendor_reference: "", charge_type: "O")
+      line_2 = create(:broker_invoice_line, broker_invoice: line.broker_invoice, charge_code: "0100", charge_description: "OUTLAY", charge_amount: BigDecimal("0.99"), vendor_name: "", vendor_reference: "", charge_type: "O")
       broker_invoice = line.broker_invoice
       # Ultimately, the reason we're doing this is to make sure we're copying sync records, so bake this into the test case
       sync_record = broker_invoice.sync_records.create! trading_partner: "TESTING", sent_at: Time.zone.now, ftp_session_id: 10
 
       # Create a second invoice and make sure it gets removed, since it won't be in the json
-      FactoryBot(:broker_invoice, entry: e)
+      create(:broker_invoice, entry: e)
 
       # Create a third invoice just to make sure the s
-      broker_invoice_3 = FactoryBot(:broker_invoice, entry: e, invoice_number: "12345")
+      broker_invoice_3 = create(:broker_invoice, entry: e, invoice_number: "12345")
       broker_invoice_3.sync_records.create! trading_partner: "TEST2", sent_at: Time.zone.now, confirmed_at: Time.zone.now, confirmation_file_name: "file.txt", failure_message:"Message", fingerprint: Time.zone.now, ignore_updates_before: Time.zone.now
 
       @e['broker_invoices'] << {
@@ -1310,7 +1310,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "does not update data with a newer last exported from source date" do
-      e = FactoryBot(:entry, broker_reference: @e['file_no'], source_system: "Alliance", last_exported_from_source: Time.zone.now)
+      e = create(:entry, broker_reference: @e['file_no'], source_system: "Alliance", last_exported_from_source: Time.zone.now)
       expect(subject.process_entry @e).to be_nil
     end
 
@@ -1484,7 +1484,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "clears date values that are no longer sent in updated data" do
       # basically, this just checks that if a date value has been removed from the Kewill data
       # that it gets cleared from VFI Track.
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance")
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance")
       standard_dates = [:export_date, :docs_received_date, :file_logged_date, :eta_date, :arrival_date, :release_date, :fda_release_date, :trucker_called_date, :delivery_order_pickup_date,
         :freight_pickup_date, :last_billed_date, :invoice_paid_date, :duty_due_date, :liquidation_date, :daily_statement_due_date, :free_date, :edi_received_date, :fda_transmit_date, :daily_statement_approved_date,
         :final_delivery_date, :worksheet_date, :available_date, :isf_sent_date, :isf_accepted_date, :fda_review_date, :first_release_date, :first_entry_sent_date, :monthly_statement_received_date, :monthly_statement_paid_date]
@@ -1539,9 +1539,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "assigns fiscal month to entry and broker invoice" do
-      imp = with_customs_management_id(FactoryBot(:company, fiscal_reference: "ent_release_date"), "TEST")
-      fm_1 = FactoryBot(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 3, 1), end_date: Date.new(2015, 3, 31))
-      fm_2 = FactoryBot(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015, 4, 1), end_date: Date.new(2015, 4, 30))
+      imp = with_customs_management_id(create(:company, fiscal_reference: "ent_release_date"), "TEST")
+      fm_1 = create(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 3, 1), end_date: Date.new(2015, 3, 31))
+      fm_2 = create(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015, 4, 1), end_date: Date.new(2015, 4, 30))
 
       entry = subject.process_entry @e
       expect(entry.fiscal_date).to eq fm_1.start_date
@@ -1566,7 +1566,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "purges existing entries that have been cancelled" do
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance")
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance")
 
       @e['dates'] << {'date_no'=>5023, 'date'=>201503021000}
       expect(subject.process_entry @e).to be_nil
@@ -1624,7 +1624,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "clears entry level field accumulations when new json does not have values" do
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", customer_references: "0", commercial_invoice_numbers: "1", mfids: "2", export_country_codes: "3", origin_country_codes: "4",
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", customer_references: "0", commercial_invoice_numbers: "1", mfids: "2", export_country_codes: "3", origin_country_codes: "4",
         vendor_names: "5", total_units_uoms: "6", special_program_indicators: "7", po_numbers: "8", part_numbers: "9", container_numbers: "10", container_sizes: "11",
         charge_codes: "12", departments: "13", store_names: "14", fcl_lcl: "15", product_lines: "16",
         total_invoiced_value: 17, broker_invoice_total: 18, total_units: 19, total_cvd: 20, total_add: 21, total_non_dutiable_amount: 22, other_fees: 23)
@@ -1689,7 +1689,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "allows blank customer name if importer account already exists" do
-      importer = with_customs_management_id(FactoryBot(:importer), "TEST")
+      importer = with_customs_management_id(create(:importer), "TEST")
       @e['cust_name'] = ""
       entry = subject.process_entry @e
       expect(entry.importer).to eq importer
@@ -1707,7 +1707,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "rolls back if error is raised" do
       # create an entry with actual line level data which would have gotten destroyed if a rollback didn't occur
-      t = FactoryBot(:commercial_invoice_tariff)
+      t = create(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.commercial_invoice.entry
       e.update! broker_reference: "12345", source_system: "Alliance"
 
@@ -1722,7 +1722,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }
-      let (:entry) { FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance") }
+      let (:entry) { create(:entry, broker_reference: "12345", source_system: "Alliance") }
 
       it "updates statement links" do
         entry = subject.process_entry @e, {key: "file.json", bucket: "bucket"}
@@ -1876,7 +1876,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   end
 
   describe OpenChain::CustomHandler::KewillEntryParser::HoldReleaseSetter do
-    let(:ent) { FactoryBot(:entry, aphis_hold_date: nil, aphis_hold_release_date: nil) }
+    let(:ent) { create(:entry, aphis_hold_date: nil, aphis_hold_release_date: nil) }
     let(:date1) { DateTime.new(2017, 3, 15) }
     let(:date2) { DateTime.new(2017, 3, 16)}
     let(:date3) { DateTime.new(2017, 3, 17)}

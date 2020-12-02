@@ -1,10 +1,10 @@
 describe SurveyResponseLogsController do
   describe "index" do
-    let(:survey_response) { FactoryBot(:survey_response) }
+    let(:survey_response) { create(:survey_response) }
     let!(:log) { survey_response.survey_response_logs.create!(message: "x") }
 
     before do
-      user = FactoryBot(:user)
+      user = create(:user)
 
       sign_in_as user
     end

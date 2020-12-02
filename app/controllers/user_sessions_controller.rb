@@ -1,8 +1,8 @@
 class UserSessionsController < ApplicationController
   include Recaptcha::ClientHelper
 
-  skip_before_filter :require_user, :only => [:create, :new, :destroy, :create_from_omniauth]
-  skip_before_filter :force_reset, :only => [:destroy]
+  skip_before_action :require_user, :only => [:create, :new, :destroy, :create_from_omniauth]
+  skip_before_action :force_reset, :only => [:destroy]
   protect_from_forgery :except => [:create, :create_from_omniauth]
 
   def index

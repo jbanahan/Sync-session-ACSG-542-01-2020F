@@ -2,9 +2,9 @@ describe BookingLine do
   describe 'when validating' do
     describe 'when order line id is present' do
       it 'sets the order id and product id' do
-        p = FactoryBot(:product)
-        ol = FactoryBot(:order_line, product:p)
-        s = FactoryBot(:shipment)
+        p = create(:product)
+        ol = create(:order_line, product:p)
+        s = create(:shipment)
         bl = s.booking_lines.create!(order_line:ol)
         expect(bl.product_id).to eq p.id
         expect(bl.order_id).to eq ol.order_id
@@ -33,20 +33,20 @@ describe BookingLine do
 
   describe "product_summed_order_quantity" do
     it "returns the total order quantity for associated product" do
-      o = FactoryBot(:order)
-      p = FactoryBot(:product)
-      s1 = FactoryBot(:shipment)
-      s2 = FactoryBot(:shipment)
+      o = create(:order)
+      p = create(:product)
+      s1 = create(:shipment)
+      s2 = create(:shipment)
 
-      ol1 = FactoryBot(:order_line, order: o, quantity: 2, product: p)
-      ol2 = FactoryBot(:order_line, order: o, quantity: 3, product: p)
-      ol4 = FactoryBot(:order_line, order: o, quantity: 6, product: p) # different shipment
-      ol3 = FactoryBot(:order_line, order: o, quantity: 4, product: FactoryBot(:product)) # different product
+      ol1 = create(:order_line, order: o, quantity: 2, product: p)
+      ol2 = create(:order_line, order: o, quantity: 3, product: p)
+      ol4 = create(:order_line, order: o, quantity: 6, product: p) # different shipment
+      ol3 = create(:order_line, order: o, quantity: 4, product: create(:product)) # different product
 
-      bl = FactoryBot(:booking_line, order: o, order_line: ol1, product: p, shipment: s1)
-      FactoryBot(:booking_line, order: o, order_line: ol2, product: p, shipment: s1)
-      FactoryBot(:booking_line, order: o, order_line: ol3, product: p, shipment: s1)
-      FactoryBot(:booking_line, order: o, order_line: ol4, product: p, shipment: s2)
+      bl = create(:booking_line, order: o, order_line: ol1, product: p, shipment: s1)
+      create(:booking_line, order: o, order_line: ol2, product: p, shipment: s1)
+      create(:booking_line, order: o, order_line: ol3, product: p, shipment: s1)
+      create(:booking_line, order: o, order_line: ol4, product: p, shipment: s2)
 
       expect(bl.product_summed_order_quantity).to eq 11
     end

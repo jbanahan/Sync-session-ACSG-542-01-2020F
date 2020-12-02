@@ -2,22 +2,22 @@ describe OpenChain::Report::SgDutyDueReport do
 
   describe "get_entries" do
     it "returns results of query" do
-      co = with_customs_management_id(FactoryBot(:company), 'sgold')
+      co = with_customs_management_id(create(:company), 'sgold')
       duty_due = Date.today + 1
 
-      port = FactoryBot(:port, schedule_d_code: "1234", name: "Boston")
+      port = create(:port, schedule_d_code: "1234", name: "Boston")
 
-      FactoryBot(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01',
+      create(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01',
               daily_statement_approved_date: '2016-03-02', daily_statement_number: '12345678AB', broker_reference: "12345",
               customer_references: "123AB\n 456CD", release_date: "2016-03-02", total_duty: 60 , total_fees: 40, entry_number: "22212345666",
               entry_type: "01", duty_due_date: duty_due)
 
-      FactoryBot(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01',
+      create(:entry, importer: co, us_entry_port: port, arrival_date: '2016-03-01',
               daily_statement_approved_date: '2016-03-02', daily_statement_number: '87654321CD', broker_reference: "54321",
               customer_references: "321AB\n 654CD", release_date: "2016-03-01", total_duty: 30 , total_fees: 20, entry_number: "22254321666",
               entry_type: "01", duty_due_date: duty_due)
 
-       u = FactoryBot(:user, company: co)
+       u = create(:user, company: co)
        allow(u).to receive(:view_entries?).and_return true
        allow(co).to receive(:can_view?).with(u).and_return true
        results = subject.get_entries u, co

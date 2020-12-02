@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Hm::HmPurolatorDrawbackParser do
 
   describe "parse_file" do
     let(:log) { InboundFile.new }
-    let!(:importer) { FactoryBot(:importer, system_code:'HENNE') }
+    let!(:importer) { create(:importer, system_code:'HENNE') }
     before(:each) {
       allow(subject).to receive(:inbound_file).and_return log
     }

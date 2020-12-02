@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftPuma7501Parser do
   let (:xml_path) { 'spec/fixtures/files/puma_7501.xml' }
   let (:xml_data) { IO.read(xml_path) }
-  let (:importer) { with_customs_management_id(FactoryBot(:importer, irs_number: '123456'), "PUMA") }
+  let (:importer) { with_customs_management_id(create(:importer, irs_number: '123456'), "PUMA") }
 
   let! (:inbound_file) do
     file = InboundFile.new

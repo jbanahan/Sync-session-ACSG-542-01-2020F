@@ -1,5 +1,5 @@
 describe ActiveRecordLiquidDelegator do
-  let(:attachment) { FactoryBot(:attachment) }
+  let(:attachment) { create(:attachment) }
   let(:liquid_attachment) {ActiveRecordLiquidDelegator.new(attachment)}
 
   it "creates a to_liquid method on a given object" do

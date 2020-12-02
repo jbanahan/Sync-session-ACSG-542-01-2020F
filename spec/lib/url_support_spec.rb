@@ -4,7 +4,7 @@ describe OpenChain::UrlSupport do
   end
 
   let(:test_class) { TestClass.new }
-  let(:ent) { FactoryBot(:entry) }
+  let(:ent) { create(:entry) }
 
   describe "show_url" do
     it "returns show URL for object input" do
@@ -44,11 +44,11 @@ describe OpenChain::UrlSupport do
     end
 
     it "returns blank if object type doesn't have a business-rule URL" do
-      expect(test_class.validation_results_url obj: FactoryBot(:shipment)).to eq ""
+      expect(test_class.validation_results_url obj: create(:shipment)).to eq ""
     end
 
     it "returns blank if klass doesn't have a business-rule URL" do
-      shp = FactoryBot(:shipment)
+      shp = create(:shipment)
       expect(test_class.validation_results_url klass: Shipment, id: shp.id).to eq ""
     end
   end

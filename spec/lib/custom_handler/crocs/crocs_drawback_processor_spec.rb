@@ -2,12 +2,12 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
   describe "process_entries_by_arrival_date" do
 
     it "should find entries by customer and date range" do
-      imp = with_customs_management_id(FactoryBot(:company), 'CROCS')
-      e1 = FactoryBot(:entry, importer_id:imp.id, arrival_date:1.year.ago)
-      e2 = FactoryBot(:entry, importer_id:imp.id, arrival_date:1.week.ago)
-      e3 = FactoryBot(:entry, importer_id:imp.id, arrival_date:1.week.from_now)
-      e4 = FactoryBot(:entry, importer_id:imp.id, arrival_date:1.year.from_now)
-      e5 = FactoryBot(:entry, importer_id:FactoryBot(:company).id, arrival_date:1.week.from_now)
+      imp = with_customs_management_id(create(:company), 'CROCS')
+      e1 = create(:entry, importer_id:imp.id, arrival_date:1.year.ago)
+      e2 = create(:entry, importer_id:imp.id, arrival_date:1.week.ago)
+      e3 = create(:entry, importer_id:imp.id, arrival_date:1.week.from_now)
+      e4 = create(:entry, importer_id:imp.id, arrival_date:1.year.from_now)
+      e5 = create(:entry, importer_id:create(:company).id, arrival_date:1.week.from_now)
       expect(described_class).to receive(:process_entries) do |arg|
         expect(arg.to_a).to eq([e2, e3])
       end
@@ -17,16 +17,16 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
 
   describe "find_shipment_lines" do
     before :each do
-      @imp = with_customs_management_id(FactoryBot(:company), 'CROCS')
-      @p = FactoryBot(:product, unique_identifier:'CROCS-S12345')
+      @imp = with_customs_management_id(create(:company), 'CROCS')
+      @p = create(:product, unique_identifier:'CROCS-S12345')
       @defs = described_class.prep_custom_definitions [:shpln_po, :shpln_received_date, :shpln_coo]
-      s = FactoryBot(:shipment, importer:@imp)
+      s = create(:shipment, importer:@imp)
       @s_line = s.shipment_lines.create!(product:@p, quantity:10)
       @s_line.update_custom_value! @defs[:shpln_po], '00022671OT00010'
       @s_line.update_custom_value! @defs[:shpln_received_date], Time.now.to_date
       @s_line.update_custom_value! @defs[:shpln_coo], 'CN'
 
-      @c_line = FactoryBot(:commercial_invoice_line, po_number:'USA0022671', quantity:10, part_number:'S12345', country_origin_code:'CN')
+      @c_line = create(:commercial_invoice_line, po_number:'USA0022671', quantity:10, part_number:'S12345', country_origin_code:'CN')
       @c_line.entry.update_attributes(arrival_date:3.days.ago)
 
     end
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     end
     it "should not find wrong customer" do
       shp = @s_line.shipment
-      shp.importer = FactoryBot(:company)
+      shp.importer = create(:company)
       shp.save!
       r = described_class.new.find_shipment_lines(@c_line)
       expect(r).to be_empty
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
   describe "get_part_number" do
     it 'should be sku-coo' do
       defs = described_class.prep_custom_definitions [:shpln_coo, :shpln_sku]
-      s_line = FactoryBot(:shipment_line)
+      s_line = create(:shipment_line)
       s_line.update_custom_value! defs[:shpln_coo], 'CN'
       s_line.update_custom_value! defs[:shpln_sku], 'MYSKU'
       p = described_class.new.get_part_number s_line, nil # commercial invoice line shouldn't be used
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
     it 'should pull from shipment line' do
       # not pulling from commercial invoice line to stay consistent with get_part_number
       defs = described_class.prep_custom_definitions [:shpln_coo]
-      s_line = FactoryBot(:shipment_line)
+      s_line = create(:shipment_line)
       s_line.update_custom_value! defs[:shpln_coo], 'CN'
       expect(described_class.new.get_country_of_origin(s_line, nil)).to eq('CN')
     end
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
   describe "get_received_date" do
     it 'should pull from shipment line custom value' do
       defs = described_class.prep_custom_definitions [:shpln_received_date]
-      s_line = FactoryBot(:shipment_line)
+      s_line = create(:shipment_line)
       s_line.update_custom_value! defs[:shpln_received_date], Date.new(2013, 10, 11)
       expect(described_class.new.get_received_date(s_line).to_date).to eq(Date.new(2013, 10, 11))
     end

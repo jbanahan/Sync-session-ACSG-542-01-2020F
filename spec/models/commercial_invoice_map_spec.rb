@@ -7,13 +7,13 @@ describe CommercialInvoiceMap do
       @shp_date = CustomDefinition.create!(:label=>"shpdt", :data_type=>"date", :module_type=>"Shipment")
       @shp_coo = CustomDefinition.create!(:label=>"coo", :data_type=>"string", :module_type=>"ShipmentLine")
       ModelField.reload
-      @s_line = FactoryBot(:shipment_line, :quantity=>20,
-        :shipment=>FactoryBot(:shipment, :reference=>"SHR"))
+      @s_line = create(:shipment_line, :quantity=>20,
+        :shipment=>create(:shipment, :reference=>"SHR"))
       @s_line.shipment.update_custom_value! @shp_date.id, Date.new(2012, 01, 01)
       @s_line.update_custom_value! @shp_coo.id, "CA"
-      @o_line = FactoryBot(:order_line, :product=>@s_line.product, :quantity=>80,
+      @o_line = create(:order_line, :product=>@s_line.product, :quantity=>80,
         :price_per_unit=>3,
-        :order=>FactoryBot(:order, :vendor=>@s_line.shipment.vendor, :order_date=>Date.new(2010, 3, 6))
+        :order=>create(:order, :vendor=>@s_line.shipment.vendor, :order_date=>Date.new(2010, 3, 6))
         )
       @piece_set = PieceSet.create!(:shipment_line_id=>@s_line.id, :order_line_id=>@o_line.id, :quantity=>20)
     end
@@ -24,7 +24,7 @@ describe CommercialInvoiceMap do
       }.each do |src, dest|
         CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
       end
-      ci = CommercialInvoiceMap.generate_invoice! FactoryBot(:user), [@s_line]
+      ci = CommercialInvoiceMap.generate_invoice! create(:user), [@s_line]
       expect(ci.invoice_number).to eq("SHR")
       expect(ci.invoice_date).to eq(Date.new(2012, 01, 01))
       expect(ci.commercial_invoice_lines.size).to eq(1)
@@ -37,7 +37,7 @@ describe CommercialInvoiceMap do
         CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
       end
       hdr_hash = {:ci_invoice_date=>"2006-04-01"}
-      ci = CommercialInvoiceMap.generate_invoice! FactoryBot(:user), [@s_line], hdr_hash
+      ci = CommercialInvoiceMap.generate_invoice! create(:user), [@s_line], hdr_hash
       expect(ci.invoice_date).to eq(Date.new(2006, 4, 1))
     end
     it "should set line values from passed in hash" do
@@ -45,7 +45,7 @@ describe CommercialInvoiceMap do
         CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
       end
       val_hash = {:ci_invoice_date=>"2006-04-01", :lines=>{@s_line.id.to_s=>{:cil_units=>"10", :cit_hts_code=>"1234567890"}}}
-      ci = CommercialInvoiceMap.generate_invoice! FactoryBot(:user), [@s_line], val_hash
+      ci = CommercialInvoiceMap.generate_invoice! create(:user), [@s_line], val_hash
       expect(ci.invoice_date).to eq(Date.new(2006, 4, 1))
       line = ci.commercial_invoice_lines.first
       expect(line.quantity).to eq(10)
@@ -61,7 +61,7 @@ describe CommercialInvoiceMap do
       }.each do |src, dest|
         CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
       end
-      ci = CommercialInvoiceMap.generate_invoice! FactoryBot(:user), [@s_line]
+      ci = CommercialInvoiceMap.generate_invoice! create(:user), [@s_line]
       expect(ci.invoice_number).to eq(@s_line.shipment.reference)
       expect(ci.invoice_date).to eq(@o_line.order.order_date)
       expect(ci.vendor_name).to eq(@o_line.order.vendor.name)
@@ -84,7 +84,7 @@ describe CommercialInvoiceMap do
       }.each do |src, dest|
         CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
       end
-      ci = CommercialInvoiceMap.generate_invoice! FactoryBot(:user), [@s_line]
+      ci = CommercialInvoiceMap.generate_invoice! create(:user), [@s_line]
       expect(ci.commercial_invoice_lines.first.value).to eq(@s_line.quantity * @o_line.price_per_unit)
     end
     it "should set tariff based on ship to country" do
@@ -99,17 +99,17 @@ describe CommercialInvoiceMap do
       end
       shipment = @s_line.shipment
       vendor = shipment.vendor
-      c = FactoryBot(:country)
-      address = FactoryBot(:address, :country=>c, :shipping=>true, :company=>vendor)
+      c = create(:country)
+      address = create(:address, :country=>c, :shipping=>true, :company=>vendor)
       shipment.update_attributes(:ship_to_id=>address.id)
       product = @s_line.product
-      tar = FactoryBot(:tariff_record, :hts_1=>"123456789", :classification=>FactoryBot(:classification, :country=>c, :product=>product))
+      tar = create(:tariff_record, :hts_1=>"123456789", :classification=>create(:classification, :country=>c, :product=>product))
       ci = CommercialInvoiceMap.generate_invoice! User.new, [@s_line]
       expect(ci.commercial_invoice_lines.first.commercial_invoice_tariffs.first.hts_code).to eq("123456789")
     end
     it "should raise exception if all lines aren't from the same shipment" do
-      s_line = FactoryBot(:shipment_line)
-      s_line2 = FactoryBot(:shipment_line)
+      s_line = create(:shipment_line)
+      s_line2 = create(:shipment_line)
       expect {CommercialInvoiceMap.generate_invoice! double('user'), [s_line, s_line2]}.to raise_error(/multiple shipments/)
     end
   end

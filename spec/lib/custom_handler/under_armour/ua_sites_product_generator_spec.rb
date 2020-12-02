@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:prod_site_codes]
-    @p = FactoryBot(:product, unique_identifier: "123-456-7890")
+    @p = create(:product, unique_identifier: "123-456-7890")
     @p.update_custom_value! @cdefs[:prod_site_codes], "123"
-    cl1 = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "US"))
-    cl2 = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "CN"))
-    @t1 = FactoryBot(:tariff_record, classification: cl1, hts_1: "1234567890")
-    @t2 = FactoryBot(:tariff_record, classification: cl2, hts_1: "0987654321")
+    cl1 = create(:classification, product: @p, country: create(:country, iso_code: "US"))
+    cl2 = create(:classification, product: @p, country: create(:country, iso_code: "CN"))
+    @t1 = create(:tariff_record, classification: cl1, hts_1: "1234567890")
+    @t2 = create(:tariff_record, classification: cl2, hts_1: "0987654321")
     DataCrossReference.create!(key: "123", value: "US", cross_reference_type: "ua_site")
   end
 
@@ -16,8 +16,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
     end
 
     it "generates a csv file with a row for each matching site code" do
-      non_site_cl = FactoryBot(:classification, product: @p, country: FactoryBot(:country, iso_code: "CA"))
-      FactoryBot(:tariff_record, classification: non_site_cl, hts_1: "1357935791")
+      non_site_cl = create(:classification, product: @p, country: create(:country, iso_code: "CA"))
+      create(:tariff_record, classification: non_site_cl, hts_1: "1357935791")
       DataCrossReference.create!(key: "234", value: "CN", cross_reference_type: "ua_site")
       @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
 

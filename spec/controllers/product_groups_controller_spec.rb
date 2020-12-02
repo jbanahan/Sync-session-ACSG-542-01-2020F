@@ -1,13 +1,13 @@
 describe ProductGroupsController do
   describe "index" do
     it "should restrict to admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :index
       expect(response).to be_redirect
       expect(flash[:errors]).to_not be_empty
     end
     it "should render" do
-      sign_in_as FactoryBot(:admin_user)
+      sign_in_as create(:admin_user)
       get :index
       expect(response).to be_success
       expect(flash[:errors]).to be_blank

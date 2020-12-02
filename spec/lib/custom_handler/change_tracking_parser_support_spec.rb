@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::ChangeTrackingParserSupport do
   end
 
   describe "set_custom_value" do
-    let (:object) { FactoryBot(:product) }
+    let (:object) { create(:product) }
     let (:changed) { MutableBoolean.new false }
 
     it "updates custom value" do
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::ChangeTrackingParserSupport do
   end
 
   describe "remove_custom_value" do
-    let (:object) { FactoryBot(:product) }
+    let (:object) { create(:product) }
     let (:changed) { MutableBoolean.new false }
 
     it "removes custom value value" do

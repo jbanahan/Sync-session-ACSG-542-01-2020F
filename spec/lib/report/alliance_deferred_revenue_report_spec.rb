@@ -6,14 +6,14 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
       allow(MasterSetup).to receive(:get).and_return d
       allow(d).to receive(:system_code).and_return "www-vfitrack-net"
 
-      u = FactoryBot(:user)
+      u = create(:user)
       u.groups << Group.use_system_group("intacct-accounting")
 
       expect(described_class.permission? u).to be_truthy
     end
 
     it "does not allow plain users" do
-      u = FactoryBot(:user)
+      u = create(:user)
       d = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return d
       expect(d).to receive(:system_code).and_return "www-vfitrack-net"
@@ -22,7 +22,7 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
     end
 
     it "does not allow non-vfitrack usage" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(described_class.permission? u).to be_falsey
     end
   end

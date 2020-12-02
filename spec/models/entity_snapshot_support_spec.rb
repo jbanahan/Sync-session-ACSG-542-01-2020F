@@ -32,12 +32,12 @@ describe EntitySnapshotSupport do
   end
 
   describe "destroy_snapshots" do
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:entity_snapshot) { subject.entity_snapshots.create! user_id: user.id, doc_path: "entity_path" }
     let (:business_rule_snapshot) { subject.business_rule_snapshots.create! doc_path: "rule_path"}
 
     before :each do
-      subject.update_attributes! order_number: "ORD", importer: FactoryBot(:importer)
+      subject.update_attributes! order_number: "ORD", importer: create(:importer)
       entity_snapshot
       business_rule_snapshot
     end

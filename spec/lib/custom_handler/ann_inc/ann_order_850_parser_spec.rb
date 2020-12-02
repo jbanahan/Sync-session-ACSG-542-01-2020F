@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
 
   let (:standard_edi_data) { IO.read 'spec/fixtures/files/ann_standard_850.edi' }
   let (:prepack_edi_data) { IO.read 'spec/fixtures/files/ann_multi_prepack_850.edi' }
-  let! (:ann_taylor) { FactoryBot(:importer, system_code: "ATAYLOR", name: "Ann Taylor")}
+  let! (:ann_taylor) { create(:importer, system_code: "ATAYLOR", name: "Ann Taylor")}
   let! (:mid_xref) { DataCrossReference.create! key: "76007", value: "MID1", company: ann_taylor, cross_reference_type: DataCrossReference::MID_XREF}
 
   describe "parse" do
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "does not update an order when the file contains stale info" do
-        order = FactoryBot(:order, order_number:"ATAYLOR-6232562", importer_id:ann_taylor.id, order_date:Date.new(2015, 5, 5), last_exported_from_source:ActiveSupport::TimeZone["America/New_York"].parse("201803211251"))
+        order = create(:order, order_number:"ATAYLOR-6232562", importer_id:ann_taylor.id, order_date:Date.new(2015, 5, 5), last_exported_from_source:ActiveSupport::TimeZone["America/New_York"].parse("201803211251"))
 
         subject.parse standard_edi_data, bucket: "bucket", key: "file.edi"
 
@@ -142,8 +142,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "updates orders / removing any lines not sent in the EDI file" do
-        order = FactoryBot(:order, order_number: "ATAYLOR-6232562", importer: ann_taylor)
-        line = order.order_lines.create! line_number: 99, product: FactoryBot(:product)
+        order = create(:order, order_number: "ATAYLOR-6232562", importer: ann_taylor)
+        line = order.order_lines.create! line_number: 99, product: create(:product)
 
         subject.parse standard_edi_data
 
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "cancels orders" do
-        order = FactoryBot(:order, order_number: "ATAYLOR-6232562", importer: ann_taylor)
+        order = create(:order, order_number: "ATAYLOR-6232562", importer: ann_taylor)
         subject.parse standard_edi_data.gsub("BEG*04*", "BEG*03*"), key: "file.edi"
 
         order.reload
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "re-uses parts" do
-        part = FactoryBot(:product, importer: ann_taylor, unique_identifier: "ATAYLOR-337955")
+        part = create(:product, importer: ann_taylor, unique_identifier: "ATAYLOR-337955")
 
         subject.parse standard_edi_data
 
@@ -180,8 +180,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "re-uses vendors / factories" do
-        vendor = FactoryBot(:vendor, system_code: "ATAYLOR-VN-76007")
-        factory = FactoryBot(:company, factory: true, system_code: "ATAYLOR-MF-76007", mid: "TEST")
+        vendor = create(:vendor, system_code: "ATAYLOR-VN-76007")
+        factory = create(:company, factory: true, system_code: "ATAYLOR-MF-76007", mid: "TEST")
 
         subject.parse standard_edi_data
 

@@ -1,12 +1,12 @@
 describe FileImportProcessor do
   it 'initializes without search setup' do
-    imp = FactoryBot(:imported_file)
+    imp = create(:imported_file)
     expect(imp.search_setup_id).to be_nil # factory shouldn't create this
     expect { described_class.new(imp, 'a,b') }.not_to raise_error
   end
 
   it 'initializes with bad search_setup_id' do
-    imp = FactoryBot(:imported_file, search_setup_id: 9999)
+    imp = create(:imported_file, search_setup_id: 9999)
     expect(imp.search_setup).to be_nil # id should not match to anything
     expect { described_class.new(imp, 'a,b') }.not_to raise_error
   end
@@ -15,7 +15,7 @@ describe FileImportProcessor do
     it "does not write to DB" do
       ss = SearchSetup.new(module_type: "Product")
       file = ImportedFile.new(search_setup: ss, module_type: "Product", starting_column: 0)
-      country = FactoryBot(:country)
+      country = create(:country)
       pro = FileImportProcessor::CSVImportProcessor.new(file, nil, [FileImportProcessor::PreviewListener.new])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -31,7 +31,7 @@ describe FileImportProcessor do
     it "returns a SpreadsheetImportProcessor for xls and xlsx files" do
       ss = SearchSetup.new(module_type: "Product")
       file = ImportedFile.new(search_setup: ss, module_type: "Product", starting_column: 0, attached_file_name: "file.xlsx")
-      FactoryBot(:country)
+      create(:country)
       expect(described_class.find_processor(file)).to be_an_instance_of(FileImportProcessor::SpreadsheetImportProcessor)
     end
 
@@ -54,7 +54,7 @@ describe FileImportProcessor do
     end
 
     it "doesn't set blank values by default" do
-      FactoryBot(:product, unique_identifier: 'uid-abc', name: 'name')
+      create(:product, unique_identifier: 'uid-abc', name: 'name')
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -65,7 +65,7 @@ describe FileImportProcessor do
     end
 
     it "sets blank values if indicated" do
-      FactoryBot(:product, unique_identifier: 'uid-abc', name: 'name')
+      create(:product, unique_identifier: 'uid-abc', name: 'name')
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -76,7 +76,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean false values" do
-      FactoryBot(:product, unique_identifier: 'uid-abc', name: 'name')
+      create(:product, unique_identifier: 'uid-abc', name: 'name')
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -88,8 +88,8 @@ describe FileImportProcessor do
     end
 
     it "creates children" do
-      country = FactoryBot(:country)
-      FactoryBot(:official_tariff, hts_code: '1234567890', country: country)
+      country = create(:country)
+      create(:official_tariff, hts_code: '1234567890', country: country)
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -108,7 +108,7 @@ describe FileImportProcessor do
     end
 
     it "updates row" do
-      prod = FactoryBot(:product, unique_identifier: 'uid-abc')
+      prod = create(:product, unique_identifier: 'uid-abc')
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
                                                   SearchColumn.new(model_field_uid: "prod_name", rank: 2)])
@@ -118,7 +118,7 @@ describe FileImportProcessor do
     end
 
     it "sets custom values" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "string")
+      cd = create(:custom_definition, module_type: "Product", data_type: "string")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -130,7 +130,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean custom values" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -142,7 +142,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean false custom values" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -154,7 +154,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean custom value to true w/ text of '1'" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -166,7 +166,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean custom value to true w/ text of 'Y'" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -178,7 +178,7 @@ describe FileImportProcessor do
     end
 
     it "sets boolean custom value to false w/ text of '0'" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
                                                    SearchColumn.new(model_field_uid: "prod_uid", rank: 1),
@@ -190,8 +190,8 @@ describe FileImportProcessor do
     end
 
     it "does not unset boolean custom values when nil value is present" do
-      prod = FactoryBot(:product, unique_identifier: 'uid-abc')
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      prod = create(:product, unique_identifier: 'uid-abc')
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       prod.update_custom_value! cd, true
 
       pro = described_class.new(file, nil, [])
@@ -205,8 +205,8 @@ describe FileImportProcessor do
     end
 
     it "unsets boolean custom values when nil value is present if indicated" do
-      prod = FactoryBot(:product, unique_identifier: 'uid-abc')
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "boolean")
+      prod = create(:product, unique_identifier: 'uid-abc')
+      cd = create(:custom_definition, module_type: "Product", data_type: "boolean")
       prod.update_custom_value! cd, true
 
       pro = described_class.new(file, nil, [])
@@ -220,7 +220,7 @@ describe FileImportProcessor do
     end
 
     it "does not set read only custom values" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "string")
+      cd = create(:custom_definition, module_type: "Product", data_type: "string")
       FieldValidatorRule.create!(model_field_uid: "*cf_#{cd.id}", custom_definition_id: cd.id, read_only: true)
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
@@ -233,7 +233,7 @@ describe FileImportProcessor do
     end
 
     it "errors when user doesn't have permission" do
-      cd = FactoryBot(:custom_definition, module_type: "Product", data_type: "string")
+      cd = create(:custom_definition, module_type: "Product", data_type: "string")
       FieldValidatorRule.create!(model_field_uid: "*cf_#{cd.id}", custom_definition_id: cd.id, can_edit_groups: "GROUP")
       pro = described_class.new(file, nil, [])
       allow(pro).to receive(:columns).and_return([
@@ -247,7 +247,7 @@ describe FileImportProcessor do
 
     context 'special cases' do
       it "sets country classification from product level fields" do
-        c = FactoryBot(:country, import_location: true)
+        c = create(:country, import_location: true)
         ModelField.reload
         pro = described_class.new(file, nil, [])
         allow(pro).to receive(:columns).and_return([
@@ -262,8 +262,8 @@ describe FileImportProcessor do
       end
 
       it "sets country classification from product level for existing product" do
-        FactoryBot(:product, unique_identifier: 'uid-abc')
-        c = FactoryBot(:country, import_location: true)
+        create(:product, unique_identifier: 'uid-abc')
+        c = create(:country, import_location: true)
         ModelField.reload
         pro = described_class.new(file, nil, [])
         allow(pro).to receive(:columns).and_return([
@@ -330,7 +330,7 @@ describe FileImportProcessor do
 
       context "with change detection preventing saves" do
         it "does not set updated_at on objects that have not been changed" do
-          product = FactoryBot(:product, unique_identifier: 'uid-abc', name: "Description")
+          product = create(:product, unique_identifier: 'uid-abc', name: "Description")
           updated_at = product.updated_at
 
           pro = described_class.new(file, nil, [])
@@ -346,7 +346,7 @@ describe FileImportProcessor do
         end
 
         it "does not set updated_at on objects that have not had custom values changed" do
-          product = FactoryBot(:product, unique_identifier: 'uid-abc', name: "Description")
+          product = create(:product, unique_identifier: 'uid-abc', name: "Description")
           cd = CustomDefinition.create! module_type: "Product", label: "Test", data_type: "string"
           product.update_custom_value! cd, "value"
 
@@ -365,8 +365,8 @@ describe FileImportProcessor do
         end
 
         it "does not set updated_at on objects that have not been changed detecting child non-changes" do
-          product = FactoryBot(:product, unique_identifier: 'uid-abc', name: "Description")
-          country = FactoryBot(:country, iso_code: "US")
+          product = create(:product, unique_identifier: 'uid-abc', name: "Description")
+          country = create(:country, iso_code: "US")
           classification = product.classifications.create! country: country
           cd = CustomDefinition.create! module_type: "Classification", label: "Test", data_type: "string"
           classification.update_custom_value! cd, "value"
@@ -386,11 +386,11 @@ describe FileImportProcessor do
         end
 
         it "does not set updated_at on objects that have not been changed detecting grand child non-changes" do
-          product = FactoryBot(:product, unique_identifier: 'uid-abc', name: "Description")
-          country = FactoryBot(:country, iso_code: "US")
+          product = create(:product, unique_identifier: 'uid-abc', name: "Description")
+          country = create(:country, iso_code: "US")
           classification = product.classifications.create! country: country
           classification.tariff_records.create! line_number: 1, hts_1: "1234567890"
-          FactoryBot(:official_tariff, hts_code: '1234567890', country: country)
+          create(:official_tariff, hts_code: '1234567890', country: country)
           updated_at = product.updated_at
 
           pro = described_class.new(file, nil, [])
@@ -408,8 +408,8 @@ describe FileImportProcessor do
         end
 
         it "does not set updated_at on objects that have not been changed detecting grand child non-changes to custom fields" do
-          product = FactoryBot(:product, unique_identifier: 'uid-abc', name: "Description")
-          country = FactoryBot(:country, iso_code: "US")
+          product = create(:product, unique_identifier: 'uid-abc', name: "Description")
+          country = create(:country, iso_code: "US")
           classification = product.classifications.create! country: country
           tariff = classification.tariff_records.create! line_number: 1, hts_1: "1234567890"
           cd = CustomDefinition.create! module_type: "TariffRecord", label: "Test", data_type: "string"
@@ -444,7 +444,7 @@ describe FileImportProcessor do
         end
 
         it "errors on invalid HTS values for First HTS fields" do
-          c = FactoryBot(:country, import_location: true)
+          c = create(:country, import_location: true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
           ModelField.reload
@@ -473,7 +473,7 @@ describe FileImportProcessor do
         end
 
         it "informs user of missing compound key fields" do
-          c = FactoryBot(:country, import_location: true)
+          c = create(:country, import_location: true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
           ModelField.reload

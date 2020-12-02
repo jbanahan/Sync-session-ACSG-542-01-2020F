@@ -1,6 +1,6 @@
 describe SentEmail do
   before(:each) do
-    @user = FactoryBot(:user)
+    @user = create(:user)
     @email_1 = SentEmail.create
     @email_2 = SentEmail.create
   end

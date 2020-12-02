@@ -1,10 +1,10 @@
 describe AnswersController do
   describe 'update' do
     before :each do
-      @u = FactoryBot(:user)
+      @u = create(:user)
 
       sign_in_as @u
-      @answer = FactoryBot(:answer)
+      @answer = create(:answer)
     end
     it 'should log update' do
       expect_any_instance_of(SurveyResponse).to receive(:assigned_to_user?).with(@u).and_return true
@@ -22,7 +22,7 @@ describe AnswersController do
       expect(@answer.choice).to eq('abc')
     end
     it 'should allow survey group user to save choice' do
-      group = FactoryBot(:group)
+      group = create(:group)
       @answer.survey_response.group = group
       @answer.survey_response.save!
       @u.groups << group

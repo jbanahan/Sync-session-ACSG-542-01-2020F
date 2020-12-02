@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationX
 
     let (:test_data) { IO.read('spec/fixtures/files/ll_booking_confirmation.xml') }
     let(:log) { InboundFile.new }
-    let!(:importer) { FactoryBot(:importer, system_code:'LUMBER') }
+    let!(:importer) { create(:importer, system_code:'LUMBER') }
 
     it "should fail on bad root element" do
       test_data.gsub!(/ShippingOrderMessage/, 'BADROOT')

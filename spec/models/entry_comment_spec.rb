@@ -1,6 +1,6 @@
 describe EntryComment do
   before :each do
-    @entry = FactoryBot(:entry, :importer=>FactoryBot(:importer))
+    @entry = create(:entry, :importer=>create(:importer))
   end
 
   it 'should set public_comment field in before_save callback' do
@@ -75,7 +75,7 @@ describe EntryComment do
     }
 
     before :each do
-      @user = FactoryBot(:master_user, :entry_view => true)
+      @user = create(:master_user, :entry_view => true)
     end
 
     it "should allow anyone to view public comments" do

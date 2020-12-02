@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
 
   let (:standard_transaction_data) { IO.read 'spec/fixtures/files/talbots.edi'}
   let (:prepack_transaction_data) { IO.read 'spec/fixtures/files/burlington_850_prepack.edi'}
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   describe "process_transaction" do
 
@@ -388,7 +388,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
     let (:transaction) { REX12.each_transaction(StringIO.new(standard_transaction_data)).first }
     let (:n1_loop) { subject.extract_n1_loops(transaction.segments, qualifier: "ST").first }
     let (:n1_data) { subject.extract_n1_entity_data n1_loop }
-    let! (:us) { FactoryBot(:country, iso_code: "US") }
+    let! (:us) { create(:country, iso_code: "US") }
     let (:importer) { Company.where(importer: true, system_code: "Test").first }
 
     it "extracts data from an n1 segment into a hash" do

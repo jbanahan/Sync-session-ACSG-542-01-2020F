@@ -2,7 +2,7 @@ describe ValidationRuleEntryDutyTaxesMatchSummary do
 
   describe "run_validation" do
     let (:entry) {
-      e = FactoryBot(:entry, total_duty: 150.1, mpf: 25.5, hmf: 10.49, cotton_fee: 0.99)
+      e = create(:entry, total_duty: 150.1, mpf: 25.5, hmf: 10.49, cotton_fee: 0.99)
     }
 
     let (:commercial_invoice) {
@@ -65,7 +65,7 @@ describe ValidationRuleEntryDutyTaxesMatchSummary do
     end
 
     it "doesn't error if all values are nil" do
-      entry = FactoryBot(:entry)
+      entry = create(:entry)
       entry.commercial_invoices.create! invoice_number: "INVOICE"
       line = commercial_invoice.commercial_invoice_lines.create!
       tariff = line.commercial_invoice_tariffs.create!

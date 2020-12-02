@@ -4,29 +4,29 @@ describe OpenChain::Registries::DefaultOrderBookingRegistry do
 
   describe "can_request_booking?" do
     it "should allow if user is from master & can view shipment" do
-      expect(subject.can_request_booking?(Shipment.new, FactoryBot(:master_user, shipment_view:true))).to be_truthy
+      expect(subject.can_request_booking?(Shipment.new, create(:master_user, shipment_view:true))).to be_truthy
     end
 
     it "should allow if user is from vendor & can view shipment" do
-      u = FactoryBot(:user, shipment_view:true, company:FactoryBot(:company, vendor:true))
+      u = create(:user, shipment_view:true, company:create(:company, vendor:true))
       s = Shipment.new
       allow(s).to receive(:can_view?).and_return true
       s.vendor = u.company
       expect(subject.can_request_booking?(s, u)).to be_truthy
     end
     it "should not allow if user cannot edit shipment" do
-      u = FactoryBot(:user, shipment_view:false)
+      u = create(:user, shipment_view:false)
       s = Shipment.new
       s.vendor = u.company
       expect(subject.can_request_booking?(s, u)).to be_falsey
     end
     it "should not allow if user not from vendor or master" do
-      u = FactoryBot(:user, shipment_view:false)
+      u = create(:user, shipment_view:false)
       s = Shipment.new
       expect(subject.can_request_booking?(s, u)).to be_falsey
     end
     it "should not allow if booking is approved" do
-      u = FactoryBot(:user, shipment_view:true, company:FactoryBot(:company, vendor:true))
+      u = create(:user, shipment_view:true, company:create(:company, vendor:true))
       s = Shipment.new(booking_approved_date:Time.now)
       allow(s).to receive(:can_view?).and_return true
       s.vendor = u.company
@@ -96,7 +96,7 @@ describe OpenChain::Registries::DefaultOrderBookingRegistry do
   end
 
   describe "open_bookings_hook" do
-    let! (:shipment) { FactoryBot(:shipment) }
+    let! (:shipment) { create(:shipment) }
 
     it "returns shipments with booking instructions not sent" do
       query = subject.open_bookings_hook(nil, Shipment.where("1=1"), nil)

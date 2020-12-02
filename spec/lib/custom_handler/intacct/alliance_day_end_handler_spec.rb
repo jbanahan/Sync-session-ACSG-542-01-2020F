@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     let (:check_file) { CustomFile.create! attached_file_name: "check_file.txt" }
 
     it "reads custom files, generates sql proxy requests, kicks off upload" do
-      user = FactoryBot(:user, email: "st-hubbins@hellhole.co.uk")
+      user = create(:user, email: "st-hubbins@hellhole.co.uk")
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "reports errors for checks that have already been sent" do
-      user = FactoryBot(:user, email: "st-hubbins@hellhole.co.uk")
+      user = create(:user, email: "st-hubbins@hellhole.co.uk")
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "reports errors for invoices that have already been sent" do
-      user = FactoryBot(:user, email: "st-hubbins@hellhole.co.uk")
+      user = create(:user, email: "st-hubbins@hellhole.co.uk")
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles parsing errors" do
-      user = FactoryBot(:user, time_zone: "Hawaii")
+      user = create(:user, time_zone: "Hawaii")
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [["Check Error"], nil]
       expect(subject).to receive(:read_invoices).with(invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [["Invoice Error"], nil]
 
@@ -131,10 +131,10 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles upload errors" do
-      group = FactoryBot(:group, system_code: "intacct-accounting")
-      user = FactoryBot(:user)
+      group = create(:group, system_code: "intacct-accounting")
+      user = create(:user)
       user.groups << group
-      user_2 = FactoryBot(:user)
+      user_2 = create(:user)
       user_2.groups << group
 
       check_info = {checks: ""}
@@ -170,7 +170,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles invalid amount errors" do
-      user = FactoryBot(:user, time_zone: "Hawaii")
+      user = create(:user, time_zone: "Hawaii")
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -202,8 +202,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "uses users in accounting group if no user is given" do
-      g = FactoryBot(:group, system_code: 'intacct-accounting')
-      user = FactoryBot(:user)
+      g = create(:group, system_code: 'intacct-accounting')
+      user = create(:user)
       user.groups << g
 
       check_info = {checks: ""}
@@ -230,7 +230,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "processes check file only if missing invoice file" do
-      user = FactoryBot(:user, email: "st-hubbins@hellhole.co.uk")
+      user = create(:user, email: "st-hubbins@hellhole.co.uk")
       check_info = {checks: ""}
       expect(subject).to receive(:read_check_register).with(check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
       expect(subject).not_to receive(:read_invoices)
@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "processes invoice file only if missing check file" do
-      user = FactoryBot(:user, email: "st-hubbins@hellhole.co.uk")
+      user = create(:user, email: "st-hubbins@hellhole.co.uk")
       invoice_info = {invoices: ""}
       expect(subject).not_to receive(:read_check_register)
       expect(subject).to receive(:read_invoices).with(invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
@@ -427,8 +427,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
   end
 
   describe "wait_for_export_updates" do
-    let(:u) { FactoryBot(:user, email: "tufnel@stonehenge.biz") }
-    let(:u2) { FactoryBot(:user, email: "tufnel@stonehenge.xyz") }
+    let(:u) { create(:user, email: "tufnel@stonehenge.biz") }
+    let(:u2) { create(:user, email: "tufnel@stonehenge.xyz") }
 
     it 'waits for alliance exports to all get updated' do
       export = IntacctAllianceExport.create! data_received_date: Time.zone.now
@@ -533,7 +533,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     it "finds referenced custom files and user and calls process" do
       cf1 = CustomFile.create!
       cf2 = CustomFile.create!
-      u = FactoryBot(:user)
+      u = create(:user)
 
       expect_any_instance_of(described_class).to receive(:process).with cf1, cf2, u
       described_class.process_delayed cf1.id, cf2.id, u.id
@@ -549,7 +549,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
     it "accepts nil for check file" do
       cf = CustomFile.create!
-      u = FactoryBot(:user)
+      u = create(:user)
 
       expect_any_instance_of(described_class).to receive(:process).with nil, cf, u
       described_class.process_delayed nil, cf.id, u.id
@@ -557,7 +557,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
     it "accepts nil for invoice file" do
       cf = CustomFile.create!
-      u = FactoryBot(:user)
+      u = create(:user)
 
       expect_any_instance_of(described_class).to receive(:process).with cf, nil, u
       described_class.process_delayed cf.id, nil, u.id

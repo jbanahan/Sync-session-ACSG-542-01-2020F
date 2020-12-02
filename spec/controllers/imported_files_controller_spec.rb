@@ -1,7 +1,7 @@
 describe ImportedFilesController do
 
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
 
     sign_in_as @u
   end
@@ -12,18 +12,18 @@ describe ImportedFilesController do
     end
     it "should 404 for json & imported file that user can't view" do
       allow_any_instance_of(FileImportResult).to receive(:can_view?).and_return false
-      f = FactoryBot(:imported_file)
+      f = create(:imported_file)
       expect {get :show, :id=>f.id, :format=>:json}.to raise_error ActionController::RoutingError
     end
     it "should return json for user who can view" do
       allow_any_instance_of(FileImportResult).to receive(:time_to_process).and_return(89)
       allow_any_instance_of(FileImportResult).to receive(:error_count).and_return(61)
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
-      dont_find = FactoryBot(:product)
-      f = FactoryBot(:imported_file, :user=>@u, :note=>"nota bene", :search_setup=>FactoryBot(:search_setup, name: "search!"))
+      p1 = create(:product)
+      p2 = create(:product)
+      dont_find = create(:product)
+      f = create(:imported_file, :user=>@u, :note=>"nota bene", :search_setup=>create(:search_setup, name: "search!"))
       finished_at = 1.minute.ago
-      fir = FactoryBot(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
+      fir = create(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
       [p1, p2].each {|p| fir.change_records.create!(:recordable=>p)}
       fir.change_records.create!(:recordable=>p1) # extra file row
       get :show, :id=>f.id, :format=>:json
@@ -42,7 +42,7 @@ describe ImportedFilesController do
       expect(r['search_setup_name']).to eq "search!"
     end
     it "should return search_criterions" do
-      f = FactoryBot(:imported_file, :user=>@u)
+      f = create(:imported_file, :user=>@u)
       f.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'eq', :value=>'X')
       f.search_criterions.create!(:model_field_uid=>'prod_name', :operator=>'sw', :value=>'N')
       get :show, :id=>f.id, :format=>:json
@@ -54,9 +54,9 @@ describe ImportedFilesController do
       expect(crits[1]).to eq({'mfid'=>'prod_name', 'operator'=>'sw', 'value'=>'N', 'include_empty'=>false, 'datatype'=>'string', 'label'=>'Name'})
     end
     it "should return available countries" do
-      f = FactoryBot(:imported_file, :user=>@u)
-      us = FactoryBot(:country, :iso_code=>"US", :name=>"USA", :import_location=>true, :classification_rank=>2)
-      ca = FactoryBot(:country, :iso_code=>"CA", :name=>"Canada", :import_location=>true, :classification_rank=>1)
+      f = create(:imported_file, :user=>@u)
+      us = create(:country, :iso_code=>"US", :name=>"USA", :import_location=>true, :classification_rank=>2)
+      ca = create(:country, :iso_code=>"CA", :name=>"Canada", :import_location=>true, :classification_rank=>1)
       get :show, :id=>f.id, :format=>:json
       expect(response).to be_success
       r = JSON.parse response.body
@@ -66,7 +66,7 @@ describe ImportedFilesController do
       ])
     end
     it "should return available model fields" do
-      f = FactoryBot(:imported_file, :user=>@u, :module_type=>"Product")
+      f = create(:imported_file, :user=>@u, :module_type=>"Product")
       get :show, :id=>f.id, :format=>:json
       expect(response).to be_success
       r = JSON.parse response.body
@@ -76,8 +76,8 @@ describe ImportedFilesController do
   describe 'results' do
     context "search_runs" do
       before :each do
-        @f = FactoryBot(:imported_file, :user=>@u)
-        fir = FactoryBot(:file_import_result, :imported_file=>@f, :finished_at=>1.minute.ago)
+        @f = create(:imported_file, :user=>@u)
+        fir = create(:file_import_result, :imported_file=>@f, :finished_at=>1.minute.ago)
       end
       it "should create search run" do
         get :results, :id=>@f.id, :format=>:json
@@ -97,19 +97,19 @@ describe ImportedFilesController do
     end
     it "should 404 if user can't view" do
       allow_any_instance_of(FileImportResult).to receive(:can_view?).and_return false
-      f = FactoryBot(:imported_file)
+      f = create(:imported_file)
       expect {get :results, :id=>f.id, :format=>:json}.to raise_error ActionController::RoutingError
     end
     it "should return json" do
       allow(Product).to receive(:search_where).and_return("1=1")
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
-      f = FactoryBot(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
+      p1 = create(:product)
+      p2 = create(:product)
+      f = create(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
       f.search_columns.create!(:model_field_uid=>'prod_uid')
       f.search_columns.create!(:model_field_uid=>'prod_name')
       f.search_columns.create!(:model_field_uid=>'prod_changed_at')
       finished_at = 1.minute.ago
-      fir = FactoryBot(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
+      fir = create(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
       [p1, p2].each {|p| fir.change_records.create!(:recordable=>p)}
       fir.change_records.create!(:recordable=>p1) # extra file row
       get :results, :id=>f.id, :format=>:json
@@ -124,13 +124,13 @@ describe ImportedFilesController do
     end
     it "should restrict results to products in file" do
       allow(Product).to receive(:search_where).and_return("1=1")
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
-      f = FactoryBot(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
+      p1 = create(:product)
+      p2 = create(:product)
+      f = create(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
       f.search_columns.create!(:model_field_uid=>'prod_uid')
       f.search_columns.create!(:model_field_uid=>'prod_name')
       finished_at = 1.minute.ago
-      fir = FactoryBot(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
+      fir = create(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
       fir.change_records.create!(:recordable=>p1)
       get :results, :id=>f.id, :format=>:json
       expect(response).to be_success
@@ -141,12 +141,12 @@ describe ImportedFilesController do
     it "should limit page size to 10 for old IE versions" do
       @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
       allow(Product).to receive(:search_where).and_return("1=1")
-      p1 = FactoryBot(:product)
-      f = FactoryBot(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
+      p1 = create(:product)
+      f = create(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
       f.search_columns.create!(:model_field_uid=>'prod_uid')
       f.search_columns.create!(:model_field_uid=>'prod_name')
       finished_at = 1.minute.ago
-      fir = FactoryBot(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
+      fir = create(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
       fir.change_records.create!(:recordable=>p1)
 
       # The important bit here is the 10 at the end of the with parameters
@@ -157,12 +157,12 @@ describe ImportedFilesController do
 
     it "should limit page size to 100 for all other browsers" do
       allow(Product).to receive(:search_where).and_return("1=1")
-      p1 = FactoryBot(:product)
-      f = FactoryBot(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
+      p1 = create(:product)
+      f = create(:imported_file, :user=>@u, :attached_file_name=>'fn.xls')
       f.search_columns.create!(:model_field_uid=>'prod_uid')
       f.search_columns.create!(:model_field_uid=>'prod_name')
       finished_at = 1.minute.ago
-      fir = FactoryBot(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
+      fir = create(:file_import_result, :imported_file=>f, :finished_at=>finished_at)
       fir.change_records.create!(:recordable=>p1)
 
       # The important bit here is the 100 at the end of the with parameters
@@ -173,7 +173,7 @@ describe ImportedFilesController do
   end
   describe 'update_search_criterions' do
     before :each do
-      @f = FactoryBot(:imported_file, :user=>@u)
+      @f = create(:imported_file, :user=>@u)
     end
     it "should add criterion" do
       post :update_search_criterions, :id=>@f.id, :imported_file=>{:id=>@f.id, :search_criterions=>[{:mfid=>'prod_uid', :operator=>'eq', :value=>'X'}, {:mfid=>'prod_name', :operator=>'sw', :value=>'Y'}]}
@@ -201,7 +201,7 @@ describe ImportedFilesController do
   end
   describe 'email_file' do
     before :each do
-      @file = FactoryBot(:imported_file, :user=>@u)
+      @file = create(:imported_file, :user=>@u)
       @to_address = 'a@b.c'
       @subject = 'test subject'
       @body = "test\nbody"

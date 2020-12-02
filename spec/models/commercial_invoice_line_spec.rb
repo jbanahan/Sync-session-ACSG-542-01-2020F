@@ -28,11 +28,11 @@ describe CommercialInvoiceLine do
 
   describe "total_supplemental_tariff" do
     it "sums specified field for chapter 99 tariffs" do
-      line = FactoryBot(:commercial_invoice_line)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789", duty_amount: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567", duty_amount: 12)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: 13)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: nil)
+      line = create(:commercial_invoice_line)
+      create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789", duty_amount: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567", duty_amount: 12)
+      create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: 13)
+      create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: nil)
 
       expect(line.total_supplemental_tariff(:duty_amount)).to eq 25
     end
@@ -40,10 +40,10 @@ describe CommercialInvoiceLine do
 
   describe "supplemental_tariffs" do
     it "returns associated chapter 99 tariffs" do
-      line = FactoryBot(:commercial_invoice_line)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789")
-      tariff2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567")
-      tariff3 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678")
+      line = create(:commercial_invoice_line)
+      create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789")
+      tariff2 = create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567")
+      tariff3 = create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678")
 
       expect(line.supplemental_tariffs).to contain_exactly(tariff2, tariff3)
     end
@@ -83,8 +83,8 @@ describe CommercialInvoiceLine do
 
   describe "first_sale_savings" do
     let!(:line) do
-      FactoryBot(:commercial_invoice_line, contract_amount: 500, value: 200,
-                                        commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
+      create(:commercial_invoice_line, contract_amount: 500, value: 200,
+                                        commercial_invoice_tariffs: [create(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
     end
 
     it "calculates first sale savings when contract amount isn't zero or nil" do
@@ -109,7 +109,7 @@ describe CommercialInvoiceLine do
   end
 
   describe "first_sale_difference" do
-    let!(:line) { FactoryBot(:commercial_invoice_line, contract_amount: 500, value: 200) }
+    let!(:line) { create(:commercial_invoice_line, contract_amount: 500, value: 200) }
 
     it "calculates first sale difference when contract amount isn't zero or nil" do
       expect(line.first_sale_difference).to eq 300
@@ -128,13 +128,13 @@ describe CommercialInvoiceLine do
 
   describe "value_for_tax" do
     let!(:line1) do
-      FactoryBot(:commercial_invoice_line,
-              commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff,
+      create(:commercial_invoice_line,
+              commercial_invoice_tariffs: [create(:commercial_invoice_tariff,
                                                    duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: 1234)])
     end
     let!(:line2) do
-      FactoryBot(:commercial_invoice_line,
-              commercial_invoice_tariffs: [FactoryBot(:commercial_invoice_tariff,
+      create(:commercial_invoice_line,
+              commercial_invoice_tariffs: [create(:commercial_invoice_tariff,
                                                    duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: nil)])
     end
 
@@ -149,23 +149,23 @@ describe CommercialInvoiceLine do
 
   describe "first_sale_unit_price" do
     it "detrmines unit price from contract amount / quantity" do
-      expect(FactoryBot(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 3).first_sale_unit_price).to eq BigDecimal("33.33")
+      expect(create(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 3).first_sale_unit_price).to eq BigDecimal("33.33")
     end
 
     it "returns nil if contract amount is missing" do
-      expect(FactoryBot(:commercial_invoice_line, quantity: 3).first_sale_unit_price).to be_nil
+      expect(create(:commercial_invoice_line, quantity: 3).first_sale_unit_price).to be_nil
     end
 
     it "returns 0 if contract amount is zero" do
-      expect(FactoryBot(:commercial_invoice_line, contract_amount: BigDecimal("0"), quantity: 3).first_sale_unit_price).to eq BigDecimal("0")
+      expect(create(:commercial_invoice_line, contract_amount: BigDecimal("0"), quantity: 3).first_sale_unit_price).to eq BigDecimal("0")
     end
 
     it "returns nil if quantity is nil" do
-      expect(FactoryBot(:commercial_invoice_line, contract_amount: BigDecimal("100")).first_sale_unit_price).to be_nil
+      expect(create(:commercial_invoice_line, contract_amount: BigDecimal("100")).first_sale_unit_price).to be_nil
     end
 
     it "returns nil if quantity is 0" do
-      expect(FactoryBot(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 0).first_sale_unit_price).to be_nil
+      expect(create(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 0).first_sale_unit_price).to be_nil
     end
   end
 

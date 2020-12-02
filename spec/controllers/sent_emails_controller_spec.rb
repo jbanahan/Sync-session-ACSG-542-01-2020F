@@ -1,7 +1,7 @@
 describe SentEmailsController do
 
-  let(:user) { FactoryBot(:admin_user, :company => FactoryBot(:company, :master=>true)) }
-  let(:email) { FactoryBot(:sent_email, email_body: "content") }
+  let(:user) { create(:admin_user, :company => create(:company, :master=>true)) }
+  let(:email) { create(:sent_email, email_body: "content") }
 
   before :each do
     sign_in_as user

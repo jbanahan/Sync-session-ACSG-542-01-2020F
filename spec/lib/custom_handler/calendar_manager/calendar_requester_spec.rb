@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::CalendarManager::CalendarRequester do
   subject { described_class }
 
-  let (:us_hol) {FactoryBot.create(:calendar, calendar_type: 'USHol', year: now.year)}
-  let (:ca_hol) {FactoryBot.create(:calendar, calendar_type: 'CAHol', year: 1.year.ago.year)}
+  let (:us_hol) {create(:calendar, calendar_type: 'USHol', year: now.year)}
+  let (:ca_hol) {create(:calendar, calendar_type: 'CAHol', year: 1.year.ago.year)}
   let (:now) { DateTime.now }
 
   describe "run_schedulable" do
     it "calls new_dates_needed with each calendar which does not have future events and are in the options" do
-      FactoryBot.create(:calendar_event, calendar: us_hol, event_date: now)
-      FactoryBot.create(:calendar_event, calendar: ca_hol, event_date: now)
+      create(:calendar_event, calendar: us_hol, event_date: now)
+      create(:calendar_event, calendar: ca_hol, event_date: now)
 
       expect(subject).to receive(:new_dates_needed?).with('USHol').ordered.and_return(true)
       expect(subject).to receive(:new_dates_needed?).with('CAHol').ordered.and_return(true)
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::CalendarManager::CalendarRequester do
     end
 
     it "calls send_email with the email list provided in options" do
-      FactoryBot.create(:calendar_event, calendar: us_hol, event_date: now)
+      create(:calendar_event, calendar: us_hol, event_date: now)
 
       expect(subject).to receive(:send_email).with(['test@vandegriftinc.com', 'another@email.com'], ['USHol'])
       subject.run_schedulable({"calendars" => ['USHol'], 'emails' => ['test@vandegriftinc.com', 'another@email.com']})
@@ -29,12 +29,12 @@ describe OpenChain::CustomHandler::CalendarManager::CalendarRequester do
     end
 
     it "returns false if a given calendar does have dates beyond one month" do
-      FactoryBot.create(:calendar_event, calendar: us_hol, event_date: now + 2.months)
+      create(:calendar_event, calendar: us_hol, event_date: now + 2.months)
       expect(subject.new_dates_needed?('USHol')).to eq false
     end
 
     it "returns true if there is no calendar for this year" do
-      FactoryBot.create(:calendar_event, calendar: ca_hol, event_date: 1.year.ago + 1.month)
+      create(:calendar_event, calendar: ca_hol, event_date: 1.year.ago + 1.month)
       expect(subject.new_dates_needed?('CAHol')).to eq true
     end
   end

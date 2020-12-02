@@ -30,6 +30,7 @@ Rails.application.configure do
   # number of complex assets.
   # Setting this to true makes pages loads take a LONG time.
   config.assets.debug = false
+  config.assets.check_precompiled_asset = false
 
   # Asset digests allow you to set far-future HTTP expiration dates on all assets,
   # yet still be able to expire them through the digest params.

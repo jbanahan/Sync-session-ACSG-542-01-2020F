@@ -71,10 +71,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     cancelled_row
   end
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
   let (:opts) { {bucket: "bucket", key: "path/to/s3/file"} }
   let (:cdefs) { subject.send(:cdefs) }
-  let (:us) { FactoryBot(:country, iso_code: "US", import_location: true)}
+  let (:us) { create(:country, iso_code: "US", import_location: true)}
   let (:log) { InboundFile.new }
 
   describe "process" do
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should not create classification if country is not import_location?" do
-        cn = FactoryBot(:country, :iso_code=>'CN')
+        cn = create(:country, :iso_code=>'CN')
         data = make_row(:import=>'CN')
         subject.process data, user, log, opts
         expect(Product.first.classifications).to be_empty
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should set hts for multiple countries" do
-        cn = FactoryBot(:country, :iso_code=>'CN', :import_location=>true)
+        cn = create(:country, :iso_code=>'CN', :import_location=>true)
         ot = cn.official_tariffs.create!(:hts_code=>'9876543210')
         data = make_row
         data << make_row(:import=>'CN', :proposed_hts=>ot.hts_code)
@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should not override actual hts if proposed changes" do
-        p = FactoryBot(:product, :unique_identifier=>default_values[:style])
+        p = create(:product, :unique_identifier=>default_values[:style])
         p.classifications.create!(:country_id=>us.id).tariff_records.create!(:hts_1=>'1111111111')
         subject.process make_row, user, log, opts
         p.reload
@@ -216,7 +216,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should not override actual long description if proposed change" do
-        p = FactoryBot(:product, :unique_identifier=>default_values[:style])
+        p = create(:product, :unique_identifier=>default_values[:style])
         p.update_custom_value! cdefs[:approved_long], 'something'
         subject.process make_row, user, log, opts
         p = Product.first
@@ -243,7 +243,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should update last sap sent date but not first sap sent date" do
-        p = FactoryBot(:product, :unique_identifier=>default_values[:style])
+        p = create(:product, :unique_identifier=>default_values[:style])
         p.update_custom_value! cdefs[:first_sap_date], Date.new(2012, 4, 10)
         p.update_custom_value! cdefs[:last_sap_date], Date.new(2012, 4, 15)
         subject.process make_row, user, log, opts
@@ -262,7 +262,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should append aggregate value information into an existing record" do
-        p = FactoryBot(:product, :unique_identifier=> default_values[:style])
+        p = create(:product, :unique_identifier=> default_values[:style])
         p.update_custom_value! cdefs[:po], "PO1"
         p.update_custom_value! cdefs[:origin], "Origin1"
         p.update_custom_value! cdefs[:import], "Import1"
@@ -347,7 +347,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       it "should add a new classification to hold max/min cost for import locations" do
         subject.process make_row, user, InboundFile.new, opts
 
-        other_country = FactoryBot(:country, import_location: true, iso_code: 'XX')
+        other_country = create(:country, import_location: true, iso_code: 'XX')
         row = make_row import: "XX"
         subject.process row, user, log, opts
 
@@ -360,7 +360,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       it "should not add new classification to hold max/min cost for countries not marked as import locations" do
         subject.process make_row, user, InboundFile.new, opts
 
-        other_country = FactoryBot(:country, import_location: false, iso_code: 'XX')
+        other_country = create(:country, import_location: false, iso_code: 'XX')
         row = make_row import: "XX"
         subject.process row, user, log, opts
 
@@ -375,8 +375,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         allow(OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager).to receive(:get_style).and_return existing_product
       end
 
-      let (:existing_product) { FactoryBot(:product, unique_identifier: "123456") }
-      let (:existing_vendor) { FactoryBot(:company, name: "Existing Vendor", system_code: "9876543210") }
+      let (:existing_product) { create(:product, unique_identifier: "123456") }
+      let (:existing_vendor) { create(:company, name: "Existing Vendor", system_code: "9876543210") }
 
       it "parses order data" do
         h = default_values
@@ -446,9 +446,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
       it "changes the vendor on an order if the vendor changes" do
         # I'm using system_code here for simplicity sake.
-        new_vendor = FactoryBot(:company, system_code: '0111111111')
+        new_vendor = create(:company, system_code: '0111111111')
 
-        order = FactoryBot(:order, order_number: "PO123", vendor: existing_vendor)
+        order = create(:order, order_number: "PO123", vendor: existing_vendor)
 
         subject.process make_row, user, log, opts
 
@@ -463,7 +463,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "updates an order" do
-        order = FactoryBot(:order, order_number: "PO123", vendor: existing_vendor)
+        order = create(:order, order_number: "PO123", vendor: existing_vendor)
         order_line = order.order_lines.create! product: existing_product, quantity: BigDecimal("20")
 
         subject.process make_row, user, log, opts
@@ -577,7 +577,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
       # TODO test consistently fails, not related to changes made for inbound file log
       # it "cancels an order, that is not yet cancelled, if only the specified fields plus related styles are included" do
-      #   order = FactoryBot(:order, order_number: "PO123", vendor: existing_vendor)
+      #   order = create(:order, order_number: "PO123", vendor: existing_vendor)
       #   subject.process make_row(cancelled_order_row_with_related_styles), log, user, opts
       #
       #   order.reload
@@ -589,7 +589,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       # end
 
       it "cancels an order, that is not yet cancelled, if only specified fields are included" do
-        order = FactoryBot(:order, order_number: "PO123", vendor: existing_vendor)
+        order = create(:order, order_number: "PO123", vendor: existing_vendor)
         subject.process make_row(cancelled_order_row_with_related_styles), user, log, opts
 
         order.reload

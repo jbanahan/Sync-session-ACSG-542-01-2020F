@@ -2,7 +2,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
 
   describe "permission?" do
     let(:ms) { stub_master_setup }
-    let (:u) { FactoryBot(:user) }
+    let (:u) { create(:user) }
     let (:group) { Group.use_system_group 'entry_yoy_report', create: true }
 
     it "allows access for users who can view entries, are subscribed to YoY report custom feature and are in YoY group" do
@@ -32,15 +32,15 @@ describe OpenChain::Report::CustomerYearOverYearReport do
   end
 
   describe "run_report" do
-    let (:u) { FactoryBot(:user) }
-    let(:importer) { FactoryBot(:company, name:'Crudco Consumables and Poisons, Inc.', system_code:'CRUDCO') }
-    let!(:country_us) { FactoryBot(:country, iso_code:'US')}
-    let!(:country_ca) { FactoryBot(:country, iso_code:'CA')}
+    let (:u) { create(:user) }
+    let(:importer) { create(:company, name:'Crudco Consumables and Poisons, Inc.', system_code:'CRUDCO') }
+    let!(:country_us) { create(:country, iso_code:'US')}
+    let!(:country_ca) { create(:country, iso_code:'CA')}
 
     after { @temp.close if @temp }
 
     def make_entry counter, entry_type, date_range_field, date_range_field_val, invoice_line_count:2, broker_invoice_isf_charge_count:0, entry_port_code:nil, transport_mode_code:'10', import_country:country_us
-      entry = FactoryBot(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref #{counter}", summary_line_count:10,
+      entry = create(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref #{counter}", summary_line_count:10,
               entry_type:entry_type, entered_value:55.55, total_duty:44.44, mpf:33.33, hmf:22.22, cotton_fee:11.11, total_taxes:9.99,
               other_fees:8.88, total_fees:7.77, arrival_date:make_utc_date(2018, 1, 1+counter), release_date:make_utc_date(2018, 2, 2+counter),
               file_logged_date:make_utc_date(2018, 3, 3+counter), fiscal_date:Date.new(2018, 4, 4+counter),
@@ -61,8 +61,8 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "generates spreadsheet based on arrival date" do
-      port_a = FactoryBot(:port, schedule_d_code:'5678', name:'Port A')
-      port_b = FactoryBot(:port, cbsa_port:'6789', name:'Port B')
+      port_a = create(:port, schedule_d_code:'5678', name:'Port A')
+      port_b = create(:port, cbsa_port:'6789', name:'Port B')
 
       ent_2016_Feb_1 = make_entry 1, '01', :arrival_date, make_utc_date(2016, 2, 16), invoice_line_count:3, broker_invoice_isf_charge_count:2, transport_mode_code:'10'
       ent_2016_Feb_2 = make_entry 2, '01', :arrival_date, make_utc_date(2016, 2, 17), invoice_line_count:5, broker_invoice_isf_charge_count:1, transport_mode_code:'9'
@@ -90,7 +90,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
 
       # This should be excluded because it belongs to a different importer.
       ent_2016_Feb_different_importer = make_entry 21, '01', :arrival_date, make_utc_date(2016, 2, 11)
-      importer_2 = FactoryBot(:company, name:'Crudco Bitter Rival')
+      importer_2 = create(:company, name:'Crudco Bitter Rival')
       ent_2016_Feb_different_importer.update_attributes :importer_id => importer_2.id
 
       Timecop.freeze(make_eastern_date(2017, 6, 28)) do
@@ -248,7 +248,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "generates spreadsheet based on ETA date" do
-      port_a = FactoryBot(:port, schedule_d_code:'5678', name:'Port A')
+      port_a = create(:port, schedule_d_code:'5678', name:'Port A')
 
       ent_2016_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2016, 1, 16)
       ent_2016_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2016, 1, 17)
@@ -322,7 +322,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "generates spreadsheet with Canada fields" do
-      port_a = FactoryBot(:port, schedule_d_code:'5678', name:'Port A')
+      port_a = create(:port, schedule_d_code:'5678', name:'Port A')
 
       ent_2016_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2016, 1, 16)
       ent_2016_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2016, 1, 17)
@@ -644,10 +644,10 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "appropriate handles null number values" do
-      ent_2016_Jan_1 = FactoryBot(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref 1",
+      ent_2016_Jan_1 = create(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref 1",
                       entry_type:'01', arrival_date:make_utc_date(2016, 1, 16), importer_id:importer.id)
       ent_2016_Jan_2 = make_entry 2, '01', :arrival_date, make_utc_date(2016, 1, 17)
-      ent_2017_Jan = FactoryBot(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref 3",
+      ent_2017_Jan = create(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref 3",
                       entry_type:'01', arrival_date:make_utc_date(2017, 1, 1), importer_id:importer.id)
 
       Timecop.freeze(make_eastern_date(2017, 5, 28)) do
@@ -777,7 +777,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "handles multiple importer selection" do
-      importer_2 = FactoryBot(:company, name:'Crudco Bitter Rival')
+      importer_2 = create(:company, name:'Crudco Bitter Rival')
 
       ent_2017_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2017, 1, 16)
       ent_2017_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2017, 1, 17)

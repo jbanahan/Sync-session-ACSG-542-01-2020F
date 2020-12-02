@@ -14,17 +14,17 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     let! (:master_setup) { stub_master_setup }
 
     let! (:master_user) {
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       allow(u).to receive(:view_broker_invoices?).and_return(true)
       u
     }
 
     let! (:invoice_line_1) {
-      FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.12)
+      create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.12)
     }
 
     let! (:invoice_line_2) {
-      FactoryBot(:broker_invoice_line, :broker_invoice=>invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>55)
+      create(:broker_invoice_line, :broker_invoice=>invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>55)
     }
 
     it "should break down a single entry by charge description" do
@@ -40,7 +40,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(row[1]).to eq("CD2")
     end
     it "should group the same charge for multiple entries into the same column" do
-      second_cd1 = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
+      second_cd1 = create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
       r = subject.to_arrays master_user
       expect([r[1][0], r[2][0]]).to eq([100.12, 22]) # ordering isn't guaranteed
     end
@@ -51,7 +51,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(r[1]).to be_nil
     end
     it "should limit rows" do
-      second_cd1 = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
+      second_cd1 = create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
       expect(subject.to_arrays(master_user).size).to eq(3)
       r = subject.to_arrays(master_user, row_limit: 1)
       expect(r.size).to eq(2)
@@ -82,9 +82,9 @@ describe CustomReportEntryInvoiceBreakdownSupport do
         class Cr
           def run run_by, row_limit = nil; process run_by, row_limit, true end
         end
-        broker_invoice_2 = FactoryBot(:broker_invoice, entry: invoice_line_1.broker_invoice.entry)
-        FactoryBot(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3", :charge_amount=>50.02)
-        FactoryBot(:broker_invoice_line, :broker_invoice=> broker_invoice_2, :charge_description=>"CD4", :charge_amount=>26.40)
+        broker_invoice_2 = create(:broker_invoice, entry: invoice_line_1.broker_invoice.entry)
+        create(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3", :charge_amount=>50.02)
+        create(:broker_invoice_line, :broker_invoice=> broker_invoice_2, :charge_description=>"CD4", :charge_amount=>26.40)
         rpt = Cr.create!
         rpt.search_columns.create!(:model_field_uid=>:bi_entry_num, :rank=>1)
         rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
@@ -105,7 +105,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(rows[1][1]).to eq "http://localhost:3000/entries/#{invoice_line_1.broker_invoice.entry.id }/validation_results"
     end
     it "should trim by search criteria" do
-      bi2_line = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>222)
+      bi2_line = create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>222)
       bi2_line.broker_invoice.entry.update!(:broker_reference=>"abc")
       invoice_line_1.broker_invoice.entry.update!(:broker_reference=>"def")
       rpt = Cr.create!(:name=>"SC")
@@ -120,7 +120,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       it "should truncate ISF charges" do
         invoice_line_1.update!(:charge_description=>"ISF FILI SF#123455677755", :charge_amount=>6)
         invoice_line_2.destroy
-        bi = FactoryBot(:broker_invoice_line, :charge_description=>"ISF FILING", :charge_amount=>8)
+        bi = create(:broker_invoice_line, :charge_description=>"ISF FILING", :charge_amount=>8)
         r = subject.to_arrays master_user
         expect([r[1][0], r[2][0]]).to eq([6, 8])
       end
@@ -148,12 +148,12 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     end
 
     context "security" do
-      let! (:importer_user) { FactoryBot(:importer_user) }
+      let! (:importer_user) { create(:importer_user) }
 
       it "should secure entries by linked companies for importers" do
         allow(importer_user).to receive(:view_broker_invoices?).and_return(true)
         invoice_line_1.broker_invoice.entry.update!(:importer_id=>importer_user.company_id)
-        dont_find = FactoryBot(:broker_invoice_line)
+        dont_find = create(:broker_invoice_line)
         r = subject.to_arrays importer_user
         expect(r[1][0]).to eq(100.12)
         expect(r.size).to eq(2)

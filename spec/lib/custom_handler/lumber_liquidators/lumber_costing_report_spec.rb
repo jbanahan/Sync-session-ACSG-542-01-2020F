@@ -2,14 +2,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:api) { double("OpenChain::Api::OrderApiClient")}
   subject { described_class.new api_client: api}
   let (:entry) do
-      entry = FactoryBot(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance", export_country_codes: "VN", transport_mode_code: "10")
-      container = FactoryBot(:container, entry: entry, container_number: "CONT")
-      invoice_line = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, entry: entry), container: container,
+      entry = create(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance", export_country_codes: "VN", transport_mode_code: "10")
+      container = create(:container, entry: entry, container_number: "CONT")
+      invoice_line = create(:commercial_invoice_line, commercial_invoice: create(:commercial_invoice, entry: entry), container: container,
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
-      tariff = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "1234567890", entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
-      tariff2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "9902345678", duty_amount: 70)
+      tariff = create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "1234567890", entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
+      tariff2 = create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "9902345678", duty_amount: 70)
 
-      broker_invoice = FactoryBot(:broker_invoice, entry: entry)
+      broker_invoice = create(:broker_invoice, entry: entry)
       invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0004", charge_description: "Ocean Freight", charge_amount: 200
       invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0007", charge_description: "Brokerage", charge_amount: 100
       entry.reload
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
     it "does not generate data if validation rules have failures" do
       rule = BusinessValidationRule.create! name: "Name", description: "Description"
-      result = FactoryBot(:business_validation_result, validatable: entry, state: "Fail")
+      result = create(:business_validation_result, validatable: entry, state: "Fail")
       bvrr = rule.business_validation_rule_results.create! state: "Fail"
       bvrr.business_validation_result = result
       bvrr.save!

@@ -1,13 +1,13 @@
 describe Api::V1::EventSubscriptionsController do
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   describe "index" do
-    let! (:es1) { FactoryBot(:event_subscription, user: user, event_type: '1') }
+    let! (:es1) { create(:event_subscription, user: user, event_type: '1') }
 
     it "returns subscriptions for user if current_user can_view user" do
-      FactoryBot(:event_subscription, user: user, event_type: '2', email: true)
-      FactoryBot(:event_subscription) # don't find me because I'm for a different user
+      create(:event_subscription, user: user, event_type: '2', email: true)
+      create(:event_subscription) # don't find me because I'm for a different user
 
       allow_api_access user
 
@@ -21,7 +21,7 @@ describe Api::V1::EventSubscriptionsController do
     end
 
     it "returns 404 if current_user cannot view user" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       get :index, user_id: user.id
       expect(response.status).to eq 404
     end
@@ -65,7 +65,7 @@ describe Api::V1::EventSubscriptionsController do
     end
 
     it "returns 404 if current_user cannot view user" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       post :create, user_id: user.id, event_subscriptions: payload
       expect(response.status).to eq 404
     end
@@ -73,14 +73,14 @@ describe Api::V1::EventSubscriptionsController do
     it "returns 401 if current_user cannot edit user" do
       allow_any_instance_of(User).to receive(:can_edit?).and_return false
       allow_any_instance_of(User).to receive(:can_view?).and_return true
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       post :create, user_id: user.id, event_subscriptions: payload
       expect(response.status).to eq 401
     end
 
     it "does a full replace" do
       allow_api_access user
-      es_erase = FactoryBot(:event_subscription, user: user)
+      es_erase = create(:event_subscription, user: user)
       post :create, user_id: user.id, event_subscriptions: payload
       expect(response).to be_success
       user.reload

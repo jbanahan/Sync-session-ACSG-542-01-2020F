@@ -3,13 +3,13 @@ describe SearchSchedule do
   describe "run_search" do
 
     let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001, 2, 3, 4, 5, 6) }
-    let(:user) { FactoryBot(:user, time_zone: "Hawaii", email: "tufnel@stonehenge.biz") }
+    let(:user) { create(:user, time_zone: "Hawaii", email: "tufnel@stonehenge.biz") }
     let(:search_setup) {
       # use a name that needs to be sanitized -> -test.txt
       SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t', download_format: 'xlsx', date_format: 'yyyy/mm/dd'
     }
     let(:report) { CustomReport.new user: user, name: "test/t!st.txt"}
-    let(:search_schedule) { FactoryBot(:search_schedule, search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true, date_format: "mm-yyyy-dd") }
+    let(:search_schedule) { create(:search_schedule, search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true, date_format: "mm-yyyy-dd") }
     let(:tempfile) { Tempfile.new ["search_schedule_spec", ".xls"] }
 
     after :each do
@@ -259,7 +259,7 @@ describe SearchSchedule do
 
     context "errors" do
       before :each do
-        @u = FactoryBot(:user)
+        @u = create(:user)
         @setup = SearchSetup.new(:user=>@u, :name=>"Search Setup")
         @s.search_setup = @setup
       end
@@ -285,9 +285,9 @@ describe SearchSchedule do
   end
 
   describe "send_email" do
-    let!(:sched) { FactoryBot(:search_schedule, email_addresses: "tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk") }
+    let!(:sched) { create(:search_schedule, email_addresses: "tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk") }
     let!(:user) { sched.search_setup.user }
-    let!(:mailing_list) { FactoryBot(:mailing_list, name: 'blah', user: user, email_addresses: 'mailinglist@domain.com')}
+    let!(:mailing_list) { create(:mailing_list, name: 'blah', user: user, email_addresses: 'mailinglist@domain.com')}
 
     context "when addresses are valid" do
       it "handles sending to mailing lists" do
@@ -360,7 +360,7 @@ describe SearchSchedule do
 
   describe "stopped?" do
     before :each do
-      @u = FactoryBot(:user)
+      @u = create(:user)
       @setup = SearchSetup.new(:user=>@u)
       @report = CustomReport.new(:user => @u, name: "blah")
       @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report)

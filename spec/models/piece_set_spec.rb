@@ -1,13 +1,13 @@
 describe PieceSet do
   describe 'validations' do
     before :each do
-      @product = FactoryBot(:product)
+      @product = create(:product)
       @ps = PieceSet.new(:quantity=>1,
-        :order_line=>FactoryBot(:order_line, :product=>@product),
-        :shipment_line=>FactoryBot(:shipment_line, :product=>@product),
-        :sales_order_line=>FactoryBot(:sales_order_line, :product=>@product),
-        :delivery_line=>FactoryBot(:delivery_line, :product=>@product),
-        :drawback_import_line=>FactoryBot(:drawback_import_line, :product=>@product)
+        :order_line=>create(:order_line, :product=>@product),
+        :shipment_line=>create(:shipment_line, :product=>@product),
+        :sales_order_line=>create(:sales_order_line, :product=>@product),
+        :delivery_line=>create(:delivery_line, :product=>@product),
+        :drawback_import_line=>create(:drawback_import_line, :product=>@product)
       )
     end
     it 'should pass with all products the same' do
@@ -15,14 +15,14 @@ describe PieceSet do
     end
     it 'should fail with a different product on an associated line' do
       order_line = @ps.order_line
-      order_line.product = FactoryBot(:product)
+      order_line.product = create(:product)
       order_line.save!
       expect(@ps.save).to be_falsey
       expect(@ps.errors.full_messages).to include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
     end
     it 'should fail with different product on DrawbackImportLine' do
       d = @ps.drawback_import_line
-      d.product = FactoryBot(:product)
+      d.product = create(:product)
       expect(@ps.save).to be_falsey
       expect(@ps.errors.full_messages).to include "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
     end
@@ -30,18 +30,18 @@ describe PieceSet do
 
   describe "destroy_if_one_key!" do
     it "should destroy if only has one foreign key" do
-      product = FactoryBot(:product)
+      product = create(:product)
       ps = PieceSet.create!(:quantity=>1,
-        :order_line=>FactoryBot(:order_line, :product=>product)
+        :order_line=>create(:order_line, :product=>product)
       )
       expect(ps.destroy_if_one_key).to be_truthy
       expect(PieceSet.count).to eq 0
     end
     it "should not destroy if has multiple foreign_keys" do
-      product = FactoryBot(:product)
+      product = create(:product)
       ps = PieceSet.create!(:quantity=>1,
-        :order_line=>FactoryBot(:order_line, :product=>product),
-        :shipment_line=>FactoryBot(:shipment_line, :product=>product)
+        :order_line=>create(:order_line, :product=>product),
+        :shipment_line=>create(:shipment_line, :product=>product)
       )
       expect(ps.destroy_if_one_key).to be_falsey
       expect(PieceSet.count).to eq 1
@@ -50,13 +50,13 @@ describe PieceSet do
 
   describe 'merge_duplicates' do
     before :each do
-      @product = FactoryBot(:product)
+      @product = create(:product)
       @ps = PieceSet.create!(:quantity=>1,
-        :order_line=>FactoryBot(:order_line, :product=>@product),
-        :shipment_line=>FactoryBot(:shipment_line, :product=>@product),
-        :sales_order_line=>FactoryBot(:sales_order_line, :product=>@product),
-        :delivery_line=>FactoryBot(:delivery_line, :product=>@product),
-        :drawback_import_line=>FactoryBot(:drawback_import_line, :product=>@product)
+        :order_line=>create(:order_line, :product=>@product),
+        :shipment_line=>create(:shipment_line, :product=>@product),
+        :sales_order_line=>create(:sales_order_line, :product=>@product),
+        :delivery_line=>create(:delivery_line, :product=>@product),
+        :drawback_import_line=>create(:drawback_import_line, :product=>@product)
       )
     end
     it "should merge two piece sets with same keys" do
@@ -90,15 +90,15 @@ describe PieceSet do
 
   describe "identifiers" do
     before :each do
-      @product = FactoryBot(:product)
+      @product = create(:product)
       @ps = PieceSet.create!(:quantity=>1,
-        :order_line=>FactoryBot(:order_line, :product=>@product),
-        :shipment_line=>FactoryBot(:shipment_line, :product=>@product),
-        :sales_order_line=>FactoryBot(:sales_order_line, :product=>@product),
-        :delivery_line=>FactoryBot(:delivery_line, :product=>@product),
-        :drawback_import_line=>FactoryBot(:drawback_import_line, :product=>@product)
+        :order_line=>create(:order_line, :product=>@product),
+        :shipment_line=>create(:shipment_line, :product=>@product),
+        :sales_order_line=>create(:sales_order_line, :product=>@product),
+        :delivery_line=>create(:delivery_line, :product=>@product),
+        :drawback_import_line=>create(:drawback_import_line, :product=>@product)
       )
-      @user = FactoryBot(:user)
+      @user = create(:user)
     end
 
     it "returns identifier list for piece set" do

@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerator do
   describe "generate_xml" do
     it "generates an XML" do
-      broker = FactoryBot(:company, name: "Vandegrift Forwarding Co.", broker: true)
+      broker = create(:company, name: "Vandegrift Forwarding Co.", broker: true)
       broker.addresses.create!(system_code: "4", name: "Vandegrift Forwarding Co., Inc.", line_1: "180 E Ocean Blvd",
                                line_2: "Suite 270", city: "Long Beach", state: "CA", postal_code: "90802")
       broker.system_identifiers.create!(system: "Filer Code", code: "316")
 
       tz = ActiveSupport::TimeZone['UTC']
-      entry = FactoryBot(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
+      entry = create(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
                               unlading_port_code: "1401", location_of_goods: "M801",
                               first_it_date: Date.new(2020, 5, 11), export_date: Date.new(2020, 3, 29),
                               release_date: tz.parse('2020-04-28 09:25:01'), arrival_date: tz.parse('2020-04-29 08:15:51'),
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     end
 
     it "includes FTZNumber value when entry type is '06'" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", entry_type: "06", vessel: "SS Minnow")
+      entry = create(:entry, entry_number: "31679758714", entry_type: "06", vessel: "SS Minnow")
 
       doc = subject.generate_xml entry
 
@@ -141,7 +141,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     end
 
     it "shows N flag values when conditions not met" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", master_bills_of_lading: "A\n B")
+      entry = create(:entry, entry_number: "31679758714", master_bills_of_lading: "A\n B")
       expect(entry).to receive(:post_summary_correction?).and_return false
 
       inv = entry.commercial_invoices.build
@@ -162,7 +162,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
 
     context "AssistFlag" do
       it "shows 'Y' value when one invoice line has an add to make amount value" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         inv = entry.commercial_invoices.build
         inv_line_1 = inv.commercial_invoice_lines.build(add_to_make_amount: BigDecimal(0))
         inv_line_1.commercial_invoice_tariffs.build
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
       end
 
       it "shows 'Y' value when one invoice line has an other amount value" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         inv = entry.commercial_invoices.build
         inv_line_1 = inv.commercial_invoice_lines.build(other_amount: BigDecimal(0))
         inv_line_1.commercial_invoice_tariffs.build
@@ -190,7 +190,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
       end
 
       it "shows 'N' value when no invoice lines have an add to make amount or other amount value" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         inv = entry.commercial_invoices.build
         inv_line_1 = inv.commercial_invoice_lines.build(add_to_make_amount: BigDecimal(0), other_amount: BigDecimal(0))
         inv_line_1.commercial_invoice_tariffs.build
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     it "generates and sends a file" do
       allow(stub_master_setup).to receive(:production?).and_return false
 
-      entry = FactoryBot(:entry, entry_number: "13579246")
+      entry = create(:entry, entry_number: "13579246")
       expect(entry).to receive(:post_summary_correction?).and_return(false)
 
       expect(subject).to receive(:generate_xml).with(entry).and_return REXML::Document.new("<FakeXml><child>A</child></FakeXml>")
@@ -239,7 +239,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     it "generates file with alternate prefix in production environment" do
       allow(stub_master_setup).to receive(:production?).and_return true
 
-      entry = FactoryBot(:entry, entry_number: "13579246")
+      entry = create(:entry, entry_number: "13579246")
       expect(entry).to receive(:post_summary_correction?).and_return(false)
 
       expect(subject).to receive(:generate_xml).with(entry).and_return REXML::Document.new("<FakeXml><child>A</child></FakeXml>")
@@ -258,7 +258,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     it "generates post summary correction file" do
       allow(stub_master_setup).to receive(:production?).and_return false
 
-      entry = FactoryBot(:entry, entry_number: "13579246")
+      entry = create(:entry, entry_number: "13579246")
       expect(entry).to receive(:post_summary_correction?).and_return(true)
 
       expect(subject).to receive(:generate_xml).with(entry).and_return REXML::Document.new("<FakeXml><child>A</child></FakeXml>")
@@ -279,37 +279,37 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     subject { described_class }
 
     it "calls generate and send method for each matching entry" do
-      ferg = with_customs_management_id(FactoryBot(:importer), "FERENT")
+      ferg = with_customs_management_id(create(:importer), "FERENT")
 
-      entry_no_sync = FactoryBot(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_no_sync = create(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
                                       release_date: Date.new(2020, 4, 15), entry_type: nil)
 
-      entry_old_sync = FactoryBot(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_old_sync = create(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
       entry_old_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 13))
 
       # This should be excluded because it has a sync record with a sent at date later than the entry's last exported from source.
-      entry_new_sync = FactoryBot(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_new_sync = create(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
       entry_new_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 15))
 
       # This should be excluded because it belongs to a different importer.
-      entry_not_ferg = FactoryBot(:entry, importer_id: ferg.id - 1, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_not_ferg = create(:entry, importer_id: ferg.id - 1, last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
 
       # This should be included because it is type 06 and has a first_entry_sent_date value.
-      entry_type_06_present_first_entry_sent_date = FactoryBot(:entry, importer_id: ferg.id,
+      entry_type_06_present_first_entry_sent_date = create(:entry, importer_id: ferg.id,
                                                                     last_exported_from_source: Date.new(2020, 4, 14),
                                                                     release_date: Date.new(2020, 4, 15), entry_type: "06",
                                                                     first_entry_sent_date: Date.new(2020, 4, 10))
 
       # This should be excluded because it is type 06 and does not have a first_entry_sent_date value.
-      entry_type_06_missing_first_entry_sent_date = FactoryBot(:entry, importer_id: ferg.id, last_exported_from_source:
+      entry_type_06_missing_first_entry_sent_date = create(:entry, importer_id: ferg.id, last_exported_from_source:
                                                             Date.new(2020, 4, 14), release_date: Date.new(2020, 4, 15),
                                                                     entry_type: "06", first_entry_sent_date: nil)
 
       # This should be excluded because it has no release date yet.
-      entry_no_release_date = FactoryBot(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14), final_statement_date: nil, entry_type: "X")
+      entry_no_release_date = create(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14), final_statement_date: nil, entry_type: "X")
 
       expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_old_sync)
       expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_no_sync)

@@ -158,7 +158,7 @@
         <invoiceDateValue>2019-09-28</invoiceDateValue>
       </invoiceDate>
       <invoiceDate>
-        <invoiceDateTypeCode>ExFactoryBot</invoiceDateTypeCode>
+        <invoiceDateTypeCode>Excreate</invoiceDateTypeCode>
         <invoiceDateValue>2019-09-27</invoiceDateValue>
       </invoiceDate>
       <incotermCode>FOB</incotermCode>

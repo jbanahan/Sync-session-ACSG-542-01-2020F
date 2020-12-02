@@ -3,31 +3,31 @@ require 'time'
 describe OpenChain::CustomHandler::ISFXMLGenerator do
   describe 'generate' do
     before :each do
-      importer = with_customs_management_id(FactoryBot(:importer, irs_number:'ashjdajdashdad'), 'asjhdajhdjasgd')
-      consignee = FactoryBot(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
-      @shipment = FactoryBot(:shipment,
+      importer = with_customs_management_id(create(:importer, irs_number:'ashjdajdashdad'), 'asjhdajhdjasgd')
+      consignee = create(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
+      @shipment = create(:shipment,
                           importer:importer,
                           consignee: consignee,
-                          seller_address: FactoryBot(:full_address),
-                          buyer_address: FactoryBot(:full_address),
-                          ship_to_address: FactoryBot(:full_address),
-                          container_stuffing_address: FactoryBot(:full_address),
-                          consolidator_address: FactoryBot(:full_address),
+                          seller_address: create(:full_address),
+                          buyer_address: create(:full_address),
+                          ship_to_address: create(:full_address),
+                          container_stuffing_address: create(:full_address),
+                          consolidator_address: create(:full_address),
                           house_bill_of_lading:'this is a house bill',
                           master_bill_of_lading:'this is a master bill',
                           est_load_date: 3.days.ago.to_date,
                           booking_number: 'This is the number you booked',
       )
-      order = FactoryBot(:order, order_number:'123456789')
+      order = create(:order, order_number:'123456789')
       3.times do
-        product = FactoryBot(:product)
-        container = FactoryBot(:container)
-        line = FactoryBot(:shipment_line, shipment:@shipment, product:product, container:container, quantity:100, manufacturer_address:FactoryBot(:full_address))
-        order_line = FactoryBot(:order_line, order:order, quantity:100, product:product, country_of_origin:'GN')
+        product = create(:product)
+        container = create(:container)
+        line = create(:shipment_line, shipment:@shipment, product:product, container:container, quantity:100, manufacturer_address:create(:full_address))
+        order_line = create(:order_line, order:order, quantity:100, product:product, country_of_origin:'GN')
         PieceSet.create(order_line:order_line, quantity:100, shipment_line:line)
       end
       first_line = @shipment.shipment_lines.first
-      dup_line = FactoryBot(:shipment_line, shipment:@shipment, product:first_line.product, container:first_line.container, quantity:100, manufacturer_address:first_line.manufacturer_address )
+      dup_line = create(:shipment_line, shipment:@shipment, product:first_line.product, container:first_line.container, quantity:100, manufacturer_address:first_line.manufacturer_address )
       PieceSet.create(order_line:order.order_lines.first, quantity:100, shipment_line:dup_line)
       @manufacturer_addresses = @shipment.shipment_lines.map(&:manufacturer_address).uniq
       allow_any_instance_of(ShipmentLine).to receive(:us_hts_number).and_return('123456789')

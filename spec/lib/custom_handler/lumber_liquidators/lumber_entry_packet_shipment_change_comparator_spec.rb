@@ -22,14 +22,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
   }
 
   describe "compare", :snapshot do
-    let (:shipment) { FactoryBot(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555', importer_reference:'IMP-555') }
+    let (:shipment) { create(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555', importer_reference:'IMP-555') }
 
     it "generates an entry packet when both components are present and there is no sync record" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       shipment.attachments.create! ods_attachment
       shipment.attachments.create! vds_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
       expect(OpenChain::GoogleDrive).to receive(:upload_file).with('US Entry Documents/Entry Packet/19283746 - LUMBER.pdf', instance_of(Tempfile))
@@ -55,14 +55,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "generates an entry packet when both components are present and there is a sync record with no sent date" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       # sent_at value is not set intentionally.
       synco = shipment.sync_records.create! trading_partner:'Entry Packet'
 
       shipment.attachments.create! ods_attachment
       shipment.attachments.create! vds_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
       expect(OpenChain::GoogleDrive).to receive(:upload_file).with('US Entry Documents/Entry Packet/19283746 - LUMBER.pdf', instance_of(Tempfile))
@@ -85,13 +85,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "generates an entry packet when both components are present and there is a sync record sent date is older than ODS date" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       synco = shipment.sync_records.create! sent_at:Time.zone.now, trading_partner:'Entry Packet'
 
       shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at + 1.hour})
       shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
       expect(OpenChain::GoogleDrive).to receive(:upload_file).with('US Entry Documents/Entry Packet/19283746 - LUMBER.pdf', instance_of(Tempfile))
@@ -114,14 +114,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "generates an entry packet when both components are present and there is a sync record sent date is older than VDS date" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       synco = shipment.sync_records.create! sent_at:Time.zone.now, trading_partner:'Entry Packet'
 
       shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
       shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at + 1.hour})
 
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
       expect(OpenChain::GoogleDrive).to receive(:upload_file).with('US Entry Documents/Entry Packet/19283746 - LUMBER.pdf', instance_of(Tempfile))
@@ -144,7 +144,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "does not generate an entry packet when both components are present, but the sync record date is newer than both ODS and VDS dates" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
       shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
 
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
 
@@ -168,13 +168,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "does not generate an entry packet when both VDS attachment not present" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
 
       shipment.attachments.create! ods_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
 
@@ -190,13 +190,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "does not generate an entry packet when both ODS attachment not present" do
-      entry = FactoryBot(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
 
       shipment.attachments.create! vds_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
 
@@ -214,7 +214,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     it "handles case where entry not found" do
       shipment.attachments.create! ods_attachment
       shipment.attachments.create! vds_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
       now = Time.zone.now
@@ -241,7 +241,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       shipment.attachments.create! ods_attachment
       attachment = shipment.attachments.create! vds_attachment.merge({attached_content_type: "plain/text"})
 
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       now = Time.zone.now
       Timecop.freeze(now) do
@@ -260,7 +260,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       attachment = shipment.attachments.create! ods_attachment.merge({attached_content_type: "plain/text"})
       shipment.attachments.create! vds_attachment
 
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       now = Time.zone.now
       Timecop.freeze(now) do
@@ -279,11 +279,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       expect(subject).to receive(:add_attachment_pdf_to_entry_packet).and_raise(RuntimeError.new("Your stitching failed"))
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "some_website"
 
-      FactoryBot(:mailing_list, system_code:"allport_pdf_errors", email_addresses:"abc@def.com,def@jam.com")
+      create(:mailing_list, system_code:"allport_pdf_errors", email_addresses:"abc@def.com,def@jam.com")
 
       shipment.attachments.create! ods_attachment
       shipment.attachments.create! vds_attachment
-      snapshot = shipment.create_snapshot FactoryBot(:user)
+      snapshot = shipment.create_snapshot create(:user)
 
       # Entry packet attachment should not happen.
       expect(subject).not_to receive(:attach_entry_packet_to_entry)

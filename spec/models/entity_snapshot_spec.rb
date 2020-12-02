@@ -1,11 +1,11 @@
 describe EntitySnapshot, :snapshot do
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   describe "diff" do
 
     it "should return empty diff for identical snapshots" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       o = ol.order
       s = EntitySnapshot.create_from_entity o, user
       s2 = EntitySnapshot.create_from_entity o, user
@@ -22,7 +22,7 @@ describe EntitySnapshot, :snapshot do
       expect(cib.first.model_fields_changed).to be_empty
     end
     it "should reflect changed field" do
-      o = FactoryBot(:order)
+      o = create(:order)
       old_order_number = o.order_number
       new_order_number = "#{o.order_number}X"
 
@@ -34,9 +34,9 @@ describe EntitySnapshot, :snapshot do
       expect(diff.model_fields_changed['ord_ord_num']).to eq [old_order_number, new_order_number]
     end
     it "should reflect added child" do
-      o = FactoryBot(:order)
+      o = create(:order)
       s = EntitySnapshot.create_from_entity o, user
-      ol = FactoryBot(:order_line, order:o)
+      ol = create(:order_line, order:o)
       o.reload
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
@@ -47,7 +47,7 @@ describe EntitySnapshot, :snapshot do
       expect(ca.model_fields_changed['ordln_line_number'][1]).to eq ol.line_number
     end
     it "should reflect deleted child" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       o = ol.order
       s = EntitySnapshot.create_from_entity o, user
       ol.destroy
@@ -61,7 +61,7 @@ describe EntitySnapshot, :snapshot do
       expect(cd.model_fields_changed['ordln_line_number'][0]).to eq ol.line_number
     end
     it "should reflect field changed in child" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       old_line_number = ol.line_number
       new_line_number = old_line_number + 1
       o = ol.order
@@ -76,12 +76,12 @@ describe EntitySnapshot, :snapshot do
       expect(cib.model_fields_changed['ordln_line_number']).to eq [old_line_number, new_line_number]
     end
     it "should reflect child with new id and same logical key as update not add/delete" do
-      ol = FactoryBot(:order_line, hts:'123456')
+      ol = create(:order_line, hts:'123456')
       line_number = ol.line_number
       o = ol.order
       s = EntitySnapshot.create_from_entity o, user
       ol.destroy
-      ol = FactoryBot(:order_line, order:o, line_number:line_number, hts:'654321')
+      ol = create(:order_line, order:o, line_number:line_number, hts:'654321')
       o.reload
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
@@ -103,7 +103,7 @@ describe EntitySnapshot, :snapshot do
     end
 
     it "does not identify blank string changed to/from nil as a diff" do
-      o = FactoryBot(:order)
+      o = create(:order)
       s1 = EntitySnapshot.create_from_entity o, user
 
       o.customer_order_number = ""
@@ -120,8 +120,8 @@ describe EntitySnapshot, :snapshot do
       # not worrying about permissions
       allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
 
-      @p = FactoryBot(:product, :name=>'nm', :unique_identifier=>'uid')
-      @tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :product=>@p))
+      @p = create(:product, :name=>'nm', :unique_identifier=>'uid')
+      @tr = create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :product=>@p))
       @first_snapshot = @p.create_snapshot user
     end
     it "should replace base object properties" do
@@ -149,7 +149,7 @@ describe EntitySnapshot, :snapshot do
       expect(restored.name).to eq('nm')
     end
     it "should update last_updated_by_id" do
-      other_user = FactoryBot(:user)
+      other_user = create(:user)
       restored = @first_snapshot.restore(other_user)
       expect(restored.last_updated_by_id).to eq(other_user.id)
     end
@@ -157,7 +157,7 @@ describe EntitySnapshot, :snapshot do
       @p.update_attributes! last_updated_by: user
       allow_any_instance_of(Product).to receive(:can_edit?).and_return(false)
       @p.update_attributes(:name=>'n2')
-      other_user = FactoryBot(:user)
+      other_user = create(:user)
       restored = @first_snapshot.restore(user)
       expect(restored.last_updated_by_id).to eq(user.id)
       expect(restored.name).to eq('n2')
@@ -167,7 +167,7 @@ describe EntitySnapshot, :snapshot do
       context "with standard custom field" do
 
         before :each do
-          @cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>'string')
+          @cd = create(:custom_definition, :module_type=>'Product', :data_type=>'string')
           ModelField.reload
           @p.update_custom_value! @cd, 'x'
           @first_snapshot = @p.create_snapshot user
@@ -179,7 +179,7 @@ describe EntitySnapshot, :snapshot do
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should erase custom fields that have been added" do
-          cd2 = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>'string')
+          cd2 = create(:custom_definition, :module_type=>'Product', :data_type=>'string')
           @p.update_custom_value! cd2, 'y'
           restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(cd2).value).to be_blank
@@ -197,11 +197,11 @@ describe EntitySnapshot, :snapshot do
 
       context "with special custom fields" do
         it "handles user custom value fields" do
-          user_def = FactoryBot(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
+          user_def = create(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
           ModelField.reload
           @p.update_custom_value! user_def, user
           snapshot = @p.create_snapshot user
-          user2 = FactoryBot(:user)
+          user2 = create(:user)
           @p.update_custom_value! user_def, user2
           snapshot.restore user
           @p.reload
@@ -209,11 +209,11 @@ describe EntitySnapshot, :snapshot do
         end
 
         it "handles address fields" do
-          addr_def = FactoryBot(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true)
+          addr_def = create(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true)
           ModelField.reload
 
-          address = FactoryBot(:full_address)
-          address_2 = FactoryBot(:full_address)
+          address = create(:full_address)
+          address_2 = create(:full_address)
 
           @p.update_custom_value! addr_def, address
           snapshot = @p.create_snapshot user
@@ -234,9 +234,9 @@ describe EntitySnapshot, :snapshot do
         expect(restored.classifications.first.tariff_records.first.hts_1).to eq('1234567890')
       end
       it "should remove children that didn't exist" do
-        p = FactoryBot(:product)
+        p = create(:product)
         es = p.create_snapshot user
-        FactoryBot(:tariff_record, :classification=>(FactoryBot(:classification, :product=>p)))
+        create(:tariff_record, :classification=>(create(:classification, :product=>p)))
         p.reload
         expect(p.classifications.first.tariff_records.first).not_to be_nil
         es.restore user
@@ -249,7 +249,7 @@ describe EntitySnapshot, :snapshot do
         expect(TariffRecord.find(@tr.id).hts_1).to eq('1234567890')
       end
       it "should replace custom values for children that changed" do
-        cd = FactoryBot(:custom_definition, :module_type=>"Classification", :data_type=>"string")
+        cd = create(:custom_definition, :module_type=>"Classification", :data_type=>"string")
         @tr.classification.update_custom_value! cd, 'x'
         @first_snapshot = @p.create_snapshot user
         @tr.classification.update_custom_value! cd, 'y'
@@ -315,8 +315,8 @@ describe EntitySnapshot, :snapshot do
       expected_bucket = 'bucket'
       expected_version = 'ABC123'
       expected_json = '{"a":"b"}'
-      ent = FactoryBot(:entry)
-      u = FactoryBot(:user)
+      ent = create(:entry)
+      u = create(:user)
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
       expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
 
@@ -335,9 +335,9 @@ describe EntitySnapshot, :snapshot do
       expected_bucket = 'bucket'
       expected_version = 'ABC123'
       expected_json = '{"a":"b"}'
-      ent = FactoryBot(:entry)
-      u = FactoryBot(:user)
-      imp = FactoryBot(:imported_file)
+      ent = create(:entry)
+      u = create(:user)
+      imp = create(:imported_file)
       cont = '21st Century Capitalism'
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
       expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
@@ -356,20 +356,20 @@ describe EntitySnapshot, :snapshot do
       allow_any_instance_of(described_class).to receive(:write_s3)
       expect(OpenChain::EntityCompare::EntityComparator).to receive(:handle_snapshot)
 
-      ent = FactoryBot(:entry)
-      u = FactoryBot(:user)
+      ent = create(:entry)
+      u = create(:user)
       es = EntitySnapshot.create_from_entity(ent, u)
     end
 
     context "with business validations" do
       let! (:bvt) {
-        bvt = FactoryBot(:business_validation_template, module_type: "Entry")
+        bvt = create(:business_validation_template, module_type: "Entry")
         bvt.search_criterions.create!(model_field_uid:'ent_cust_num', operator:'eq', value:'12345')
         bvt.business_validation_rules.create!( name: "Name", description: "Description", type:'ValidationRuleFieldFormat', rule_attributes_json:{model_field_uid:'ent_entry_num', regex:'X'}.to_json)
         bvt.reload
       }
-      let (:entry) { FactoryBot(:entry, customer_number: "12345") }
-      let (:user) { FactoryBot(:user) }
+      let (:entry) { create(:entry, customer_number: "12345") }
+      let (:user) { create(:user) }
 
       it "runs business validations" do
         EntitySnapshot.create_from_entity entry, user
@@ -383,8 +383,8 @@ describe EntitySnapshot, :snapshot do
       end
       expect(OpenChain::EntityCompare::EntityComparator).not_to receive(:handle_snapshot)
 
-      ent = FactoryBot(:entry)
-      u = FactoryBot(:user)
+      ent = create(:entry)
+      u = create(:user)
       es = EntitySnapshot.create_from_entity(ent, u)
 
       failure = EntitySnapshotFailure.where(snapshot_id: es.id, snapshot_type: "EntitySnapshot").first
@@ -394,7 +394,7 @@ describe EntitySnapshot, :snapshot do
 
   describe "expected_s3_path" do
     it "should be core module / recordable.id" do
-      ent = FactoryBot(:entry)
+      ent = create(:entry)
       es = EntitySnapshot.new
       es.recordable = ent
       expect(es.expected_s3_path).to eq "entry/#{ent.id}.json"
@@ -446,7 +446,7 @@ describe EntitySnapshot, :snapshot do
   end
 
   describe "store_snapshot_json" do
-    let (:snapshot) { EntitySnapshot.new recordable: FactoryBot(:entry), user: FactoryBot(:user)}
+    let (:snapshot) { EntitySnapshot.new recordable: create(:entry), user: create(:user)}
 
     it "writes snapshot json data to s3" do
       expect(snapshot).to receive(:write_s3).with "json"
@@ -536,8 +536,8 @@ describe EntitySnapshot, :snapshot do
     end
 
     it "calls delete_from_s3 in destroy callback" do
-      subject.recordable = FactoryBot(:entry)
-      subject.user = FactoryBot(:user)
+      subject.recordable = create(:entry)
+      subject.user = create(:user)
       subject.save!
 
       expect(subject).to receive(:delete_from_s3)
@@ -566,7 +566,7 @@ describe EntitySnapshot, :snapshot do
 
 
   describe "ESDiff" do
-    let (:product) { FactoryBot(:product) }
+    let (:product) { create(:product) }
 
     subject { EntitySnapshot::ESDiff.new }
 

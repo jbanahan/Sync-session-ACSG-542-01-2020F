@@ -30,9 +30,9 @@ describe CustomReportBillingStatementByPo do
     let! (:master_setup) { stub_master_setup }
 
     before :each do
-      @user = FactoryBot(:master_user)
+      @user = create(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)
-      @invoice = FactoryBot(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"), :invoice_number=>'ZZZ')
+      @invoice = create(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"), :invoice_number=>'ZZZ')
       @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2\n 3")
       @invoice.broker_invoice_lines.create!(:charge_description => "A", :charge_amount=>1)
       @invoice.broker_invoice_lines.create!(:charge_description => "B", :charge_amount=>2)
@@ -117,7 +117,7 @@ describe CustomReportBillingStatementByPo do
     end
 
     it "should raise an error if the user cannot view broker invoices" do
-      unpriv_user = FactoryBot(:user)
+      unpriv_user = create(:user)
       allow(unpriv_user).to receive(:view_broker_invoices?).and_return(false)
 
       expect {@report.to_arrays unpriv_user}.to raise_error {|e|

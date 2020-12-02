@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
 
   describe 'generate_csv' do
     let :vendor_address do
-      china = FactoryBot(:country, iso_code: "CN", name: "China")
+      china = create(:country, iso_code: "CN", name: "China")
       addr = Address.new(system_code:'VCode-CORP', name:'Corporate', line_1:'VA', city:'VC', state:'VS', postal_code:'VP', country:china)
       addr.save!
       addr
@@ -66,8 +66,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
         importer_reference: 'arfarf'
       )
 
-      port_loading = FactoryBot(:port, name: 'Hong Kong', unlocode: "HKHKG")
-      port_delivery = FactoryBot(:port, name: 'Long Beach, CA', unlocode: "USLGB")
+      port_loading = create(:port, name: 'Hong Kong', unlocode: "HKHKG")
+      port_delivery = create(:port, name: 'Long Beach, CA', unlocode: "USLGB")
 
       container = Container.new(
         port_of_loading_id: port_loading.id,
@@ -346,7 +346,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
     end
 
     it "generates revised csv" do
-      sync = SyncRecord.new(trading_partner: 'FactoryBot Pack Declaration')
+      sync = SyncRecord.new(trading_partner: 'create Pack Declaration')
       shipment.sync_records << sync
 
       csv = CSV.parse(described_class.generate_csv(shipment))

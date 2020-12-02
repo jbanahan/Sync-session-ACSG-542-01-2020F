@@ -1,8 +1,8 @@
 describe Company do
 
   describe "attachment_archive_enabled" do
-    let (:company) { FactoryBot(:company) }
-    let! (:another_company) { FactoryBot(:company) }
+    let (:company) { create(:company) }
+    let! (:another_company) { create(:company) }
 
     it "returns companies with attachment archive setups that include start date" do
       company.create_attachment_archive_setup(start_date: Time.zone.now)
@@ -21,38 +21,38 @@ describe Company do
 
   context "role scopes" do
     before do
-      @dont_find = FactoryBot(:company)
+      @dont_find = create(:company)
     end
 
     it "finds carriers" do
-      c1 = FactoryBot(:company, carrier: true)
-      c2 = FactoryBot(:company, carrier: true)
+      c1 = create(:company, carrier: true)
+      c2 = create(:company, carrier: true)
       expect(described_class.carriers).to eq([c1, c2])
     end
 
     it "finds importers" do
-      c1 = FactoryBot(:company, importer: true)
-      c2 = FactoryBot(:company, importer: true)
+      c1 = create(:company, importer: true)
+      c2 = create(:company, importer: true)
       expect(described_class.importers).to eq([c1, c2])
     end
 
     it "finds customers" do
-      c1 = FactoryBot(:company, customer: true)
-      c2 = FactoryBot(:company, customer: true)
+      c1 = create(:company, customer: true)
+      c2 = create(:company, customer: true)
       expect(described_class.customers).to eq([c1, c2])
     end
 
     it "finds vendors" do
-      c1 = FactoryBot(:company, vendor: true)
-      c2 = FactoryBot(:company, vendor: true)
+      c1 = create(:company, vendor: true)
+      c2 = create(:company, vendor: true)
       expect(described_class.vendors).to eq([c1, c2])
     end
   end
 
   describe 'linked_companies' do
     it 'creates and retrieve child companies' do
-      parent = FactoryBot(:company)
-      child = FactoryBot(:company)
+      parent = create(:company)
+      child = create(:company)
       parent.linked_companies.push child
       parent = described_class.find parent.id
       expect(parent.linked_companies.size).to eq(1)
@@ -62,25 +62,25 @@ describe Company do
 
   describe 'unlinked_companies' do
     it 'retrieves companies that are NOT linked to this one' do
-      c = FactoryBot(:company)
-      linked_c = FactoryBot(:company)
+      c = create(:company)
+      linked_c = create(:company)
       c.linked_companies << linked_c
-      unlinked_c = FactoryBot(:company)
+      unlinked_c = create(:company)
       expect(c.unlinked_companies).to include(unlinked_c) # can't check equals because initializer creates extra "My Company" company
       expect(c.unlinked_companies).not_to include(linked_c)
     end
   end
 
   describe "active_importers" do
-    let (:importer) { FactoryBot(:importer) }
+    let (:importer) { create(:importer) }
 
     it "retrieves any active importers for existing companies based on products" do
-      FactoryBot(:product, importer: importer)
+      create(:product, importer: importer)
       expect(described_class.active_importers).to include(importer)
     end
 
     it "retrieves any active importers for existing companies based on entries" do
-      FactoryBot(:entry, importer: importer, file_logged_date: Time.zone.now)
+      create(:entry, importer: importer, file_logged_date: Time.zone.now)
       expect(described_class.active_importers).to include(importer)
     end
   end
@@ -101,20 +101,20 @@ describe Company do
 
       describe '#view_trade_lanes? and #edit_trade_lanes' do
         it "allows for master company" do
-          c = FactoryBot(:master_company)
+          c = create(:master_company)
           expect(c).to be_view_trade_lanes
           expect(c).to be_edit_trade_lanes
         end
 
         it "sould not allow for non-master company" do
-          c = FactoryBot(:company)
+          c = create(:company)
           expect(c).not_to be_view_trade_lanes
           expect(c).not_to be_edit_trade_lanes
         end
 
         it "does not allow if trade lanes not enabled" do
           allow(master_setup).to receive(:trade_lane_enabled?).and_return(false)
-          c = FactoryBot(:master_company)
+          c = create(:master_company)
           expect(c).not_to be_view_trade_lanes
           expect(c).not_to be_edit_trade_lanes
         end
@@ -202,35 +202,35 @@ describe Company do
     context 'entries' do
       it 'does not allow view if master setup is disabled' do
         allow(master_setup).to receive(:entry_enabled).and_return false
-        c = FactoryBot(:company, importer: true)
+        c = create(:company, importer: true)
         expect(c).not_to be_view_entries
         expect(c).not_to be_comment_entries
         expect(c).not_to be_attach_entries
       end
 
       it 'allows master view/comment/attach' do
-        c = FactoryBot(:company, master: true)
+        c = create(:company, master: true)
         expect(c).to be_view_entries
         expect(c).to be_comment_entries
         expect(c).to be_attach_entries
       end
 
       it 'allows importer view/comment/attach' do
-        c = FactoryBot(:company, importer: true)
+        c = create(:company, importer: true)
         expect(c).to be_view_entries
         expect(c).to be_comment_entries
         expect(c).to be_attach_entries
       end
 
       it 'allows broker view/comment/attach' do
-        c = FactoryBot(:company, broker: true)
+        c = create(:company, broker: true)
         expect(c).to be_view_entries
         expect(c).to be_comment_entries
         expect(c).to be_attach_entries
       end
 
       it 'does not allow other company view/comment/attach' do
-        c = FactoryBot(:company, importer: false, master: false)
+        c = create(:company, importer: false, master: false)
         expect(c).not_to be_view_entries
         expect(c).not_to be_comment_entries
         expect(c).not_to be_attach_entries
@@ -240,22 +240,22 @@ describe Company do
     context 'broker invoices' do
       it 'does not allow view if master setup is disabled' do
         allow(master_setup).to receive(:broker_invoice_enabled).and_return false
-        c = FactoryBot(:company, importer: true)
+        c = create(:company, importer: true)
         expect(c).not_to be_view_broker_invoices
       end
 
       it 'allows master view' do
-        c = FactoryBot(:company, master: true)
+        c = create(:company, master: true)
         expect(c).to be_view_broker_invoices
       end
 
       it 'allows importer view' do
-        c = FactoryBot(:company, importer: true)
+        c = create(:company, importer: true)
         expect(c).to be_view_broker_invoices
       end
 
       it 'does not allow other company view' do
-        c = FactoryBot(:company, importer: false, master: false)
+        c = create(:company, importer: false, master: false)
         expect(c).not_to be_view_broker_invoices
       end
 
@@ -289,7 +289,7 @@ describe Company do
 
   describe "attachments.create!" do
     it 'allows one or more attachments' do
-      c = FactoryBot(:company)
+      c = create(:company)
       c.attachments.create!(attached_file_name: "attachment1.jpg")
       c.attachments.create!(attached_file_name: "attachment2.jpg")
       expect(c.attachments.length).to eq(2)
@@ -298,16 +298,16 @@ describe Company do
 
   describe "can_view?" do
     it "doesn't allow users from other companies to view the company" do
-      my_company = FactoryBot(:company)
-      other_company = FactoryBot(:company)
-      user = FactoryBot(:user, company: my_company)
+      my_company = create(:company)
+      other_company = create(:company)
+      user = create(:user, company: my_company)
       expect(other_company).not_to be_can_view(user)
     end
 
     it "allows user to view linked companies" do
-      my_company = FactoryBot(:company)
-      other_company = FactoryBot(:company)
-      user = FactoryBot(:user, company: my_company)
+      my_company = create(:company)
+      other_company = create(:company)
+      user = create(:user, company: my_company)
       my_company.linked_companies << other_company
 
       expect(other_company).to be_can_view(user)
@@ -317,16 +317,16 @@ describe Company do
   describe "search_secure" do
     subject { described_class }
 
-    let (:user) { FactoryBot(:user) }
-    let (:company) { FactoryBot(:company) }
-    let! (:another_company) { FactoryBot(:company) }
+    let (:user) { create(:user) }
+    let (:company) { create(:company) }
+    let! (:another_company) { create(:company) }
 
     it "allows me to see myself" do
       expect(subject.search_secure(user, subject).to_a).to eq [user.company]
     end
 
     it "allows me to see my linked companies" do
-      c2 = FactoryBot(:company)
+      c2 = create(:company)
       user.company.linked_companies << c2
       found = described_class.search_secure(user, described_class).to_a
       expect(found).to include user.company
@@ -335,55 +335,55 @@ describe Company do
 
     it "allows me to see all if I'm master" do
       user.company.update! master: true
-      FactoryBot(:company)
+      create(:company)
       found = described_class.search_secure(user, described_class).to_a
       subject.all.to_a.each {|c| expect(found).to include c }
     end
   end
 
   describe "can_view_as_vendor?" do
-    let (:vendor) { FactoryBot(:company, vendor: true) }
+    let (:vendor) { create(:company, vendor: true) }
 
     it "passes if user can view_vendors? and user is from this company" do
-      u = FactoryBot(:user, vendor_view: true, company: vendor)
+      u = create(:user, vendor_view: true, company: vendor)
       allow(u).to receive(:view_vendors?).and_return true
       expect(vendor).to be_can_view_as_vendor(u)
     end
 
     it "passes if user can view_vendors? and user's company is linked" do
-      u = FactoryBot(:user, vendor_view: true)
+      u = create(:user, vendor_view: true)
       allow(u).to receive(:view_vendors?).and_return true
       u.company.linked_companies << vendor
       expect(vendor).to be_can_view_as_vendor(u)
     end
 
     it "passes if user can view_vendors? and user is from master company" do
-      u = FactoryBot(:master_user, vendor_view: true)
+      u = create(:master_user, vendor_view: true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(vendor).to be_can_view_as_vendor(u)
     end
 
     it "fails if user can view_vendors? and is from unrelated company" do
-      u = FactoryBot(:user, vendor_view: true)
+      u = create(:user, vendor_view: true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(vendor).not_to be_can_view_as_vendor(u)
     end
 
     it "fails if user cannot view_vendors?" do
-      u = FactoryBot(:user, vendor_view: false, company: vendor)
+      u = create(:user, vendor_view: false, company: vendor)
       allow(u).to receive(:view_vendors?).and_return false
       expect(vendor).not_to be_can_view_as_vendor(u)
     end
 
     it "fails if company is not a vendor?" do
-      u = FactoryBot(:user, vendor_view: true)
+      u = create(:user, vendor_view: true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(u.company).not_to be_can_view_as_vendor(u)
     end
   end
 
   describe "name_with_customer_number" do
-    let (:company) { FactoryBot(:company, name: "My Name")}
+    let (:company) { create(:company, name: "My Name")}
 
     it "returns a string with just the customer number" do
       expect(company.name_with_customer_number).to eq("My Name")
@@ -406,8 +406,8 @@ describe Company do
   end
 
   describe "has_vfi_invoice?" do
-    let(:co) { FactoryBot(:company) }
-    let(:inv) { FactoryBot(:vfi_invoice) }
+    let(:co) { create(:company) }
+    let(:inv) { create(:vfi_invoice) }
 
     it "returns 'true' if company has a vfi invoice" do
       inv.update!(customer: co)
@@ -415,14 +415,14 @@ describe Company do
     end
 
     it "returns 'true' if there's a linked company with a vfi invoice" do
-      linked_co = FactoryBot(:company)
+      linked_co = create(:company)
       co.update!(linked_companies: [linked_co])
       inv.update!(customer: linked_co)
       expect(co.has_vfi_invoice?).to eq true
     end
 
     it "returns false if neither the company nor any of the linked companies have a vfi invoice" do
-      linked_co = FactoryBot(:company)
+      linked_co = create(:company)
       co.update!(linked_companies: [linked_co])
       expect(co.has_vfi_invoice?).to eq false
     end
@@ -430,8 +430,8 @@ describe Company do
 
   describe "slack_channel scope" do
     it 'returns only companies with slack channels' do
-      no_slack_channel = FactoryBot(:company, name: 'Slackless')
-      slack_channel = FactoryBot(:company, name: 'Slackfull', slack_channel: 'a_channel')
+      no_slack_channel = create(:company, name: 'Slackless')
+      slack_channel = create(:company, name: 'Slackfull', slack_channel: 'a_channel')
 
       results = described_class.has_slack_channel.to_a
       expect(results).to include(slack_channel)
@@ -441,28 +441,28 @@ describe Company do
 
   describe "name_with_system_code" do
     it "returns name concatenated with system_code if it exists" do
-      co = FactoryBot(:company, name: "ACME", system_code: "sys code")
+      co = create(:company, name: "ACME", system_code: "sys code")
       expect(co.name_with_system_code).to eq "ACME (sys code)"
     end
 
     it "returns name if system_code doesn't exist" do
-      co = FactoryBot(:company, name: "ACME")
+      co = create(:company, name: "ACME")
       expect(co.name_with_system_code).to eq "ACME"
     end
   end
 
   describe "linked_company?" do
-    let (:company) { FactoryBot(:company) }
+    let (:company) { create(:company) }
 
     it "returns true if companies are linked" do
-      linked = FactoryBot(:company)
+      linked = create(:company)
       company.linked_companies << linked
 
       expect(company.linked_company?(linked)).to eq true
     end
 
     it "returns false if companies are not linked" do
-      linked = FactoryBot(:company)
+      linked = create(:company)
 
       expect(company.linked_company?(linked)).to eq false
     end
@@ -472,7 +472,7 @@ describe Company do
     end
 
     it "returns false when an inverse link is not present" do
-      linked = FactoryBot(:company)
+      linked = create(:company)
       company.linked_companies << linked
 
       expect(linked.linked_company?(company)).to eq false
@@ -488,28 +488,28 @@ describe Company do
       end
 
       it "allows master companies to view statements" do
-        expect(FactoryBot(:master_company).view_statements?).to eq true
+        expect(create(:master_company).view_statements?).to eq true
       end
 
       it "allows importers to view statements" do
-        expect(FactoryBot(:company, importer: true).view_statements?).to eq true
+        expect(create(:company, importer: true).view_statements?).to eq true
       end
 
       it "doesn't allow other company types to view statements" do
-        expect(FactoryBot(:company).view_statements?).to eq false
+        expect(create(:company).view_statements?).to eq false
       end
     end
 
     it "doesn't allow access to statements if they are disabled" do
       expect(master_setup).to receive(:customs_statements_enabled?).and_return false
-      expect(FactoryBot(:master_company).view_statements?).to eq false
+      expect(create(:master_company).view_statements?).to eq false
     end
   end
 
   describe "parent_system_code" do
-    let (:company) { FactoryBot(:company) }
+    let (:company) { create(:company) }
     let! (:parent_company) do
-      f = FactoryBot(:company)
+      f = create(:company)
       f.linked_companies << company
       f
     end
@@ -550,7 +550,7 @@ describe Company do
     end
 
     it "finds an exisiting company" do
-      c = FactoryBot(:company)
+      c = create(:company)
       c.system_identifiers.create! system: "System", code: "Code"
 
       c1 = subject.find_or_create_company!("System", "Code", {name: "Name"})
@@ -567,11 +567,11 @@ describe Company do
 
   describe "options_for_companies_with_system_identifier" do
     let! (:kewill_company) do
-      with_customs_management_id(FactoryBot(:company, name: "Z Company", system_code: "SYSCODE"), "KEWILL")
+      with_customs_management_id(create(:company, name: "Z Company", system_code: "SYSCODE"), "KEWILL")
     end
 
     let (:fenix_company) do
-      with_fenix_id(FactoryBot(:company, name: "A Company", system_code: "SYSCODE2"), "FENIX")
+      with_fenix_id(create(:company, name: "A Company", system_code: "SYSCODE2"), "FENIX")
     end
 
     it "returns array of values suitable to be used in options_for_select methods" do
@@ -612,7 +612,7 @@ describe Company do
     end
 
     it "allows providing a relation to use to only return results belonging to that relation" do
-      with_customs_management_id(FactoryBot(:company), "KEWILL2")
+      with_customs_management_id(create(:company), "KEWILL2")
 
       expect(described_class.options_for_companies_with_system_identifier("Customs Management",
                                                                           in_relation: described_class.where(id: kewill_company.id))).to eq [["Z Company (KEWILL)",
@@ -621,7 +621,7 @@ describe Company do
   end
 
   describe "set_system_identifier" do
-    let(:company) { FactoryBot(:company) }
+    let(:company) { create(:company) }
 
     it "sets a system identifier" do
       company.set_system_identifier("TEST", "TESTING")

@@ -2,7 +2,7 @@
 
 class HmController < ApplicationController
 
-  before_filter :security_check
+  before_action :security_check
   def index
 
   end

@@ -18,7 +18,7 @@ describe DutyCalcExportFile do
 
   describe "file generating tests" do
     before :each do
-      @importer = FactoryBot(:company, :importer=>true)
+      @importer = create(:company, :importer=>true)
       2.times {DutyCalcExportFileLine.create!(importer_id:@importer.id, export_date:Date.new(2013, 9, 10))}
       FileUtils::mkdir_p 'spec/support/tmp' # make sure directory is there
       @zip_path = 'spec/support/tmp/dce.zip'
@@ -33,7 +33,7 @@ describe DutyCalcExportFile do
     describe "generate_for_importer" do
       it "should generate excel zip and attach" do
         allow_any_instance_of(DutyCalcExportFileLine).to receive(:make_line_array).with(duty_calc_format: :legacy).and_return(["a", "b"])
-        u = FactoryBot(:master_user)
+        u = create(:master_user)
         expect {DutyCalcExportFile.generate_for_importer @importer, u}.to change(DutyCalcExportFile, :count).from(0).to(1)
         d = DutyCalcExportFile.first
         expect(d.attachment).not_to be_nil
@@ -97,7 +97,7 @@ describe DutyCalcExportFile do
 
       it "should not output csv for different importer" do
         allow_any_instance_of(DutyCalcExportFileLine).to receive(:make_line_array).with(duty_calc_format: :legacy).and_return(["a", "b"])
-        other_company = FactoryBot(:company, :importer=>true)
+        other_company = create(:company, :importer=>true)
         DutyCalcExportFileLine.create!(:importer_id=>other_company.id)
         d, t = DutyCalcExportFile.generate_csv @importer
         expect(d.duty_calc_export_file_lines.size).to eq(2)

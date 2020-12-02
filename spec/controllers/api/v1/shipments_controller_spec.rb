@@ -7,7 +7,7 @@ describe Api::V1::ShipmentsController do
     ms
   end
 
-  let(:user) { FactoryBot(:master_user, shipment_edit: true, shipment_view: true, order_view: true, product_view: true) }
+  let(:user) { create(:master_user, shipment_edit: true, shipment_view: true, order_view: true, product_view: true) }
 
   before do
     allow_api_access user
@@ -15,8 +15,8 @@ describe Api::V1::ShipmentsController do
 
   describe "index" do
     it "finds shipments" do
-      FactoryBot(:shipment, reference: '123')
-      FactoryBot(:shipment, reference: 'ABC')
+      create(:shipment, reference: '123')
+      create(:shipment, reference: 'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
@@ -24,7 +24,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "limits fields returned" do
-      s1 = FactoryBot(:shipment, reference: '123', mode: 'Air', master_bill_of_lading: 'MBOL')
+      s1 = create(:shipment, reference: '123', mode: 'Air', master_bill_of_lading: 'MBOL')
       get :index, fields: 'shp_ref,shp_mode', shipment_lines: true, booking_lines: true
       expect(response).to be_success
       j = JSON.parse(response.body)['results']
@@ -35,7 +35,7 @@ describe Api::V1::ShipmentsController do
 
   describe "show" do
     it "renders shipment" do
-      s = FactoryBot(:shipment, reference: '123', mode: 'Air', importer_reference: 'DEF')
+      s = create(:shipment, reference: '123', mode: 'Air', importer_reference: 'DEF')
       get :show, id: s.id
       expect(response).to be_success
       j = JSON.parse response.body
@@ -47,7 +47,7 @@ describe Api::V1::ShipmentsController do
 
     it "appends custom_view to shipment if not nil" do
       allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:shipment_view).and_return 'abc'
-      s = FactoryBot(:shipment)
+      s = create(:shipment)
       get :show, id: s.id
       j = JSON.parse response.body
       expect(j['shipment']['custom_view']).to eq 'abc'
@@ -59,7 +59,7 @@ describe Api::V1::ShipmentsController do
       allow_any_instance_of(Shipment).to receive(:can_attach?).and_return true
       allow_any_instance_of(Shipment).to receive(:can_comment?).and_return false
       allow_any_instance_of(Shipment).to receive(:can_edit_booking?).and_return false
-      s = FactoryBot(:shipment)
+      s = create(:shipment)
       get :show, id: s.id
       j = JSON.parse response.body
       pj = j['shipment']['permissions']
@@ -71,7 +71,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders without lines" do
-      sl = FactoryBot(:shipment_line)
+      sl = create(:shipment_line)
       get :show, id: sl.shipment_id.to_s
       j = JSON.parse response.body
       expect(j['shipment']['lines']).to be_nil
@@ -80,14 +80,14 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders summary section" do
-      ol1 = FactoryBot(:order_line)
-      ol2 = FactoryBot(:order_line, order: ol1.order)
-      sl1 = FactoryBot(:shipment_line, quantity: 1100, product: ol1.product)
+      ol1 = create(:order_line)
+      ol2 = create(:order_line, order: ol1.order)
+      sl1 = create(:shipment_line, quantity: 1100, product: ol1.product)
       sl1.linked_order_line_id = ol1.id
-      sl2 = FactoryBot(:shipment_line, shipment: sl1.shipment, quantity: 25, product: ol2.product)
+      sl2 = create(:shipment_line, shipment: sl1.shipment, quantity: 25, product: ol2.product)
       sl2.linked_order_line_id = ol2.id
-      bl1 = FactoryBot(:booking_line, shipment: sl1.shipment, quantity: 600, product: ol1.product, order: ol1.order)
-      bl2 = FactoryBot(:booking_line, shipment: sl1.shipment, quantity: 50, order_line: ol1)
+      bl1 = create(:booking_line, shipment: sl1.shipment, quantity: 600, product: ol1.product, order: ol1.order)
+      bl2 = create(:booking_line, shipment: sl1.shipment, quantity: 50, order_line: ol1)
       [sl1, sl2, bl1, bl2].each {|s| s.update(updated_at: Time.zone.now)}
 
       get :show, id: sl1.shipment_id.to_s, summary: 'true'
@@ -107,7 +107,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "converts numbers to numeric" do
-      sl = FactoryBot(:shipment_line, quantity: 10)
+      sl = create(:shipment_line, quantity: 10)
       get :show, id: sl.shipment_id, shipment_lines: true
       j = JSON.parse response.body
       sln = j['shipment']['lines'].first
@@ -115,8 +115,8 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders custom values" do
-      cd = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'string')
-      s = FactoryBot(:shipment)
+      cd = create(:custom_definition, module_type: 'Shipment', data_type: 'string')
+      s = create(:shipment)
       s.update_custom_value! cd, 'myval'
       get :show, id: s.id
       expect(response).to be_success
@@ -125,7 +125,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders shipment lines" do
-      sl = FactoryBot(:shipment_line, line_number: 5, quantity: 10)
+      sl = create(:shipment_line, line_number: 5, quantity: 10)
       get :show, id: sl.shipment_id, shipment_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
@@ -136,7 +136,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders booking lines" do
-      sl = FactoryBot(:booking_line, line_number: 5, quantity: 10)
+      sl = create(:booking_line, line_number: 5, quantity: 10)
       get :show, id: sl.shipment_id, booking_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
@@ -147,9 +147,9 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders optional order lines" do
-      ol = FactoryBot(:order_line, quantity: 20, currency: 'USD')
+      ol = create(:order_line, quantity: 20, currency: 'USD')
       ol.order.update(customer_order_number: 'C123', order_number: '123')
-      sl = FactoryBot(:shipment_line, quantity: 10, product: ol.product)
+      sl = create(:shipment_line, quantity: 10, product: ol.product)
       sl.linked_order_line_id = ol.id
       sl.save!
       get :show, id: sl.shipment_id, shipment_lines: true, include: 'order_lines'
@@ -165,9 +165,9 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders shipment containers" do
-      c = FactoryBot(:container, entry: nil, shipment: FactoryBot(:shipment),
+      c = create(:container, entry: nil, shipment: create(:shipment),
                               container_number: 'CN1234')
-      sl = FactoryBot(:shipment_line, shipment: c.shipment, container: c)
+      sl = create(:shipment_line, shipment: c.shipment, container: c)
       get :show, id: sl.shipment_id, shipment_lines: true, include: "containers"
       expect(response).to be_success
       j = JSON.parse response.body
@@ -177,8 +177,8 @@ describe Api::V1::ShipmentsController do
     end
 
     it "optionallies render carton sets" do
-      cs = FactoryBot(:carton_set, starting_carton: 1000)
-      FactoryBot(:shipment_line, shipment: cs.shipment, carton_set: cs)
+      cs = create(:carton_set, starting_carton: 1000)
+      create(:shipment_line, shipment: cs.shipment, carton_set: cs)
       get :show, id: cs.shipment_id, shipment_lines: true, include: 'carton_sets'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -188,7 +188,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders comments" do
-      s = FactoryBot(:shipment, reference: '123', mode: 'Air', importer_reference: 'DEF')
+      s = create(:shipment, reference: '123', mode: 'Air', importer_reference: 'DEF')
       s.comments.create! user: user, subject: "Subject", body: "Comment Body"
       get :show, id: s.id, include: "comments"
 
@@ -200,7 +200,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "renders importer-specific view settings" do
-      s = FactoryBot(:shipment, reference: "123", importer: FactoryBot(:company, system_code: "ACME"))
+      s = create(:shipment, reference: "123", importer: create(:company, system_code: "ACME"))
       KeyJsonItem.shipment_settings("ACME").first_or_create!(json_data: {"percentage_field" => "by product"}.to_json)
       get :show, id: s.id
 
@@ -359,8 +359,8 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "process_tradecard_pack_manifest" do
-    let(:shipment) { FactoryBot(:shipment, reference: "ref num") }
-    let!(:att) { FactoryBot(:attachment, attachable: shipment, attached_file_name: "attached.txt") }
+    let(:shipment) { create(:shipment, reference: "ref num") }
+    let!(:att) { create(:attachment, attachable: shipment, attached_file_name: "attached.txt") }
 
     it "fails if user cannot edit shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
@@ -370,8 +370,8 @@ describe Api::V1::ShipmentsController do
 
     it "fails if attachment is not attached to this shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-      a2 = FactoryBot(:attachment, attached_file_name: "not attached.txt")
-      a3 = FactoryBot(:attachment, attached_file_name: "also not attached.txt")
+      a2 = create(:attachment, attached_file_name: "not attached.txt")
+      a3 = create(:attachment, attached_file_name: "also not attached.txt")
       expect {post :process_tradecard_pack_manifest, {'attachment_ids' => [a2.id, a3.id], 'id' => shipment.id}}.not_to change(AttachmentProcessJob, :count)
       expect(response.status).to eq 400
       # rubocop:disable Layout/LineLength
@@ -406,7 +406,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "processes multiple jobs", :disable_delayed_jobs do
-      att_2 = FactoryBot(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
+      att_2 = create(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
 
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       allow_any_instance_of(AttachmentProcessJob).to receive(:process)
@@ -434,7 +434,7 @@ describe Api::V1::ShipmentsController do
       # DelayedJob prevents processing from taking place.
       # Ensures that submitted but unprocessed worksheets can't be resubmitted
 
-      att_2 = FactoryBot(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
+      att_2 = create(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
 
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       post :process_tradecard_pack_manifest, {'attachment_ids' => [att.id, att_2.id], 'id' => shipment.id}
@@ -467,7 +467,7 @@ describe Api::V1::ShipmentsController do
 
       it "notifies user of exceptions for multiple jobs", :disable_delayed_jobs do
         allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-        att_2 = FactoryBot(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
+        att_2 = create(:attachment, attachable: shipment, attached_file_name: "attached2.txt")
         bad_attachment = Attachment.first
         counter = 0
 
@@ -494,9 +494,9 @@ describe Api::V1::ShipmentsController do
                       'shp_imp_syscode' => 'IMP'}}
     end
 
-    let!(:ven) { FactoryBot(:company, vendor: true, system_code: 'VC') }
-    let!(:imp) { FactoryBot(:company, importer: true, system_code: 'IMP') }
-    let!(:product) { FactoryBot(:product, unique_identifier: 'PUID1') }
+    let!(:ven) { create(:company, vendor: true, system_code: 'VC') }
+    let!(:imp) { create(:company, importer: true, system_code: 'IMP') }
+    let!(:product) { create(:product, unique_identifier: 'PUID1') }
 
     before do
       ven.products_as_vendor << product
@@ -589,7 +589,7 @@ describe Api::V1::ShipmentsController do
     end
 
     context "order_lines" do
-      let!(:o_line) { FactoryBot(:order_line, product: product, quantity: 1000, order: FactoryBot(:order, importer: imp)) }
+      let!(:o_line) { create(:order_line, product: product, quantity: 1000, order: create(:order, importer: imp)) }
 
       before do
         shipment_hash['shipment']['lines'] = [
@@ -613,7 +613,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it "does not link order line if products are different" do
-        o_line.update(product_id: FactoryBot(:product).id)
+        o_line.update(product_id: create(:product).id)
         expect {post :create, shipment_hash}.not_to change(Shipment, :count)
         expect(response.status).to eq 400
       end
@@ -631,10 +631,10 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "update" do
-    let(:imp) { FactoryBot(:company, importer: true, system_code: 'IMP') }
-    let(:shipment) { FactoryBot(:shipment, importer: imp, mode: 'Air') }
-    let!(:ven) { FactoryBot(:company, vendor: true, system_code: 'VC') }
-    let(:product) { FactoryBot(:product, unique_identifier: 'PUID1') }
+    let(:imp) { create(:company, importer: true, system_code: 'IMP') }
+    let(:shipment) { create(:shipment, importer: imp, mode: 'Air') }
+    let!(:ven) { create(:company, vendor: true, system_code: 'VC') }
+    let(:product) { create(:product, unique_identifier: 'PUID1') }
 
     let(:shipment_hash) do
       {
@@ -657,7 +657,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "updates shipment line" do
-      sl = FactoryBot(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
+      sl = create(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
       shipment_hash['lines'] = [{shpln_line_number: 1, shpln_shipped_qty: 24}]
       put :update, id: shipment.id, shipment: shipment_hash
       expect(response).to be_success
@@ -677,7 +677,7 @@ describe Api::V1::ShipmentsController do
 
     it "does not allow lines to be deleted if !can_add_remove_lines?" do
       allow_any_instance_of(Shipment).to receive(:can_add_remove_shipment_lines?).and_return false
-      sl = FactoryBot(:shipment_line, shipment: shipment)
+      sl = create(:shipment_line, shipment: shipment)
       shipment_hash['lines'] = [
         { 'id' => sl.id,
           '_destroy' => 'true'}
@@ -687,7 +687,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "updates container" do
-      con = FactoryBot(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
+      con = create(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
       shipment_hash['containers'] = [{'id' => con.id, 'con_container_number' => 'CNUM', 'con_container_size' => '40'}]
       put :update, id: shipment.id, shipment: shipment_hash
       expect(response).to be_success
@@ -696,7 +696,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "allows lines to be deleted" do
-      sl = FactoryBot(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
+      sl = create(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
       shipment_hash['lines'] = [{shpln_line_number: 1, _destroy: true}]
       put :update, id: shipment.id, shipment: shipment_hash
       expect(response).to be_success
@@ -704,7 +704,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "allows containers to be deleted" do
-      con = FactoryBot(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
+      con = create(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
       shipment_hash['containers'] = [{'id' => con.id, '_destroy' => true}]
       put :update, id: shipment.id, shipment: shipment_hash
       expect(response).to be_success
@@ -712,8 +712,8 @@ describe Api::V1::ShipmentsController do
     end
 
     it "does not allow containers to be deleted if they have lines" do
-      con = FactoryBot(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
-      FactoryBot(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1, container: con)
+      con = create(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
+      create(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1, container: con)
       shipment_hash['containers'] = [{'id' => con.id, '_destroy' => true}]
       put :update, id: shipment.id, shipment: shipment_hash
       expect(response.status).to eq 400
@@ -721,8 +721,8 @@ describe Api::V1::ShipmentsController do
     end
 
     it "allows containers to be deleted if associated shipment lines are going to be deleted too" do
-      con = FactoryBot(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
-      sl = FactoryBot(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1, container: con)
+      con = create(:container, entry: nil, shipment: shipment, container_number: 'CNOLD')
+      sl = create(:shipment_line, shipment: shipment, product: product, quantity: 100, line_number: 1, container: con)
       shipment_hash['containers'] = [{'id' => con.id, '_destroy' => true}]
       shipment_hash['lines'] = [{'id' => sl.id, '_destroy' => true}]
       expect {put :update, id: shipment.id, shipment: shipment_hash}.to change(Container, :count).from(1).to(0)
@@ -731,7 +731,7 @@ describe Api::V1::ShipmentsController do
 
     context "with booking lines" do
 
-      let (:order_line) { FactoryBot(:order_line, product: product, quantity: 1000, order: FactoryBot(:order, importer: imp)) }
+      let (:order_line) { create(:order_line, product: product, quantity: 1000, order: create(:order, importer: imp)) }
 
       let (:shipment_data) do
         {'id' => shipment.id,
@@ -743,7 +743,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it "updates booking line" do
-        sl = FactoryBot(:booking_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
+        sl = create(:booking_line, shipment: shipment, product: product, quantity: 100, line_number: 1)
         shipment_data['booking_lines'].first.merge!({'bkln_line_number' => 1, 'bkln_quantity' => 24})
         put :update, id: shipment.id, shipment: shipment_data
         expect(response).to be_success
@@ -764,7 +764,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it "rejects orders belonging to a different importer" do
-        order_line.order.update!(importer: FactoryBot(:company, importer: true, system_code: 'ACME'))
+        order_line.order.update!(importer: create(:company, importer: true, system_code: 'ACME'))
         put :update, id: shipment.id, shipment: shipment_data
         expect(response.status).to eq 400
         expect(JSON.parse(response.body)['errors']).to eq ["Order has different importer from shipment"]
@@ -803,7 +803,7 @@ describe Api::V1::ShipmentsController do
       expect(ar_object).to receive(:limit).with(25).and_return ar_object
       expect(ar_object).to receive(:each).and_yield(o1).and_yield(o2)
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
-      s = FactoryBot(:shipment)
+      s = create(:shipment)
       get :available_orders, id: s.id
       expect(response).to be_success
       r = JSON.parse(response.body)['available_orders']
@@ -821,13 +821,13 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "booked orders" do
-    let(:shipment) { FactoryBot(:shipment) }
-    let!(:order1) { FactoryBot :order, order_number: 'ONUM', customer_order_number: 'CNUM' }
-    let!(:order2) { FactoryBot :order, order_number: 'ONUM2', customer_order_number: 'CNUM2' }
+    let(:shipment) { create(:shipment) }
+    let!(:order1) { create :order, order_number: 'ONUM', customer_order_number: 'CNUM' }
+    let!(:order2) { create :order, order_number: 'ONUM2', customer_order_number: 'CNUM2' }
 
     before do
-      FactoryBot :booking_line, shipment_id: shipment.id, order_id: order1.id
-      FactoryBot :booking_line, shipment_id: shipment.id, order_id: order2.id
+      create :booking_line, shipment_id: shipment.id, order_id: order1.id
+      create :booking_line, shipment_id: shipment.id, order_id: order2.id
     end
 
     it "returns orders that have been booked at the order_id level" do
@@ -848,7 +848,7 @@ describe Api::V1::ShipmentsController do
 
     it "lines_available is true if any lines are booked at the order_line_id level" do
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
-      FactoryBot :booking_line, shipment_id: shipment.id, order_line_id: 99
+      create :booking_line, shipment_id: shipment.id, order_line_id: 99
 
       get :booked_orders, id: shipment.id
       expect(response).to be_success
@@ -860,11 +860,11 @@ describe Api::V1::ShipmentsController do
   describe "available_lines" do
     it "returns booking_lines with an order_line_id, in a format that mocks the linked order_line" do
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
-      shipment = FactoryBot(:shipment)
-      order = FactoryBot :order, order_number: 'ONUM', customer_order_number: 'CNUM'
-      prod1 = FactoryBot :product
-      oline1 = FactoryBot :order_line, order_id: order.id, line_number: 1, sku: 'SKU', product_id: prod1.id
-      bline1 = FactoryBot :booking_line, shipment_id: shipment.id, order_line_id: oline1.id, line_number: 5
+      shipment = create(:shipment)
+      order = create :order, order_number: 'ONUM', customer_order_number: 'CNUM'
+      prod1 = create :product
+      oline1 = create :order_line, order_id: order.id, line_number: 1, sku: 'SKU', product_id: prod1.id
+      bline1 = create :booking_line, shipment_id: shipment.id, order_line_id: oline1.id, line_number: 5
 
       get :available_lines, id: shipment.id
       expect(response).to be_success
@@ -880,11 +880,11 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "autocomplete_orders" do
-    let(:shipment) { FactoryBot(:shipment, importer: user.company, vendor: user.company) }
-    let!(:order_1) { FactoryBot(:order, importer: user.company, vendor: user.company, approval_status: 'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM") }
+    let(:shipment) { create(:shipment, importer: user.company, vendor: user.company) }
+    let!(:order_1) { create(:order, importer: user.company, vendor: user.company, approval_status: 'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM") }
 
     before do
-      FactoryBot(:order, importer: user.company, vendor: user.company, approval_status: 'Accepted', customer_order_number: "CNO#")
+      create(:order, importer: user.company, vendor: user.company, approval_status: 'Accepted', customer_order_number: "CNO#")
     end
 
     it "autocompletes order numbers that are available to utilize" do
@@ -937,9 +937,9 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "autocomplete_products" do
-    let(:shipment) { FactoryBot(:shipment, importer: user.company, vendor: user.company) }
-    let!(:product1) { FactoryBot(:product, importer: user.company, unique_identifier: "Prod1") }
-    let(:product2) { FactoryBot(:product, importer: user.company, unique_identifier: "Prod2") }
+    let(:shipment) { create(:shipment, importer: user.company, vendor: user.company) }
+    let!(:product1) { create(:product, importer: user.company, unique_identifier: "Prod1") }
+    let(:product2) { create(:product, importer: user.company, unique_identifier: "Prod2") }
 
     it "autocompletes products that are available to utilize" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
@@ -965,9 +965,9 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "autocomplete_address" do
-    let(:user) { FactoryBot(:user, shipment_edit: true, shipment_view: true, order_view: true, product_view: true) }
-    let(:importer) { FactoryBot(:importer) }
-    let(:shipment) { FactoryBot(:shipment, importer: importer) }
+    let(:user) { create(:user, shipment_edit: true, shipment_view: true, order_view: true, product_view: true) }
+    let(:importer) { create(:importer) }
+    let(:shipment) { create(:shipment, importer: importer) }
 
     before do
       user.company.linked_companies << importer
@@ -976,7 +976,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "returns address matching by name linked to the importer" do
-      address = FactoryBot(:full_address, name: "Company 1", company: importer, in_address_book: true)
+      address = create(:full_address, name: "Company 1", company: importer, in_address_book: true)
 
       get :autocomplete_address, id: shipment.id, n: "ny"
       r = JSON.parse(response.body)
@@ -987,7 +987,7 @@ describe Api::V1::ShipmentsController do
     it "does not return address linked to companies user can't view" do
       user.company.linked_companies.delete_all
 
-      FactoryBot(:full_address, name: "Company 1", company: importer, in_address_book: true)
+      create(:full_address, name: "Company 1", company: importer, in_address_book: true)
 
       get :autocomplete_address, id: shipment.id, n: "ny"
       r = JSON.parse(response.body)
@@ -995,7 +995,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "does not return address not saved to address book" do
-      FactoryBot(:full_address, name: "Company 1", company: importer, in_address_book: false)
+      create(:full_address, name: "Company 1", company: importer, in_address_book: false)
       get :autocomplete_address, id: shipment.id, n: "ny"
       r = JSON.parse(response.body)
       expect(r.size).to eq 0
@@ -1003,11 +1003,11 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "create_address" do
-    let(:importer) { FactoryBot(:importer) }
-    let(:shipment) { FactoryBot(:shipment, importer: importer) }
+    let(:importer) { create(:importer) }
+    let(:shipment) { create(:shipment, importer: importer) }
 
     it "creates an address associated with the importer" do
-      c = FactoryBot(:country)
+      c = create(:country)
       address = {name: "Address", line_1: "Line 1", city: "City", state: "ST", postal_code: "1234N", country_id: c.id, in_address_book: true}
 
       post :create_address, id: shipment.id, address: address
@@ -1034,9 +1034,9 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "shipment_lines" do
-    let!(:line1) { FactoryBot(:shipment_line) }
+    let!(:line1) { create(:shipment_line) }
     let(:shipment) { line1.shipment }
-    let!(:line2) { FactoryBot(:shipment_line, shipment: shipment) }
+    let!(:line2) { create(:shipment_line, shipment: shipment) }
 
     it "returns shell shipment with only shipment lines" do
       get :shipment_lines, id: shipment.id
@@ -1053,7 +1053,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "returns order information if requested" do
-      ol1 = FactoryBot(:order_line)
+      ol1 = create(:order_line)
       line1.update! product: ol1.product
 
       PieceSet.create! order_line: ol1, shipment_line: line1, quantity: 1100
@@ -1080,9 +1080,9 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "booking_lines" do
-    let!(:line1) { FactoryBot(:booking_line) }
+    let!(:line1) { create(:booking_line) }
     let(:shipment) { line1.shipment }
-    let!(:line2) { FactoryBot(:booking_line, shipment: shipment) }
+    let!(:line2) { create(:booking_line, shipment: shipment) }
 
     it "returns shell shipment with only shipment lines" do
       get :booking_lines, id: shipment.id
@@ -1108,22 +1108,22 @@ describe Api::V1::ShipmentsController do
 
   context 'order booking' do
     let :importer do
-      FactoryBot(:company, importer: true)
+      create(:company, importer: true)
     end
     let :vendor do
-      FactoryBot(:company, vendor: true)
+      create(:company, vendor: true)
     end
     let :shipment do
-      FactoryBot(:shipment, importer: importer, vendor: vendor, ship_from: order.ship_from)
+      create(:shipment, importer: importer, vendor: vendor, ship_from: order.ship_from)
     end
     let :order do
-      FactoryBot(:order, importer: importer, vendor: vendor, ship_from: FactoryBot(:address, company: vendor))
+      create(:order, importer: importer, vendor: vendor, ship_from: create(:address, company: vendor))
     end
     let :product do
-      FactoryBot(:product)
+      create(:product)
     end
     let :order_line do
-      FactoryBot(:order_line, order: order, quantity: 100, variant: FactoryBot(:variant, product: product), product: product)
+      create(:order_line, order: order, quantity: 100, variant: create(:variant, product: product), product: product)
     end
 
     describe "#create_booking_from_order" do
@@ -1213,7 +1213,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it 'fails if order ship from is different than shipment ship from' do
-        order.update(ship_from_id: FactoryBot(:address, company: vendor))
+        order.update(ship_from_id: create(:address, company: vendor))
 
         expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.not_to change(BookingLine, :count)
 
@@ -1237,7 +1237,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it 'fails if shipment has different importer as order' do
-        order_line.order.update(importer_id: FactoryBot(:company, importer: true).id)
+        order_line.order.update(importer_id: create(:company, importer: true).id)
 
         expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.not_to change(BookingLine, :count)
 
@@ -1246,7 +1246,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it 'fails if shipment has different vendor than order' do
-        order_line.order.update(vendor_id: FactoryBot(:company, vendor: true).id)
+        order_line.order.update(vendor_id: create(:company, vendor: true).id)
 
         expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.not_to change(BookingLine, :count)
 
@@ -1257,12 +1257,12 @@ describe Api::V1::ShipmentsController do
   end
 
   describe "open_bookings" do
-    let (:vendor) { FactoryBot(:vendor) }
-    let (:importer) { FactoryBot(:importer) }
-    let! (:shipment) { FactoryBot(:shipment, vendor: vendor, importer: importer) }
+    let (:vendor) { create(:vendor) }
+    let (:importer) { create(:importer) }
+    let! (:shipment) { create(:shipment, vendor: vendor, importer: importer) }
 
     context "with order_id parameter" do
-      let! (:order) { FactoryBot(:order, importer: importer, vendor: vendor) }
+      let! (:order) { create(:order, importer: importer, vendor: vendor) }
 
       it "returns bookings user can see where the importer and vendor match the given order's ids" do
         expect(OpenChain::Registries::OrderBookingRegistry).to receive(:can_book_order_to_shipment?).with(order, shipment).and_return "yes"
@@ -1276,14 +1276,14 @@ describe Api::V1::ShipmentsController do
       end
 
       it "does not return results if importer is different than order" do
-        shipment.update! importer_id: FactoryBot(:importer).id
+        shipment.update! importer_id: create(:importer).id
 
         get "open_bookings", order_id: order.id
         expect(JSON.parse(response.body)["results"].length).to eq 0
       end
 
       it "does not return results if vendor is different than order" do
-        shipment.update! vendor_id: FactoryBot(:vendor).id
+        shipment.update! vendor_id: create(:vendor).id
 
         get "open_bookings", order_id: order.id
         expect(JSON.parse(response.body)["results"].length).to eq 0
@@ -1291,7 +1291,7 @@ describe Api::V1::ShipmentsController do
     end
 
     it "limits bookings to linked importer accounts if user is not a vendor or an importer" do
-      user.company = FactoryBot(:master_company)
+      user.company = create(:master_company)
       user.company.linked_companies << importer
       user.save!
 
@@ -1307,7 +1307,7 @@ describe Api::V1::ShipmentsController do
       user.company.vendor = true
       user.company.save!
 
-      shipment.update! vendor_id: FactoryBot(:vendor).id
+      shipment.update! vendor_id: create(:vendor).id
 
       get "open_bookings"
       expect(JSON.parse(response.body)["results"].length).to eq 0
@@ -1317,14 +1317,14 @@ describe Api::V1::ShipmentsController do
       user.company.importer = true
       user.company.save!
 
-      shipment.update! importer_id: FactoryBot(:vendor).id
+      shipment.update! importer_id: create(:vendor).id
 
       get "open_bookings"
       expect(JSON.parse(response.body)["results"].length).to eq 0
     end
 
     it "limits fields returned" do
-      user.company = FactoryBot(:master_company)
+      user.company = create(:master_company)
       user.company.linked_companies << importer
       user.save!
       get "open_bookings", fields: "shp_ref"
@@ -1337,7 +1337,7 @@ describe Api::V1::ShipmentsController do
 
     it "uses order booking registry to add query restrictions to open bookings" do
       # Make sure it's setup with a scenario where a shipment should be found
-      user.company = FactoryBot(:master_company)
+      user.company = create(:master_company)
       user.company.linked_companies << importer
       user.save!
 

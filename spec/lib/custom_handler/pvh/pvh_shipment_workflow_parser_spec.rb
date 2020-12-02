@@ -8,21 +8,21 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     ["01/21/16", "2254444", nil, "KAETHE P", "OOLU7360259", "OOLU", "2567813300", "HOT", "JONESVILLE", "CN", "REGINA MIRACLE INTL", "0159419203", "A3", "4W", "315605", "F3646", "       ", "025", "2394", "MODERN T-SHIRT      ", "6212109020", "   ", " ", "5.32", "0.000", "63", "1/29/2016", "1/28/2016", "WOMEN'S BRA", nil, nil, "USSAV", "016", "12/23/2015", "HKHKG", "12/20/15", "                                       ", nil, nil]
   }
 
-  let (:pvh) { FactoryBot(:importer, system_code: "PVHWSHT") }
-  let (:user) { FactoryBot(:master_user, product_view: true, order_view: true) }
-  let (:unlading_port) { FactoryBot(:port, unlocode: "USSAV")}
-  let (:lading_port) { FactoryBot(:port, unlocode: "HKHKG")}
+  let (:pvh) { create(:importer, system_code: "PVHWSHT") }
+  let (:user) { create(:master_user, product_view: true, order_view: true) }
+  let (:unlading_port) { create(:port, unlocode: "USSAV")}
+  let (:lading_port) { create(:port, unlocode: "HKHKG")}
   let (:cdefs) {subject.instance_variable_get("@cdefs")}
-  let (:existing_product) { FactoryBot(:product, unique_identifier: "PVHWSHT-F3646")}
+  let (:existing_product) { create(:product, unique_identifier: "PVHWSHT-F3646")}
   let (:existing_order) {
-    order = FactoryBot(:order, importer: pvh, order_number: "PVHWSHT-315605")
+    order = create(:order, importer: pvh, order_number: "PVHWSHT-315605")
     order_line = order.order_lines.create! product: existing_product
     order_line.update_custom_value! cdefs[:ord_line_color], "025"
     order_line.update_custom_value! cdefs[:ord_line_division], "A34W"
     order
   }
   let (:existing_shipment) {
-    shipment = FactoryBot(:shipment, reference: "PVHWSHT-OOLU2567813300", importer: pvh)
+    shipment = create(:shipment, reference: "PVHWSHT-OOLU2567813300", importer: pvh)
     container = shipment.containers.create! container_number: "OOLU7360259"
     sl = shipment.shipment_lines.create! product: existing_product, container: container
     sl.piece_sets.create! order_line: existing_order.order_lines.first, quantity: 10
@@ -204,7 +204,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
   end
 
   describe "can_view?" do
-    let (:can_view_user) { FactoryBot(:master_user)}
+    let (:can_view_user) { create(:master_user)}
     let (:www_setup) {
       setup = MasterSetup.new system_code: "www-vfitrack-net"
       allow(MasterSetup).to receive(:get).and_return setup
@@ -217,7 +217,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
 
     it "disallows non-master users" do
       www_setup
-      expect(described_class.can_view? FactoryBot(:user)).to be_falsey
+      expect(described_class.can_view? create(:user)).to be_falsey
     end
 
     it "disallows non-www systems" do

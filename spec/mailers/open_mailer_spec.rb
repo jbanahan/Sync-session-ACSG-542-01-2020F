@@ -18,12 +18,12 @@ describe OpenMailer do
 
   context "support tickets" do
 
-    let(:requestor) { FactoryBot(:user) }
+    let(:requestor) { create(:user) }
     let(:st) { SupportTicket.new(requestor: requestor, subject: "SUB", body: "BOD") }
 
     describe 'send_support_ticket_to_agent' do
       it "sends ticket to agent when agent is set" do
-        agent = FactoryBot(:user)
+        agent = create(:user)
         st.agent = agent
         described_class.send_support_ticket_to_agent(st).deliver_now
         mail = ActionMailer::Base.deliveries.pop
@@ -56,7 +56,7 @@ describe OpenMailer do
   describe 'send_support_request_to_helpdesk' do
     it "sends request to helpdesk" do
       stub_master_setup
-      request = FactoryBot(:support_request, ticket_number: "42", body: "request body", severity: "urgent", referrer_url: "ref url", external_link: "ext link")
+      request = create(:support_request, ticket_number: "42", body: "request body", severity: "urgent", referrer_url: "ref url", external_link: "ext link")
       described_class.send_support_request_to_helpdesk("support@vandegriftinc.com", request).deliver_now
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["support@vandegriftinc.com"]
@@ -93,7 +93,7 @@ describe OpenMailer do
   end
 
   describe 'send_s3_file' do
-    let(:user) { FactoryBot(:user) }
+    let(:user) { create(:user) }
     let(:to) { 'a@b.com' }
     let(:cc) { 'cc@cc.com' }
     let(:subject) { 'my subject' }
@@ -215,9 +215,9 @@ describe OpenMailer do
     end
 
     it "explodes mailing lists into component email addresses" do
-      mailing_list = FactoryBot(:mailing_list, system_code: "MAILING LIST")
-      user1 = FactoryBot(:user, email: "me@there.com")
-      user2 = FactoryBot(:user, email: "you@there.com")
+      mailing_list = create(:mailing_list, system_code: "MAILING LIST")
+      user1 = create(:user, email: "me@there.com")
+      user2 = create(:user, email: "you@there.com")
 
       mailing_list.email_addresses = [user1.email, user2.email].join(", ").to_str
       described_class.send_simple_html(mailing_list, "Subject", "").deliver_now
@@ -228,9 +228,9 @@ describe OpenMailer do
     end
 
     it "explodes groups into component email addresses" do
-      group = FactoryBot(:group, system_code: "GROUP")
-      user1 = FactoryBot(:user, email: "me@there.com")
-      user2 = FactoryBot(:user, email: "you@there.com")
+      group = create(:group, system_code: "GROUP")
+      user1 = create(:user, email: "me@there.com")
+      user2 = create(:user, email: "you@there.com")
 
       group.users << user1
       group.users << user2
@@ -675,7 +675,7 @@ describe OpenMailer do
   end
 
   describe "send_invite" do
-    let(:user) { FactoryBot(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
+    let(:user) { create(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
 
     it "sends an invite email" do
       allow(master_setup).to receive(:request_host).and_return "localhost"
@@ -710,7 +710,7 @@ describe OpenMailer do
   end
 
   describe "send_uploaded_items" do
-    let(:user) { FactoryBot(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
+    let(:user) { create(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
 
     it "sends imported file data" do
       data = "This is my data, there are many like it but this one is mine."
@@ -741,8 +741,8 @@ describe OpenMailer do
   end
 
   describe "send_survey_invite" do
-    let(:user) { FactoryBot(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
-    let(:survey) { FactoryBot(:survey) }
+    let(:user) { create(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com") }
+    let(:survey) { create(:survey) }
     let(:survey_response) { survey.survey_responses.create! user: user, subtitle: "test subtitle" }
 
     before do
@@ -768,9 +768,9 @@ describe OpenMailer do
     end
 
     context 'with user group' do
-      let(:group) { FactoryBot(:group) }
-      let(:user1) { FactoryBot(:user) }
-      let(:user2) { FactoryBot(:user) }
+      let(:group) { create(:group) }
+      let(:user1) { create(:user) }
+      let(:user2) { create(:user) }
 
       before do
         user1.groups << group
@@ -794,7 +794,7 @@ describe OpenMailer do
     let! (:master_setup) { stub_master_setup }
 
     it "sends email with specified recipients, subject & body, with a link to the survey" do
-      sr = FactoryBot(:survey_response)
+      sr = create(:survey_response)
 
       email_to = ["john.smith@abc.com", "sue.anderson@cbs.com"]
       email_subject = "don't forget to complete your survey"
@@ -812,7 +812,7 @@ describe OpenMailer do
   end
 
   describe "send_search_result_manually" do
-    let(:user) { FactoryBot(:user, email: "me@here.com") }
+    let(:user) { create(:user, email: "me@here.com") }
 
     it "sends email with to, reply_to, subject, body, and attachment" do
        Tempfile.open(["file", "txt"]) do |f|
@@ -841,7 +841,7 @@ describe OpenMailer do
   describe "send_search_bad_email" do
     it "sends email with to, subject, body" do
       stub_master_setup
-      srch = FactoryBot(:search_setup, name: "srch name")
+      srch = create(:search_setup, name: "srch name")
       described_class.send_search_bad_email("tufnel@stonehenge.biz", srch, "Your search has an invalid email!").deliver_now
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]

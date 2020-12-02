@@ -1,14 +1,14 @@
 describe OpenChain::ModelFieldDefinition::OfficialTariffFieldDefinition do
   describe "WTO 6 Digit" do
     it "should get 6 digit HTS w/o formatting" do
-      ot = FactoryBot(:official_tariff, hts_code:'1234567890')
-      FactoryBot(:official_tariff, hts_code:'0987654321') # don't find w/ search
+      ot = create(:official_tariff, hts_code:'1234567890')
+      create(:official_tariff, hts_code:'0987654321') # don't find w/ search
 
       mf = ModelField.find_by_uid(:ot_wto6)
       expect(mf).to be_read_only
       expect(mf.process_export(ot, nil, true)).to eq '123456'
 
-      ss = SearchSetup.new(module_type:'OfficialTariff', user_id:FactoryBot(:admin_user).id)
+      ss = SearchSetup.new(module_type:'OfficialTariff', user_id:create(:admin_user).id)
       ss.search_criterions.build(model_field_uid:'ot_wto6', operator:'eq', value:'123456')
       expect(ss.result_keys).to eq [ot.id]
     end

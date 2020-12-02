@@ -1,7 +1,7 @@
 describe ValidationRuleEntryReleased do
   before :each do
     @rule = ValidationRuleEntryReleased.new(rule_attributes_json: {hold_date: 'ent_cbp_hold_date', release_date: 'ent_cbp_hold_release_date'}.to_json)
-    @entry = FactoryBot(:entry, entry_number: '1234', importer_id: 555)
+    @entry = create(:entry, entry_number: '1234', importer_id: 555)
   end
 
   it 'raises an error given an invalid release_date model field' do

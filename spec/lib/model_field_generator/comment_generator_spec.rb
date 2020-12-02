@@ -1,14 +1,14 @@
 describe OpenChain::ModelFieldGenerator::CommentGenerator do
   describe '_comment_count' do
     before :each do
-      @u = FactoryBot(:admin_user, order_view:true)
+      @u = create(:admin_user, order_view:true)
       @mf = ModelField.find_by_uid :ord_comment_count
       @ss = SearchSetup.new(name:'Test', user:@u, module_type:'Order')
       @sc = @ss.search_criterions.build(model_field_uid:'ord_comment_count', operator:'eq')
       @ss.search_columns.build(model_field_uid:'ord_comment_count', rank:1)
     end
     it "should work when no comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       expect(@mf.process_export(o, nil, true)).to eq 0
 
       @sc.value = 0
@@ -16,7 +16,7 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
       expect(SearchQuery.new(@ss, @u).execute).to eq expected_result
     end
     it "should work when multiple comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       2.times {|i| o.comments.create!(body:'x', user:@u)}
       expect(@mf.process_export(o, nil, true)).to eq 2
 
@@ -27,14 +27,14 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
   end
   describe '_last_comment_body' do
     before :each do
-      @u = FactoryBot(:admin_user, order_view:true)
+      @u = create(:admin_user, order_view:true)
       @mf = ModelField.find_by_uid :ord_last_comment_body
       @ss = SearchSetup.new(name:'Test', user:@u, module_type:'Order')
       @sc = @ss.search_criterions.build(model_field_uid:'ord_last_comment_body', operator:'eq')
       @ss.search_columns.build(model_field_uid:'ord_last_comment_body', rank:1)
     end
     it "should work when no comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       expect(@mf.process_export(o, nil, true)).to eq ''
 
       @sc.value = ''
@@ -42,7 +42,7 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
       expect(SearchQuery.new(@ss, @u).execute).to eq expected_result
     end
     it "should work when multiple comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       2.times {|i| o.comments.create!(body:i.to_s, user:@u)}
       expect(@mf.process_export(o, nil, true)).to eq '1'
 
@@ -53,14 +53,14 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
   end
   describe '_last_comment_subject' do
     before :each do
-      @u = FactoryBot(:admin_user, order_view:true)
+      @u = create(:admin_user, order_view:true)
       @mf = ModelField.find_by_uid :ord_last_comment_subject
       @ss = SearchSetup.new(name:'Test', user:@u, module_type:'Order')
       @sc = @ss.search_criterions.build(model_field_uid:'ord_last_comment_subject', operator:'eq')
       @ss.search_columns.build(model_field_uid:'ord_last_comment_subject', rank:1)
     end
     it "should work when no comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       expect(@mf.process_export(o, nil, true)).to eq ''
 
       @sc.value = ''
@@ -68,7 +68,7 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
       expect(SearchQuery.new(@ss, @u).execute).to eq expected_result
     end
     it "should work when multiple comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       2.times {|i| o.comments.create!(body:i.to_s, subject: "s#{i}", user:@u)}
       expect(@mf.process_export(o, nil, true)).to eq 's1'
 
@@ -79,14 +79,14 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
   end
   describe '_last_comment_by' do
     before :each do
-      @u = FactoryBot(:admin_user, order_view:true)
+      @u = create(:admin_user, order_view:true)
       @mf = ModelField.find_by_uid :ord_last_comment_by
       @ss = SearchSetup.new(name:'Test', user:@u, module_type:'Order')
       @sc = @ss.search_criterions.build(model_field_uid:'ord_last_comment_by', operator:'eq')
       @ss.search_columns.build(model_field_uid:'ord_last_comment_by', rank:1)
     end
     it "should work when no comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       expect(@mf.process_export(o, nil, true)).to eq ''
 
       @sc.value = ''
@@ -94,7 +94,7 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
       expect(SearchQuery.new(@ss, @u).execute).to eq expected_result
     end
     it "should work when multiple comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       2.times {|i| o.comments.create!(body:i.to_s, user:@u)}
       expect(@mf.process_export(o, nil, true)).to eq @u.username
 
@@ -105,14 +105,14 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
   end
   describe '_last_comment_at' do
     before :each do
-      @u = FactoryBot(:admin_user, order_view:true)
+      @u = create(:admin_user, order_view:true)
       @mf = ModelField.find_by_uid :ord_last_comment_at
       @ss = SearchSetup.new(name:'Test', user:@u, module_type:'Order')
       @sc = @ss.search_criterions.build(model_field_uid:'ord_last_comment_at', operator:'gt')
       @ss.search_columns.build(model_field_uid:'ord_last_comment_at', rank:1)
     end
     it "should work when no comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       expect(@mf.process_export(o, nil, true)).to be_nil
 
       @sc.operator = 'null'
@@ -120,7 +120,7 @@ describe OpenChain::ModelFieldGenerator::CommentGenerator do
       expect(SearchQuery.new(@ss, @u).execute).to eq expected_result
     end
     it "should work when multiple comments" do
-      o = FactoryBot(:order)
+      o = create(:order)
       o.comments.create!(body:"1", user:@u, created_at: 1.minute.ago)
       comment2 = o.comments.create!(body:"2", user:@u)
       comment2.reload

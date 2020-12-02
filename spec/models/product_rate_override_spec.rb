@@ -20,7 +20,7 @@ describe ProductRateOverride do
       it 'should wrap to product.search_where' do
         u = double('user')
         expect(Product).to receive(:search_where).with(u).and_return '99=99'
-        pro = FactoryBot(:product_rate_override)
+        pro = create(:product_rate_override)
         search = ProductRateOverride.search_secure(u, ProductRateOverride)
         expect(search.to_sql).to match(/product_rate_overrides\.product_id IN \(SELECT products\.id FROM products WHERE 99=99\)/)
         expect(search.to_a).to eq [pro]

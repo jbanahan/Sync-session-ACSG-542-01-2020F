@@ -7,15 +7,15 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
     ]
   }
 
-  let (:cq) { FactoryBot(:importer, system_code: "CQ") }
-  let (:advance) { FactoryBot(:importer, system_code: "ADVANCE") }
+  let (:cq) { create(:importer, system_code: "CQ") }
+  let (:advance) { create(:importer, system_code: "ADVANCE") }
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"
     allow(custom_file).to receive(:path).and_return "/path/to/file.xlsx"
     custom_file
   }
-  let (:user) { FactoryBot(:user) }
-  let (:countries) { [FactoryBot(:country, iso_code: "US", import_location: true), FactoryBot(:country, iso_code: "CA", import_location: true)]}
+  let (:user) { create(:user) }
+  let (:countries) { [create(:country, iso_code: "US", import_location: true), create(:country, iso_code: "CA", import_location: true)]}
 
   subject {described_class.new custom_file }
 
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
 
-      user = FactoryBot(:master_user)
+      user = create(:master_user)
       expect(user).to receive(:edit_products?).and_return true
 
       expect(described_class.can_view? user).to be_truthy
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
 
-      user = FactoryBot(:master_user)
+      user = create(:master_user)
       expect(user).to receive(:edit_products?).and_return false
 
       expect(described_class.can_view? user).to be_falsey
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return false
 
-      user = FactoryBot(:master_user)
+      user = create(:master_user)
       allow(user).to receive(:edit_products?).and_return true
       expect(described_class.can_view? user).to be_falsey
     end

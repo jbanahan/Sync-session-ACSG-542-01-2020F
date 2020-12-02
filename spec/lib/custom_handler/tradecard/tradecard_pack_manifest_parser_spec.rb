@@ -91,8 +91,8 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
 
     before :each do
-      @s = FactoryBot(:shipment)
-      @u = FactoryBot(:user)
+      @s = create(:shipment)
+      @u = create(:user)
       allow(@s).to receive(:can_edit?).and_return true
     end
     it "should error if cell B2 doesn't say 'Packing Manifest'" do
@@ -218,11 +218,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect {described_class.new.process_rows(@s, rows, @u)}.to_not change(Container, :count)
     end
     it "should add lines" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      ol2 = FactoryBot(:order_line, quantity:100, product:p, sku:'sk55555', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      ol2 = create(:order_line, quantity:100, product:p, sku:'sk55555', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
@@ -247,10 +247,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
 
     it "should add lines even if order# / sku is a numeric value" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'123', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'12345', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'123', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'12345', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
@@ -269,11 +269,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
 
     it "should add lines when PACKAGE DETAIL header is used" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      ol2 = FactoryBot(:order_line, quantity:100, product:p, sku:'sk55555', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      ol2 = create(:order_line, quantity:100, product:p, sku:'sk55555', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('PACKAGE DETAIL'),
@@ -297,10 +297,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(l.line_number).to eq 2
     end
     it "should handle commas in quantity" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
@@ -317,11 +317,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(f.order_lines.to_a).to eq [ol]
     end
     it "should not add lines for a different importer" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      @s.update_attributes(importer_id:FactoryBot(:company).id)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      @s.update_attributes(importer_id:create(:company).id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
         84=>['', '', '', 'Equipment#: WHATEVER'],
@@ -332,10 +332,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect {described_class.new.process_rows(@s, rows, @u)}.to raise_error "Order Number ordnum not found."
     end
     it "should assign lines to container" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {61=>mode_row('OCEAN'),
         76=>subtitle_row('EQUIPMENT SUMMARY'),
@@ -353,10 +353,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(@s.shipment_lines.first.container.container_number).to eq 'ABCD12345'
     end
     it "should handle blank line between EQUIPMENT SUMMARY and container table" do
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {61=>mode_row('OCEAN'),
         76=>subtitle_row('EQUIPMENT SUMMARY'),
@@ -386,8 +386,8 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect {described_class.new.process_rows(@s, rows, @u)}.to raise_error "Order Number ordnum not found."
     end
     it "should fail on missing SKU" do
-      c = FactoryBot(:company)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      c = create(:company)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
@@ -400,11 +400,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
     it "raises error when order/manifest check fails if enable_warnings is present" do
       @s.update_attributes! reference: "REF1"
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF2"), product: p)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "REF2"), product: p)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
       @s.update_attributes(importer_id:c.id)
@@ -419,11 +419,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
     it "assigns warning_overridden attribs when enable_warnings is absent" do
       @s.update_attributes! reference: "REF1"
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: 'Accepted')
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF2"), product: p)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: 'Accepted')
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "REF2"), product: p)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
       @s.update_attributes(importer_id:c.id)
@@ -440,11 +440,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
     it "errors if an order is 'unaccepted'" do
       @s.update_attributes! reference: "REF1"
-      c = FactoryBot(:company)
-      p = FactoryBot(:product)
-      o = FactoryBot(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: nil)
-      ol = FactoryBot(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF2"), product: p)
+      c = create(:company)
+      p = create(:product)
+      o = create(:order, importer:c, customer_order_number:'custordnum', order_number:'ordnum', approval_status: nil)
+      ol = create(:order_line, quantity:100, product:p, sku:'sk12345', order:o)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "REF2"), product: p)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
       @s.update_attributes(importer_id:c.id)
@@ -458,8 +458,8 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect { described_class.new.process_rows(@s, rows, @u, nil, false) }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: custordnum'
     end
     it "should rollback changes on error" do
-      c = FactoryBot(:company)
-      o = FactoryBot(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
+      c = create(:company)
+      o = create(:order, importer:c, customer_order_number:'ordnum', approval_status: 'Accepted')
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         61=>mode_row('OCEAN'),
@@ -479,10 +479,10 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
     context "cartons" do
       before :each do
-        c = FactoryBot(:company)
-        p = FactoryBot(:product)
-        o = FactoryBot(:order, importer:c, customer_order_number:'ORD', approval_status: 'Accepted')
-        ol = FactoryBot(:order_line, quantity:100, product:p, sku:'SK', order:o)
+        c = create(:company)
+        p = create(:product)
+        o = create(:order, importer:c, customer_order_number:'ORD', approval_status: 'Accepted')
+        ol = create(:order_line, quantity:100, product:p, sku:'SK', order:o)
         @s.update_attributes(importer_id:c.id)
       end
       it "should add carton ranges" do

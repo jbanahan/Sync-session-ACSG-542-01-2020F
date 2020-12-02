@@ -151,7 +151,7 @@ describe OpenChain::TariffFileMonitor do
 
       key = KeyJsonItem.polling_job('OpenChain::TariffFileMonitor').create! json_data: "{\"last_run\":\"2017-07-06 05:55\"}"
 
-      FactoryBot(:mailing_list, system_code:"IGNORE ME", email_addresses: "a@b.com,c@d.com")
+      create(:mailing_list, system_code:"IGNORE ME", email_addresses: "a@b.com,c@d.com")
 
       ftp_client = double("ftp_client")
       expect(FtpSender::FtpClient).to receive(:new).and_return(ftp_client)

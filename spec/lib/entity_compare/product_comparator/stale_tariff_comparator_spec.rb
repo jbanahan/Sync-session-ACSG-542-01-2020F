@@ -1,10 +1,10 @@
 describe OpenChain::EntityCompare::ProductComparator::StaleTariffComparator do
 
-  let (:country) { FactoryBot(:country, iso_code: "CA") }
+  let (:country) { create(:country, iso_code: "CA") }
   let (:cdefs) { described_class.new.cdefs }
   let! (:valid_tariff) { OfficialTariff.create! hts_code: "1231890123", country_id: country.id }
   let! (:product) {
-    product = FactoryBot(:product)
+    product = create(:product)
     c = product.classifications.create! country: country
     c.tariff_records.create! line_number: 1, hts_1: valid_tariff.hts_code
 

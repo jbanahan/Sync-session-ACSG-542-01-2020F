@@ -33,7 +33,7 @@ describe SearchTemplate do
   describe "add_to_user!" do
     it "should create search in user account" do
       st = described_class.create_from_search_setup! @ss
-      u = FactoryBot(:user)
+      u = create(:user)
       setup = st.add_to_user! u
       setup = SearchSetup.find setup.id
       expect(setup.user).to eq u

@@ -19,8 +19,8 @@ describe OpenChain::EntityCompare::EntityComparator do
     end
   }
 
-  let (:user) { FactoryBot(:user) }
-  let (:order) { FactoryBot(:order) }
+  let (:user) { create(:user) }
+  let (:order) { create(:order) }
 
   describe "process_by_id" do
     it "should find EntitySnapshot and process" do
@@ -225,7 +225,7 @@ describe OpenChain::EntityCompare::EntityComparator do
         ms = stub_master_setup
         expect(ms).to receive(:custom_feature?).with("Disable Product Snapshot Comparators").and_return true
 
-        product = FactoryBot(:product, unique_identifier: "UAPARTS-123")
+        product = create(:product, unique_identifier: "UAPARTS-123")
         es = EntitySnapshot.new id: 6, recordable: product
 
         expect(subject).not_to receive(:delay)
@@ -271,7 +271,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       it "does not skip process by id if test environment" do
         # Make sure there's a comparator there to process
         OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
-        product = FactoryBot(:product, unique_identifier: "UAPARTS-123")
+        product = create(:product, unique_identifier: "UAPARTS-123")
         es = EntitySnapshot.new id: 6, recordable: product
 
         expect(subject).to receive(:delay).and_return subject

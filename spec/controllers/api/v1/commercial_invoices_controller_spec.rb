@@ -7,13 +7,13 @@ describe Api::V1::CommercialInvoicesController do
   }
 
   before(:each) do
-    @u = FactoryBot(:user, entry_edit: true, entry_view: true)
+    @u = create(:user, entry_edit: true, entry_view: true)
     @u.company.update_attributes(importer:true, broker: true, system_code:'SYS')
     allow_api_access @u
   end
   describe 'index' do
     before(:each) do
-      2.times {|i| FactoryBot(:commercial_invoice, invoice_number:"#{i}ci", importer:@u.company)}
+      2.times {|i| create(:commercial_invoice, invoice_number:"#{i}ci", importer:@u.company)}
     end
     it "should find invoices" do
       get :index
@@ -54,7 +54,7 @@ describe Api::V1::CommercialInvoicesController do
       expect(res[0]['ci_invoice_number']).to eql '1ci'
     end
     it "should apply search criterions" do
-      FactoryBot(:commercial_invoice, invoice_number:'1xz', importer:@u.company)
+      create(:commercial_invoice, invoice_number:'1xz', importer:@u.company)
       get :index, {'sid1'=>'ci_invoice_number', 'sop1'=>'sw', 'sv1'=>'1',
         'sid2'=>'ci_invoice_number', 'sop2'=>'ew', 'sv2'=>'i'}
       expect(response).to be_success
@@ -78,7 +78,7 @@ describe Api::V1::CommercialInvoicesController do
     end
 
     it "should secure for visible commercial invoices" do
-      c = FactoryBot(:company, importer:true)
+      c = create(:company, importer:true)
       CommercialInvoice.last.update_attributes(importer_id:c.id)
       get :index
       j = JSON.parse response.body
@@ -263,7 +263,7 @@ describe Api::V1::CommercialInvoicesController do
     end
     context "importer" do
       it "should check if user can edit invoices for importer" do
-        c = FactoryBot(:company, system_code:'OTHR', importer:true) # non linked company, can't edit
+        c = create(:company, system_code:'OTHR', importer:true) # non linked company, can't edit
         @base_hash['commercial_invoice']['ci_imp_syscode'] = 'OTHR'
         expect {post :create, @base_hash}.to_not change(CommercialInvoice, :count)
         expect(response.status).to eq 400
@@ -286,7 +286,7 @@ describe Api::V1::CommercialInvoicesController do
   end
   describe "update" do
     before :each do
-      @ci = FactoryBot(:commercial_invoice, importer:@u.company, invoice_number:'OLD', entry:nil)
+      @ci = create(:commercial_invoice, importer:@u.company, invoice_number:'OLD', entry:nil)
       @cil = @ci.commercial_invoice_lines.create!(line_number:1,
         part_number:'ABC', quantity:40)
       @base_hash = {'id'=>@ci.id,
@@ -341,7 +341,7 @@ describe Api::V1::CommercialInvoicesController do
       expect(JSON.parse(response.body)['errors'].first).to eql "Path ID #{@ci.id} does not match JSON ID #{@ci.id+1}."
     end
     it 'should not update record attached to entry' do
-      ent = FactoryBot(:entry, importer:@ci.importer)
+      ent = create(:entry, importer:@ci.importer)
       @ci.entry = ent
       @ci.save!
       put :update, id:@ci.id, commercial_invoice: @base_hash

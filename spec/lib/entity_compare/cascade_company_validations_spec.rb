@@ -5,19 +5,19 @@ describe OpenChain::EntityCompare::CascadeCompanyValidations do
   describe "compare" do
     it "should ignore non-companies" do
       expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)
-      subject.compare 'Order', FactoryBot(:order).id, nil, nil, nil, nil, nil, nil
+      subject.compare 'Order', create(:order).id, nil, nil, nil, nil, nil, nil
     end
 
     it "ignores updates to the master company" do
       expect(subject).not_to receive(:validate_connected_orders)
       expect(subject).not_to receive(:validate_connected_entries)
 
-      subject.compare 'Company', FactoryBot(:master_company).id, nil, nil, nil, nil, nil, nil
+      subject.compare 'Company', create(:master_company).id, nil, nil, nil, nil, nil, nil
     end
 
     context "orders" do
-      let (:vendor) { FactoryBot(:company, vendor: true) }
-      let (:order) { FactoryBot(:order, vendor: vendor) }
+      let (:vendor) { create(:company, vendor: true) }
+      let (:order) { create(:order, vendor: vendor) }
 
       it "should call BusinessValidationTemplate.create_results_for_object! for orders where company is vendor" do
         expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with(order)
@@ -45,8 +45,8 @@ describe OpenChain::EntityCompare::CascadeCompanyValidations do
     end
 
     context "entries" do
-      let (:importer) { FactoryBot(:importer) }
-      let (:entry) { FactoryBot(:entry, importer: importer) }
+      let (:importer) { create(:importer) }
+      let (:entry) { create(:entry, importer: importer) }
 
       it "should call BusinessValidationTemplate.create_results_for_object! for entries where company is importer" do
         expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with(entry)

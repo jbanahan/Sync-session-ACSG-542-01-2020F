@@ -2,15 +2,15 @@ require 'open_chain/tariff_finder'
 require 'open_chain/xl_client'
 
 describe PartNumberCorrelation do
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
 
   let(:part_number_correlation) do
-    pnc = FactoryBot(:part_number_correlation, starting_row: 1, part_column: "B", part_regex: "", entry_country_iso: "US", user: user)
-    pnc.attachment = FactoryBot(:attachment, attached_file_name: "sheet.xls", attached_content_type: "application/vnd.ms-excel")
+    pnc = create(:part_number_correlation, starting_row: 1, part_column: "B", part_regex: "", entry_country_iso: "US", user: user)
+    pnc.attachment = create(:attachment, attached_file_name: "sheet.xls", attached_content_type: "application/vnd.ms-excel")
     pnc
   end
 
-  let(:usa) { FactoryBot(:country) }
+  let(:usa) { create(:country) }
 
   describe "process" do
     it "updates xls files with three additional columns" do

@@ -27,15 +27,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
   describe "generate_kewill_shipment_data" do
     let (:importer) {
-      with_customs_management_id(FactoryBot(:importer), "CUST")
+      with_customs_management_id(create(:importer), "CUST")
     }
 
     let (:us) {
-      FactoryBot(:country, iso_code: "US")
+      create(:country, iso_code: "US")
     }
 
     let (:cn) {
-     FactoryBot(:country, iso_code: "CN")
+     create(:country, iso_code: "CN")
     }
 
     let (:cdefs) {
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     }
 
     let (:product) {
-      p = FactoryBot(:product, name: "Part Description")
+      p = create(:product, name: "Part Description")
       c = p.classifications.create! country_id: us.id
       c.tariff_records.create! hts_1: "1234509876"
       p.update_custom_value! cdefs[:prod_part_number], "PARTNO"
@@ -51,8 +51,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     }
 
     let (:order) {
-      o = FactoryBot(:order, customer_order_number: "ORDER")
-      l = FactoryBot(:order_line, product: product, order: o, country_of_origin: "VN", price_per_unit: 10)
+      o = create(:order, customer_order_number: "ORDER")
+      l = create(:order_line, product: product, order: o, country_of_origin: "VN", price_per_unit: 10)
       o
     }
 
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
     describe 'roll up' do
       let (:importer) {
-        with_customs_management_id(FactoryBot(:importer), "ROLLUPCUST")
+        with_customs_management_id(create(:importer), "ROLLUPCUST")
       }
 
       let! (:shipment_roll_up) {
@@ -353,7 +353,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     end
 
     it "combines duplicate container numbers together" do
-      shipment_2 = FactoryBot(:shipment)
+      shipment_2 = create(:shipment)
       container_2 = shipment_2.containers.create! container_number: "CONTAINER", weight: BigDecimal("100"), quantity: BigDecimal("1000"), seal_number: "SEAL2", container_size: "40HC"
       shipment_line_1 = shipment_2.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container_2.id, mid: "MID1"
       shipment_line_1.linked_order_line_id = order.order_lines.first.id

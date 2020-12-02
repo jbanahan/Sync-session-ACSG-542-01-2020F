@@ -17,31 +17,31 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
   let(:data) { IO.read 'spec/fixtures/files/lt_856.edi' }
   let(:data_abridged) { IO.read 'spec/fixtures/files/lt_856_abridged.edi' }
   let(:data_missing_container) { IO.read 'spec/fixtures/files/lt_856_missing_container.edi' }
-  let(:lt) { FactoryBot(:importer, system_code: "LOLLYT") }
-  let(:vietnam) { FactoryBot(:country, iso_code: "VN") }
-  let(:sri_lanka) { FactoryBot(:country, iso_code: "LK") }
-  let(:ord_1) { FactoryBot(:order, importer: lt, customer_order_number: "613430") }
-  let(:ord_2) { FactoryBot(:order, importer: lt, customer_order_number: "416475") }
-  let(:ord_3) { FactoryBot(:order, importer: lt, customer_order_number: "613450") }
-  let(:ord_4) { FactoryBot(:order, importer: lt, customer_order_number: "416495") }
+  let(:lt) { create(:importer, system_code: "LOLLYT") }
+  let(:vietnam) { create(:country, iso_code: "VN") }
+  let(:sri_lanka) { create(:country, iso_code: "LK") }
+  let(:ord_1) { create(:order, importer: lt, customer_order_number: "613430") }
+  let(:ord_2) { create(:order, importer: lt, customer_order_number: "416475") }
+  let(:ord_3) { create(:order, importer: lt, customer_order_number: "613450") }
+  let(:ord_4) { create(:order, importer: lt, customer_order_number: "416495") }
 
-  let(:ordln_1) { FactoryBot(:order_line, order: ord_1, sku: "192399348778")}
-  let(:ordln_2) { FactoryBot(:order_line, order: ord_1, sku: "192399348761")}
-  let(:ordln_3) { FactoryBot(:order_line, order: ord_2, sku: "192399348631")}
-  let(:ordln_4) { FactoryBot(:order_line, order: ord_3, sku: "192399348662")}
-  let(:ordln_5) { FactoryBot(:order_line, order: ord_4, sku: "192399348648")}
+  let(:ordln_1) { create(:order_line, order: ord_1, sku: "192399348778")}
+  let(:ordln_2) { create(:order_line, order: ord_1, sku: "192399348761")}
+  let(:ordln_3) { create(:order_line, order: ord_2, sku: "192399348631")}
+  let(:ordln_4) { create(:order_line, order: ord_3, sku: "192399348662")}
+  let(:ordln_5) { create(:order_line, order: ord_4, sku: "192399348648")}
 
-  let(:port_receipt_1) { FactoryBot(:port, schedule_k_code: "55224")}
-  let(:port_unlading_1) { FactoryBot(:port, schedule_d_code: "2709")}
-  let(:port_final_dest_1) { FactoryBot(:port, schedule_d_code: "2710")}
-  let(:port_lading_1) { FactoryBot(:port, schedule_k_code: "55200")}
-  let(:port_last_foreign_1) { FactoryBot(:port, schedule_k_code: "12345")}
+  let(:port_receipt_1) { create(:port, schedule_k_code: "55224")}
+  let(:port_unlading_1) { create(:port, schedule_d_code: "2709")}
+  let(:port_final_dest_1) { create(:port, schedule_d_code: "2710")}
+  let(:port_lading_1) { create(:port, schedule_k_code: "55200")}
+  let(:port_last_foreign_1) { create(:port, schedule_k_code: "12345")}
 
-  let(:port_receipt_2) { FactoryBot(:port, schedule_k_code: "54201")}
-  let(:port_unlading_2) { FactoryBot(:port, schedule_d_code: "1001")}
-  let(:port_final_dest_2) { FactoryBot(:port, schedule_d_code: "1002")}
-  let(:port_lading_2) { FactoryBot(:port, schedule_k_code: "54301")}
-  let(:port_last_foreign_2) { FactoryBot(:port, schedule_k_code: "54321")}
+  let(:port_receipt_2) { create(:port, schedule_k_code: "54201")}
+  let(:port_unlading_2) { create(:port, schedule_d_code: "1001")}
+  let(:port_final_dest_2) { create(:port, schedule_d_code: "1002")}
+  let(:port_lading_2) { create(:port, schedule_k_code: "54301")}
+  let(:port_last_foreign_2) { create(:port, schedule_k_code: "54321")}
 
 
   def load_all
@@ -172,10 +172,10 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
 
     it "replaces an existing shipment" do
       load_all
-      s = FactoryBot :shipment, importer_id: lt.id, reference: "LOLLYT-20998", master_bill_of_lading: "mbol"
+      s = create :shipment, importer_id: lt.id, reference: "LOLLYT-20998", master_bill_of_lading: "mbol"
 
-      container = FactoryBot(:container, shipment: s, container_number: 'cont num')
-      FactoryBot(:shipment_line, shipment: s, container: container, product: ordln_1.product, linked_order_line_id: ordln_1, quantity: 50)
+      container = create(:container, shipment: s, container_number: 'cont num')
+      create(:shipment_line, shipment: s, container: container, product: ordln_1.product, linked_order_line_id: ordln_1, quantity: 50)
 
       subject.parse data, bucket: "bucket", key: "file.edi"
 

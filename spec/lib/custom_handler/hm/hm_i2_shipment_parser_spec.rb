@@ -8,20 +8,20 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   let! (:master_setup) {
     stub_master_setup
   }
-  let!(:hm) { FactoryBot(:importer, system_code: "HENNE") }
-  let(:hm_fenix) { with_fenix_id(FactoryBot(:importer), "887634400RM0001")}
-  let(:ca) { FactoryBot(:country, iso_code: "CA")}
-  let(:us) { FactoryBot(:country, iso_code: "US")}
+  let!(:hm) { create(:importer, system_code: "HENNE") }
+  let(:hm_fenix) { with_fenix_id(create(:importer), "887634400RM0001")}
+  let(:ca) { create(:country, iso_code: "CA")}
+  let(:us) { create(:country, iso_code: "US")}
   let(:log) { InboundFile.new }
 
   let (:cdefs) {
     described_class.new.cdefs
   }
   let (:entry) {
-    entry = FactoryBot(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF", release_date: Time.zone.now)
-    inv = FactoryBot(:commercial_invoice, entry: entry, invoice_number: "987654")
-    line = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID", quantity: 10, country_origin_code: "CN")
-    tariff = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "9999999999", tariff_description: "Invoice Desc", entered_value: "100")
+    entry = create(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF", release_date: Time.zone.now)
+    inv = create(:commercial_invoice, entry: entry, invoice_number: "987654")
+    line = create(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID", quantity: 10, country_origin_code: "CN")
+    tariff = create(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "9999999999", tariff_description: "Invoice Desc", entered_value: "100")
 
     entry
   }
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   describe "parse_file" do
     let(:ca_file) { make_csv_file("ZSTO") }
     let(:us_file) { make_csv_file("ZRET") }
-    let(:product) { FactoryBot(:product, importer: hm, unique_identifier: "HENNE-1234567", name: "Description") }
+    let(:product) { create(:product, importer: hm, unique_identifier: "HENNE-1234567", name: "Description") }
     let(:ca_product) {
       p = product
       c = p.classifications.create! country_id: ca.id
@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
       it "sends email to PARSNumbersNeeded list regarding PARS numbers being needed if no PARS numbers are left" do
         expect(DataCrossReference).to receive(:unused_pars_count).and_return(0).and_return(0)
-        MailingList.create! system_code: "PARSNumbersNeeded", user: FactoryBot(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
+        MailingList.create! system_code: "PARSNumbersNeeded", user: create(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
         p = described_class.new
 
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
@@ -268,7 +268,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(DataCrossReference).to receive(:unused_pars_count).and_return(301)
         expect(DataCrossReference).to receive(:unused_pars_count).and_return(299)
         expect_any_instance_of(described_class).to receive(:pars_thresholds).and_return [300]
-        MailingList.create! system_code: "PARSNumbersNeeded", user: FactoryBot(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
+        MailingList.create! system_code: "PARSNumbersNeeded", user: create(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
         p = described_class.new
 
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
@@ -728,7 +728,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
   describe "build_missing_product_spreadsheet" do
     let(:ca_product) {
-      p = FactoryBot(:product, importer: hm, unique_identifier: "HENNE-CA-Product", name: "CA Description")
+      p = create(:product, importer: hm, unique_identifier: "HENNE-CA-Product", name: "CA Description")
       c = p.classifications.create! country_id: ca.id
       t = c.tariff_records.create! hts_1: "1234567890"
       # This is the PO number/Invoice number to use for the entry lookup (make sure the code handles splitting multiple out)
@@ -736,7 +736,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       p
     }
     let(:us_product) {
-      p = FactoryBot(:product, importer: hm, unique_identifier: "HENNE-US-Product", name: "US Description")
+      p = create(:product, importer: hm, unique_identifier: "HENNE-US-Product", name: "US Description")
       c = p.classifications.create! country_id: us.id
       t = c.tariff_records.create! hts_1: "9876543210"
       p

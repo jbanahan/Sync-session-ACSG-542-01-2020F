@@ -13,10 +13,10 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     end
   end
 
-  let (:csm_def) { FactoryBot(:custom_definition, :module_type=>"Product", :label=>"CSM Number", :data_type=>:text) }
-  let (:italy) { FactoryBot(:country, :iso_code=>'IT') }
+  let (:csm_def) { create(:custom_definition, :module_type=>"Product", :label=>"CSM Number", :data_type=>:text) }
+  let (:italy) { create(:country, :iso_code=>'IT') }
   let (:product) {
-    tr = FactoryBot(:tariff_record, :hts_1=>'1234567890', :hts_2=>'123455555', :hts_3=>'0987654321', :classification=>FactoryBot(:classification, :country=>italy))
+    tr = create(:tariff_record, :hts_1=>'1234567890', :hts_2=>'123455555', :hts_3=>'0987654321', :classification=>create(:classification, :country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
     prod
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     end
 
     it "repeatedly generates and autoconfirms products until all pending products are drained" do
-      tr = FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, country: italy, product: FactoryBot(:product, unique_identifier: "prod2")))
+      tr = create(:tariff_record, hts_1: '1234567890', classification: create(:classification, country: italy, product: create(:product, unique_identifier: "prod2")))
       p2 = tr.classification.product
       p2.update_custom_value! csm_def, 'CSM2'
 

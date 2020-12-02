@@ -3,7 +3,7 @@ describe OpenChain::CoreModuleProcessor do
   describe "validate_and_save_module" do
     before :each do
       @object = Product.new :unique_identifier => "unique_id"
-      User.current = FactoryBot(:user)
+      User.current = create(:user)
     end
 
     after :each do
@@ -16,7 +16,7 @@ describe OpenChain::CoreModuleProcessor do
       FieldValidatorRule.create! starts_with: "unique", module_type: "Product", model_field_uid: "prod_uid"
 
       # Create a custom field to ensure they're being parsed
-      prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      prod_cd = create(:custom_definition, :module_type=>'Product', :data_type=>:string)
       params = {'product'=>{"prod_uid" => "unique_id", prod_cd.model_field_uid.to_s => "custom"}}
 
       succeed = nil
@@ -38,7 +38,7 @@ describe OpenChain::CoreModuleProcessor do
       FieldValidatorRule.create! starts_with: "unique", module_type: "Product", model_field_uid: "prod_uid"
 
       # Create a custom field to ensure they're being parsed
-      prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      prod_cd = create(:custom_definition, :module_type=>'Product', :data_type=>:string)
       params = {'product'=>{"prod_uid" => "unique_id", prod_cd.model_field_uid.to_s => "custom"}}
 
       succeed = nil
@@ -84,8 +84,8 @@ describe OpenChain::CoreModuleProcessor do
       p = Product.new
 
       # Create a custom field to ensure they're being parsed
-      country = FactoryBot(:country)
-      prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      country = create(:country)
+      prod_cd = create(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
       params = {
         'product'=> {
@@ -123,12 +123,12 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "updates existing child objects" do
-      tr = FactoryBot(:tariff_record)
+      tr = create(:tariff_record)
       cl = tr.classification
       p = cl.product
 
-      country = FactoryBot(:country)
-      prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      country = create(:country)
+      prod_cd = create(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
       params = {
         'product'=> {
@@ -171,12 +171,12 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "deletes child records" do
-      tr = FactoryBot(:tariff_record)
+      tr = create(:tariff_record)
       cl = tr.classification
       p = cl.product
 
-      country = FactoryBot(:country)
-      prod_cd = FactoryBot(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      country = create(:country)
+      prod_cd = create(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
       params = {
         'product'=> {
@@ -201,14 +201,14 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "it deletes, updates, and adds child records" do
-      tr = FactoryBot(:tariff_record)
+      tr = create(:tariff_record)
       cl = tr.classification
       p = cl.product
 
-      cl2 = FactoryBot(:classification, product: p)
-      tr2 = FactoryBot(:tariff_record, classification: cl2)
-      country = FactoryBot(:country)
-      country2 = FactoryBot(:country)
+      cl2 = create(:classification, product: p)
+      tr2 = create(:tariff_record, classification: cl2)
+      country = create(:country)
+      country2 = create(:country)
 
       params = {
         'product'=> {
@@ -258,14 +258,14 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "it deletes, updates, and adds child records using standard attribute nesting" do
-      tr = FactoryBot(:tariff_record)
+      tr = create(:tariff_record)
       cl = tr.classification
       p = cl.product
 
-      cl2 = FactoryBot(:classification, product: p)
-      tr2 = FactoryBot(:tariff_record, classification: cl2)
-      country = FactoryBot(:country)
-      country2 = FactoryBot(:country)
+      cl2 = create(:classification, product: p)
+      tr2 = create(:tariff_record, classification: cl2)
+      country = create(:country)
+      country2 = create(:country)
 
       params = {
         product: {
@@ -312,7 +312,7 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "errors if import failure occurs" do
-      p = FactoryBot(:product, unique_identifier: "ID")
+      p = create(:product, unique_identifier: "ID")
       params = {
         product: {
           id: p.id,
@@ -337,7 +337,7 @@ describe OpenChain::CoreModuleProcessor do
     end
 
     it "should forecast piece sets" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       o = ol.order
 
       params = {"order_number" => "po"}
@@ -356,8 +356,8 @@ describe OpenChain::CoreModuleProcessor do
   describe "bulk_objects" do
     before :each do
       @cm = CoreModule::PRODUCT
-      @obj = FactoryBot(:product)
-      @obj2 = FactoryBot(:product)
+      @obj = create(:product)
+      @obj2 = create(:product)
     end
 
     it "finds, locks and yields objects given an array of primary keys" do

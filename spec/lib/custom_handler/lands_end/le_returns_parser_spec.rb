@@ -4,14 +4,14 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   describe "process_file" do
     let (:custom_file) { instance_double(CustomFile) }
-    let (:headers) { ["Client#", "Client Name", "Export Control#", "Export Date", "Reference#", "Ticket#", "Order #", "Returned By", "Address", "City", "Province", "Postal Code", "Part#", "Sub-Div#/Style#", "FactoryBot Code", "Description 1", "Description 2", "CDN HS Code", "US HS Code", "Origin", "Quantity", "Unit Price", "Total", "Date Imported to Canada", "Transaction Imported to Canada", "B3 Date", "Office Imported to Canada", "Duty on Importation", "GST on Importation", "HST/PST on Importation", "ExciseTax on Importation", "Days In Canada", "Order Date", "Date Return Processed"]}
+    let (:headers) { ["Client#", "Client Name", "Export Control#", "Export Date", "Reference#", "Ticket#", "Order #", "Returned By", "Address", "City", "Province", "Postal Code", "Part#", "Sub-Div#/Style#", "create Code", "Description 1", "Description 2", "CDN HS Code", "US HS Code", "Origin", "Quantity", "Unit Price", "Total", "Date Imported to Canada", "Transaction Imported to Canada", "B3 Date", "Office Imported to Canada", "Duty on Importation", "GST on Importation", "HST/PST on Importation", "ExciseTax on Importation", "Days In Canada", "Order Date", "Date Return Processed"]}
     let (:first_row) {
       ["LANDS-EBO", "LANDS-EBO", "21571", nil, "ONDNX007922291", "LBO-191010-1 ", "64394301", "Hampton Inn & S", "Janet Pratt", "FREDERICTON", nil, "E3C 0B4", "4211928", "450650", "3625", "WR CS STR FIT STR CHN PNT", "WMS/GIRLS PANTS", "6204.62.00.19", "", "BD", "1", "28.11", "28.11", "17/06/2019", "15818-028267659", "17/06/2019", "453", "6.37", "2.19", "0", "0", "124", "14/06/2019", "16/10/2019"]
     }
-    let! (:lands_end) { FactoryBot(:importer, system_code: "LANDS1") }
-    let (:us) { FactoryBot(:country, iso_code: "US") }
+    let! (:lands_end) { create(:importer, system_code: "LANDS1") }
+    let (:us) { create(:country, iso_code: "US") }
     let! (:product) {
-      p = FactoryBot(:product, importer: lands_end, unique_identifier: "LANDS1-4211928")
+      p = create(:product, importer: lands_end, unique_identifier: "LANDS1-4211928")
       p.update_hts_for_country(us, "1234567890")
       p
     }
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       end
       b
     }
-    let (:user) { FactoryBot(:user, email:"me@there.com") }
+    let (:user) { create(:user, email:"me@there.com") }
 
     before :each do
       allow(subject).to receive(:custom_file).and_return custom_file
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   describe "can_view?" do
 
-    let (:master_user) { FactoryBot(:master_user) }
+    let (:master_user) { create(:master_user) }
     let! (:master_setup) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return custom_feature_enabled
@@ -138,7 +138,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       end
 
       it "does not allow standard users" do
-        expect(subject.can_view?(FactoryBot(:user))).to eq false
+        expect(subject.can_view?(create(:user))).to eq false
       end
     end
 

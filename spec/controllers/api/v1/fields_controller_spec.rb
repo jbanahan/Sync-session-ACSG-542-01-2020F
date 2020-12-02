@@ -7,7 +7,7 @@ describe Api::V1::FieldsController do
   }
 
   before(:each) do
-    @u = FactoryBot(:master_user, shipment_view:true)
+    @u = create(:master_user, shipment_view:true)
     allow_api_access @u
   end
 

@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::Amazon::AmazonProductParser do
 
-  let! (:country_origin) { FactoryBot(:country, iso_code: "CN") }
-  let! (:us) { FactoryBot(:country, iso_code: "US") }
+  let! (:country_origin) { create(:country, iso_code: "CN") }
+  let! (:us) { create(:country, iso_code: "US") }
   let (:data) { IO.read 'spec/fixtures/files/amazon_parts.csv' }
   let (:csv_data) { CSV.parse(data) }
   let! (:importer) {
-    add_system_identifier(with_customs_management_id(FactoryBot(:importer), "CMID"), "Amazon Reference", "ABC4439203")
+    add_system_identifier(with_customs_management_id(create(:importer), "CMID"), "Amazon Reference", "ABC4439203")
   }
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
   let (:cdefs) { subject.cdefs }
   let (:inbound_file) { InboundFile.new }
 
@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductParser do
     end
 
     it "updates existing product" do
-      p = FactoryBot(:product, importer: importer, unique_identifier: "CMID-HJE9870", name: "Desc")
+      p = create(:product, importer: importer, unique_identifier: "CMID-HJE9870", name: "Desc")
       subject.process_parts csv_data, user, "file.csv"
 
       p.reload
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductParser do
     end
 
     it "syncs tariff records to what is in the file" do
-      p = FactoryBot(:product, importer: importer, unique_identifier: "CMID-HJE9870", name: "Desc")
+      p = create(:product, importer: importer, unique_identifier: "CMID-HJE9870", name: "Desc")
       p.update_hts_for_country(us, ["1234567890", "9876543210"])
 
       subject.process_parts csv_data, user, "file.csv"
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductParser do
     end
 
     it "marks parts inactive if instructed" do
-      p = FactoryBot(:product, importer: importer, unique_identifier: "CMID-HJE9870")
+      p = create(:product, importer: importer, unique_identifier: "CMID-HJE9870")
       csv_data[1][0] = "Delete"
       subject.process_parts csv_data, user, "file.csv"
       p.reload

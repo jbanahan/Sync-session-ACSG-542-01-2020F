@@ -1,5 +1,5 @@
 describe OpenChain::BusinessRulesCopier do
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
 
   context "TemplateUploader" do
     let(:cf) { double "custom file" }
@@ -43,7 +43,7 @@ describe OpenChain::BusinessRulesCopier do
     let(:cf) { double "custom file" }
     let(:file) { double "JSON file"}
     let(:rule_uploader) { described_class::RuleUploader.new cf }
-    let!(:bvt) { FactoryBot(:business_validation_template) }
+    let!(:bvt) { create(:business_validation_template) }
     before do
       allow(cf).to receive(:path).and_return "/path"
       allow(cf).to receive(:bucket).and_return "bucket"
@@ -85,7 +85,7 @@ describe OpenChain::BusinessRulesCopier do
 
   describe "copy_template" do
     it "copies template" do
-      bvt = FactoryBot(:business_validation_template, name: "template")
+      bvt = create(:business_validation_template, name: "template")
       expect_any_instance_of(BusinessValidationTemplate).to receive(:copy_attributes).with(include_external: true).and_call_original
       described_class.copy_template user.id, bvt.id
 
@@ -101,8 +101,8 @@ describe OpenChain::BusinessRulesCopier do
 
   describe "copy_rule" do
     it "copies rule to template" do
-      bvt = FactoryBot(:business_validation_template)
-      bvru = FactoryBot(:business_validation_rule, name: "thys rulez")
+      bvt = create(:business_validation_template)
+      bvru = create(:business_validation_rule, name: "thys rulez")
 
       expect_any_instance_of(BusinessValidationRule).to receive(:copy_attributes).with(include_external: true).and_call_original
       described_class.copy_rule user.id, bvru.id, bvt.id

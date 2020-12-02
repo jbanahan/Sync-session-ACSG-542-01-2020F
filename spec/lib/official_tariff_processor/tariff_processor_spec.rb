@@ -8,9 +8,9 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
     end
     it "should create unique list with one of each tariff not already containing keys" do
       ep = OpenChain::OfficialTariffProcessor::GenericProcessor
-      c = FactoryBot(:country, iso_code:'IT')
+      c = create(:country, iso_code:'IT')
       spi_already_processed = 'Free: (PE)'
-      tariff_already_processed = FactoryBot(:official_tariff, country:c, special_rates:spi_already_processed)
+      tariff_already_processed = create(:official_tariff, country:c, special_rates:spi_already_processed)
       SpiRate.create!(
         special_rate_key:tariff_already_processed.special_rate_key,
         country_id:c.id,
@@ -18,17 +18,17 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
         rate_text:'Free'
       )
 
-      new_spi1 = FactoryBot(:official_tariff, country:c, special_rates:'Free: (CO)')
-      new_spi2 = FactoryBot(:official_tariff, country:c, special_rates:'Free: (CO,PE)')
+      new_spi1 = create(:official_tariff, country:c, special_rates:'Free: (CO)')
+      new_spi2 = create(:official_tariff, country:c, special_rates:'Free: (CO,PE)')
 
       # ignore new tariff with spi that has already been written
-      FactoryBot(:official_tariff, special_rates:spi_already_processed)
+      create(:official_tariff, special_rates:spi_already_processed)
       # ignore second tariff with same special rates
-      FactoryBot(:official_tariff, country:c, special_rates:'Free: (CO)')
+      create(:official_tariff, country:c, special_rates:'Free: (CO)')
       # ignore blank spi
-      FactoryBot(:official_tariff, country:c, special_rates:nil)
+      create(:official_tariff, country:c, special_rates:nil)
       # ignore for another country
-      FactoryBot(:official_tariff, special_rates:'Free: (CO)')
+      create(:official_tariff, special_rates:'Free: (CO)')
 
       log = double("LOG LOG LOG")
       expect(ep).to receive(:process).once.with(new_spi1, log).ordered

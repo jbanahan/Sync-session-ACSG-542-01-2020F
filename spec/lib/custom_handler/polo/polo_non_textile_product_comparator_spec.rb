@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator do
   describe "compare" do
     subject { described_class }
     let (:cdefs) { subject.new.cdefs }
-    let (:product) { FactoryBot(:product) }
+    let (:product) { create(:product) }
 
     it "sets Non Textile flag to N when knit woven field = KNIT" do
       product.update_custom_value! cdefs[:knit_woven], "KnIt"

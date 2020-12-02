@@ -1,5 +1,5 @@
 describe OpenChain::Validations::Password::PasswordComplexityValidator do
-  let!(:user) { FactoryBot.build(:user) }
+  let!(:user) { create.build(:user) }
 
   describe '.has_symbol?' do
     it 'returns true if string contains symbol' do

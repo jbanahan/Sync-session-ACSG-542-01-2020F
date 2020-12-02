@@ -41,7 +41,7 @@
         <Date DateQualifier="CancelDate">00000000</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-FactoryBotDate">20161219</Date>
+        <Date DateQualifier="Ex-createDate">20161219</Date>
       </DateTime>
       <Price>
         <Amount Type="Net">38.72</Amount>
@@ -92,7 +92,7 @@
         <Date DateQualifier="CancelDate">20171201</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-FactoryBotDate">20170520</Date>
+        <Date DateQualifier="Ex-createDate">20170520</Date>
       </DateTime>
       <CustomerSoldTo>
         <ID>0011055030</ID>
@@ -146,7 +146,7 @@
         <Date DateQualifier="CancelDate">00000000</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-FactoryBotDate">20161219</Date>
+        <Date DateQualifier="Ex-createDate">20161219</Date>
       </DateTime>
       <Price>
         <Amount Type="Net">38.72</Amount>
@@ -197,7 +197,7 @@
         <Date DateQualifier="CancelDate">20171201</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-FactoryBotDate">20170520</Date>
+        <Date DateQualifier="Ex-createDate">20170520</Date>
       </DateTime>
       <CustomerSoldTo>
         <ID>0011055030</ID>
@@ -252,7 +252,7 @@
         <Date DateQualifier="CancelDate">20171201</Date>
       </DateTime>
       <DateTime>
-        <Date DateQualifier="Ex-FactoryBotDate">20170520</Date>
+        <Date DateQualifier="Ex-createDate">20170520</Date>
       </DateTime>
       <CustomerSoldTo>
         <ID>0011055030</ID>

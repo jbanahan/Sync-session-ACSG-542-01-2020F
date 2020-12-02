@@ -14,27 +14,27 @@ describe CustomReportIsfStatus do
 
   describe "column_fields_available" do
     it "uses security filing fields" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(CustomReportIsfStatus.column_fields_available(u)).to eq CoreModule::SECURITY_FILING.model_fields(u).values
     end
   end
 
   describe "criterion fields available" do
     it "uses security filing and line fields" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(CustomReportIsfStatus.criterion_fields_available(u)).to eq CoreModule::SECURITY_FILING.model_fields_including_children(u).values
     end
   end
 
   describe "can_view?" do
     it "allows security filing viewers to view" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(u).to receive(:view_security_filings?).and_return true
       expect(CustomReportIsfStatus.can_view?(u)).to be_truthy
     end
 
     it "disallows non-security filing viewers to view" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(u).to receive(:view_security_filings?).and_return false
       expect(CustomReportIsfStatus.can_view?(u)).to be_falsey
     end
@@ -42,8 +42,8 @@ describe CustomReportIsfStatus do
 
   describe "run" do
     before :each do
-      @sf = FactoryBot(:security_filing, :transaction_number => "1234", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
-      @u = FactoryBot(:importer_user, company_id: @sf.importer_id)
+      @sf = create(:security_filing, :transaction_number => "1234", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
+      @u = create(:importer_user, company_id: @sf.importer_id)
       allow_any_instance_of(User).to receive(:view_security_filings?).and_return true
 
       @rpt = CustomReportIsfStatus.new
@@ -93,7 +93,7 @@ describe CustomReportIsfStatus do
     end
 
     it "searches secure" do
-      u2 = FactoryBot(:importer_user)
+      u2 = create(:importer_user)
       workbook = nil
       Tempfile.open("test") do |f|
         t = @rpt.xls_file u2, file: f
@@ -112,7 +112,7 @@ describe CustomReportIsfStatus do
 
     it "only shows first tab for preview runs" do
       # Just build an unmatched ISF for the same company that would normally show on the second tab and make sure it's not there
-      sf2 = FactoryBot(:security_filing, :transaction_number => "456789", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
+      sf2 = create(:security_filing, :transaction_number => "456789", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
       @rpt.search_criterions.create! model_field_uid: "sf_transaction_number", operator: "eq", value: @sf.transaction_number
 
       a = @rpt.to_arrays @u, row_limit: 10, preview_run: true

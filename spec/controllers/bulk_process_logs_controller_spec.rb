@@ -1,7 +1,7 @@
 describe BulkProcessLogsController do
 
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
     sign_in_as @u
 
     @log = BulkProcessLog.create! :user => @u

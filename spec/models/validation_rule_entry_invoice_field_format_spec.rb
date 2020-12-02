@@ -1,8 +1,8 @@
 describe ValidationRuleEntryInvoiceFieldFormat do
   before :each do
     @rule = described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes', regex:'ABC'}.to_json)
-    @ci = FactoryBot(:commercial_invoice, issue_codes: 'ABC', invoice_number:'DEFGH')
-    @e = FactoryBot(:entry, commercial_invoices: [@ci])
+    @ci = create(:commercial_invoice, issue_codes: 'ABC', invoice_number:'DEFGH')
+    @e = create(:entry, commercial_invoices: [@ci])
   end
 
   it 'should pass if all lines are valid' do
@@ -27,7 +27,7 @@ describe ValidationRuleEntryInvoiceFieldFormat do
 
   it 'should pass if invoice that does not meet search criteria is invalid' do
     @rule.search_criterions.new(model_field_uid: 'ci_issue_codes', operator:'eq', value:'ABC')
-    @bad_ci = FactoryBot(:commercial_invoice, issue_codes: 'XYZ')
+    @bad_ci = create(:commercial_invoice, issue_codes: 'XYZ')
     @e.update_attributes(commercial_invoices: [@ci, @bad_ci])
     expect(@rule.run_validation(@ci.entry)).to be_nil
   end

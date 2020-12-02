@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
   end
 
   it "should match to existing export line and create import line" do
-    exp = FactoryBot(:duty_calc_export_file_line, :ref_1=>'85075306')
+    exp = create(:duty_calc_export_file_line, :ref_1=>'85075306')
     t = Tempfile.new("ftz")
     t << @line
     t.flush
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
     expect(d.duty_per_unit).to eq(0.0939)
   end
   it "should not create import lines if they already exist" do
-    exp = FactoryBot(:duty_calc_export_file_line, :ref_1=>'85075306')
+    exp = create(:duty_calc_export_file_line, :ref_1=>'85075306')
     t = Tempfile.new("ftz")
     t << @line
     t.flush

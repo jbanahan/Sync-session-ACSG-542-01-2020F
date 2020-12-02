@@ -11,8 +11,8 @@ end; end;
 
 describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator do
 
-  let (:importer) { with_customs_management_id(FactoryBot(:importer), "TEST") }
-  let (:shipment) { FactoryBot(:shipment, importer: importer) }
+  let (:importer) { with_customs_management_id(create(:importer), "TEST") }
+  let (:shipment) { create(:shipment, importer: importer) }
   let (:cross_reference) {
     DataCrossReference.create! key: "TEST", cross_reference_type: DataCrossReference::SHIPMENT_ENTRY_LOAD_CUSTOMERS
   }

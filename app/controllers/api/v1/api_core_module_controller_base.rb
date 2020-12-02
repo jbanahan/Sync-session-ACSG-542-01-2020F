@@ -12,7 +12,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   include Api::V1::StateToggleSupport
   include OpenChain::Api::V1::ApiModelFieldSupport
 
-  prepend_before_filter :allow_csv, only: [:index]
+  prepend_before_action :allow_csv, only: [:index]
 
   def output_generator
     @g ||= begin

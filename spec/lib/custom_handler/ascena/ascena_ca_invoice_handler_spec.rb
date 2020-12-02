@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
       allow(@cf).to receive(:path).and_return "path/to/file.csv"
       allow(@cf).to receive(:attached_file_name).and_return "file.csv"
 
-      @user = FactoryBot(:master_user)
+      @user = create(:master_user)
       @h = described_class.new @cf
     end
 
@@ -78,8 +78,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
                "0.04", "CN", "9.45", "0", "0.9", "3924.90.0099", "0", "4", "53.36", "Plastic", " ", " ", " ", " ", " ",
                " ", " ", " ", " ", "12.64", "0.19", "0.51"]
 
-      @co = with_fenix_id(FactoryBot(:importer), "858053119RM0001")
-      @ci = FactoryBot(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: @co.id)
+      @co = with_fenix_id(create(:importer), "858053119RM0001")
+      @ci = create(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: @co.id)
       @handler = described_class.new "some file"
     end
 
@@ -129,9 +129,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
       end
 
       it "replaces invoice lines if invoice already exists" do
-        old_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: @ci, part_number: @row1[7..9].join('-'),
+        old_cil = create(:commercial_invoice_line, commercial_invoice: @ci, part_number: @row1[7..9].join('-'),
                           country_origin_code: @row1[23], quantity: @row1[29], value: @row1[30])
-        old_cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: old_cil, hts_code: @row1[27].delete('.'))
+        old_cit = create(:commercial_invoice_tariff, commercial_invoice_line: old_cil, hts_code: @row1[27].delete('.'))
       end
 
     end
@@ -191,7 +191,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
     end
 
     describe "get_importer_id" do
-      let! (:importer) { with_fenix_id(FactoryBot(:company), "123456789") }
+      let! (:importer) { with_fenix_id(create(:company), "123456789") }
 
       it "looks up importer_id using Fenix ID" do
         expect(@handler.get_importer_id("123456789")).to eq importer.id

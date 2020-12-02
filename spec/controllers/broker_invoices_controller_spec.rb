@@ -8,12 +8,12 @@ describe BrokerInvoicesController do
   end
 
   before do
-    sign_in_as(FactoryBot(:user, company: FactoryBot(:company, master: true), broker_invoice_edit: true, entry_view: true))
+    sign_in_as(create(:user, company: create(:company, master: true), broker_invoice_edit: true, entry_view: true))
   end
 
   describe "sync_records" do
-    let (:entry) { FactoryBot(:entry) }
-    let (:broker_invoice) { FactoryBot(:broker_invoice, entry: entry) }
+    let (:entry) { create(:entry) }
+    let (:broker_invoice) { create(:broker_invoice, entry: entry) }
 
     it "shows sync_records" do
       get :sync_records, {id: broker_invoice.id}

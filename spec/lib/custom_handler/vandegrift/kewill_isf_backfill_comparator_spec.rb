@@ -1,11 +1,11 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
   subject { described_class }
 
-  let(:us_country) { FactoryBot(:country, iso_code: "US")}
-  let(:non_us_country) { FactoryBot(:country, iso_code: "CA")}
-  let(:entry) { FactoryBot(:entry, source_system: 'Alliance', import_country: us_country, transport_mode_code: 10, entry_number: '1234567890', master_bills_of_lading: '1234567890',
+  let(:us_country) { create(:country, iso_code: "US")}
+  let(:non_us_country) { create(:country, iso_code: "CA")}
+  let(:entry) { create(:entry, source_system: 'Alliance', import_country: us_country, transport_mode_code: 10, entry_number: '1234567890', master_bills_of_lading: '1234567890',
                         customer_number: '1234567890', broker_reference: '1234567890')}
-  let!(:security_filing) { FactoryBot(:security_filing, broker_customer_number: '1234567890', master_bill_of_lading: '1234567890')}
+  let!(:security_filing) { create(:security_filing, broker_customer_number: '1234567890', master_bill_of_lading: '1234567890')}
 
   describe "#compare" do
 
@@ -90,8 +90,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
 
   describe "#find_security_filings" do
     it "finds only security filings that match customer number and master_bills_of_lading" do
-      sf1 = FactoryBot(:security_filing, master_bill_of_lading: '1234567890', broker_customer_number: '1234567890')
-      sf2 = FactoryBot(:security_filing, master_bill_of_lading: '0987654321', broker_customer_number: '0987654321')
+      sf1 = create(:security_filing, master_bill_of_lading: '1234567890', broker_customer_number: '1234567890')
+      sf2 = create(:security_filing, master_bill_of_lading: '0987654321', broker_customer_number: '0987654321')
       entry.customer_number = 1234567890
       entry.master_bills_of_lading = "1234567890"
       entry.broker_reference = "1234567890"

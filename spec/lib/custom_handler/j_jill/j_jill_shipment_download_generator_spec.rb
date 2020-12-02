@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
-  let (:user) { FactoryBot(:master_user) }
+  let (:user) { create(:master_user) }
   let (:shipment) {
-    s = FactoryBot(:shipment, receipt_location: 'Prague, CZK', destination_port: FactoryBot(:port), final_dest_port: FactoryBot(:port),
+    s = create(:shipment, receipt_location: 'Prague, CZK', destination_port: create(:port), final_dest_port: create(:port),
       master_bill_of_lading: 'MASTER', house_bill_of_lading: 'HOUSE', vessel: 'La Fromage Du Mer',
       voyage: '20000 Leagues', booking_received_date: 1.week.ago, cargo_on_hand_date: 3.days.ago,
       docs_received_date: 2.days.ago, confirmed_on_board_origin_date: 1.day.ago, departure_date: 10.days.ago,
@@ -12,15 +12,15 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
     s.reload
     s
   }
-  let (:vendor) { FactoryBot(:vendor) }
+  let (:vendor) { create(:vendor) }
   let (:cdefs) { subject.send(:cdefs) }
-  let (:container1) { FactoryBot :container, shipment: shipment, container_number: '99000', seal_number: 'SEAL1212', container_size: 'GINORMOUS' }
-  let (:container2) { FactoryBot :container, shipment: shipment, container_number: '99099', seal_number: 'SEAL2020', container_size: 'MODEST' }
-  let (:order) { FactoryBot(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: Date.new(2016, 03, 15), first_expected_delivery_date: Date.new(2016, 03, 20)) }
-  let (:order2) { FactoryBot(:order, vendor: vendor, customer_order_number:'987654321', ship_window_end: Date.new(2016, 03, 16), first_expected_delivery_date: Date.new(2016, 03, 21)) }
-  let (:us) { FactoryBot(:country, iso_code: "US") }
+  let (:container1) { create :container, shipment: shipment, container_number: '99000', seal_number: 'SEAL1212', container_size: 'GINORMOUS' }
+  let (:container2) { create :container, shipment: shipment, container_number: '99099', seal_number: 'SEAL2020', container_size: 'MODEST' }
+  let (:order) { create(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: Date.new(2016, 03, 15), first_expected_delivery_date: Date.new(2016, 03, 20)) }
+  let (:order2) { create(:order, vendor: vendor, customer_order_number:'987654321', ship_window_end: Date.new(2016, 03, 16), first_expected_delivery_date: Date.new(2016, 03, 21)) }
+  let (:us) { create(:country, iso_code: "US") }
   let (:product) {
-    product = FactoryBot(:product, importer: FactoryBot(:importer))
+    product = create(:product, importer: create(:importer))
     product.update_custom_value!(cdefs[:prod_part_number], "Part")
     product
   }
@@ -33,8 +33,8 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
   def create_lines shipment, order, line_params
     line_params.each do |p|
-      line = FactoryBot(:shipment_line, shipment:shipment, product:product, container: p[:container], carton_qty: p[:carton_qty], quantity: p[:quantity], cbms: p[:cbms])
-      order_line = FactoryBot(:order_line, order:order, quantity:line.quantity, product:product, country_of_origin:'GN')
+      line = create(:shipment_line, shipment:shipment, product:product, container: p[:container], carton_qty: p[:carton_qty], quantity: p[:quantity], cbms: p[:cbms])
+      order_line = create(:order_line, order:order, quantity:line.quantity, product:product, country_of_origin:'GN')
       PieceSet.create(order_line:order_line, quantity:line.quantity, shipment_line:line)
     end
     shipment.reload
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
       it "includes line details for air shipments" do
         shipment.update_attributes! mode: "Air"
-        my_order = FactoryBot(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
+        my_order = create(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, my_order, [{carton_qty: 5, quantity: 10, cbms: 15}]
 
         subject.generate(builder, shipment, user)
@@ -116,7 +116,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
       end
 
       it "falls back to unique identifier for part number if no part number field is present" do
-        order = FactoryBot(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
+        order = create(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, order, [{carton_qty: 5, quantity: 10, cbms: 15}]
         prod = shipment.shipment_lines.first.order_lines.first.product
         prod.update_custom_value!(cdefs[:prod_part_number], "")
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
       it "falls back to unique identifier for part number if no part number field is present without stripping system code" do
         # If the part unique id doesn't start with the importer's syscode, then don't bother stripping anything.
-        order = FactoryBot(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
+        order = create(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, order, [{carton_qty: 5, quantity: 10, cbms: 15}]
         prod = shipment.shipment_lines.first.order_lines.first.product
         prod.update_custom_value!(cdefs[:prod_part_number], "")

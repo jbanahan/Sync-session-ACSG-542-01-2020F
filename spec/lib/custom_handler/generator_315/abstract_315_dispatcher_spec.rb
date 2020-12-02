@@ -5,8 +5,8 @@ describe OpenChain::CustomHandler::Generator315::Abstract315Dispatcher do
   end
 
   describe "process_field" do
-    let (:entry) { FactoryBot(:entry, release_date: Time.zone.parse("2015-12-01 12:05")) }
-    let (:user) { FactoryBot(:master_user) }
+    let (:entry) { create(:entry, release_date: Time.zone.parse("2015-12-01 12:05")) }
+    let (:user) { create(:master_user) }
     let (:field) {  {model_field_uid: :ent_release_date } }
 
     it "returns a milestone update object for a specific model field" do

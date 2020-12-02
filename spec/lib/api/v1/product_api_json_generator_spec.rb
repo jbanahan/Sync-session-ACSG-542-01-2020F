@@ -1,6 +1,6 @@
 describe OpenChain::Api::V1::ProductApiJsonGenerator do
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
   let (:params) { {} }
   let (:product) { Product.new }
 

@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
   before :each do
-    @ent = FactoryBot(:entry, commercial_invoice_numbers: "123456789\n 987654321")
+    @ent = create(:entry, commercial_invoice_numbers: "123456789\n 987654321")
     @rule = described_class.new(rule_attributes_json: {style_list: ['1111', '2222']}.to_json)
     @helper_class = OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper
   end

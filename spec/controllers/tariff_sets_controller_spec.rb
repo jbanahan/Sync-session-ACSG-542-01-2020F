@@ -5,11 +5,11 @@ describe TariffSetsController do
     before(:each) do
       Country.destroy_all
       TariffSet.destroy_all
-      @user = FactoryBot(:user)
+      @user = create(:user)
 
       sign_in_as @user
-      @c1 = FactoryBot(:country)
-      c2 = FactoryBot(:country)
+      @c1 = create(:country)
+      c2 = create(:country)
       [@c1, c2].each do |c|
         # a : z stuff is to make sure they're not in alphabetical order in the DB
         5.times {|i| c.tariff_sets.create!(:label=>"#{i.modulo(2)==0 ? "a" : "z"}#{i}")}
@@ -42,11 +42,11 @@ describe TariffSetsController do
   describe "load" do
     before :each do
       Country.destroy_all
-      @country = FactoryBot(:country)
+      @country = create(:country)
     end
     context 'security' do
       it 'should not allow non-sys admins' do
-        @user = FactoryBot(:user)
+        @user = create(:user)
 
         sign_in_as @user
         expect(TariffLoader).not_to receive(:delay)
@@ -57,7 +57,7 @@ describe TariffSetsController do
     end
     context 'behavior' do
       before :each do
-        @user = FactoryBot(:user, :sys_admin=>true, :time_zone=>'Hawaii')
+        @user = create(:user, :sys_admin=>true, :time_zone=>'Hawaii')
 
         sign_in_as @user
       end
@@ -96,12 +96,12 @@ describe TariffSetsController do
   describe "activate" do
     before :each do
       Country.destroy_all
-      @country = FactoryBot(:country)
+      @country = create(:country)
       @tariff_set = @country.tariff_sets.create!(:label=>'mylabel')
     end
     context 'security' do
       it 'should not allow non admins' do
-        @user = FactoryBot(:user)
+        @user = create(:user)
 
         sign_in_as @user
         get :activate, :id=>@tariff_set.id
@@ -110,7 +110,7 @@ describe TariffSetsController do
       end
     end
     it 'should call delayed activate and write flash message' do
-      @user = FactoryBot(:user, :admin=>true)
+      @user = create(:user, :admin=>true)
 
       sign_in_as @user
       expect(TariffSet).to receive(:find).with(@tariff_set.id.to_s).and_return(@tariff_set)

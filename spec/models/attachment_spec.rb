@@ -1,8 +1,8 @@
 describe Attachment do
   describe "attachments_as_json" do
     it "creates json" do
-      u = FactoryBot(:user, first_name: 'Jim', last_name: 'Kirk')
-      o = FactoryBot(:order)
+      u = create(:user, first_name: 'Jim', last_name: 'Kirk')
+      o = create(:order)
       a1 = o.attachments.create!(attached_file_name: '1.txt', attached_file_size: 200, attachment_type: 'mytype', uploaded_by_id: u.id)
       a2 = o.attachments.create!(attached_file_name: '2.txt', attached_file_size: 1_000_000, attachment_type: '2type', uploaded_by_id: u.id)
       h = described_class.attachments_as_json o
@@ -39,8 +39,8 @@ describe Attachment do
 
   describe "can_view?" do
     it "allows viewing for permitted users when private" do
-      company = FactoryBot(:company, master: true)
-      user = FactoryBot(:user, company: company)
+      company = create(:company, master: true)
+      user = create(:user, company: company)
       a = described_class.new(is_private: true)
       a.attached_file_name = "test.txt"
       a.attachable = Entry.new
@@ -51,8 +51,8 @@ describe Attachment do
     end
 
     it "allows viewing for permitted users when not private" do
-      company = FactoryBot(:company)
-      user = FactoryBot(:user, company: company)
+      company = create(:company)
+      user = create(:user, company: company)
       a = described_class.new(is_private: false)
       a.attached_file_name = "test.txt"
       a.attachable = Entry.new
@@ -62,8 +62,8 @@ describe Attachment do
     end
 
     it "blocks viewing for non-permitted users" do
-      company = FactoryBot(:company, master: true)
-      user = FactoryBot(:user, company: company)
+      company = create(:company, master: true)
+      user = create(:user, company: company)
       a = described_class.new(is_private: true)
       a.attached_file_name = "test.txt"
       a.attachable = Entry.new
@@ -73,8 +73,8 @@ describe Attachment do
     end
 
     context "with attachment type limitations" do
-      let (:user) {FactoryBot(:user)}
-      let (:entry) {FactoryBot(:entry, importer: user.company)}
+      let (:user) {create(:user)}
+      let (:entry) {create(:entry, importer: user.company)}
       let (:attachment) {entry.attachments.build attached_file_name: "test.txt"}
 
       it "limits access to any type that has 'Billing Invoice' in the name to only those capable of viewing BrokerInvoices" do

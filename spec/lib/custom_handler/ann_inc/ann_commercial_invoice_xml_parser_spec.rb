@@ -2,9 +2,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
 
   let (:xml) { IO.read "spec/fixtures/files/ann_commercial_invoice.xml"}
   let (:document) { REXML::Document.new xml }
-  let!(:ann) { FactoryBot(:importer, system_code: "ATAYLOR", alliance_customer_number: "ATAYLOR") }
-  let!(:country) { FactoryBot(:country, iso_code: "CN") }
-  let!(:country2) { FactoryBot(:country, iso_code: "ID") }
+  let!(:ann) { create(:importer, system_code: "ATAYLOR", alliance_customer_number: "ATAYLOR") }
+  let!(:country) { create(:country, iso_code: "CN") }
+  let!(:country2) { create(:country, iso_code: "ID") }
   let(:log) { InboundFile.new }
 
   before do

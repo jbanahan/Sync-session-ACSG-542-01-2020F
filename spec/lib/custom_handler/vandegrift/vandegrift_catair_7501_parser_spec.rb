@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
   end
 
   let (:importer) do
-    with_customs_management_id(FactoryBot(:importer, irs_number: "30-0641353"), "CUSTNO")
+    with_customs_management_id(create(:importer, irs_number: "30-0641353"), "CUSTNO")
   end
 
   describe "process_file" do

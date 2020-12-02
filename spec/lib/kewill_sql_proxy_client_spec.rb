@@ -111,7 +111,7 @@ describe OpenChain::KewillSqlProxyClient do
   describe "bulk_request_entry_data" do
     subject { described_class }
 
-    let!(:entry) { FactoryBot(:entry, source_system: 'Alliance', broker_reference: '123456') }
+    let!(:entry) { create(:entry, source_system: 'Alliance', broker_reference: '123456') }
 
     it "uses primary key values to request entry data" do
       expect_any_instance_of(subject).to receive(:request_entry_data).with "123456"
@@ -142,7 +142,7 @@ describe OpenChain::KewillSqlProxyClient do
       allow(s3_obj).to receive(:bucket).and_return "bucket"
       s3_obj
     end
-    let (:search_run) { SearchRun.create! search_setup_id: FactoryBot(:search_setup).id }
+    let (:search_run) { SearchRun.create! search_setup_id: create(:search_setup).id }
 
     it "proxies requests with search runs in them" do
       expect(OpenChain::S3).to receive(:create_s3_tempfile).and_return s3_obj

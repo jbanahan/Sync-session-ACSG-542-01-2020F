@@ -1,8 +1,8 @@
 describe UserTemplate do
   describe 'create_user!' do
-    let (:new_company) { FactoryBot(:company) }
+    let (:new_company) { create(:company) }
     let!(:system_group) { Group.use_system_group('SYSG') }
-    let (:current_user) { FactoryBot(:user) }
+    let (:current_user) { create(:user) }
 
     it "creates user with default template merge" do
       expect(User).not_to receive(:delay)

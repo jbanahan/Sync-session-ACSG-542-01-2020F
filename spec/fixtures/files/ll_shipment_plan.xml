@@ -527,7 +527,7 @@
 					<LatestDeliveryDate>2005-01-24T12:00:00.000-07:00</LatestDeliveryDate>
 					<EarliestShipDate>2010-03-25T12:00:00.000-07:00</EarliestShipDate>
 					<DivisionIdentifier>HK - Division</DivisionIdentifier>
-					<FactoryBotLoad>CY</FactoryBotLoad>
+					<createLoad>CY</createLoad>
                     <LineItemAgentRef>ABB Logistics</LineItemAgentRef>
                     <Department>New York</Department>
                     <QuotaCategoryNumber>Quota One</QuotaCategoryNumber>
@@ -614,7 +614,7 @@
 						<Name>AAA &amp; BBB -AGENT</Name>
 					</PartyInfo>
 					<PartyInfo>
-						<Type>FactoryBot</Type>
+						<Type>create</Type>
 						<Name>BBB Company</Name>
 					</PartyInfo>
 				</ShipmentPlanItem>

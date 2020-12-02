@@ -112,7 +112,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     end
 
     it "requests entry data if expected_update_time is in past" do
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: 1.day.ago)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: 1.day.ago)
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).to receive(:request_entry_data).with("12345")
 
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
     end
 
     it "requests entry data if alliance source system export date is in past" do
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: 1.day.ago)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: 1.day.ago)
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).to receive(:request_entry_data).with("12345")
 
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "does not request data if expected update time is newer than from request" do
       existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
 
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).not_to receive(:request_entry_data)
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "does not request data if last_exported_from_source is newer than from request" do
       existing_last_exported = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: existing_last_exported)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", last_exported_from_source: existing_last_exported)
 
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).not_to receive(:request_entry_data)
@@ -149,8 +149,8 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "does not request data if invoice count is same as the remote" do
       existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
-      FactoryBot(:broker_invoice, entry: entry)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
+      create(:broker_invoice, entry: entry)
 
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).not_to receive(:request_entry_data)
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::KewillDataRequester do
 
     it "requests data if invoice count is less than the remote count" do
       existing_expected = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
-      entry = FactoryBot(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
+      entry = create(:entry, broker_reference: "12345", source_system: "Alliance", expected_update_time: existing_expected)
 
       sql_proxy_client = double("KewillSqlProxyClient")
       expect(sql_proxy_client).to receive(:request_entry_data).with("12345")

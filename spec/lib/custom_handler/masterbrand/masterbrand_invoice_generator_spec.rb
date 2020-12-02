@@ -2,11 +2,11 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "run_schedulable" do
     it "finds the new billable events, creates a VFI invoice, bills new entries and monthly charges" do
-      e1 = FactoryBot(:entry)
-      e2 = FactoryBot(:entry)
-      e3 = FactoryBot(:entry)
-      under_limit_billables = [FactoryBot(:billable_event, billable_eventable: e1), FactoryBot(:billable_event, billable_eventable: e2)]
-      over_limit_billables = [FactoryBot(:billable_event, billable_eventable: e3)]
+      e1 = create(:entry)
+      e2 = create(:entry)
+      e3 = create(:entry)
+      under_limit_billables = [create(:billable_event, billable_eventable: e1), create(:billable_event, billable_eventable: e2)]
+      over_limit_billables = [create(:billable_event, billable_eventable: e3)]
       invoice = double "vfi invoice"
       detail_tmp = double "detail tempfile"
 
@@ -24,35 +24,35 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "get_new_billables" do
     it "returns no results for entries that have already been invoiced" do
-      be = FactoryBot(:billable_event, billable_eventable: FactoryBot(:entry), entity_snapshot: FactoryBot(:entity_snapshot), event_type: "entry_new")
-      FactoryBot(:invoiced_event, billable_event: be, invoice_generator_name: "MasterbrandInvoiceGenerator")
+      be = create(:billable_event, billable_eventable: create(:entry), entity_snapshot: create(:entity_snapshot), event_type: "entry_new")
+      create(:invoiced_event, billable_event: be, invoice_generator_name: "MasterbrandInvoiceGenerator")
       results = described_class.get_new_billables
       expect(results.count).to eq 0
     end
 
     it "returns no results for billable events with types other than 'entry_new'" do
-      FactoryBot(:billable_event, billable_eventable: FactoryBot(:entry), entity_snapshot: FactoryBot(:entity_snapshot), event_type: "entry_foo")
+      create(:billable_event, billable_eventable: create(:entry), entity_snapshot: create(:entity_snapshot), event_type: "entry_foo")
       results = described_class.get_new_billables
       expect(results.count).to eq 0
     end
 
     it "returns no results for entries with file_logged_date before '2016-05-01'" do
-      e = FactoryBot(:entry, file_logged_date: '2016-01-01')
-      FactoryBot(:billable_event, billable_eventable: e, entity_snapshot: FactoryBot(:entity_snapshot), event_type: "entry_new")
+      e = create(:entry, file_logged_date: '2016-01-01')
+      create(:billable_event, billable_eventable: e, entity_snapshot: create(:entity_snapshot), event_type: "entry_new")
       results = described_class.get_new_billables
       expect(results.count).to eq 0
     end
 
     it "returns results for events invoiced with a generator other than MasterbrandInvoiceGenerator" do
-      be = FactoryBot(:billable_event, billable_eventable: FactoryBot(:entry), entity_snapshot: FactoryBot(:entity_snapshot), event_type: "entry_new")
-      FactoryBot(:invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
+      be = create(:billable_event, billable_eventable: create(:entry), entity_snapshot: create(:entity_snapshot), event_type: "entry_new")
+      create(:invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
       results = described_class.get_new_billables
       expect(results.count).to eq 1
     end
 
     it "returns results for un-invoiced entries with file_logged_date since '2016-05-01' and associated with billable events of type entry_new " do
-      e = FactoryBot(:entry, file_logged_date: '2017-01-01')
-      FactoryBot(:billable_event, billable_eventable: e, entity_snapshot: FactoryBot(:entity_snapshot), event_type: "entry_new")
+      e = create(:entry, file_logged_date: '2017-01-01')
+      create(:billable_event, billable_eventable: e, entity_snapshot: create(:entity_snapshot), event_type: "entry_new")
       results = described_class.get_new_billables
       expect(results.count).to eq 1
     end
@@ -65,7 +65,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "create_invoice" do
     it "creates a new VFI invoice" do
-      mbci = FactoryBot(:master_company)
+      mbci = create(:master_company)
       inv = described_class.create_invoice
       expected = [mbci, Date.today, "VFI-1", "USD"]
       expect([inv.customer, inv.invoice_date, inv.invoice_number, inv.currency]).to eq expected
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "bill_new_entries" do
     it "writes new billables as invoiced events and creates invoice lines for those of type 'entry_new'" do
-      inv = FactoryBot(:vfi_invoice)
+      inv = create(:vfi_invoice)
 
       billables = [double('billable')]
 
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
     it "attaches an invoice line" do
       billables = double('billables')
       expect(described_class).to receive(:write_invoiced_events).with(billables, instance_of(VfiInvoiceLine))
-      inv = FactoryBot(:vfi_invoice)
+      inv = create(:vfi_invoice)
       described_class.bill_monthly_charge billables, inv
       line = VfiInvoice.first.vfi_invoice_lines.first
       expected = [1000, 1, "ea", 1000, "Monthly charge for up to 250 entries"]
@@ -104,9 +104,9 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "write_invoiced_events" do
     it "creates an invoiced event for each new billable" do
-      be_1 = FactoryBot(:billable_event)
-      be_2 = FactoryBot(:billable_event)
-      inv_line = FactoryBot(:vfi_invoice_line)
+      be_1 = create(:billable_event)
+      be_2 = create(:billable_event)
+      inv_line = create(:vfi_invoice_line)
       new_billables = [{id: be_1.id},
                        {id: be_2.id}]
 
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       it "creates and attaches spreadsheet to invoice" do
         stub_paperclip
         entry_ids = double "ids"
-        inv = FactoryBot(:vfi_invoice, invoice_number: "inv-num")
+        inv = create(:vfi_invoice, invoice_number: "inv-num")
         workbook_double = XlsMaker.create_workbook 'workbook_double'
         expect(generator).to receive(:create_workbook).with(entry_ids, "inv-num").and_return workbook_double
         generator.create_report_for_invoice(entry_ids, inv)
@@ -140,8 +140,8 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
     describe "create_workbook" do
       it "returns list of entry numbers corresponding to the specified billable events" do
-        e1 = FactoryBot(:entry, entry_number: "321")
-        e2 = FactoryBot(:entry, entry_number: "123")
+        e1 = create(:entry, entry_number: "321")
+        e2 = create(:entry, entry_number: "123")
 
         wb = generator.create_workbook([e1.id, e2.id], "inv num")
         sheet = wb.worksheets[0]

@@ -78,7 +78,7 @@ describe OpenChain::BulkAction::BulkActionRunner do
   end
   describe '#run_s3' do
     it "should retrieve S3 file, run IDs, delete S3 file" do
-      bpl = BulkProcessLog.create!(user:FactoryBot(:user), bulk_type:'whatever')
+      bpl = BulkProcessLog.create!(user:create(:user), bulk_type:'whatever')
       expect(User).to receive(:find).with(99).and_return @u
       expect(BulkProcessLog).to receive(:with_log).with(@u, @ac.bulk_type).and_yield bpl
       base_hash = {user_id:99, keys:[1, 2, 3], opts:{'abc'=>'def'}}

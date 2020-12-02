@@ -1,6 +1,6 @@
 describe CompaniesController do
-  let (:company) { FactoryBot(:company, :master=>true) }
-  let (:user) { FactoryBot(:user, admin: true, company: company)}
+  let (:company) { create(:company, :master=>true) }
+  let (:user) { create(:user, admin: true, company: company)}
   before :each do
     sign_in_as user
   end
@@ -133,16 +133,16 @@ describe CompaniesController do
       expect(flash[:errors].size).to eq(1)
     end
     it "should replace children" do
-      c1 = FactoryBot(:company)
-      c2 = FactoryBot(:company)
-      c3 = FactoryBot(:company)
+      c1 = create(:company)
+      c2 = create(:company)
+      c3 = create(:company)
       company.linked_companies << c1
       post :update_children, { :id=>company.id, :selected=>{"1"=>c2.id.to_s, "2"=>c3.id.to_s} }
       expect(response).to redirect_to show_children_company_path company
       expect(Company.find(company.id).linked_companies.to_a).to eq([c2, c3])
     end
     it "should allow user to unlink all companies" do
-      c1 = FactoryBot(:company); c2 = FactoryBot(:company); c3 = FactoryBot(:company)
+      c1 = create(:company); c2 = create(:company); c3 = create(:company)
       company.linked_companies << c1; company.linked_companies << c2
       post :update_children, { :id=>company.id }
       expect(response).to redirect_to show_children_company_path company

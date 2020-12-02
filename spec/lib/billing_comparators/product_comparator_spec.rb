@@ -12,7 +12,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
 
     it "runs comparisons" do
-      es = FactoryBot(:entity_snapshot, bucket: "new_bucket", doc_path: "new_path", version: "new_version")
+      es = create(:entity_snapshot, bucket: "new_bucket", doc_path: "new_path", version: "new_version")
 
       expect(described_class).to receive(:check_new_classification).with(id: 'id', old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version',
                                                                     new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: es.id)
@@ -23,9 +23,9 @@ describe OpenChain::BillingComparators::ProductComparator do
 
   describe "check_new_classification" do
     before(:each) do
-      @class = FactoryBot(:classification)
+      @class = create(:classification)
       base_hash["entity"]["children"].first["entity"]["record_id"] = @class.id
-      @es = FactoryBot(:entity_snapshot)
+      @es = create(:entity_snapshot)
     end
 
     it "creates a billable event for every classification on the product if the product is new" do
@@ -42,7 +42,7 @@ describe OpenChain::BillingComparators::ProductComparator do
     end
 
     it "creates a billable event for every classification not on the old version of the product" do
-      class_2 = FactoryBot(:classification)
+      class_2 = create(:classification)
       base_hash_2 = Marshal.load(Marshal.dump base_hash) # creates deep copy -- http://stackoverflow.com/a/4157635
       new_class = [{"entity"=>{"core_module"=>"Classification", "record_id"=>class_2.id, "model_fields"=>{"class_cntry_iso"=>"CA"}, "children" =>
                      [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>2, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"2222"}}}]}}]

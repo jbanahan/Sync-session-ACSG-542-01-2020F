@@ -6,7 +6,7 @@ describe OpenChain::BillingComparators::EntryComparator do
     end
 
     it "runs comparisons" do
-      es = FactoryBot(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
+      es = create(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
       expect(described_class).to receive(:check_new_entry).with(id: 2, old_bucket: 'old_bucket', old_path: 'old_path', old_version: 'old_version',
                                                             new_bucket: 'new_bucket', new_path: 'new_path', new_version: 'new_version', new_snapshot_id: es.id)
 
@@ -16,8 +16,8 @@ describe OpenChain::BillingComparators::EntryComparator do
 
   describe "check_new_entry" do
     it "creates a billable event for a new entry" do
-      es = FactoryBot(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
-      ent = FactoryBot(:entry)
+      es = create(:entity_snapshot, bucket: 'new_bucket', doc_path: 'new_path', version: 'new_version')
+      ent = create(:entry)
       described_class.check_new_entry(id: ent.id, old_bucket: nil, old_path: nil, old_version: nil, new_bucket: 'new_bucket',
                                       new_path: 'new_path', new_version: 'new_version', new_snapshot_id: es.id)
 

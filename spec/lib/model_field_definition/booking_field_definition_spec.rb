@@ -6,23 +6,23 @@ describe OpenChain::ModelFieldDefinition::BookingLineFieldDefinition do
 
   describe "bkln_quantity_diff" do
     it 'should handle the booking_line quantity being nil' do
-      ol = FactoryBot(:order_line, quantity: 100)
-      bl = FactoryBot(:booking_line, order_line: ol)
+      ol = create(:order_line, quantity: 100)
+      bl = create(:booking_line, order_line: ol)
 
       expect(@qd.process_export(bl, nil, true)).to eq(1.0)
     end
 
     it 'should handle the order_line quantity being nil' do
-      ol = FactoryBot(:order_line)
-      bl = FactoryBot(:booking_line, order_line: ol, quantity: 100)
+      ol = create(:order_line)
+      bl = create(:booking_line, order_line: ol, quantity: 100)
       ol.update_attribute(:quantity, nil)
 
       expect(@qd.process_export(bl, nil, true)).to eq(nil)
     end
 
     it 'should handle both quantities when present' do
-      ol = FactoryBot(:order_line, quantity: 50)
-      bl = FactoryBot(:booking_line, order_line: ol, quantity: 100)
+      ol = create(:order_line, quantity: 50)
+      bl = create(:booking_line, order_line: ol, quantity: 100)
 
       expect(@qd.process_export(bl, nil, true)).to eq(200.0)
     end
@@ -30,11 +30,11 @@ describe OpenChain::ModelFieldDefinition::BookingLineFieldDefinition do
 
   describe "bkln_order_line_quantity" do
     it 'should return the booking line\'s quantity' do
-      ol = FactoryBot(:order_line, quantity: 100)
-      bl = FactoryBot(:booking_line, order_line: ol)
+      ol = create(:order_line, quantity: 100)
+      bl = create(:booking_line, order_line: ol)
 
       # test query
-      ss = SearchSetup.new(module_type:'Shipment', user_id: FactoryBot(:admin_user).id)
+      ss = SearchSetup.new(module_type:'Shipment', user_id: create(:admin_user).id)
       ss.search_criterions.build(model_field_uid:'bkln_order_line_quantity', operator:'eq', value:'100')
       expect(ss.result_keys).to eq [bl.shipment_id]
 

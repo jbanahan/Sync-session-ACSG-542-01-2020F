@@ -1,18 +1,18 @@
 describe SurveyResponseUpdate do
   describe "update_eligible scope" do
-    let(:survey_response) { FactoryBot(:survey_response) }
-    let(:user) { FactoryBot(:user) }
+    let(:survey_response) { create(:survey_response) }
+    let(:user) { create(:user) }
 
     it "returns items updated > 1 hour ago" do
       find_me = survey_response.survey_response_updates.create!(user_id: user.id, updated_at: 2.hours.ago)
-      survey_response.survey_response_updates.create(user_id: FactoryBot(:user).id)
+      survey_response.survey_response_updates.create(user_id: create(:user).id)
       expect(described_class.update_eligible.all).to eq([find_me])
     end
   end
 
   describe "run_updates" do
     let(:quiet_email) { instance_double('email') }
-    let(:user) { FactoryBot(:user) }
+    let(:user) { create(:user) }
 
     before do
       allow(quiet_email).to receive(:deliver_now)
@@ -24,10 +24,10 @@ describe SurveyResponseUpdate do
       end
 
       it "sends to subscribers" do
-        FactoryBot(:user)
-        sr = FactoryBot(:survey_response)
+        create(:user)
+        sr = create(:survey_response)
         ss = sr.survey.survey_subscriptions.create!(user: user)
-        update = sr.survey_response_updates.create!(user: FactoryBot(:user), updated_at: 2.hours.ago)
+        update = sr.survey_response_updates.create!(user: create(:user), updated_at: 2.hours.ago)
 
         # expectation
         eml = instance_double('email')
@@ -40,7 +40,7 @@ describe SurveyResponseUpdate do
 
       it "does not send to subscribers if there aren't any" do
         # setup
-        sr = FactoryBot(:survey_response)
+        sr = create(:survey_response)
         sr.survey_response_updates.create!(user: user, updated_at: 2.hours.ago)
 
         # expectation
@@ -52,8 +52,8 @@ describe SurveyResponseUpdate do
 
       it "does not send to subscriber if subscriber is the only updater" do
         # setup
-        u2 = FactoryBot(:user)
-        sr = FactoryBot(:survey_response)
+        u2 = create(:user)
+        sr = create(:survey_response)
         sr.survey.survey_subscriptions.create!(user: user)
         ss2 = sr.survey.survey_subscriptions.create!(user: u2)
         update = sr.survey_response_updates.create!(user: user, updated_at: 2.hours.ago)
@@ -68,11 +68,11 @@ describe SurveyResponseUpdate do
       end
 
       it "sends to subscriber if the subscriber updated and another user also updated" do
-        FactoryBot(:user)
-        sr = FactoryBot(:survey_response)
+        create(:user)
+        sr = create(:survey_response)
         ss = sr.survey.survey_subscriptions.create!(user: user)
         update = sr.survey_response_updates.create!(user: user, updated_at: 2.hours.ago)
-        update2 = sr.survey_response_updates.create!(user: FactoryBot(:user), updated_at: 2.hours.ago)
+        update2 = sr.survey_response_updates.create!(user: create(:user), updated_at: 2.hours.ago)
 
         eml = instance_double('email')
         expect(eml).to receive(:deliver_now)
@@ -91,9 +91,9 @@ describe SurveyResponseUpdate do
       end
 
       it "sends to survey recipient if someone else updated" do
-        sr = FactoryBot(:survey_response, user: user)
+        sr = create(:survey_response, user: user)
         sr.survey_response_updates.create!(user: user, updated_at: 2.hours.ago)
-        sr.survey_response_updates.create!(user: FactoryBot(:user), updated_at: 2.hours.ago)
+        sr.survey_response_updates.create!(user: create(:user), updated_at: 2.hours.ago)
 
         eml = instance_double('email')
         expect(eml).to receive(:deliver_now)
@@ -103,9 +103,9 @@ describe SurveyResponseUpdate do
       end
 
       it "does not send to survey recipient if status == NEEDS_RATING" do
-        sr = FactoryBot(:survey_response, user: user)
+        sr = create(:survey_response, user: user)
         allow_any_instance_of(SurveyResponse).to receive(:status).and_return(SurveyResponse::STATUSES[:needs_rating])
-        sr.survey_response_updates.create!(user: FactoryBot(:user), updated_at: 2.hours.ago)
+        sr.survey_response_updates.create!(user: create(:user), updated_at: 2.hours.ago)
 
         expect(OpenMailer).not_to receive(:send_survey_user_update)
 
@@ -114,7 +114,7 @@ describe SurveyResponseUpdate do
 
       it "does not send to survey recipient if only the recipient updated" do
         # setup
-        sr = FactoryBot(:survey_response, user: user)
+        sr = create(:survey_response, user: user)
         sr.survey_response_updates.create!(user: user, updated_at: 2.hours.ago)
 
         # expectation

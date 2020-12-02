@@ -3,7 +3,7 @@ describe Api::V1::DataCrossReferencesController do
     let!(:xref_1) { DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE" }
     let!(:xref_2) { DataCrossReference.create! cross_reference_type: DataCrossReference::US_HTS_TO_CA, key: "KEY2", value: "VALUE2" }
     let!(:u) do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow_api_access u
       u
     end

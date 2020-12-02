@@ -6,10 +6,10 @@ describe "OrderLineFieldDefinition" do
 
     it "should round if total_cost_digits is populated" do
       # default extended cost 31830.4728, should round to 31830.47
-      ol = FactoryBot(:order_line, price_per_unit:1.89, quantity:16841.52, total_cost_digits:2)
+      ol = create(:order_line, price_per_unit:1.89, quantity:16841.52, total_cost_digits:2)
 
       # test query
-      ss = SearchSetup.new(module_type:'Order', user_id:FactoryBot(:admin_user).id)
+      ss = SearchSetup.new(module_type:'Order', user_id:create(:admin_user).id)
       ss.search_criterions.build(model_field_uid:'ordln_total_cost', operator:'eq', value:'31830.47')
       expect(ss.result_keys).to eq [ol.order_id]
 
@@ -19,10 +19,10 @@ describe "OrderLineFieldDefinition" do
 
     it "should not round if total_cost_digits is not populated" do
       # default extended cost 31830.4728, should round to 31830.47
-      ol = FactoryBot(:order_line, price_per_unit:1.89, quantity:16841.52)
+      ol = create(:order_line, price_per_unit:1.89, quantity:16841.52)
 
       # test query
-      ss = SearchSetup.new(module_type:'Order', user_id:FactoryBot(:admin_user).id)
+      ss = SearchSetup.new(module_type:'Order', user_id:create(:admin_user).id)
       ss.search_criterions.build(model_field_uid:'ordln_total_cost', operator:'eq', value:'31830.4728')
       expect(ss.result_keys).to eq [ol.order_id]
 
@@ -33,13 +33,13 @@ describe "OrderLineFieldDefinition" do
 
   describe "product vendor assignment custom fields" do
     it "should link to ProductVendorAssignment" do
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
-      p = FactoryBot(:product)
-      v = FactoryBot(:company, vendor:true)
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      p = create(:product)
+      v = create(:company, vendor:true)
       pva = ProductVendorAssignment.create!(product_id:p.id, vendor_id:v.id)
       pva.update_custom_value!(cd, 'testval')
-      o = FactoryBot(:order, vendor:v)
-      ol = FactoryBot(:order_line, product:p, order:o)
+      o = create(:order, vendor:v)
+      ol = create(:order_line, product:p, order:o)
 
       ModelField.reload
       mf = ModelField.find_by_uid("#{cd.model_field_uid}_order_lines")

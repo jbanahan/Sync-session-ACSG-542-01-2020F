@@ -2,7 +2,7 @@ describe SearchWriter do
 
   describe "write_search" do
     let! (:ms) { stub_master_setup }
-    let(:user) { FactoryBot(:user) }
+    let(:user) { create(:user) }
     let(:search_setup) {
       # for the basic search stuff, we're going to use csv since it's easier to read back
       ss = SearchSetup.new module_type: "Entry", user: user, name: 'search', download_format: "csv"

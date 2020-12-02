@@ -1,10 +1,10 @@
 describe AnswerCommentsController do
   describe "create" do
     before :each do
-      @user = FactoryBot(:user, first_name:'Joe', last_name:'Jackson')
+      @user = create(:user, first_name:'Joe', last_name:'Jackson')
 
       sign_in_as @user
-      @answer = FactoryBot(:answer)
+      @answer = create(:answer)
       allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
     end
     it "should check permission on parent survey response can_view?" do

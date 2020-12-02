@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
 
   # The parent class contains more extensive tests, this is just to make sure everything works together correctly
   describe "process" do
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:custom_file) { instance_double(CustomFile) }
     let (:row_data) {
      [
@@ -13,8 +13,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
 
     let! (:xref_code) { DataCrossReference.create! key: "CODE", value: "TEXT", cross_reference_type: "ll_patent_statement"}
     let! (:xref_code_2) { DataCrossReference.create! key: "CODE2", value: "TEXT2", cross_reference_type: "ll_patent_statement" }
-    let (:product) { FactoryBot(:product, unique_identifier: "PRODUCT".rjust(18, '0')) }
-    let (:vendor) { FactoryBot(:vendor, system_code: "VENDOR".rjust(10, '0')) }
+    let (:product) { create(:product, unique_identifier: "PRODUCT".rjust(18, '0')) }
+    let (:vendor) { create(:vendor, system_code: "VENDOR".rjust(10, '0')) }
     let! (:product_vendor_assignment) { product.product_vendor_assignments.create! vendor: vendor }
 
     subject { described_class.new nil }
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
 
   describe "can_view?" do
     let (:ms) { stub_master_setup }
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:group) { Group.use_system_group "PATENTASSIGN" }
     subject { described_class }
 

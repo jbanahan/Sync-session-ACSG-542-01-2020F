@@ -2,7 +2,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
   let(:report) { described_class.new }
 
   describe "permission?" do
-    let (:ascena) { FactoryBot(:importer, system_code: "ASCENA") }
+    let (:ascena) { create(:importer, system_code: "ASCENA") }
 
     before(:each) do
       ascena
@@ -11,32 +11,32 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     end
 
     it "allows access for master users who can view entries" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "allows access for Ascena users who can view entries" do
-      u = FactoryBot(:user, company: ascena)
+      u = create(:user, company: ascena)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "allows access for users of Ascena's parent companies" do
-      parent = FactoryBot(:company, linked_companies: [ascena])
-      u = FactoryBot(:user, company: parent)
+      parent = create(:company, linked_companies: [ascena])
+      u = create(:user, company: parent)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "prevents access by other companies" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq false
     end
 
     it "prevents access by users who can't view entries" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:view_entries?).and_return false
       expect(described_class.permission? u).to eq false
     end
@@ -45,140 +45,140 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
   describe "run_schedulable" do
     def create_data
       agent_cdef = described_class.prep_custom_definitions([:ord_selling_agent])[:ord_selling_agent]
-      co = FactoryBot(:company, system_code: "ASCENA")
-      fact1 = FactoryBot(:company, name: "fact1")
-      fact2 = FactoryBot(:company, name: "fact2")
+      co = create(:company, system_code: "ASCENA")
+      fact1 = create(:company, name: "fact1")
+      fact2 = create(:company, name: "fact2")
       DataCrossReference.create!(cross_reference_type: 'asce_mid', key: 'mid1-vendorId1')
       DataCrossReference.create!(cross_reference_type: 'asce_mid', key: 'mid2-vendorId2')
-      fm_year_start = FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 1, start_date: '2016-01-01', end_date: '2016-01-31')
-      fm_season_start = FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 7, start_date: '2016-07-01', end_date: '2016-07-31')
-      fm_previous = FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 8, start_date: '2016-08-01', end_date: '2016-08-31')
-      fm_current = FactoryBot(:fiscal_month, company: co, year: 2016, month_number: 9, start_date: '2016-09-01', end_date: '2016-09-30')
+      fm_year_start = create(:fiscal_month, company: co, year: 2016, month_number: 1, start_date: '2016-01-01', end_date: '2016-01-31')
+      fm_season_start = create(:fiscal_month, company: co, year: 2016, month_number: 7, start_date: '2016-07-01', end_date: '2016-07-31')
+      fm_previous = create(:fiscal_month, company: co, year: 2016, month_number: 8, start_date: '2016-08-01', end_date: '2016-08-31')
+      fm_current = create(:fiscal_month, company: co, year: 2016, month_number: 9, start_date: '2016-09-01', end_date: '2016-09-30')
 
       # ELIGIBLE (contract_amount > 0)
-      vend1 = FactoryBot(:company, name: "vend1")
-      vend2 = FactoryBot(:company, name: "vend2")
+      vend1 = create(:company, name: "vend1")
+      vend2 = create(:company, name: "vend2")
 
       # FIRST SALE
 
       # previous month
-      ent1 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
-      ci1 = FactoryBot(:commercial_invoice, entry: ent1, invoice_value: 20)
-      cil1_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_1', contract_amount: 10, value: 8, mid: 'mid1')
-      cil1_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_2', contract_amount: 9, value: 6, mid: 'mid1')
-      cil1_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_3', contract_amount: 8, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_1, duty_amount: 3, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_2, duty_amount: 5, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1_3, duty_amount: 2, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num1_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num1_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num1_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent1 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
+      ci1 = create(:commercial_invoice, entry: ent1, invoice_value: 20)
+      cil1_1 = create(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_1', contract_amount: 10, value: 8, mid: 'mid1')
+      cil1_2 = create(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_2', contract_amount: 9, value: 6, mid: 'mid1')
+      cil1_3 = create(:commercial_invoice_line, commercial_invoice: ci1, po_number: 'po num1_3', contract_amount: 8, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil1_1, duty_amount: 3, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil1_2, duty_amount: 5, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil1_3, duty_amount: 2, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num1_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num1_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num1_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # season
-      ent2 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
-      ci2 = FactoryBot(:commercial_invoice, entry: ent2, invoice_value: 20)
-      cil2_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_1', contract_amount: 10, value: 8, mid: 'mid1')
-      cil2_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_2', contract_amount: 9, value: 6, mid: 'mid1')
-      cil2_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_3', contract_amount: 8, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil2_1, duty_amount: 3, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil2_2, duty_amount: 5, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil2_3, duty_amount: 2, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num2_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num2_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num2_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent2 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
+      ci2 = create(:commercial_invoice, entry: ent2, invoice_value: 20)
+      cil2_1 = create(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_1', contract_amount: 10, value: 8, mid: 'mid1')
+      cil2_2 = create(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_2', contract_amount: 9, value: 6, mid: 'mid1')
+      cil2_3 = create(:commercial_invoice_line, commercial_invoice: ci2, po_number: 'po num2_3', contract_amount: 8, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil2_1, duty_amount: 3, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil2_2, duty_amount: 5, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil2_3, duty_amount: 2, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num2_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num2_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num2_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # ytd
-      ent3 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
-      ci3 = FactoryBot(:commercial_invoice, entry: ent3, invoice_value: 20)
-      cil3_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_1', contract_amount: 10, value: 8, mid: 'mid1')
-      cil3_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_2', contract_amount: 9, value: 6, mid: 'mid1')
-      cil3_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_3', contract_amount: 8, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil3_1, duty_amount: 3, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil3_2, duty_amount: 5, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil3_3, duty_amount: 2, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num3_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num3_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num3_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent3 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
+      ci3 = create(:commercial_invoice, entry: ent3, invoice_value: 20)
+      cil3_1 = create(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_1', contract_amount: 10, value: 8, mid: 'mid1')
+      cil3_2 = create(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_2', contract_amount: 9, value: 6, mid: 'mid1')
+      cil3_3 = create(:commercial_invoice_line, commercial_invoice: ci3, po_number: 'po num3_3', contract_amount: 8, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil3_1, duty_amount: 3, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil3_2, duty_amount: 5, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil3_3, duty_amount: 2, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num3_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num3_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num3_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
 
       # MISSED SAVINGS (contract_amount = 0)
 
       # previous month
-      ent4 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
-      ci4 = FactoryBot(:commercial_invoice, entry: ent4, invoice_value: 20)
-      cil4_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_1', contract_amount: 0, value: 8, mid: 'mid1')
-      cil4_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_2', contract_amount: 0, value: 6, mid: 'mid1')
-      cil4_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_3', contract_amount: 0, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil4_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil4_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil4_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num4_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num4_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num4_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent4 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
+      ci4 = create(:commercial_invoice, entry: ent4, invoice_value: 20)
+      cil4_1 = create(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_1', contract_amount: 0, value: 8, mid: 'mid1')
+      cil4_2 = create(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_2', contract_amount: 0, value: 6, mid: 'mid1')
+      cil4_3 = create(:commercial_invoice_line, commercial_invoice: ci4, po_number: 'po num4_3', contract_amount: 0, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil4_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil4_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil4_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num4_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num4_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num4_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # season
-      ent5 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
-      ci5 = FactoryBot(:commercial_invoice, entry: ent5, invoice_value: 20)
-      cil5_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_1', contract_amount: 0, value: 8, mid: 'mid1')
-      cil5_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_2', contract_amount: 0, value: 6, mid: 'mid1')
-      cil5_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_3', contract_amount: 0, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil5_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil5_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil5_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num5_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num5_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num5_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent5 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
+      ci5 = create(:commercial_invoice, entry: ent5, invoice_value: 20)
+      cil5_1 = create(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_1', contract_amount: 0, value: 8, mid: 'mid1')
+      cil5_2 = create(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_2', contract_amount: 0, value: 6, mid: 'mid1')
+      cil5_3 = create(:commercial_invoice_line, commercial_invoice: ci5, po_number: 'po num5_3', contract_amount: 0, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil5_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil5_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil5_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num5_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num5_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num5_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # ytd
-      ent6 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
-      ci6 = FactoryBot(:commercial_invoice, entry: ent6, invoice_value: 20)
-      cil6_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_1', contract_amount: 0, value: 8, mid: 'mid1')
-      cil6_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_2', contract_amount: 0, value: 6, mid: 'mid1')
-      cil6_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_3', contract_amount: 0, value: 5, mid: 'mid2')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil6_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil6_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil6_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num6_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num6_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num6_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent6 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
+      ci6 = create(:commercial_invoice, entry: ent6, invoice_value: 20)
+      cil6_1 = create(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_1', contract_amount: 0, value: 8, mid: 'mid1')
+      cil6_2 = create(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_2', contract_amount: 0, value: 6, mid: 'mid1')
+      cil6_3 = create(:commercial_invoice_line, commercial_invoice: ci6, po_number: 'po num6_3', contract_amount: 0, value: 5, mid: 'mid2')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil6_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil6_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil6_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num6_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num6_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num6_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
 
       # INELIGIBLE
-      vend3 = FactoryBot(:company, name: "vend3")
-      vend4 = FactoryBot(:company, name: "vend4")
+      vend3 = create(:company, name: "vend3")
+      vend4 = create(:company, name: "vend4")
 
       # POTENTIAL SAVINGS (contract_amount = 0)
 
       # previous month
-      ent7 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
-      ci7 = FactoryBot(:commercial_invoice, entry: ent7, invoice_value: 20)
-      cil7_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_1', contract_amount: 0, value: 8, mid: 'mid3')
-      cil7_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_2', contract_amount: 0, value: 6, mid: 'mid3')
-      cil7_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_3', contract_amount: 0, value: 5, mid: 'mid4')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil7_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil7_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil7_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num7_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num7_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num7_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent7 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
+      ci7 = create(:commercial_invoice, entry: ent7, invoice_value: 20)
+      cil7_1 = create(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_1', contract_amount: 0, value: 8, mid: 'mid3')
+      cil7_2 = create(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_2', contract_amount: 0, value: 6, mid: 'mid3')
+      cil7_3 = create(:commercial_invoice_line, commercial_invoice: ci7, po_number: 'po num7_3', contract_amount: 0, value: 5, mid: 'mid4')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil7_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil7_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil7_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num7_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num7_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num7_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # season
-      ent8 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
-      ci8 = FactoryBot(:commercial_invoice, entry: ent8, invoice_value: 20)
-      cil8_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_1', contract_amount: 0, value: 8, mid: 'mid3')
-      cil8_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_2', contract_amount: 0, value: 6, mid: 'mid3')
-      cil8_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_3', contract_amount: 0, value: 5, mid: 'mid4')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil8_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil8_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil8_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num8_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num8_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num8_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent8 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-07-04', fiscal_month: 9, fiscal_year: 2016)
+      ci8 = create(:commercial_invoice, entry: ent8, invoice_value: 20)
+      cil8_1 = create(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_1', contract_amount: 0, value: 8, mid: 'mid3')
+      cil8_2 = create(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_2', contract_amount: 0, value: 6, mid: 'mid3')
+      cil8_3 = create(:commercial_invoice_line, commercial_invoice: ci8, po_number: 'po num8_3', contract_amount: 0, value: 5, mid: 'mid4')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil8_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil8_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil8_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num8_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num8_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num8_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       # ytd
-      ent9 = FactoryBot(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
-      ci9 = FactoryBot(:commercial_invoice, entry: ent9, invoice_value: 20)
-      cil9_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_1', contract_amount: 0, value: 8, mid: 'mid3')
-      cil9_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_2', contract_amount: 0, value: 6, mid: 'mid3')
-      cil9_3 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_3', contract_amount: 0, value: 5, mid: 'mid4')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil9_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil9_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil9_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
-      FactoryBot(:order, order_number: 'ASCENA-po num9_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num9_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
-      FactoryBot(:order, order_number: 'ASCENA-po num9_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      ent9 = create(:entry, customer_number: 'ASCE', fiscal_date: '2016-01-04', fiscal_month: 9, fiscal_year: 2016)
+      ci9 = create(:commercial_invoice, entry: ent9, invoice_value: 20)
+      cil9_1 = create(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_1', contract_amount: 0, value: 8, mid: 'mid3')
+      cil9_2 = create(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_2', contract_amount: 0, value: 6, mid: 'mid3')
+      cil9_3 = create(:commercial_invoice_line, commercial_invoice: ci9, po_number: 'po num9_3', contract_amount: 0, value: 5, mid: 'mid4')
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil9_1, duty_amount: 3, duty_rate: 2, entered_value: 5)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil9_2, duty_amount: 5, duty_rate: 3, entered_value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil9_3, duty_amount: 2, duty_rate: 4, entered_value: 6)
+      create(:order, order_number: 'ASCENA-po num9_1', vendor: vend3, factory: fact1).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num9_2', vendor: vend3, factory: fact2).update_custom_value!(agent_cdef, 'agent')
+      create(:order, order_number: 'ASCENA-po num9_3', vendor: vend4, factory: fact1).update_custom_value!(agent_cdef, 'agent')
     end
 
     it "emailed attachment has correct data" do
@@ -196,7 +196,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
         sheet_1 = wb.worksheet(0)
         expect(sheet_1.row(1)).to eq ["First Sale Eligible Vendors Claiming First Sale at Entry"]
-        expect(sheet_1.row(2)).to eq ['Vendor', 'Seller', 'FactoryBot', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
+        expect(sheet_1.row(2)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
         expect(sheet_1.row(3)).to eq ['vend1', 'agent', 'fact1', 1.20, 2.40, 3.60]
         expect(sheet_1.row(4)).to eq ['vend1', 'agent', 'fact2', 1.50, 3.00, 4.50]
         expect(sheet_1.row(5)).to eq [nil, nil, nil, 2.70, 5.40, 8.10, 'vend1 Subtotal']
@@ -210,7 +210,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(13)).to eq [nil, '29.63%', 'Fiscal Season Average Vendor Margin']
         expect(sheet_1.row(14)).to eq [nil, '29.63%', 'Fiscal YTD Average Vendor Margin']
 
-        expect(sheet_1.row(16)).to eq ['Vendor', 'Seller', 'FactoryBot', 'Previous Fiscal Month Missed Duty Savings', 'Fiscal Season to Date Missed Savings', 'Fiscal YTD Missed Savings']
+        expect(sheet_1.row(16)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Missed Duty Savings', 'Fiscal Season to Date Missed Savings', 'Fiscal YTD Missed Savings']
         expect(sheet_1.row(17)).to eq ['vend1', 'agent', 'fact1', 4.74, 9.48, 14.22]
         expect(sheet_1.row(18)).to eq ['vend1', 'agent', 'fact2', 5.33, 10.67, 16.00]
         expect(sheet_1.row(19)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend1 Subtotal']
@@ -224,7 +224,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(27)).to eq [nil, '29.63%', 'Fiscal Season Average Vendor Margin']
         expect(sheet_1.row(28)).to eq [nil, '29.63%', 'Fiscal YTD Average Vendor Margin']
 
-        expect(sheet_1.row(30)).to eq ['Vendor', 'Seller', 'FactoryBot', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
+        expect(sheet_1.row(30)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
         expect(sheet_1.row(31)).to eq ['vend3', 'agent', 'fact1', 4.74, 9.48, 14.22]
         expect(sheet_1.row(32)).to eq ['vend3', 'agent', 'fact2', 5.33, 10.67, 16.00]
         expect(sheet_1.row(33)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend3 Subtotal']
@@ -372,13 +372,13 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
   end
 
   describe "FiscalMonthRange" do
-    let!(:co) { FactoryBot(:company, system_code: "ASCENA") }
+    let!(:co) { create(:company, system_code: "ASCENA") }
     let(:fm_range) { described_class::FiscalMonthRange.new }
 
     describe "range_for_previous_fiscal_month" do
       it "returns SQL range encompassing previous fiscal month when it falls within current year" do
-        FactoryBot(:fiscal_month, company: co, year: 2018, month_number: 2, start_date: '2017-08-27', end_date: '2017-09-30')
-        FactoryBot(:fiscal_month, company: co, year: 2018, month_number: 3, start_date: '2017-10-01', end_date: '2017-10-28')
+        create(:fiscal_month, company: co, year: 2018, month_number: 2, start_date: '2017-08-27', end_date: '2017-09-30')
+        create(:fiscal_month, company: co, year: 2018, month_number: 3, start_date: '2017-10-01', end_date: '2017-10-28')
 
         Timecop.freeze(DateTime.new(2017, 10, 10)) do
           expect(fm_range.range_for_previous_fiscal_month).to eq "e.fiscal_date >= '2017-08-27' AND e.fiscal_date < '2017-10-01'"
@@ -386,8 +386,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       end
 
       it "returns SQL range encompassing previous fiscal month when it falls within previous year" do
-        FactoryBot(:fiscal_month, company: co, year: 2018, month_number: 1, start_date: '2017-07-30', end_date: '2017-08-26')
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
+        create(:fiscal_month, company: co, year: 2018, month_number: 1, start_date: '2017-07-30', end_date: '2017-08-26')
+        create(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
         Timecop.freeze(Date.new(2017, 8, 10)) do
           expect(fm_range.range_for_previous_fiscal_month).to eq "e.fiscal_date >= '2017-07-02' AND e.fiscal_date < '2017-07-30'"
@@ -397,8 +397,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
     describe "range_for_fiscal_season_to_date" do
       it "returns SQL range starting from beginning of current fiscal season (mos. 1-6)" do
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 5, start_date: '2016-11-27', end_date: '2016-12-31')
+        create(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
+        create(:fiscal_month, company: co, year: 2017, month_number: 5, start_date: '2016-11-27', end_date: '2016-12-31')
 
         Timecop.freeze(Date.new(2016, 12, 10)) do
           expect(fm_range.range_for_fiscal_season_to_date).to eq "e.fiscal_date >= '2016-07-31' AND e.fiscal_date < '2016-11-27'"
@@ -406,8 +406,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       end
 
       it "returns SQL range starting from beginning of current fiscal season (mos. 7-12)" do
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 7, start_date: '2017-01-29', end_date: '2017-02-25')
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
+        create(:fiscal_month, company: co, year: 2017, month_number: 7, start_date: '2017-01-29', end_date: '2017-02-25')
+        create(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
         Timecop.freeze(Date.new(2017, 7, 4)) do
           expect(fm_range.range_for_fiscal_season_to_date).to eq "e.fiscal_date >= '2017-01-29' AND e.fiscal_date < '2017-07-02'"
@@ -417,8 +417,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
     describe "range_for_fiscal_ytd" do
       it "returns SQL range encompassing fiscal year-to-date" do
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
-        FactoryBot(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
+        create(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
+        create(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
         Timecop.freeze(Date.new(2017, 7, 04)) do
           expect(fm_range.range_for_fiscal_ytd).to eq "e.fiscal_date >= '2016-07-31' AND e.fiscal_date < '2017-07-02'"
@@ -437,9 +437,9 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     describe "first_sale_savings" do
       before do
         rep = Report.new
-        @cil = FactoryBot(:commercial_invoice_line, contract_amount: 10.5, value: 7)
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 4.5, entered_value: 8)
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 3, entered_value: 6)
+        @cil = create(:commercial_invoice_line, contract_amount: 10.5, value: 7)
+        create(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 4.5, entered_value: 8)
+        create(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 3, entered_value: 6)
 
         @qry = <<-SQL
                 SELECT #{rep.first_sale_savings('cil')}
@@ -478,8 +478,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     describe "first_sale_difference" do
       before do
         rep = Report.new
-        @cil = FactoryBot(:commercial_invoice_line, contract_amount: 10, value: 5.156)
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil)
+        @cil = create(:commercial_invoice_line, contract_amount: 10, value: 5.156)
+        create(:commercial_invoice_tariff, commercial_invoice_line: @cil)
 
         @qry = <<-SQL
                 SELECT #{rep.first_sale_difference('cil')}
@@ -517,16 +517,16 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     describe "savings_query" do
       before do
         @cdefs = described_class.prep_custom_definitions [:ord_selling_agent]
-        vendor = FactoryBot(:company, name: "vend")
-        factory = FactoryBot(:company, name: "fact")
-        o = FactoryBot(:order, order_number: "ASCENA-po num", vendor: vendor, factory: factory)
+        vendor = create(:company, name: "vend")
+        factory = create(:company, name: "fact")
+        o = create(:order, order_number: "ASCENA-po num", vendor: vendor, factory: factory)
         o.update_custom_value!(@cdefs[:ord_selling_agent], 'agent')
-        ent = FactoryBot(:entry, customer_number: 'ASCE')
-        ci = FactoryBot(:commercial_invoice, entry: ent)
-        cil1 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, po_number: "po num", contract_amount: 10, value: 7, mid: "MID")
-        cil2 = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, po_number: "po num", contract_amount: 9, value: 5, mid: "MID")
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil1, duty_amount: 4.5, duty_rate: 0.2, entered_value: 8)
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil2, duty_amount: 3, duty_rate: 0.4, entered_value: 6)
+        ent = create(:entry, customer_number: 'ASCE')
+        ci = create(:commercial_invoice, entry: ent)
+        cil1 = create(:commercial_invoice_line, commercial_invoice: ci, po_number: "po num", contract_amount: 10, value: 7, mid: "MID")
+        cil2 = create(:commercial_invoice_line, commercial_invoice: ci, po_number: "po num", contract_amount: 9, value: 5, mid: "MID")
+        create(:commercial_invoice_tariff, commercial_invoice_line: cil1, duty_amount: 4.5, duty_rate: 0.2, entered_value: 8)
+        create(:commercial_invoice_tariff, commercial_invoice_line: cil2, duty_amount: 3, duty_rate: 0.4, entered_value: 6)
       end
 
       it "returns expected result" do
@@ -563,20 +563,20 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     describe "detail_query" do
 
       before do
-        FactoryBot(:company, system_code: "ASCENA")
+        create(:company, system_code: "ASCENA")
         @cdefs = described_class.prep_custom_definitions [:ord_type, :ord_selling_agent, :prod_vendor_style, :ord_line_wholesale_unit_price, :prod_reference_number]
-        vendor = FactoryBot(:company, name: 'vend')
-        factory = FactoryBot(:company, name: 'fact')
-        @ent = FactoryBot(:entry, customer_number: 'ASCE', entry_number: 'ent num', entry_filed_date: '2016-01-01', first_release_date: '2016-02-01', fiscal_month: 1)
-        ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 3)
-        @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, mid: 'cil mid', country_origin_code: 'coo', po_number: 'po num', part_number: 'part num', quantity: 6, unit_price: 2, contract_amount: 4, value: 8)
-        FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_rate: 2, duty_amount: 3, entered_value: 4)
-        prod = FactoryBot(:product, unique_identifier: "ASCENA-part num" )
+        vendor = create(:company, name: 'vend')
+        factory = create(:company, name: 'fact')
+        @ent = create(:entry, customer_number: 'ASCE', entry_number: 'ent num', entry_filed_date: '2016-01-01', first_release_date: '2016-02-01', fiscal_month: 1)
+        ci = create(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 3)
+        @cil = create(:commercial_invoice_line, commercial_invoice: ci, mid: 'cil mid', country_origin_code: 'coo', po_number: 'po num', part_number: 'part num', quantity: 6, unit_price: 2, contract_amount: 4, value: 8)
+        create(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_rate: 2, duty_amount: 3, entered_value: 4)
+        prod = create(:product, unique_identifier: "ASCENA-part num" )
         prod.update_custom_value!(@cdefs[:prod_vendor_style], 'style')
-        @o = FactoryBot(:order, order_number: "ASCENA-po num", vendor: vendor, factory: factory)
+        @o = create(:order, order_number: "ASCENA-po num", vendor: vendor, factory: factory)
         @o.update_custom_value!(@cdefs[:ord_selling_agent], "agent")
         @o.update_custom_value!(@cdefs[:ord_type], "AGS")
-        ol = FactoryBot(:order_line, order: @o, product: prod)
+        ol = create(:order_line, order: @o, product: prod)
         ol.update_custom_value!(@cdefs[:ord_line_wholesale_unit_price], 10)
 
         @fm_range = double "fiscal month range"

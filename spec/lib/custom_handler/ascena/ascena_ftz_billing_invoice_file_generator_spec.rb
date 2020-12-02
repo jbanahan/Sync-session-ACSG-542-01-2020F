@@ -13,45 +13,45 @@ describe OpenChain::CustomHandler::Ascena::AscenaFtzBillingInvoiceFileGenerator 
     let! (:today) { Time.zone.now.to_date }
 
     let! (:entry) do
-      entry = FactoryBot(:entry, customer_number: "ASCE", entry_number: "ENTRYNO", entry_type: "06", first_entry_sent_date: today, broker_reference: "REF")
-      entry.attachments << FactoryBot(:attachment, attachment_type: "FTZ Supplemental Data")
+      entry = create(:entry, customer_number: "ASCE", entry_number: "ENTRYNO", entry_type: "06", first_entry_sent_date: today, broker_reference: "REF")
+      entry.attachments << create(:attachment, attachment_type: "FTZ Supplemental Data")
 
-      commercial_invoice = FactoryBot(:commercial_invoice, entry: entry)
-      invoice_line1 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line1)
+      commercial_invoice = create(:commercial_invoice, entry: entry)
+      invoice_line1 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice)
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line1)
 
-      invoice_line2 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line2)
+      invoice_line2 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice)
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line2)
 
       # Make two lines for the same PO, so we make sure we're handling the sum'ing at po level correctly as well as the proration for brokerage lines
-      invoice_line3 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line3)
+      invoice_line3 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice)
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line3)
 
-      invoice_line4 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line4)
+      invoice_line4 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice)
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line4)
 
       entry
     end
 
     let! (:broker_invoice) do
-      FactoryBot(:broker_invoice, entry: entry, invoice_number: "INVOICENUMBER", invoice_date: today)
+      create(:broker_invoice, entry: entry, invoice_number: "INVOICENUMBER", invoice_date: today)
     end
 
     let! (:broker_invoice_line_duty) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0001", charge_amount: 211.00, charge_description: "DUTY")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0001", charge_amount: 211.00, charge_description: "DUTY")
     end
 
     # Gets skipped
     let! (:broker_invoice_line_duty_direct) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0099", charge_amount: 100.00, charge_description: "Duty Paid Direct")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0099", charge_amount: 100.00, charge_description: "Duty Paid Direct")
     end
 
     # Gets skipped
     let! (:broker_invoice_line_brokerage) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0007", charge_amount: 50.00, charge_description: "Brokerage")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_code: "0007", charge_amount: 50.00, charge_description: "Brokerage")
     end
 
-    let! (:user) { FactoryBot(:master_user) }
+    let! (:user) { create(:master_user) }
 
     let (:broker_invoice_with_duty_snapshot) do
       broker_invoice_line_duty
@@ -156,14 +156,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaFtzBillingInvoiceFileGenerator 
     end
 
     it "concatenates reports for multiple entries" do
-      entry2 = FactoryBot(:entry, customer_number: "ASCE", entry_number: "ENTRYNO 2", entry_type: "06", first_entry_sent_date: today, broker_reference: "REF 2")
+      entry2 = create(:entry, customer_number: "ASCE", entry_number: "ENTRYNO 2", entry_type: "06", first_entry_sent_date: today, broker_reference: "REF 2")
       entry2.create_snapshot User.integration
-      entry2.attachments << FactoryBot(:attachment, attachment_type: "FTZ Supplemental Data")
-      ci = FactoryBot(:commercial_invoice, entry: entry2)
-      cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 1, prorated_mpf: BigDecimal(10))
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: BigDecimal(20))
-      bi = FactoryBot(:broker_invoice, entry: entry2, invoice_number: "INVOICENUMBER 2", invoice_date: today)
-      FactoryBot(:broker_invoice_line, broker_invoice: bi, charge_code: "0001", charge_description: "DUTY", charge_amount: 117.07)
+      entry2.attachments << create(:attachment, attachment_type: "FTZ Supplemental Data")
+      ci = create(:commercial_invoice, entry: entry2)
+      cil = create(:commercial_invoice_line, commercial_invoice: ci, customs_line_number: 1, prorated_mpf: BigDecimal(10))
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil, duty_amount: BigDecimal(20))
+      bi = create(:broker_invoice, entry: entry2, invoice_number: "INVOICENUMBER 2", invoice_date: today)
+      create(:broker_invoice_line, broker_invoice: bi, charge_code: "0001", charge_description: "DUTY", charge_amount: 117.07)
 
       snapshot = JSON.parse CoreModule::ENTRY.entity_json(entry2)
 
@@ -286,8 +286,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaFtzBillingInvoiceFileGenerator 
       let (:broker_invoice_duty_credit) do
         duty_line = broker_invoice_line_duty
         duty_invoice = duty_line.broker_invoice
-        invoice = FactoryBot(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: today + 1.day)
-        FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
+        invoice = create(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: today + 1.day)
+        create(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
 
         invoice
       end

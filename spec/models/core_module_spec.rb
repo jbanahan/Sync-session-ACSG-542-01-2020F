@@ -24,7 +24,7 @@ describe CoreModule do
       cm.validate_business_logic p
     end
     it "should call Product.validate_tariff_numbers" do
-      ot = FactoryBot(:official_tariff)
+      ot = create(:official_tariff)
       p = Product.new
       p.classifications.build(country:ot.country).tariff_records.build(hts_1:"#{ot.hts_code}X")
       expect(CoreModule::PRODUCT.validate_business_logic(p)).to be_falsey
@@ -180,7 +180,7 @@ describe CoreModule do
 
   describe "group_options" do
     it "returns core module fields in a format usable for grouped_options_for_select" do
-      user = FactoryBot(:user)
+      user = create(:user)
       allow(user).to receive(:view_module?) {|m| m.label == 'Product'}
       fields = CoreModule.grouped_options user
       expect(fields['Product'].size).to be > 0
@@ -190,9 +190,9 @@ describe CoreModule do
 
   describe "walk_object_heirarchy" do
     it "yields each object in core module heirarchy" do
-      p = FactoryBot(:product)
-      t1 = FactoryBot(:tariff_record, classification: FactoryBot(:classification, product: p))
-      t2 = FactoryBot(:tariff_record, classification: FactoryBot(:classification, product: p))
+      p = create(:product)
+      t1 = create(:tariff_record, classification: create(:classification, product: p))
+      t2 = create(:tariff_record, classification: create(:classification, product: p))
 
       yielded_vals = []
       CoreModule.walk_object_heirarchy(p) {|cm, obj| yielded_vals << [cm, obj]}
@@ -271,7 +271,7 @@ describe CoreModule do
     end
 
     it "does not override traditional find_by behavior for CoreModules" do
-      ord = FactoryBot(:order, order_number: "555ord666")
+      ord = create(:order, order_number: "555ord666")
       expect(Order.find_by(order_number: "555ord666")).to eq ord
     end
   end

@@ -6,20 +6,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   end
   describe '#can_view?' do
     it "should fail if custom feature not enabled" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       allow(u).to receive(:edit_variants?).and_return true
       allow(u).to receive(:in_group?).and_return true
       expect(described_class.can_view?(u)).to be_falsey
     end
     it "should fail if user not master" do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow(u).to receive(:edit_variants?).and_return true
       allow(u).to receive(:in_group?).and_return true
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
       expect(described_class.can_view?(u)).to be_falsey
     end
     it "should fail if user cannot edit variants" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:edit_variants?).and_return false
       allow(u).to receive(:in_group?).and_return true
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
     end
 
     it 'should fail if user not in PRODUCTCOMP group' do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       allow(u).to receive(:edit_variants?).and_return true
       expect(u).to receive(:in_group?).and_return false
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
     end
 
     it 'should pass if user can edit variants, is master, and feature is enabled' do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:edit_variants?).and_return true
       expect(u).to receive(:in_group?).with('PRODUCTCOMP').and_return true
       expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lumber EPD').and_return true
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
     end
 
     it 'uses instance method and should pass if user can edit variants, is master, and feature is enabled' do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:edit_variants?).and_return true
       expect(u).to receive(:in_group?).with('PRODUCTCOMP').and_return true
       expect_any_instance_of(MasterSetup).to receive(:custom_feature?).with('Lumber EPD').and_return true
@@ -136,18 +136,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   end
   describe '#process_variant' do
     before :each do
-      @u = FactoryBot(:master_user)
+      @u = create(:master_user)
       @cdefs = described_class.prep_my_custom_definitions
     end
     it "should create plant_variant_assignment and product_vendor_assignment" do
       expect_any_instance_of(Product).to receive(:create_snapshot).with(@u, nil, "System Job: EPD Parser")
       expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot).with(@u, nil, "System Job: EPD Parser")
 
-      product = FactoryBot(:product, unique_identifier:'000000000000000pid')
-      var = FactoryBot(:variant, variant_identifier:'varid', product:product)
-      cmp = FactoryBot(:company)
+      product = create(:product, unique_identifier:'000000000000000pid')
+      var = create(:variant, variant_identifier:'varid', product:product)
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
-      plnt = FactoryBot(:plant, company:cmp)
+      plnt = create(:plant, company:cmp)
 
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
       s2 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'top', 11.3, 'g2', 's2', 'MX', 2)
@@ -173,15 +173,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(prodven.vendor).to eq cmp
     end
     it "should not reset approvals" do
-      product = FactoryBot(:product, unique_identifier:'000000000000000pid')
-      var = FactoryBot(:variant, variant_identifier:'varid', product:product)
-      cmp = FactoryBot(:company)
+      product = create(:product, unique_identifier:'000000000000000pid')
+      var = create(:variant, variant_identifier:'varid', product:product)
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
-      plnt = FactoryBot(:plant, company:cmp)
+      plnt = create(:plant, company:cmp)
       pva = plnt.plant_variant_assignments.create!(variant_id:var.id)
       expected_approved_date = 1.week.ago
       pva.update_custom_value!(@cdefs[:pva_pc_approved_date], expected_approved_date)
-      u2 = FactoryBot(:user)
+      u2 = create(:user)
       pva.update_custom_value!(@cdefs[:pva_pc_approved_by], u2.id)
 
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
@@ -198,14 +198,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
     end
     it "should create one variant with multiple plant variant assignments for multiple vendors and same recipe id" do
-      FactoryBot(:product, unique_identifier:'000000000000000pid')
-      cmp = FactoryBot(:company)
+      create(:product, unique_identifier:'000000000000000pid')
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
-      plnt = FactoryBot(:plant, company:cmp)
+      plnt = create(:plant, company:cmp)
 
-      cmp_2 = FactoryBot(:company)
+      cmp_2 = create(:company)
       cmp_2.update_custom_value!(@cdefs[:cmp_sap_company], '0000000456')
-      plnt_2 = FactoryBot(:plant, company:cmp_2)
+      plnt_2 = create(:plant, company:cmp_2)
 
 
       s1_1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
@@ -234,10 +234,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(pva_2.get_custom_value(@cdefs[:pva_pc_approved_date]).value).to_not be_nil
     end
     it "should create variant if it doesn't exist" do
-      product = FactoryBot(:product, unique_identifier:'000000000000000pid')
-      cmp = FactoryBot(:company)
+      product = create(:product, unique_identifier:'000000000000000pid')
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
-      FactoryBot(:plant, company:cmp)
+      create(:plant, company:cmp)
 
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
       s2 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'top', 11.3, 'g2', 's2', 'MX', 2)
@@ -254,9 +254,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
 
     end
     it "should create plant if vendor exists and plant doesn't" do
-      product = FactoryBot(:product, unique_identifier:'000000000000000pid')
-      var = FactoryBot(:variant, variant_identifier:'varid', product:product)
-      cmp = FactoryBot(:company)
+      product = create(:product, unique_identifier:'000000000000000pid')
+      var = create(:variant, variant_identifier:'varid', product:product)
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
 
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
@@ -296,8 +296,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq ["Vendor ID is blank for row 2."]
     end
     it "should fail if vendor doesn't exist" do
-      product = FactoryBot(:product, unique_identifier:'000000000000000pid')
-      FactoryBot(:variant, variant_identifier:'varid', product:product)
+      product = create(:product, unique_identifier:'000000000000000pid')
+      create(:variant, variant_identifier:'varid', product:product)
 
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
 
@@ -307,7 +307,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       expect(errors).to eq ['Vendor "0000000123" not found for row 2.']
     end
     it "should fail if product doesn't exist" do
-      cmp = FactoryBot(:company)
+      cmp = create(:company)
       cmp.update_custom_value!(@cdefs[:cmp_sap_company], '0000000123')
       s1 = @base_struct.new('000000000000000pid', 'varid', '0000000123', 'base', 1, 'gen', 'spec', 'CN', 2)
 
@@ -319,7 +319,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   end
   describe '#write_results_message' do
     before :each do
-      @u = FactoryBot(:user)
+      @u = create(:user)
     end
     it 'should write user message for success' do
       errors = []

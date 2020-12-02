@@ -14,22 +14,22 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
-  skip_before_filter :require_login, raise: false
-  before_filter :chainio_redirect
-  before_filter :prep_model_fields
-  before_filter :new_relic
-  before_filter :set_master_setup
-  before_filter :require_user
-  before_filter :prep_exception_notifier
-  before_filter :portal_redirect
-  before_filter :set_user_time_zone
-  before_filter :log_request
-  before_filter :log_run_as_request
-  before_filter :log_last_request_time
-  before_filter :force_reset
-  before_filter :set_legacy_scripts
-  before_filter :set_x_frame_options_header
-  before_filter :set_page_title
+  skip_before_action :require_login, raise: false
+  before_action :chainio_redirect
+  before_action :prep_model_fields
+  before_action :new_relic
+  before_action :set_master_setup
+  before_action :require_user
+  before_action :prep_exception_notifier
+  before_action :portal_redirect
+  before_action :set_user_time_zone
+  before_action :log_request
+  before_action :log_run_as_request
+  before_action :log_last_request_time
+  before_action :force_reset
+  before_action :set_legacy_scripts
+  before_action :set_x_frame_options_header
+  before_action :set_page_title
 
   helper_method :master_company
   helper_method :add_flash
@@ -41,9 +41,9 @@ class ApplicationController < ActionController::Base
   helper_method :master_setup
   helper_method :run_as_user
 
-  after_filter :reset_state_values
-  after_filter :set_csrf_cookie
-  after_filter :set_auth_token_cookie
+  after_action :reset_state_values
+  after_action :set_csrf_cookie
+  after_action :set_auth_token_cookie
 
   def set_page_title
     @page_title = MasterSetup.application_name

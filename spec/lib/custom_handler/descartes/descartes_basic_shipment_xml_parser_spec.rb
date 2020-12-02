@@ -2,11 +2,11 @@ describe OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser do
 
   let (:xml_data) { IO.read 'spec/fixtures/files/descartes_shipment.xml' }
   let (:xml) { REXML::Document.new xml_data }
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   describe "parse_file" do
     let! (:importer) {
-      i = FactoryBot(:importer, system_code: "SYSCODE")
+      i = create(:importer, system_code: "SYSCODE")
       i.system_identifiers.create! system: "eCellerate", code: "INTIN"
       i
     }

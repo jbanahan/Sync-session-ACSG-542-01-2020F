@@ -1,7 +1,7 @@
 describe PowerOfAttorneysController do
-  let(:company) { FactoryBot(:company) }
-  let(:user) { FactoryBot(:user, company: company) }
-  let!(:power_of_attorney) { FactoryBot(:power_of_attorney, user: user, company: company) }
+  let(:company) { create(:company) }
+  let(:user) { create(:user, company: company) }
+  let!(:power_of_attorney) { create(:power_of_attorney, user: user, company: company) }
 
   before do
     sign_in_as user

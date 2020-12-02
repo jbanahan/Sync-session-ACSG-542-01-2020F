@@ -1,5 +1,5 @@
 class AttachmentArchiveManifestsController < ApplicationController
-  before_filter :secure
+  before_action :secure
   def create
     m = Company.find(params[:company_id]).attachment_archive_manifests.create!
     m.delay.make_manifest!

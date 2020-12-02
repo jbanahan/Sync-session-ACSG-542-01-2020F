@@ -3,9 +3,9 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
   describe "accepts?" do
     context "J JILL Logic" do
       before :each do
-        @entry = FactoryBot(:entry, :customer_number => "JILL")
-        @broker_invoice = FactoryBot(:broker_invoice, :entry => @entry)
-        @broker_invoice_line = FactoryBot(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_code => "0600")
+        @entry = create(:entry, :customer_number => "JILL")
+        @broker_invoice = create(:broker_invoice, :entry => @entry)
+        @broker_invoice_line = create(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_code => "0600")
       end
 
       context "www-vfitrack-net system code" do
@@ -123,7 +123,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
     describe "receive" do
       before :each do
-        @e = FactoryBot(:entry, file_logged_date: '2016-02-01')
+        @e = create(:entry, file_logged_date: '2016-02-01')
       end
 
       it "should generate a report and create an entry attachment" do

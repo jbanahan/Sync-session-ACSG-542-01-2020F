@@ -2,7 +2,7 @@ describe "CustomFieldSupport" do
   describe "update_custom_value" do
     before :each do
       @cd = CustomDefinition.create!(:module_type=>"Shipment", :label=>"CX", :data_type=>"string")
-      @s = FactoryBot(:shipment)
+      @s = create(:shipment)
       @s.update_custom_value!(@cd, "x")
     end
     it 'should update a new custom value' do
@@ -19,16 +19,16 @@ describe "CustomFieldSupport" do
   end
   describe "get_custom_value" do
     it "should get the same custom value object twice without saving" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
-      p = FactoryBot(:product)
+      cd = create(:custom_definition, :module_type=>'Product')
+      p = create(:product)
       cv = p.get_custom_value cd
       expect(p.get_custom_value(cd)).to equal cv
     end
   end
 
   describe "custom_value" do
-    let (:custom_def) { FactoryBot(:custom_definition, :module_type=>'Product', data_type:'string') }
-    let (:obj) { FactoryBot(:product) }
+    let (:custom_def) { create(:custom_definition, :module_type=>'Product', data_type:'string') }
+    let (:obj) { create(:product) }
 
     it "retrieves a custom value" do
       obj.custom_values.create! custom_definition: custom_def, string_value: "Testing"
@@ -53,9 +53,9 @@ describe "CustomFieldSupport" do
 
   describe "freeze_custom_values" do
     it "should freeze cached values and no longer hit database" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product', data_type:'string')
-      cd2 = FactoryBot(:custom_definition, :module_type=>'Product', data_type:'string')
-      p = FactoryBot(:product)
+      cd = create(:custom_definition, :module_type=>'Product', data_type:'string')
+      cd2 = create(:custom_definition, :module_type=>'Product', data_type:'string')
+      p = create(:product)
       p.update_custom_value!(cd.id, 'y')
       fresh_p = Product.includes(:custom_values).where(id:p.id).first
       fresh_p.freeze_custom_values # now that it's frozen, it's values shouldn't change
@@ -94,8 +94,8 @@ describe "CustomFieldSupport" do
 
   describe "find_and_set_custom_value" do
     it "finds a custom value object in the custom_values relation and sets it to the given value" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product', data_type:'string')
-      p = FactoryBot(:product)
+      cd = create(:custom_definition, :module_type=>'Product', data_type:'string')
+      p = create(:product)
       p.update_custom_value! cd, "VALUE"
 
       cv = p.find_and_set_custom_value cd, "OTHER VALUE"
@@ -112,7 +112,7 @@ describe "CustomFieldSupport" do
     end
 
     it "creates a new custom value if no existing one is found" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product', data_type:'string')
+      cd = create(:custom_definition, :module_type=>'Product', data_type:'string')
       p = Product.new unique_identifier: "ABC"
 
       cv = p.find_and_set_custom_value cd, "VALUE"

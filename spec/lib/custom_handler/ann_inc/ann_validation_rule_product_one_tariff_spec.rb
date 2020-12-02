@@ -1,15 +1,15 @@
 describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductOneTariff do
   let(:rule) { described_class.new }
   let(:cdefs) { rule.cdefs }
-  let!(:us) { FactoryBot(:country, iso_code: "US") }
+  let!(:us) { create(:country, iso_code: "US") }
 
-  let(:prod) { FactoryBot(:product) }
+  let(:prod) { create(:product) }
   let!(:classi) do
-    cl = FactoryBot(:classification, product: prod, country: us)
+    cl = create(:classification, product: prod, country: us)
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.save!
-    FactoryBot(:tariff_record, classification: cl, line_number: 1)
-    FactoryBot(:tariff_record, classification: cl, line_number: 2)
+    create(:tariff_record, classification: cl, line_number: 1)
+    create(:tariff_record, classification: cl, line_number: 2)
     cl
   end
 

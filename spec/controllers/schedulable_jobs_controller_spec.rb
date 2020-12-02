@@ -2,17 +2,17 @@ describe SchedulableJobsController do
 
   describe "index" do
     it "onlies allow sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :index
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
     end
 
     it "loads all jobs" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       # The sorting of the classes should be based on their class name (sans module)
-      FactoryBot(:schedulable_job, run_class: "A::Fully::Qualified::Module::FirstClassName")
-      FactoryBot(:schedulable_job, run_class: "Seoncd::Fully::Qualified::Module::ClassName")
+      create(:schedulable_job, run_class: "A::Fully::Qualified::Module::FirstClassName")
+      create(:schedulable_job, run_class: "Seoncd::Fully::Qualified::Module::ClassName")
 
       get :index
       expect(response).to be_success
@@ -21,17 +21,17 @@ describe SchedulableJobsController do
   end
 
   describe "edit" do
-    let(:schedulable_job) { FactoryBot(:schedulable_job) }
+    let(:schedulable_job) { create(:schedulable_job) }
 
     it "only allows sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :edit, id: schedulable_job.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
     end
 
     it "loads job" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       get :edit, id: schedulable_job.id
       expect(response).to be_success
       expect(assigns(:sj)).to eq(schedulable_job)
@@ -39,10 +39,10 @@ describe SchedulableJobsController do
   end
 
   describe "update" do
-    let (:schedulable_job) { FactoryBot(:schedulable_job, opts: '{"abc": 123}') }
+    let (:schedulable_job) { create(:schedulable_job, opts: '{"abc": 123}') }
 
     it "only allows sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       put :update, id: schedulable_job.id, schedulable_job: {opts: '12345'}
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
@@ -53,7 +53,7 @@ describe SchedulableJobsController do
     context "with sys admin login" do
 
       before do
-        sign_in_as FactoryBot(:sys_admin_user)
+        sign_in_as create(:sys_admin_user)
       end
 
       it "updates job" do
@@ -74,14 +74,14 @@ describe SchedulableJobsController do
 
   describe "new" do
     it "onlies allow sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :new
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
     end
 
     it "loads empty job" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       get :new
       expect(response).to be_success
       expect(assigns(:sj)).to be_instance_of(SchedulableJob)
@@ -90,7 +90,7 @@ describe SchedulableJobsController do
 
   describe "create" do
     it "onlies allow sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       post :create, schedulable_job: {opts: '{"opt":12345}'}
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
@@ -98,7 +98,7 @@ describe SchedulableJobsController do
     end
 
     it "shoud make job" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       post :create, schedulable_job: {opts: '{"opt":12345}'}
       expect(response).to redirect_to schedulable_jobs_path
       expect(SchedulableJob.first.opts).to eq('{"opt":12345}')
@@ -106,10 +106,10 @@ describe SchedulableJobsController do
   end
 
   describe "destroy" do
-    let(:schedulable_job) { FactoryBot(:schedulable_job) }
+    let(:schedulable_job) { create(:schedulable_job) }
 
     it "only allows sys_admins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       delete :destroy, id: schedulable_job.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
@@ -117,7 +117,7 @@ describe SchedulableJobsController do
     end
 
     it "destroys job" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       delete :destroy, id: schedulable_job.id
       expect(response).to redirect_to schedulable_jobs_path
       expect(SchedulableJob.all).to be_empty
@@ -125,10 +125,10 @@ describe SchedulableJobsController do
   end
 
   describe "run" do
-    let (:scheduled_job) { FactoryBot(:schedulable_job, run_class: "My::RunClass") }
+    let (:scheduled_job) { create(:schedulable_job, run_class: "My::RunClass") }
 
     it "runs a job on demand" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       expect_any_instance_of(SchedulableJob).to receive(:delay).and_return scheduled_job
       expect(scheduled_job).to receive(:run_if_needed).with(force_run: true)
 
@@ -140,7 +140,7 @@ describe SchedulableJobsController do
 
     it "runs with adjusted priority" do
       scheduled_job.update! queue_priority: 100
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       expect_any_instance_of(SchedulableJob).to receive(:delay).with(priority: 100).and_return scheduled_job
       expect(scheduled_job).to receive(:run_if_needed).with(force_run: true)
 
@@ -148,7 +148,7 @@ describe SchedulableJobsController do
     end
 
     it "only allows sysadmins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       post :run, id: scheduled_job.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)
@@ -156,10 +156,10 @@ describe SchedulableJobsController do
   end
 
   describe "reset_run_flag" do
-    let (:schedulable_job) { FactoryBot(:schedulable_job, run_class: "My::RunClass", running: true)}
+    let (:schedulable_job) { create(:schedulable_job, run_class: "My::RunClass", running: true)}
 
     it "unsets the runing flag" do
-      sign_in_as FactoryBot(:sys_admin_user)
+      sign_in_as create(:sys_admin_user)
       post :reset_run_flag, id: schedulable_job.id
 
       expect(response).to redirect_to schedulable_jobs_path
@@ -168,7 +168,7 @@ describe SchedulableJobsController do
     end
 
     it "only allows sysadmins" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       post :reset_run_flag, id: schedulable_job.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Only system admins/)

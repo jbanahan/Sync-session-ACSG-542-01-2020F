@@ -586,13 +586,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     subject { described_class }
 
     let (:product) { create_product "Style" }
-    let (:us) { FactoryBot(:country, iso_code: "US") }
-    let (:importer) { with_customs_management_id(FactoryBot(:importer), "CUST") }
+    let (:us) { create(:country, iso_code: "US") }
+    let (:importer) { with_customs_management_id(create(:importer), "CUST") }
     let! (:mid) { ManufacturerId.create! mid: "MID" }
 
     def create_product style, part_number: true, mid: true, importer_id: importer.id
-      p = FactoryBot(:product, unique_identifier: "CUST-#{style}", importer_id: importer_id)
-      c = FactoryBot(:classification, product: p, country: us)
+      p = create(:product, unique_identifier: "CUST-#{style}", importer_id: importer_id)
+      c = create(:classification, product: p, country: us)
       c.tariff_records.create! hts_1: "1234567890"
 
       p.update_custom_value!(described_class.new(nil).custom_defs[:prod_part_number], style) if part_number
@@ -800,13 +800,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     context "with linked importer sending" do
 
       let! (:linked_importer_1) do
-        i = with_customs_management_id(FactoryBot(:importer), "CHILD1")
+        i = with_customs_management_id(create(:importer), "CHILD1")
         importer.linked_companies << i
         i
       end
 
       let! (:linked_importer_2) do
-        i = with_customs_management_id(FactoryBot(:importer), "CHILD2")
+        i = with_customs_management_id(create(:importer), "CHILD2")
         importer.linked_companies << i
         i
       end
@@ -835,8 +835,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "sends products for multiple given customer numbers" do
-      create_product("PART_NO", importer_id: with_customs_management_id(FactoryBot(:importer), "CUST1").id)
-      create_product("PART_NO_2", importer_id: with_customs_management_id(FactoryBot(:importer), "CUST2").id)
+      create_product("PART_NO", importer_id: with_customs_management_id(create(:importer), "CUST1").id)
+      create_product("PART_NO_2", importer_id: with_customs_management_id(create(:importer), "CUST2").id)
 
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|

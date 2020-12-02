@@ -1,7 +1,7 @@
 describe TariffRecord do
 
   it "should not allow the same line number on multiple records for same classification" do
-    tr = FactoryBot(:tariff_record, :line_number=>1)
+    tr = create(:tariff_record, :line_number=>1)
     new_rec = tr.classification.tariff_records.build(:line_number=>1)
     expect(new_rec.save).to be_falsey
     expect(new_rec.errors[:line_number].size).to eq(1)
@@ -9,7 +9,7 @@ describe TariffRecord do
 
   it "should not allow same line number on multiple records for same classification using nested_attributes" do
     l = lambda do
-      c = FactoryBot(:country)
+      c = create(:country)
       h = {'unique_identifier'=>'truid',
         "classifications_attributes"=>{"0"=>{
           "country_id"=>c.id.to_s,
@@ -30,7 +30,7 @@ describe TariffRecord do
     expect(l).to raise_error ActiveRecord::RecordInvalid
   end
   it "should allow auto-assigning of line numbers when using nested attributes" do
-    c = FactoryBot(:country)
+    c = create(:country)
     h = {'unique_identifier'=>'truid',
       "classifications_attributes"=>{"0"=>{
         "country_id"=>c.id.to_s,

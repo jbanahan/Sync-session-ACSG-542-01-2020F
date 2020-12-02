@@ -31,40 +31,40 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
     xml
   }
 
-  let! (:importer) { FactoryBot(:importer, system_code: "SYSTEM_CODE") }
+  let! (:importer) { create(:importer, system_code: "SYSTEM_CODE") }
 
   let(:cdefs) { subject.cdefs }
 
   let (:integration) { User.integration }
 
   let (:product) {
-    p = FactoryBot(:product, importer: importer, unique_identifier: "SYSTEM_CODE-219397", name: "PILLOW OPEN PLAID BLK 20IN")
+    p = create(:product, importer: importer, unique_identifier: "SYSTEM_CODE-219397", name: "PILLOW OPEN PLAID BLK 20IN")
     p.update_hts_for_country us, "9404901000"
     p
   }
 
   let (:order) {
-    ol = FactoryBot(:order_line, product: product, line_number: 100, order: FactoryBot(:order, importer: importer, factory: factory, vendor: vendor, order_number: "SYSTEM_CODE-675974"))
+    ol = create(:order_line, product: product, line_number: 100, order: create(:order, importer: importer, factory: factory, vendor: vendor, order_number: "SYSTEM_CODE-675974"))
     ol.order
   }
 
   let (:factory) {
-    f = FactoryBot(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, mid: "INGUP103XXXX")
-    f.system_identifiers.create! system: "SYSTEM_CODE-GTN FactoryBot", code: "28537"
-    FactoryBot(:address, company: f, system_code: "SYSTEM_CODE-GTN FactoryBot-28537", address_type: "FactoryBot", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
+    f = create(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, mid: "INGUP103XXXX")
+    f.system_identifiers.create! system: "SYSTEM_CODE-GTN create", code: "28537"
+    create(:address, company: f, system_code: "SYSTEM_CODE-GTN create-28537", address_type: "create", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
     f
   }
 
   let (:vendor) {
-    v = FactoryBot(:company, vendor: true, name: "FWS_VIVSUN EXPORT", system_code: "")
+    v = create(:company, vendor: true, name: "FWS_VIVSUN EXPORT", system_code: "")
     v.system_identifiers.create! system: "SYSTEM_CODE-GTN Vendor", code: "28536"
-    FactoryBot(:address, company: v, system_code: "SYSTEM_CODE-GTN Vendor-28536", address_type: "Vendor", name: "FWS_VIVSUN EXPORT", country: india, line_1: "23/47 LINI RD INDUSTRIAL AREA", city: "GHAZIABAD")
+    create(:address, company: v, system_code: "SYSTEM_CODE-GTN Vendor-28536", address_type: "Vendor", name: "FWS_VIVSUN EXPORT", country: india, line_1: "23/47 LINI RD INDUSTRIAL AREA", city: "GHAZIABAD")
     v
   }
 
 
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:us) { FactoryBot(:country, iso_code: "US")}
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:us) { create(:country, iso_code: "US")}
   let (:inbound_file) { InboundFile.new }
 
   subject { MockGtnSimpleOrderXmlParser.new }
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       f = o.factory
       expect(f).not_to be_nil
-      expect(f).to have_system_identifier("SYSTEM_CODE-GTN FactoryBot", "28537")
+      expect(f).to have_system_identifier("SYSTEM_CODE-GTN create", "28537")
       expect(f.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(f.factory?).to eq true
       expect(f.mid).to eq "INGUP103XXXX"
@@ -136,8 +136,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       a = f.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "SYSTEM_CODE-GTN FactoryBot-28537"
-      expect(a.address_type).to eq "FactoryBot"
+      expect(a.system_code).to eq "SYSTEM_CODE-GTN create-28537"
+      expect(a.address_type).to eq "create"
       expect(a.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(a.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
       expect(a.city).to eq "FARIDABAD"
@@ -276,7 +276,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       context "detecting changes " do
         it "detects changes to basic party information on an existing order and saves / snapshots them" do
-          factory.update! name: "FactoryBot"
+          factory.update! name: "create"
           vendor.update! name: "Vendor"
 
           o = subject.process_order xml, integration, "bucket", "key"

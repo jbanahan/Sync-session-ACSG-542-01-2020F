@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
 
-  let(:product) { FactoryBot(:product, importer: importer) }
+  let(:product) { create(:product, importer: importer) }
 
   let(:custom_defintions) {
     # Need this to force creation of the custom definitions
@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
     dest_cd = custom_defintions[:ord_line_destination_code]
     div_cd = custom_defintions[:ord_line_division]
 
-    o = FactoryBot(:order, importer: importer)
+    o = create(:order, importer: importer)
 
     l = o.order_lines.create! product: product
     l.update_custom_value! dest_cd, "DEST1"
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
     dest_cd = custom_defintions[:ord_line_destination_code]
     div_cd = custom_defintions[:ord_line_division]
 
-    o = FactoryBot(:order, importer: importer)
+    o = create(:order, importer: importer)
     l = o.order_lines.create! product: product
     l.update_custom_value! dest_cd, "DEST2"
     l.update_custom_value! div_cd, "DIV2"
@@ -34,15 +34,15 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   }
 
   let(:importer) {
-    i = with_customs_management_id(FactoryBot(:importer), "PVHWSHT")
+    i = with_customs_management_id(create(:importer), "PVHWSHT")
     i.addresses.create! name: "DEST1", line_1: "ADDR1", city: "CITY", state: "ST", postal_code: "12345", phone_number: "123-456-7890", fax_number: "098-765-4321"
     i
   }
-  let (:lading_port) { FactoryBot(:port, name: "lading_port")}
-  let (:unlading_port) { FactoryBot(:port, name: "unlading_port")}
+  let (:lading_port) { create(:port, name: "lading_port")}
+  let (:unlading_port) { create(:port, name: "unlading_port")}
 
   let (:entry) {
-    e = FactoryBot(:entry, customer_number: "PVHWSHT", importer: importer, master_bills_of_lading: "ABC", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port, carrier_name: "CARRIER NAME")
+    e = create(:entry, customer_number: "PVHWSHT", importer: importer, master_bills_of_lading: "ABC", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port, carrier_name: "CARRIER NAME")
     e.containers.create! container_number: "12345", container_size: "20'", size_description: "DRY VAN", seal_number: "SEAL123", weight: 10, quantity: 20
     e.containers.create! container_number: "67890", container_size: "40", size_description: "HIGH Cube", seal_number: "SEAL345", weight: 10, quantity: 30
     e.commercial_invoices.create! invoice_number: "INV1"
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
     priority_cd = custom_defintions[:shpln_priority]
     inv_cd = custom_defintions[:shpln_invoice_number]
 
-    s = FactoryBot(:shipment, importer: importer, master_bill_of_lading: "ABC")
+    s = create(:shipment, importer: importer, master_bill_of_lading: "ABC")
     s.update_custom_value! priority_cd, "HOT"
     s.master_bill_of_lading = "ABC"
 

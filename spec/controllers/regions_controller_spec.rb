@@ -1,8 +1,8 @@
 describe RegionsController do
   describe "security" do
-    let(:user) { FactoryBot(:user) }
-    let(:region) { FactoryBot(:region) }
-    let(:country) { FactoryBot(:country) }
+    let(:user) { create(:user) }
+    let(:region) { create(:region) }
+    let(:country) { create(:country) }
 
     before do
       sign_in_as user
@@ -20,7 +20,7 @@ describe RegionsController do
     end
 
     it "restricts destroy" do
-      r = FactoryBot(:region, name: "EMEA")
+      r = create(:region, name: "EMEA")
       delete :destroy, id: r.id
       expect(Region.find_by(name: "EMEA")).not_to be_nil
       expect(response).to redirect_to request.referer
@@ -43,8 +43,8 @@ describe RegionsController do
   end
 
   context "security passed" do
-    let(:user) { FactoryBot(:admin_user) }
-    let!(:region) { FactoryBot(:region) }
+    let(:user) { create(:admin_user) }
+    let!(:region) { create(:region) }
 
     before do
       sign_in_as user
@@ -52,7 +52,7 @@ describe RegionsController do
 
     describe "index" do
       it "shows all regions" do
-        r2 = FactoryBot(:region)
+        r2 = create(:region)
         get :index
         expect(response).to be_success
         expect(assigns(:regions).to_a).to eq([region, r2])
@@ -76,7 +76,7 @@ describe RegionsController do
     end
 
     context "country management" do
-      let(:country) { FactoryBot(:country) }
+      let(:country) { create(:country) }
 
       describe "add_country" do
         it "adds country to region" do

@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::ImportExportRegulationParser do
 
   before :each do
-    @country =  FactoryBot(:country, :iso_code => 'TW')
+    @country =  create(:country, :iso_code => 'TW')
   end
 
   context "process_file" do
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
 
   describe "process" do
     it "raises an error for countries that are not configured" do
-      country = FactoryBot(:country)
+      country = create(:country)
       expect {OpenChain::CustomHandler::ImportExportRegulationParser.new(country).process(StringIO.new, 'file.txt')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .txt files for '#{country.iso_code}'."
     end
 
@@ -28,9 +28,9 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
 
   context "process TW data" do
     before :each do
-      @tariff1 = FactoryBot(:official_tariff, :country_id => @country.id, :hts_code => '01011000104', :import_regulations=> 'blah', :export_regulations => 'yada')
-      @tariff2 = FactoryBot(:official_tariff, :country_id => @country.id, :hts_code => '01011000202', :import_regulations=> 'blah', :export_regulations => 'yada')
-      @tariff3 = FactoryBot(:official_tariff, :country_id => @country.id, :hts_code => '01019000107', :import_regulations=> 'blah', :export_regulations => 'yada')
+      @tariff1 = create(:official_tariff, :country_id => @country.id, :hts_code => '01011000104', :import_regulations=> 'blah', :export_regulations => 'yada')
+      @tariff2 = create(:official_tariff, :country_id => @country.id, :hts_code => '01011000202', :import_regulations=> 'blah', :export_regulations => 'yada')
+      @tariff3 = create(:official_tariff, :country_id => @country.id, :hts_code => '01019000107', :import_regulations=> 'blah', :export_regulations => 'yada')
 
       @data = "Tariff No.    date    date   specific  ad valoren    specific  ad valoren    Unit      Quantity     Mark          Import  Regulations                      Export  Regulations\n" + \
               "=========== ======= =======  ========  ==========    ========  ==========  ========  ============  ============  =======================================  =======================================\r\n" + \

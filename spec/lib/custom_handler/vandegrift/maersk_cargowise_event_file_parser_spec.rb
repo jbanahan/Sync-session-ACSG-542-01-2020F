@@ -19,11 +19,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
   describe "process_event" do
 
-    let (:country_us) { FactoryBot(:country, iso_code:"US") }
+    let (:country_us) { create(:country, iso_code:"US") }
 
     it "updates an entry, CCC event" do
       # CCC is the default value in the test XML.
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
       entry.entry_comments.build(username:"UniversalEvent", body:"2019-05-07 15:10:52 - DDD - DIFFERENTVAL")
       entry.save!
 
@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
     it "updates an entry, CCC event, existing dates" do
       # CCC is the default value in the test XML.
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       entry_filed_date:Date.new(2019, 1, 1), first_entry_sent_date:Date.new(2019, 1, 1),
                       across_sent_date:Date.new(2019, 1, 1))
       existing_date = entry.first_entry_sent_date
@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO-PGA FDA 33")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, " SO - PGA FDA")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_transmit_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.fda_transmit_date
 
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA FDA  01")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA  FDA 01")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_transmit_date:Date.new(2019, 1, 1), fda_review_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.fda_review_date
 
@@ -185,7 +185,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA -FDA 02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -211,8 +211,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA -FDA 02")
 
-      country_ca = FactoryBot(:country, iso_code:"CA")
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_ca)
+      country_ca = create(:country, iso_code:"CA")
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_ca)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA FDA  02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_transmit_date:Date.new(2019, 1, 1), fda_hold_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.fda_hold_date
 
@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO- PGA FDA  02")
 
       # On hold flag should be true because FDA hold date is set and FDA hold release date is not.
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_transmit_date:Date.new(2019, 1, 1), fda_hold_date:Date.new(2019, 1, 1), import_country:country_us,
                       on_hold:false, fda_hold_release_date:nil)
       existing_date = entry.fda_hold_date
@@ -294,7 +294,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -PGA - FDA    07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_release_date:Date.new(2019, 1, 1), fda_hold_release_date:Date.new(2019, 1, 1), fda_hold_date:Date.new(2017, 7, 7), import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
@@ -322,8 +322,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -PGA - FDA    07")
 
-      country_ca = FactoryBot(:country, iso_code:"CA")
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      country_ca = create(:country, iso_code:"CA")
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_release_date:Date.new(2019, 1, 1), fda_hold_release_date:Date.new(2019, 1, 1), fda_hold_date:Date.new(2017, 7, 7), import_country:country_ca)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
@@ -350,7 +350,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA - NHT  02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -375,7 +375,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO-PGA NHT 02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nhtsa_hold_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.nhtsa_hold_date
 
@@ -400,7 +400,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA NHT 07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nhtsa_hold_date:Date.new(2017, 7, 7), import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nhtsa_hold_date:Date.new(2017, 7, 7), import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -425,7 +425,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA NHT 07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nhtsa_hold_release_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.nhtsa_hold_release_date
 
@@ -450,7 +450,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA -NMF  02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -475,7 +475,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA   - NMF 02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nmfs_hold_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.nmfs_hold_date
 
@@ -500,7 +500,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO-PGA - NMF 07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nmfs_hold_date:Date.new(2017, 7, 7), import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nmfs_hold_date:Date.new(2017, 7, 7), import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -525,7 +525,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA NMF 07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nmfs_hold_release_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.nmfs_hold_release_date
 
@@ -550,7 +550,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -575,7 +575,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA OGA 02")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       other_agency_hold_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.other_agency_hold_date
 
@@ -600,7 +600,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, other_agency_hold_date:Date.new(2017, 7, 7), import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, other_agency_hold_date:Date.new(2017, 7, 7), import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
@@ -625,7 +625,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA - OGA 07")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       other_agency_hold_release_date:Date.new(2019, 1, 1), import_country:country_us)
       existing_date = entry.other_agency_hold_release_date
 
@@ -650,7 +650,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - RAVEN")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
@@ -671,7 +671,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, CLR event" do
       test_data.gsub!(/CCC/, 'CLR')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
 
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
       expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
@@ -697,7 +697,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CLR')
 
       # These dates occur prior to the date in the XML.  The XML date should be ignored.
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       first_release_received_date:Date.new(2019, 1, 1), pars_ack_date:Date.new(2019, 1, 1),
                       across_declaration_accepted:Date.new(2019, 1, 1), first_7501_print:Date.new(2019, 1, 1))
       existing_date = entry.first_release_received_date
@@ -720,7 +720,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CLR')
 
       # These dates occur more recently than the date in the XML.  It should replace them.
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       first_release_received_date:Date.new(2020, 1, 1), pars_ack_date:Date.new(2020, 1, 1),
                       across_declaration_accepted:Date.new(2020, 1, 1), first_7501_print:Date.new(2020, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
@@ -743,7 +743,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, DIM event" do
       test_data.gsub!(/CCC/, 'DIM')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       edi_received_date:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -762,7 +762,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, JOP event" do
       test_data.gsub!(/CCC/, 'JOP')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       file_logged_date:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -781,7 +781,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, DDV event" do
       test_data.gsub!(/CCC/, 'DDV')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       last_7501_print:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -802,7 +802,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'DDV')
       test_data.gsub!(/SOMEVAL/, "AAA Delivery Order BBB")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       last_7501_print:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -822,7 +822,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, CRP event" do
       test_data.gsub!(/CCC/, 'CRP')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       cadex_accept_date:Date.new(2019, 1, 1), k84_receive_date:Date.new(2019, 1, 1),
                       b3_print_date:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
@@ -845,7 +845,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CES')
       test_data.gsub!(/SOMEVAL/, "DeusEXMachina")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -864,7 +864,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CES')
       test_data.gsub!(/SOMEVAL/, "DeusEXMachina")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       exam_ordered_date:Date.new(2019, 1, 1))
       existing_date = entry.exam_ordered_date
       expect(subject.process_event entry, xml_document).to eq false
@@ -883,7 +883,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CES')
       test_data.gsub!(/SOMEVAL/, "WTA")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -903,7 +903,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CES')
       test_data.gsub!(/SOMEVAL/, "WTA")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       pars_ack_date:Date.new(2019, 1, 1), across_declaration_accepted:Date.new(2019, 1, 1))
       existing_date = entry.pars_ack_date
       expect(subject.process_event entry, xml_document).to eq false
@@ -923,7 +923,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'CES')
       test_data.gsub!(/SOMEVAL/, "AAAAAA")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to have_identifier :event_type, "CES | AAAAAA"
@@ -937,7 +937,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MRJ')
       test_data.gsub!(/SOMEVAL/, "IID REJECTED")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       pars_reject_date:Date.new(2019, 1, 1))
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -957,7 +957,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/, 'MRJ')
       test_data.gsub!(/SOMEVAL/, "AAAAAA")
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to have_identifier :event_type, "MRJ | AAAAAA"
@@ -970,7 +970,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "rejects when event type is missing" do
       test_data.gsub!(/EventType/, 'EventTerp')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
       expect(subject.process_event entry, xml_document).to eq false
 
@@ -981,7 +981,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "warns when event type is unknown" do
       test_data.gsub!(/CCC/, 'BLEH')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
       expect(subject.process_event entry, xml_document).to eq false
 
@@ -994,7 +994,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       test_data.gsub!(/EventTime/, 'EventTim')
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       entry_filed_date:Date.new(2019, 1, 1))
 
       expect(subject.process_event entry, xml_document).to eq true
@@ -1055,7 +1055,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "file.xml")
       expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
 
-      entry = FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       subject.parse xml_document, key: "file.xml"
     end
   end
@@ -1063,7 +1063,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
   describe "process_documents" do
 
     let (:test_data) { IO.read ('spec/fixtures/files/maersk_event_document.xml') }
-    let! (:entry) { FactoryBot(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM) }
+    let! (:entry) { create(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM) }
 
     it "extracts document data from event xml" do
       subject.process_documents entry, xml_document

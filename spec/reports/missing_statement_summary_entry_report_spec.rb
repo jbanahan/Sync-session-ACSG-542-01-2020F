@@ -58,7 +58,7 @@ describe OpenChain::Report::MissingStatementSummaryEntryReport do
 
   describe 'run' do
     before do
-      @entry = FactoryBot.create(:entry)
+      @entry = create(:entry)
       @port = Port.create(:name=>'PORT', :schedule_d_code=>"1234")
       @entry.update_attributes(
           last_exported_from_source: start_date,
@@ -89,7 +89,7 @@ describe OpenChain::Report::MissingStatementSummaryEntryReport do
     end
 
     it 'handles more than one failure' do
-      second_entry = FactoryBot.create(:entry)
+      second_entry = create(:entry)
       second_entry.update_attributes(
           last_exported_from_source: start_date,
           entry_filed_date: start_date,

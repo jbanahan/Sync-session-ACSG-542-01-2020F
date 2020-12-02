@@ -1,6 +1,6 @@
 describe CustomReportAnnSapChanges do
   before :each do
-    @u = FactoryBot(:master_user)
+    @u = create(:master_user)
     allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return(true)
   end
   describe "static_methods" do
@@ -27,7 +27,7 @@ describe CustomReportAnnSapChanges do
 
   describe "run" do
     def make_eligible_product
-      tr = FactoryBot(:tariff_record)
+      tr = create(:tariff_record)
       cls = tr.classification
       cls.update_custom_value! @appr, 2.days.ago
       cls.product.update_custom_value! @sap, 1.day.ago
@@ -43,7 +43,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should only include products with SAP Revised Date after approved date" do
       p = make_eligible_product
-      tr2 = FactoryBot(:tariff_record)
+      tr2 = create(:tariff_record)
       cls2 = tr2.classification
       cls2.update_custom_value! @appr, 2.days.ago
       cls2.product.update_custom_value! @sap, 3.days.ago
@@ -81,7 +81,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should not include classification with approval after sap revised date even if another classification is before" do
       p = make_eligible_product
-      cls = FactoryBot(:classification, product:p)
+      cls = create(:classification, product:p)
       cls.update_custom_value! @appr, 0.days.ago
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)

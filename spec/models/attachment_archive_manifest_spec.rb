@@ -1,6 +1,6 @@
 describe AttachmentArchiveManifest do
   before :each do
-    @c = FactoryBot(:company)
+    @c = create(:company)
   end
   describe "make_manifest!" do
     it "should create attachment and update time" do
@@ -23,8 +23,8 @@ describe AttachmentArchiveManifest do
   describe "generate_manifest_tempfile!" do
     before :each do
       @rel_date = 1.day.ago
-      @ent = FactoryBot(:entry, :importer=>@c, :broker_reference=>'123', :entry_number=> 'abc123', :release_date=>@rel_date, :master_bills_of_lading=>'mbol', :arrival_date=>1.day.ago, :po_numbers => "PO")
-      @inv = FactoryBot(:broker_invoice, :entry=>@ent, :invoice_date => 2.months.ago)
+      @ent = create(:entry, :importer=>@c, :broker_reference=>'123', :entry_number=> 'abc123', :release_date=>@rel_date, :master_bills_of_lading=>'mbol', :arrival_date=>1.day.ago, :po_numbers => "PO")
+      @inv = create(:broker_invoice, :entry=>@ent, :invoice_date => 2.months.ago)
       @att1 = @ent.attachments.create!(:attached_file_name=>'a.txt', :attached_file_size=>100, :attachment_type=>'EDOC')
       @a_setup = @c.create_attachment_archive_setup(:start_date=>10.years.ago)
       # Make sure to create the archives and attachments separately to ensure the attachments are attached to the archvies

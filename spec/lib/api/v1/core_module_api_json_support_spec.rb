@@ -17,12 +17,12 @@ describe OpenChain::Api::V1::CoreModuleApiJsonSupport do
   end
 
   describe "render_state_toggle_buttons" do
-    let! (:button) { FactoryBot(:state_toggle_button,
+    let! (:button) { create(:state_toggle_button,
         activate_text:'A', activate_confirmation_text:'B', module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date",
         deactivate_text:'C', deactivate_confirmation_text:'D', simple_button: false, identifier: "identifier", display_index: 1)
     }
-    let (:user) { FactoryBot(:user) }
-    let (:object) { FactoryBot(:shipment) }
+    let (:user) { create(:user) }
+    let (:object) { create(:shipment) }
 
     it "return array of buttons hash data" do
       expect(StateToggleButton).to receive(:for_core_object_user).with(object, user).and_return([button])

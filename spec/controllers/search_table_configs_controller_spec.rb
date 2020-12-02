@@ -1,9 +1,9 @@
 describe SearchTableConfigsController do
-  let!(:user) { FactoryBot(:sys_admin_user, company: FactoryBot(:company, name: "Oracle")) }
+  let!(:user) { create(:sys_admin_user, company: create(:company, name: "Oracle")) }
   before { sign_in_as user }
 
   describe "index" do
-    let!(:stc) { FactoryBot(:search_table_config) }
+    let!(:stc) { create(:search_table_config) }
 
     it "renders for sys-admin user" do
       get :index
@@ -20,10 +20,10 @@ describe SearchTableConfigsController do
   end
 
   describe "new" do
-    let!(:stc) { FactoryBot(:search_table_config) }
+    let!(:stc) { create(:search_table_config) }
     let!(:co_1) { user.company }
-    let!(:co_2) { FactoryBot(:company, name: "Microsoft") }
-    let!(:co_3) { FactoryBot(:company, name: "Google") }
+    let!(:co_2) { create(:company, name: "Microsoft") }
+    let!(:co_3) { create(:company, name: "Google") }
 
     it "renders for sys-admin user" do
       get :new
@@ -41,10 +41,10 @@ describe SearchTableConfigsController do
   end
 
   describe "edit" do
-    let!(:stc) { FactoryBot(:search_table_config) }
+    let!(:stc) { create(:search_table_config) }
     let!(:co_1) { user.company }
-    let!(:co_2) { FactoryBot(:company, name: "Microsoft") }
-    let!(:co_3) { FactoryBot(:company, name: "Google") }
+    let!(:co_2) { create(:company, name: "Microsoft") }
+    let!(:co_3) { create(:company, name: "Google") }
 
 
     it "renders for sys-admin user" do
@@ -63,7 +63,7 @@ describe SearchTableConfigsController do
   end
 
   describe "create" do
-    let!(:co) { FactoryBot(:company, name: "Oracle") }
+    let!(:co) { create(:company, name: "Oracle") }
 
     it "creates stc for sys-admin" do
       json = '{"columns: [], "criteria": [], "sorts": []}'
@@ -87,10 +87,10 @@ describe SearchTableConfigsController do
   end
 
   describe "update" do
-    let!(:co_1) { FactoryBot(:company, name: "Oracle") }
-    let!(:co_2) { FactoryBot(:company, name: "Microsoft") }
+    let!(:co_1) { create(:company, name: "Oracle") }
+    let!(:co_2) { create(:company, name: "Microsoft") }
     let!(:original_json) { '{"columns: [], "criteria": [], "sorts": []}' }
-    let!(:stc) { FactoryBot(:search_table_config, company: co_1, page_uid: "original page_uid", name: "original name", config_json: original_json) }
+    let!(:stc) { create(:search_table_config, company: co_1, page_uid: "original page_uid", name: "original name", config_json: original_json) }
 
     it "updates stc for sys-admin" do
       new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}'
@@ -118,7 +118,7 @@ describe SearchTableConfigsController do
   end
 
   describe "destroy" do
-    let!(:stc) { FactoryBot(:search_table_config) }
+    let!(:stc) { create(:search_table_config) }
 
     it "deletes stc for sys-admin" do
       delete :destroy, id: stc.id

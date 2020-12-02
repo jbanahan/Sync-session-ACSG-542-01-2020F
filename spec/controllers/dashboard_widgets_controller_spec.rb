@@ -1,10 +1,10 @@
 describe DashboardWidgetsController do
 
   before :each do
-    @user = FactoryBot(:master_user, :email=>'a@example.com')
+    @user = create(:master_user, :email=>'a@example.com')
     sign_in_as @user
 
-    @search_setup = FactoryBot(:search_setup, user: @user)
+    @search_setup = create(:search_setup, user: @user)
     @dashboard_widget = DashboardWidget.new
     @dashboard_widget.user = @user
     @dashboard_widget.search_setup = @search_setup
@@ -23,7 +23,7 @@ describe DashboardWidgetsController do
 
   describe "edit" do
     it "sets widgets and searches" do
-      ss2 = FactoryBot(:search_setup, module_type: "Entry", user: @user)
+      ss2 = create(:search_setup, module_type: "Entry", user: @user)
       @user.search_setups << ss2
       @user.save!
 
@@ -35,7 +35,7 @@ describe DashboardWidgetsController do
 
   describe "save" do
     it "saves a dashboard layout" do
-      ss2 = FactoryBot(:search_setup, module_type: "Entry", user: @user)
+      ss2 = create(:search_setup, module_type: "Entry", user: @user)
       p = {:dashboard_widget => {'0' => {search_setup_id: ss2.id, rank: 0}}}
 
       post :save, p

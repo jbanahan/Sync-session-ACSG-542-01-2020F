@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::CustomDefinitionSupport do
   describe '#prep_custom_defs' do
 
     it "finds existing custom definitions" do
-      cd = FactoryBot(:custom_definition, cdef_uid:'XYZ', label:'abc', module_type:'Order', data_type: :string)
+      cd = create(:custom_definition, cdef_uid:'XYZ', label:'abc', module_type:'Order', data_type: :string)
 
       h = {cdef_uid:'XYZ', label:'OTHER', module_type: 'Order', data_type: 'string'}
       defs = subject.prep_custom_defs [:my_field], {my_field: h}
@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::CustomDefinitionSupport do
     end
 
     it "should find when cdef_uid is same and label is different" do
-      cd = FactoryBot(:custom_definition, cdef_uid:'XYZ', label:'abc', module_type:'Order', data_type: :string)
+      cd = create(:custom_definition, cdef_uid:'XYZ', label:'abc', module_type:'Order', data_type: :string)
       expect {
         defs = subject.prep_custom_defs [:my_field], {my_field: {cdef_uid:'XYZ', label:'OTHER', module_type: cd.module_type, data_type: cd.data_type}}
         expect(defs[:my_field]).to eq cd

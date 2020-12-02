@@ -1,6 +1,6 @@
 describe MessagesController do
-  let(:base_user) { FactoryBot(:user) }
-  let(:sys_admin_user) { FactoryBot(:user, sys_admin: true) }
+  let(:base_user) { create(:user) }
+  let(:sys_admin_user) { create(:user, sys_admin: true) }
 
   describe 'create' do
     it 'works for sys_admins' do
@@ -33,7 +33,7 @@ describe MessagesController do
     end
 
     it 'does not allow normal admins' do
-      u = FactoryBot(:user)
+      u = create(:user)
       u.admin = true
       u.save!
       sign_in_as u
@@ -58,7 +58,7 @@ describe MessagesController do
     end
 
     it 'does not allow normal admins' do
-      u = FactoryBot(:user)
+      u = create(:user)
       u.admin = true
       u.save!
       sign_in_as u
@@ -70,13 +70,13 @@ describe MessagesController do
   context "send messages" do
     let(:company) do
       Company.destroy_all
-      company = FactoryBot(:company)
+      company = create(:company)
       company
     end
 
     describe "new_bulk" do
       it "only allows use by admins" do
-        u = FactoryBot(:user, company: company)
+        u = create(:user, company: company)
         sign_in_as u
 
         get :new_bulk
@@ -85,7 +85,7 @@ describe MessagesController do
       end
 
       it "displays the selection screen" do
-        u = FactoryBot(:admin_user, company: company)
+        u = create(:admin_user, company: company)
         sign_in_as u
 
         get :new_bulk
@@ -95,15 +95,15 @@ describe MessagesController do
     end
 
     describe "send_to_users" do
-      let(:receiver1) { FactoryBot(:user, company: company) }
-      let(:receiver2) { FactoryBot(:user, company: company) }
+      let(:receiver1) { create(:user, company: company) }
+      let(:receiver2) { create(:user, company: company) }
 
       before do
         User.destroy_all
       end
 
       it "only allows use by admins" do
-        u = FactoryBot(:user)
+        u = create(:user)
         sign_in_as u
         post :send_to_users, {receivers: [receiver1.id, receiver2.id], message_subject: "Test Message", message_body: "This is a test."}
 
@@ -114,7 +114,7 @@ describe MessagesController do
       end
 
       it 'sanitizes subject and formats body as markdown' do
-        u = FactoryBot(:admin_user)
+        u = create(:admin_user)
         sign_in_as u
 
         d = instance_double("delayed_job")
@@ -125,7 +125,7 @@ describe MessagesController do
       end
 
       it "creates notifications for specified users" do
-        u = FactoryBot(:admin_user)
+        u = create(:admin_user)
         sign_in_as u
 
         d = instance_double("delayed_job")

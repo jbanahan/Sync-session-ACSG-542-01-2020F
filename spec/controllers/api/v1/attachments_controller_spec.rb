@@ -1,7 +1,7 @@
 describe Api::V1::AttachmentsController do
 
-  let (:user) { FactoryBot(:user) }
-  let (:product) { FactoryBot(:product) }
+  let (:user) { create(:user) }
+  let (:product) { create(:product) }
   let (:attachment) { Attachment.create! attached_file_name: "file.txt", attachable: product, uploaded_by: user, attachment_type: "Attachment Type", attached_file_size: 1024 }
 
   before do
@@ -175,7 +175,7 @@ describe Api::V1::AttachmentsController do
     end
 
     it "calls log_update and attachment_added if base object responds to those methods" do
-      answer = FactoryBot(:answer)
+      answer = create(:answer)
       allow_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
       expect_any_instance_of(Answer).to receive(:log_update).with(user)
       attachment_id = nil

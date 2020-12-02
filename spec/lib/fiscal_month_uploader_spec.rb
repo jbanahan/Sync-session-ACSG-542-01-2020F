@@ -1,9 +1,9 @@
 describe OpenChain::FiscalMonthUploader do
   describe "process" do
     before do
-      @u = FactoryBot(:user)
-      @imp = FactoryBot(:company)
-      @ent = FactoryBot(:entry, importer: @imp, release_date: Date.new(2016, 1, 15))
+      @u = create(:user)
+      @imp = create(:company)
+      @ent = create(:entry, importer: @imp, release_date: Date.new(2016, 1, 15))
       @row_0 = ['Fiscal Year', 'Fiscal Month', 'Actual Start Date', 'Actual End Date']
       @row_1 = ['2017', '1', '2016-01-01', '2016-01-31']
       @row_2 = ['2017', '2', '2016-02-01', '2016-02-29']
@@ -31,8 +31,8 @@ describe OpenChain::FiscalMonthUploader do
 
     it "updates existing fiscal months from spreadsheet" do
       row_1 = ['2017', '2', '2016-02-15', '2016-02-25']
-      FactoryBot(:fiscal_month, company: @imp, year: 2017, month_number: 1, start_date: Date.new(2016, 01, 01), end_date: Date.new(2016, 01, 31))
-      FactoryBot(:fiscal_month, company: @imp, year: 2017, month_number: 2, start_date: Date.new(2016, 02, 01), end_date: Date.new(2016, 02, 29))
+      create(:fiscal_month, company: @imp, year: 2017, month_number: 1, start_date: Date.new(2016, 01, 01), end_date: Date.new(2016, 01, 31))
+      create(:fiscal_month, company: @imp, year: 2017, month_number: 2, start_date: Date.new(2016, 02, 01), end_date: Date.new(2016, 02, 29))
 
       expect(@handler).to receive(:foreach).with(@cf, {skip_blank_lines:true}).and_yield(@row_0, 0).and_yield(row_1, 1)
       expect(FiscalMonth.count).to eq 2

@@ -1,21 +1,21 @@
 describe OpenChain::CustomHandler::AnnInc::AnnClassificationDefaultComparator do
   subject { described_class }
-  let (:ann) { FactoryBot(:importer, system_code: "ann") }
+  let (:ann) { create(:importer, system_code: "ann") }
   let (:cdef) { subject.new.cdef }
 
   describe "compare" do
-    let(:prod) { FactoryBot(:product) }
+    let(:prod) { create(:product) }
 
-    let(:classi_1) { FactoryBot(:classification, product: prod) }
+    let(:classi_1) { create(:classification, product: prod) }
 
     let(:classi_2) do
-      c = FactoryBot(:classification, product: prod)
+      c = create(:classification, product: prod)
       c.update_custom_value! cdef, ""
       c
     end
 
     let(:classi_3) do
-      c = FactoryBot(:classification, product: prod)
+      c = create(:classification, product: prod)
       c.update_custom_value! cdef, "Multi"
       c
     end

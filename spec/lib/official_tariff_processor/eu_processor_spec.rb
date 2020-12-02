@@ -1,7 +1,7 @@
 describe OpenChain::OfficialTariffProcessor::EuProcessor do
   let(:eu_tariff) do
-    FactoryBot(:official_tariff, hts_code:'0101300000',
-      country:FactoryBot(:country, iso_code:'IT'),
+    create(:official_tariff, hts_code:'0101300000',
+      country:create(:country, iso_code:'IT'),
       special_rates: '	3.2%: (SPGL - TarrPref Excl), 9999.99%: (KP - North Korea - I), Free: (AL,DZ,AD- CstUnDty,XC,CL,EPA,EG,TOUT- NonPrfTQ,EEA,SWITZ,FO,MK,IL,JO,LB,XL,MX,ME,MA,PS,S M- CstUnDty,ZA,CH,SY,TN,TR- CstUnDty,BA - Tariff preferen,XK - Tariff preferen,XS - Tariff preferen,EU,ERGA OMNES - Airwort,PG - Tariff preferen,CARI - TarrPref Excl,ESA - Tariff Prefere,KR - Preferential ta,KR - Tariff Preferen,MD - Tariff Preferen,PE - Tariff Preferen,CO - Tariff Preferen,CAMER - Tariff Prefe,SPGA - Tariff prefer,UA - Tariff preferen,FJ - Fiji,CM - Tariff preferen,GE - Tariff preferen,EC - Tariff preferen,SPGE - PrefTariff,LOMB - TARIFF PREFER)'
     )
   end

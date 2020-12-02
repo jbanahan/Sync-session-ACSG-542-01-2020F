@@ -3,15 +3,15 @@ module Api; module V1; class ApiController < ActionController::Base
   include AuthTokenSupport
   rescue_from StandardError, :with => :error_handler
 
-  before_filter :validate_format
-  around_filter :validate_authtoken
-  before_filter :set_master_setup
-  before_filter :log_request
-  before_filter :log_run_as_request
-  before_filter :prep_exception_notifier
-  around_filter :set_user_settings
-  before_filter :new_relic
-  before_filter :prep_model_fields
+  before_action :validate_format
+  around_action :validate_authtoken
+  before_action :set_master_setup
+  before_action :log_request
+  before_action :log_run_as_request
+  before_action :prep_exception_notifier
+  around_action :set_user_settings
+  before_action :new_relic
+  before_action :prep_model_fields
 
   def current_user
     @user
@@ -73,7 +73,7 @@ module Api; module V1; class ApiController < ActionController::Base
     end
   end
 
-  # use this as a prepend_before_filter to accept CSV format for a route
+  # use this as a prepend_before_action to accept CSV format for a route
   #  it has to be prepended because it needs to run before validate_format
   def allow_csv
     @allow_csv = true

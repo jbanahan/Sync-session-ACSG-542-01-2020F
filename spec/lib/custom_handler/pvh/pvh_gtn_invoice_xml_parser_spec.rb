@@ -12,13 +12,13 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser do
     REXML::XPath.first(xml, "/Invoice/invoiceDetail")
   }
 
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:ca) { FactoryBot(:country, iso_code: "CA") }
-  let (:pvh) { FactoryBot(:importer, system_code: "PVH") }
-  let (:user) { FactoryBot(:user) }
-  let (:order) { FactoryBot(:order, order_number: "PVH-RTTC216384", importer: pvh)}
-  let (:product) { FactoryBot(:product, unique_identifier: "PVH-7695775") }
-  let (:order_line) { FactoryBot(:order_line, order: order, line_number: 1, product: product) }
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:ca) { create(:country, iso_code: "CA") }
+  let (:pvh) { create(:importer, system_code: "PVH") }
+  let (:user) { create(:user) }
+  let (:order) { create(:order, order_number: "PVH-RTTC216384", importer: pvh)}
+  let (:product) { create(:product, unique_identifier: "PVH-7695775") }
+  let (:order_line) { create(:order_line, order: order, line_number: 1, product: product) }
   let (:inbound_file) { InboundFile.new }
 
   describe "process_invoice" do

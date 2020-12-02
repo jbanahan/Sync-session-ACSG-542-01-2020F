@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser do
-  let!(:user) { FactoryBot(:master_user) }
+  let!(:user) { create(:master_user) }
   let!(:custom_file) { double "custom file "}
   before { allow(custom_file).to receive(:attached_file_name).and_return "file.csv" }
 
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
 
     it "blocks product-editing non-master users on systems with feature" do
       allow(ms).to receive(:custom_feature?).with('UA SAP').and_return true
-      user = FactoryBot(:user)
+      user = create(:user)
       allow(user).to receive(:edit_products?).and_return true
       expect(subject.can_view? user).to eq false
     end

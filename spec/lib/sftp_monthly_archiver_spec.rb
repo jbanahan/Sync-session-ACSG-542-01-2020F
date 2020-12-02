@@ -40,11 +40,11 @@ describe OpenChain::SftpMonthlyArchiver do
 
   describe "run" do
     let (:opts) { {'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'} }
-    let (:company) { with_customs_management_id(FactoryBot(:company), "blah") }
+    let (:company) { with_customs_management_id(create(:company), "blah") }
     let! (:archive_setup) { AttachmentArchiveSetup.create! company_id: company.id, start_date: (Time.zone.now - 1.year).to_date }
 
     let (:entry) do
-      e = FactoryBot(:entry, importer: company, broker_reference: "reference")
+      e = create(:entry, importer: company, broker_reference: "reference")
       e.broker_invoices.create! invoice_date: 1.year.ago
       e
     end
@@ -97,9 +97,9 @@ describe OpenChain::SftpMonthlyArchiver do
       described_class.new({'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
     end
 
-    let (:company) { with_customs_management_id(FactoryBot(:company), "blah") }
+    let (:company) { with_customs_management_id(create(:company), "blah") }
     let (:archive) { AttachmentArchive.create!(name: 'archive', company_id: company.id) }
-    let (:entry) { FactoryBot(:entry, importer: company, broker_reference: "reference") }
+    let (:entry) { create(:entry, importer: company, broker_reference: "reference") }
     let! (:archive_setup) { entry.importer.create_attachment_archive_setup(start_date: 1.year.ago) }
     let (:tempfile) { Tempfile.new "file" }
 

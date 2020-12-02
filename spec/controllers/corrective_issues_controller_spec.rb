@@ -1,9 +1,9 @@
 describe CorrectiveIssuesController do
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
 
     sign_in_as @u
-    @cap = FactoryBot(:corrective_action_plan)
+    @cap = create(:corrective_action_plan)
     allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return(true)
   end
 

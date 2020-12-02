@@ -2,8 +2,8 @@ describe OpenChain::BulkAction::BulkSendToTest do
 
   describe "act" do
     before :each do
-      @ord = FactoryBot(:order, last_file_bucket:'the_bucket', last_file_path:'the_path')
-      @u = FactoryBot(:user, order_view:true)
+      @ord = create(:order, last_file_bucket:'the_bucket', last_file_path:'the_path')
+      @u = create(:user, order_view:true)
     end
 
     it "sends integration file to test" do
@@ -38,7 +38,7 @@ describe OpenChain::BulkAction::BulkSendToTest do
     end
 
     it "does not send file if object doesn't support this behavior", :without_partial_double_verification do
-      company = FactoryBot(:company)
+      company = create(:company)
 
       allow_any_instance_of(Company).to receive(:can_view?).and_return true
       expect(Company).not_to receive(:send_integration_file_to_test).with('the_bucket', 'the_path')

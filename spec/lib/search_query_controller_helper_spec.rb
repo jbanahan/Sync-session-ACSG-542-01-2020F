@@ -22,13 +22,13 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:count).and_return(501)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
       @ss.search_columns.create!(:model_field_uid=>:ent_brok_ref, :rank=>1)
       @ss.search_columns.create!(:model_field_uid=>:ent_entry_num, :rank=>2)
       @ss.search_columns.create!(:model_field_uid=>:ent_import_date, :rank=>3)
       @ss.search_columns.create!(:model_field_uid=>:ent_arrival_date, :rank=>4)
-      @p = FactoryBot(:entry, broker_reference: 'XYZ', entry_number: '555', import_date: Date.new(2020, 2, 1), arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
+      @p = create(:entry, broker_reference: 'XYZ', entry_number: '555', import_date: Date.new(2020, 2, 1), arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       expect(r['id']).to eq(@ss.id)
@@ -67,12 +67,12 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
       @ss.search_columns.create!(:model_field_uid=>:ent_brok_ref, :rank=>1)
       @ss.search_columns.create!(:model_field_uid=>:ent_entry_num, :rank=>2)
       @ss.search_columns.create!(:model_field_uid=>:ent_import_date, :rank=>3)
-      @p = FactoryBot(:entry, :entry_number=>'mpn')
+      @p = create(:entry, :entry_number=>'mpn')
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       expect(r['id']).to eq(@ss.id)
@@ -84,14 +84,14 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "Hawaii")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
       @ss.search_columns.create!(:model_field_uid=>:ent_arrival_date, :rank=>1)
       @ss.no_time= true
 
       # Make sure the changed at time is set to a time that will roll back a day
       # based on the timezone translation of GMT -> Hawaii
-      @p = FactoryBot(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
+      @p = create(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       # The only thing we really care about is how the time was returned
@@ -111,8 +111,8 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry')
       @ss.search_columns.create!(:model_field_uid=>:ent_arrival_date, :rank=>1)
 
       expect(@ss).to receive(:respond_to?).with(:date_format).and_return true
@@ -120,7 +120,7 @@ describe OpenChain::SearchQueryControllerHelper do
       # This ensures that we can run with objects that don't support the no_time? method
       expect(@ss).to receive(:respond_to?).with(:no_time?).and_return false
 
-      @p = FactoryBot(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
+      @p = create(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       # The only thing we really care about is how the time was returned
@@ -140,16 +140,16 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
       # Through rspec trickery, this will not respond to date_format.  We're including date_format here to ensure that it's ignored.
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry', date_format: "MM/DD/YYYY")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry', date_format: "MM/DD/YYYY")
       @ss.search_columns.create!(:model_field_uid=>:ent_arrival_date, :rank=>1)
 
       expect(@ss).to receive(:respond_to?).with(:date_format).and_return false
       expect(@ss).to receive(:respond_to?).with(:search_run).and_return false
       expect(@ss).to receive(:respond_to?).with(:no_time?).and_return true
 
-      @p = FactoryBot(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
+      @p = create(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       # Date should be output in the default format.
@@ -169,11 +169,11 @@ describe OpenChain::SearchQueryControllerHelper do
       allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
       allow_any_instance_of(Entry).to receive(:can_edit?).and_return(true)
-      @user = FactoryBot(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
-      @ss = FactoryBot(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry', date_format: "MM/DD/YYYY")
+      @user = create(:master_user, :email=>'a@example.com', :time_zone => "America/New_York")
+      @ss = create(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Entry', date_format: "MM/DD/YYYY")
       @ss.search_columns.create!(:model_field_uid=>:ent_arrival_date, :rank=>1)
 
-      @p = FactoryBot(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
+      @p = create(:entry, :entry_number=>'mpn', arrival_date: ActiveSupport::TimeZone["America/New_York"].parse("2020-02-02 02:02:02"))
       r = @k.new.execute_query_to_hash(SearchQuery.new(@ss, @user), @user, 1, 50)
       r = HashWithIndifferentAccess.new r
       expect(r['rows']).to eq([

@@ -1,12 +1,12 @@
 describe ValidationRuleProductClassificationFieldFormat do
-  let!(:descr_cdef) { FactoryBot(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'Customs Description') }
+  let!(:descr_cdef) { create(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'Customs Description') }
   let!(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid, regex:'good descr'}.to_json) }
   let!(:cl) do
-    c = FactoryBot(:classification)
+    c = create(:classification)
     c.update_custom_value!(descr_cdef, 'good descr')
     c
   end
-  let!(:p) { FactoryBot(:product, unique_identifier: 'good UID', classifications: [cl]) }
+  let!(:p) { create(:product, unique_identifier: 'good UID', classifications: [cl]) }
 
   it 'should pass if all lines are valid' do
     expect(rule.run_validation(cl.product)).to be_nil
@@ -42,9 +42,9 @@ describe ValidationRuleProductClassificationFieldFormat do
   end
 
   it 'should pass if classification that does not meet search criteria is invalid' do
-    sima_cdef = FactoryBot(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'SIMA Code')
+    sima_cdef = create(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'SIMA Code')
     rule.search_criterions.new(model_field_uid:sima_cdef.model_field_uid, operator:'eq', value:'good SIMA')
-    bad_cl = FactoryBot(:classification, product: p)
+    bad_cl = create(:classification, product: p)
     bad_cl.update_custom_value!(descr_cdef, 'bad descr')
     bad_cl.update_custom_value!(sima_cdef, 'bad SIMA')
     cl.update_custom_value!(sima_cdef, 'good SIMA')

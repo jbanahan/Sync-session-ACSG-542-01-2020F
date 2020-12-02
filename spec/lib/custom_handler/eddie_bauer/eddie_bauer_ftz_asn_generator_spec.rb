@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     before :each do
       @entries = []
       @file = "file data"
-      @entry = FactoryBot(:entry)
+      @entry = create(:entry)
       @sync_record = SyncRecord.new syncable: @entry, trading_partner: "partner"
     end
     it "generates file and saves yielded sync records and ftps yield file" do
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   describe "generate_file" do
 
     before(:each) do
-      @ent = FactoryBot(:entry, updated_at:1.minute.ago, broker_reference: "broker-ref")
+      @ent = create(:entry, updated_at:1.minute.ago, broker_reference: "broker-ref")
     end
 
     context "changed" do
@@ -146,7 +146,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     context "error handling" do
 
       before :each do
-        @ent2 = FactoryBot(:entry)
+        @ent2 = create(:entry)
       end
 
       it 'handles errors raised for a specific dataset generation without blowing up the whole run' do
@@ -168,10 +168,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   end
   describe "find_entries" do
     before :each do
-      @entry  = FactoryBot(:entry, customer_number:'EDDIEFTZ',
+      @entry  = create(:entry, customer_number:'EDDIEFTZ',
         broker_invoice_total:45, file_logged_date:Date.new(2014, 5, 1),
         last_exported_from_source:1.day.ago)
-      @rule_result = FactoryBot(:business_validation_rule_result, state:'Pass')
+      @rule_result = create(:business_validation_rule_result, state:'Pass')
       res = @rule_result.business_validation_result
       res.state = 'Pass'
       res.validatable = @entry
@@ -219,7 +219,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   end
   describe "generate_data_for_entry" do
     before(:each) do
-      @entry = FactoryBot(:entry, broker_reference:'1234567',
+      @entry = create(:entry, broker_reference:'1234567',
         entry_number:'31612345678',
         master_bills_of_lading:'MBOL',
         house_bills_of_lading:'HBOL',
@@ -236,15 +236,15 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         vessel:'VES',
         container_numbers:'CONNUM'
       )
-      @ci = FactoryBot(:commercial_invoice, entry:@entry)
-      @ci_line = FactoryBot(:commercial_invoice_line, commercial_invoice:@ci,
+      @ci = create(:commercial_invoice, entry:@entry)
+      @ci_line = create(:commercial_invoice_line, commercial_invoice:@ci,
         country_export_code:'HK',
         country_origin_code:'CN',
         po_number:'12345-001',
         part_number:'123-1234',
         mid:'mid',
         quantity:2000)
-      @ci_tariff = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:@ci_line,
+      @ci_tariff = create(:commercial_invoice_tariff, commercial_invoice_line:@ci_line,
         entered_value:1000.50,
         gross_weight:123,
         classification_qty_2:122, # net weight

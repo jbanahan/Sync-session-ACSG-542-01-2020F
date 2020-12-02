@@ -2,19 +2,19 @@ describe Api::V1::ApiController do
 
   describe '#allow_csv' do
     let :setup_route do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow_api_user u
     end
     context 'allows_csv' do
       controller(Api::V1::ApiController) do
-        prepend_before_filter :allow_csv
+        prepend_before_action :allow_csv
         def index
           respond_to do |format|
             format.csv {render text: 'hello'}
           end
         end
       end
-      it 'should allow csv if before_filter is set' do
+      it 'should allow csv if before_action is set' do
         setup_route
         get :index, format: :csv
         expect(response.body).to eq 'hello'
@@ -28,7 +28,7 @@ describe Api::V1::ApiController do
           end
         end
       end
-      it 'should not allow csv if before_filter is not set' do
+      it 'should not allow csv if before_action is not set' do
         setup_route
         get :index, format: :csv
         expect(response).to_not be_success
@@ -43,7 +43,7 @@ describe Api::V1::ApiController do
       end
     end
     it "should reload stale model fields" do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow_api_access u
       expect(ModelField).to receive(:reload_if_stale)
       get :index
@@ -61,8 +61,8 @@ describe Api::V1::ApiController do
     end
 
     before :each do
-      @obj = FactoryBot(:company)
-      u = FactoryBot(:user)
+      @obj = create(:company)
+      u = create(:user)
       allow_api_access u
     end
 
@@ -111,7 +111,7 @@ describe Api::V1::ApiController do
     end
 
     it "sets MasterSetup.current" do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow_api_access u
 
       get :index
@@ -136,7 +136,7 @@ describe Api::V1::ApiController do
 
     it "yields in db_lock if request is a mutable request type" do
       allow(request).to receive(:get?).and_return false
-      object = FactoryBot(:product)
+      object = create(:product)
 
       expect(Lock).to receive(:db_lock).with(object).and_yield
       yielded = false
@@ -146,7 +146,7 @@ describe Api::V1::ApiController do
 
     it "does not yield in db_lock if request is a nonmutable request type" do
       expect(request).to receive(:get?).and_return true
-      object = FactoryBot(:product)
+      object = create(:product)
 
       expect(Lock).not_to receive(:db_lock)
       yielded = false
@@ -156,7 +156,7 @@ describe Api::V1::ApiController do
 
     it "yields in db_lock if request is a nonmutable request type if forced" do
       expect(request).to receive(:get?).and_return true
-      object = FactoryBot(:product)
+      object = create(:product)
 
       expect(Lock).to receive(:db_lock).with(object).and_yield
       yielded = false

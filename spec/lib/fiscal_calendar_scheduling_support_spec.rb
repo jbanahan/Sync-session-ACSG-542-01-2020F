@@ -6,7 +6,7 @@ describe OpenChain::FiscalCalendarSchedulingSupport do
     }.new
   }
 
-  let (:importer) { FactoryBot(:importer, system_code: "IMP") }
+  let (:importer) { create(:importer, system_code: "IMP") }
   let! (:fiscal_month) { FiscalMonth.create! company_id: importer.id, year: 2017, month_number: 3, start_date: Date.new(2017, 3, 6), end_date: Date.new(2017, 4, 2) }
 
   describe "run_if_fiscal_day" do
@@ -158,7 +158,7 @@ describe OpenChain::FiscalCalendarSchedulingSupport do
   end
 
   describe "get_fiscal_quarter_start_end_dates" do
-    let(:company) { FactoryBot(:company) }
+    let(:company) { create(:company) }
 
     it "gets quarter start end dates" do
       fm_1 = FiscalMonth.create!(year:2025, month_number:1, start_date:Date.new(2025, 4, 5), end_date:Date.new(2025, 5, 4), company_id:company.id)
@@ -178,7 +178,7 @@ describe OpenChain::FiscalCalendarSchedulingSupport do
   end
 
   describe "get_fiscal_half_start_end_dates" do
-    let(:company) { FactoryBot(:company) }
+    let(:company) { create(:company) }
 
     it "gets quarter start end dates" do
       fm_1 = FiscalMonth.create!(year: 2025, month_number: 1, start_date: Date.new(2025, 4, 5), end_date: Date.new(2025, 5, 4), company_id: company.id)

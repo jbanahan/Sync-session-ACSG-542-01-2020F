@@ -5,56 +5,56 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
   let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type] }
 
   def create_data
-    with_customs_management_id(FactoryBot(:importer), "ASCE")
+    with_customs_management_id(create(:importer), "ASCE")
 
     @today = ActiveSupport::TimeZone["UTC"].now.beginning_of_day
     @yesterday = @today - 1.day
     @day_before_yesterday = @yesterday - 1.day
     @tomorrow = @today + 1.day
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid-vend sys code")
-    vend = FactoryBot(:company, name: "vend name", system_code: "vend sys code")
-    @ent = FactoryBot(:entry, import_country: FactoryBot(:country, iso_code: 'US'), customer_number: 'ASCE', entry_filed_date: @day_before_yesterday,
+    vend = create(:company, name: "vend name", system_code: "vend sys code")
+    @ent = create(:entry, import_country: create(:country, iso_code: 'US'), customer_number: 'ASCE', entry_filed_date: @day_before_yesterday,
                     first_entry_sent_date: @today, entry_number: 'entry num', release_date: @yesterday,
                     duty_due_date: @tomorrow, master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols')
-    @ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 2)
-    @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: @ci, contract_amount: 0, po_number: 'po num', part_number: 'part num',
+    @ci = create(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 2)
+    @cil = create(:commercial_invoice_line, commercial_invoice: @ci, contract_amount: 0, po_number: 'po num', part_number: 'part num',
                     country_origin_code: 'coo', department: 'dept', vendor_name: 'supplier', quantity: 6, unit_of_measure: 'uom',
                     value: 1, non_dutiable_amount: 5, mid: 'mid', product_line: 'brand', unit_price: 3)
-    @cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', entered_value: 1, duty_rate: 7, duty_amount: 8)
+    @cit = create(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', entered_value: 1, duty_rate: 7, duty_amount: 8)
 
-    @prod = FactoryBot(:product, unique_identifier: 'ASCENA-part num')
-    @ord = FactoryBot(:order, order_number: 'ASCENA-brand-po num', vendor: vend)
+    @prod = create(:product, unique_identifier: 'ASCENA-part num')
+    @ord = create(:order, order_number: 'ASCENA-brand-po num', vendor: vend)
     @ord.find_and_set_custom_value(cdefs[:ord_type], 'AGS')
     @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
     @ord.save!
-    @ordln = FactoryBot(:order_line, order: @ord, product: @prod, price_per_unit: 1)
+    @ordln = create(:order_line, order: @ord, product: @prod, price_per_unit: 1)
   end
 
   describe "permission?" do
     let! (:ms) { stub_master_setup_for_reports }
-    let!(:linked) { with_customs_management_id(FactoryBot(:importer), "ASCE") }
-    let!(:co) { FactoryBot(:company, linked_companies: [linked]) }
+    let!(:linked) { with_customs_management_id(create(:importer), "ASCE") }
+    let!(:co) { create(:company, linked_companies: [linked]) }
 
     it "allows user at master company who can view entries" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "allows Ascena user who can view entries" do
-      u = FactoryBot(:user, company: co)
+      u = create(:user, company: co)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "blocks user who can't view entries" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(u).to receive(:view_entries?).and_return false
       expect(described_class.permission? u).to eq false
     end
 
     it "blocks user who doesn't belong to Ascena or master company" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq false
     end
@@ -78,7 +78,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
 
     it "generates spreadsheet with datetimes in user's time zone" do
       create_data
-      u = FactoryBot(:user, time_zone: "Eastern Time (US & Canada)")
+      u = create(:user, time_zone: "Eastern Time (US & Canada)")
 
       @temp = described_class.run_report u
       wb = Spreadsheet.open @temp.path
@@ -126,7 +126,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     end
 
     it "omits non-US entries" do
-      @ent.update_attributes(import_country: FactoryBot(:country, iso_code: "CA"))
+      @ent.update_attributes(import_country: create(:country, iso_code: "CA"))
       db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end

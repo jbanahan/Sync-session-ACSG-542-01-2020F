@@ -1,8 +1,8 @@
 describe Message do
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
 
   describe 'can_view?' do
-    let(:msg) { FactoryBot(:message) }
+    let(:msg) { create(:message) }
 
     it "returns true for sys_admin" do
       user.sys_admin = true; user.save!
@@ -22,9 +22,9 @@ describe Message do
   describe 'unread_message_count' do
 
     it 'returns number if unread messages exist' do
-      FactoryBot(:message, user: user, viewed: false) # not viewed should be counted
-      FactoryBot(:message, user: user) # no viewed value should be counted
-      FactoryBot(:message, user: user, viewed: true) # viewed should not be counted
+      create(:message, user: user, viewed: false) # not viewed should be counted
+      create(:message, user: user) # no viewed value should be counted
+      create(:message, user: user, viewed: true) # viewed should not be counted
       expect(described_class.unread_message_count(user.id)).to eq(2)
     end
   end
@@ -66,8 +66,8 @@ describe Message do
 
   describe "send_to_users" do
     it "distributes message to specified users" do
-      u1 = FactoryBot(:user)
-      u2 = FactoryBot(:user)
+      u1 = create(:user)
+      u2 = create(:user)
       described_class.send_to_users([u1.id, u2.id], "Test Message", "This is a test.")
 
       expect(u1.messages.first.subject).to eq "Test Message"

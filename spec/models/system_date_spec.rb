@@ -9,7 +9,7 @@ describe SystemDate do
     end
 
     it "finds the start date that is tied to a specific company" do
-      c = FactoryBot(:company)
+      c = create(:company)
       described_class.create!(date_type: "XYZ", start_date: Date.new(2020, 2, 20), end_date: Date.new(2030, 3, 30), company_id: c.id)
 
       expect(described_class.find_start_date("XYZ", c)).to eq Date.new(2020, 2, 20)
@@ -35,7 +35,7 @@ describe SystemDate do
     end
 
     it "finds the end date that is tied to a specific company" do
-      c = FactoryBot(:company)
+      c = create(:company)
       described_class.create!(date_type: "XYZ", start_date: Date.new(2020, 2, 20), end_date: Date.new(2030, 3, 30), company_id: c.id)
 
       expect(described_class.find_end_date("XYZ", c)).to eq Date.new(2030, 3, 30)

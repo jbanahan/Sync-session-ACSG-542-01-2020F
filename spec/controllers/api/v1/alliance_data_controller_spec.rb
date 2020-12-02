@@ -1,7 +1,7 @@
 describe Api::V1::AllianceDataController do
 
   let! (:user) {
-    u = FactoryBot(:admin_user, api_auth_token: "Token")
+    u = create(:admin_user, api_auth_token: "Token")
     allow_api_access u
     u
   }

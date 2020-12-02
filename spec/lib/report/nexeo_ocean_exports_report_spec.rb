@@ -2,17 +2,17 @@ describe OpenChain::Report::NexeoOceanExportsReport do
 
   context "with db data" do
     before :each do
-      port = FactoryBot(:port, schedule_d_code: "1234", name: "PORT")
-      @nexeo = with_customs_management_id(FactoryBot(:importer), "NEXEO")
-      @shipment = FactoryBot(:shipment, importer: @nexeo, importer_reference: "REF", vessel: "VESS", voyage: "VOY", est_departure_date: Date.new(2015, 12, 1), lcl: false,
+      port = create(:port, schedule_d_code: "1234", name: "PORT")
+      @nexeo = with_customs_management_id(create(:importer), "NEXEO")
+      @shipment = create(:shipment, importer: @nexeo, importer_reference: "REF", vessel: "VESS", voyage: "VOY", est_departure_date: Date.new(2015, 12, 1), lcl: false,
                           house_bill_of_lading: "HBOL", booking_carrier: "CAR", master_bill_of_lading: "MBOL", freight_total: BigDecimal("123"),
-                          invoice_total: BigDecimal("150"), gross_weight: BigDecimal("10"), lading_port: port, buyer_address: FactoryBot(:address, name: "BUYER"))
+                          invoice_total: BigDecimal("150"), gross_weight: BigDecimal("10"), lading_port: port, buyer_address: create(:address, name: "BUYER"))
       @shipment.containers.create! container_number: "CONT"
       @shipment.comments.create! subject: "Discharge Port", body: "Discharge", user: User.integration
       @shipment.comments.create! subject: "Final Destination", body: "Dest", user: User.integration
 
       @order = Order.create! importer: @nexeo, order_number: "NEXEO-123", customer_order_number: "12345"
-      product = FactoryBot(:product, importer: @nexeo, unique_identifier: "NEXEO-PRODUCT")
+      product = create(:product, importer: @nexeo, unique_identifier: "NEXEO-PRODUCT")
       ol = @order.order_lines.create! product: product
 
       @shipment.shipment_lines.create! product: product, linked_order_line_id: ol.id
@@ -77,7 +77,7 @@ describe OpenChain::Report::NexeoOceanExportsReport do
       end
 
       it "does not return results for non-nexeo shipments" do
-        @shipment.update_attributes importer: FactoryBot(:importer)
+        @shipment.update_attributes importer: create(:importer)
         f = described_class.run_report User.integration, start_date: "2015-12-01", end_date: "2015-12-02"
 
         wb = Spreadsheet.open(f.path)
@@ -86,7 +86,7 @@ describe OpenChain::Report::NexeoOceanExportsReport do
       end
 
       it "does not return results for dates after date range" do
-        @shipment.update_attributes importer: FactoryBot(:importer)
+        @shipment.update_attributes importer: create(:importer)
         f = described_class.run_report User.integration, start_date: "2015-12-01", end_date: "2015-12-01"
 
         wb = Spreadsheet.open(f.path)
@@ -95,7 +95,7 @@ describe OpenChain::Report::NexeoOceanExportsReport do
       end
 
       it "does not return results for dates prior to the date range" do
-        @shipment.update_attributes importer: FactoryBot(:importer)
+        @shipment.update_attributes importer: create(:importer)
         f = described_class.run_report User.integration, start_date: "2015-12-02", end_date: "2015-12-03"
 
         wb = Spreadsheet.open(f.path)
@@ -133,16 +133,16 @@ describe OpenChain::Report::NexeoOceanExportsReport do
       ms = double("MasterSetup")
       allow(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:shipment_enabled).and_return true
-      @nexeo = with_customs_management_id(FactoryBot(:importer), "NEXEO")
+      @nexeo = with_customs_management_id(create(:importer), "NEXEO")
     end
 
     it "allows users with view shipment permission and access to nexeo company to view" do
-      user = FactoryBot(:user, company: @nexeo, shipment_view: true)
+      user = create(:user, company: @nexeo, shipment_view: true)
       expect(described_class.permission? user).to be_truthy
     end
 
     it "disallows users not able to view nexeo company" do
-      user = FactoryBot(:user)
+      user = create(:user)
       expect(described_class.permission? user).to be_falsey
     end
   end

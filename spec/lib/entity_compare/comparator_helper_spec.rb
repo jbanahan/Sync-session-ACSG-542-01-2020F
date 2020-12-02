@@ -151,7 +151,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
   end
 
   describe "find_entity_object" do
-    let (:entry) { FactoryBot(:entry) }
+    let (:entry) { create(:entry) }
     let (:json) { {"core_module" => "Entry", "record_id" => entry.id } }
 
     it "retrieves core module object specified by snapshot json" do

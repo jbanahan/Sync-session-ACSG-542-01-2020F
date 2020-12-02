@@ -1,9 +1,9 @@
 describe OpenChain::BulkAction::BulkOrderUpdate do
   describe "#act" do
     before :each do
-      @ord = FactoryBot(:order)
-      @u = FactoryBot(:master_user, order_edit:true, order_view:true)
-      @bpl = FactoryBot(:bulk_process_log)
+      @ord = create(:order)
+      @u = create(:master_user, order_edit:true, order_view:true)
+      @bpl = create(:bulk_process_log)
       field_names = [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del]
       @mf_list = CoreModule::ORDER.model_fields(@u) { |mf| field_names.include? mf.uid}
       @date = Array.new(5) { |i| Date.new(2016, 1, i + 1)}

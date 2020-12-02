@@ -1,6 +1,6 @@
 class PublicShipmentsController < ApplicationController
-    skip_before_filter :require_user
-    skip_before_filter :set_user_time_zone
+    skip_before_action :require_user
+    skip_before_action :set_user_time_zone
 
   def index
     @no_buttons = true

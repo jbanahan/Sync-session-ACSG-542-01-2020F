@@ -1,17 +1,17 @@
 describe PlantProductGroupAssignmentsController do
   before :each do
-    sign_in_as FactoryBot(:user)
+    sign_in_as create(:user)
   end
   describe "show" do
     it "should show if can view" do
-      ppga = FactoryBot(:plant_product_group_assignment)
+      ppga = create(:plant_product_group_assignment)
       allow_any_instance_of(PlantProductGroupAssignment).to receive(:can_view?).and_return true
       get :show, vendor_id: ppga.plant.company_id, vendor_plant_id: ppga.plant_id, id: ppga.id
       expect(response).to be_success
       expect(assigns(:ppga)).to eq ppga
     end
     it "shoud not show if cannot view" do
-      ppga = FactoryBot(:plant_product_group_assignment)
+      ppga = create(:plant_product_group_assignment)
       allow_any_instance_of(PlantProductGroupAssignment).to receive(:can_view?).and_return false
       get :show, vendor_id: ppga.plant.company_id, vendor_plant_id: ppga.plant_id, id: ppga.id
       expect(response).to be_redirect
@@ -21,8 +21,8 @@ describe PlantProductGroupAssignmentsController do
 
   describe "update" do
     before :each do
-      @cd = FactoryBot(:custom_definition, module_type:'PlantProductGroupAssignment', data_type:'text')
-      @ppga = FactoryBot(:plant_product_group_assignment)
+      @cd = create(:custom_definition, module_type:'PlantProductGroupAssignment', data_type:'text')
+      @ppga = create(:plant_product_group_assignment)
       @h = {"*cf_#{@cd.id}"=>'myval'}
     end
     it "should update if can edit" do

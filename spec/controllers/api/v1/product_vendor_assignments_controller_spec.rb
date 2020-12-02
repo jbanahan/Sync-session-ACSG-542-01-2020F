@@ -2,8 +2,8 @@ describe Api::V1::ProductVendorAssignmentsController do
   describe '#index' do
     it "should get product vendor assignments" do
       allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
-      pva = FactoryBot(:product_vendor_assignment)
-      u = FactoryBot(:master_user)
+      pva = create(:product_vendor_assignment)
+      u = create(:master_user)
       allow_api_access u
       get :index
       expect(response).to be_success
@@ -18,8 +18,8 @@ describe Api::V1::ProductVendorAssignmentsController do
   describe '#show' do
     it 'should get record' do
       allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
-      pva = FactoryBot(:product_vendor_assignment)
-      u = FactoryBot(:master_user)
+      pva = create(:product_vendor_assignment)
+      u = create(:master_user)
       allow_api_access u
       get :show, id: pva.id.to_s
       expect(response).to be_success
@@ -31,9 +31,9 @@ describe Api::V1::ProductVendorAssignmentsController do
     it 'should update record' do
       allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return(true)
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
-      pva = FactoryBot(:product_vendor_assignment)
-      u = FactoryBot(:master_user)
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      pva = create(:product_vendor_assignment)
+      u = create(:master_user)
       allow_api_access u
       h = {'id'=>pva.id, "*cf_#{cd.id}"=>'hello'}
       put :update, id: pva.id.to_s, product_vendor_assignment:h
@@ -51,20 +51,20 @@ describe Api::V1::ProductVendorAssignmentsController do
     }
 
     before :each do
-      @u = FactoryBot(:master_user)
+      @u = create(:master_user)
       allow_api_access @u
     end
     it "should create records by IDs" do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
 
-      v1 = FactoryBot(:company, vendor:true)
-      v2 = FactoryBot(:company, vendor:true)
+      v1 = create(:company, vendor:true)
+      v2 = create(:company, vendor:true)
 
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
+      p1 = create(:product)
+      p2 = create(:product)
 
       request_hash = {
         product_ids:[p1.id, p2.id],
@@ -92,13 +92,13 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
 
-      v1 = FactoryBot(:company, vendor:true, system_code:'X')
-      v2 = FactoryBot(:company, vendor:true, system_code:'Y')
+      v1 = create(:company, vendor:true, system_code:'X')
+      v2 = create(:company, vendor:true, system_code:'Y')
 
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
+      p1 = create(:product)
+      p2 = create(:product)
 
       request_hash = {
         prod_uids:[p1.unique_identifier, p2.unique_identifier],
@@ -127,9 +127,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return false
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = FactoryBot(:company, vendor:true, system_code:'X')
+      v1 = create(:company, vendor:true, system_code:'X')
 
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
 
       request_hash = {
         prod_uids:[p1.unique_identifier],
@@ -144,9 +144,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = FactoryBot(:company, vendor:true, system_code:'X')
+      v1 = create(:company, vendor:true, system_code:'X')
 
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
 
       request_hash = {
         prod_uids:[p1.unique_identifier],
@@ -161,9 +161,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = FactoryBot(:company, vendor:true, system_code:'X')
+      v1 = create(:company, vendor:true, system_code:'X')
 
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
 
       request_hash = {
         prod_uids:[p1.unique_identifier, 'otherproduct'],
@@ -183,9 +183,9 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = FactoryBot(:company, vendor:true, system_code:'X')
+      v1 = create(:company, vendor:true, system_code:'X')
 
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
 
       product_uids = Array.new(11, 'x')
       product_uids << p1.unique_identifier
@@ -209,13 +209,13 @@ describe Api::V1::ProductVendorAssignmentsController do
     }
 
     it "should update records" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
       allow_api_access u
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
       uid = cd.model_field_uid
-      pva1 = FactoryBot(:product_vendor_assignment)
-      pva2 = FactoryBot(:product_vendor_assignment)
+      pva1 = create(:product_vendor_assignment)
+      pva2 = create(:product_vendor_assignment)
 
       put_json = {product_vendor_assignments:[
         {uid=>'hello', 'id'=>pva1.id},
@@ -229,12 +229,12 @@ describe Api::V1::ProductVendorAssignmentsController do
       expect(pva2.get_custom_value(cd).value).to eq 'world'
     end
     it "should fail if user cannot edit records" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return false
       allow_api_access u
-      cd = FactoryBot(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
+      cd = create(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
       uid = cd.model_field_uid
-      pva1 = FactoryBot(:product_vendor_assignment)
+      pva1 = create(:product_vendor_assignment)
 
       put_json = {product_vendor_assignments:[
         {uid=>'hello', 'id'=>pva1.id}

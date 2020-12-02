@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberPasswordLengthValidator do
 
-  let!(:user) { FactoryBot.build(:user) }
+  let!(:user) { create.build(:user) }
 
   it 'is valid if the password is at least 8 characters in length' do
     expect(user).to_not receive(:admin?)

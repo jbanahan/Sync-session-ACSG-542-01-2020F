@@ -8,10 +8,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
   let (:log) { InboundFile.new }
 
   it "should generate ProductVendorAssignment" do
-    v = FactoryBot(:company)
+    v = create(:company)
     v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
-    p = FactoryBot(:product, unique_identifier:'000000000010039350')
-    importer = FactoryBot(:importer, system_code:'LUMBER')
+    p = create(:product, unique_identifier:'000000000010039350')
+    importer = create(:importer, system_code:'LUMBER')
 
     expect {described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment, :count).from(0).to(1)
 
@@ -29,12 +29,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
     expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[0].module_id).to eq p.id
   end
   it "should do nothing if vendor doesn't exist" do
-    FactoryBot(:product, unique_identifier:'000000000010039350')
+    create(:product, unique_identifier:'000000000010039350')
 
     expect {described_class.parse_file(@data, log, opts)}.to_not change(ProductVendorAssignment, :count)
   end
   it "should create product shell if product doesn't exist" do
-    v = FactoryBot(:company)
+    v = create(:company)
     v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
 
     expect {described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment, :count).from(0).to(1)
@@ -44,9 +44,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
     expect(pva.product.unique_identifier).to eq '000000000010039350'
   end
   it "should do nothing if ProductVendorAssignment already exists" do
-    v = FactoryBot(:company)
+    v = create(:company)
     v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
-    p = FactoryBot(:product, unique_identifier:'000000000010039350')
+    p = create(:product, unique_identifier:'000000000010039350')
 
     p.vendors << v
 

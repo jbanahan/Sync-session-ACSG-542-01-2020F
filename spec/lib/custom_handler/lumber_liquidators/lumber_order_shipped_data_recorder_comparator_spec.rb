@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataReco
   }
 
   let (:order) {
-    order = Order.create! order_number: "4500230506", importer_id: FactoryBot(:importer).id
+    order = Order.create! order_number: "4500230506", importer_id: create(:importer).id
     order.update_custom_value! cdefs[:ord_country_of_origin], "CN"
     # Don't set anything that's not required, we want to ensure the data that's set comes from the
     # snapshot data.
@@ -66,7 +66,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataReco
   }
 
   let (:shipment) {
-    shipment = FactoryBot(:shipment, reference: "7ABC2FGA", importer_id: order.importer_id)
+    shipment = create(:shipment, reference: "7ABC2FGA", importer_id: order.importer_id)
     l = shipment.shipment_lines.build
     l.quantity = 992
     l.product = product

@@ -4,12 +4,12 @@ describe OpenChain::CustomHandler::Amazon::AmazonEntryBillingComparator do
 
   describe "accept?" do
     let (:entry) {
-      e = FactoryBot(:entry, customer_number: "AMZN-1234", source_system: "Alliance")
-      e.broker_invoices << FactoryBot(:broker_invoice)
+      e = create(:entry, customer_number: "AMZN-1234", source_system: "Alliance")
+      e.broker_invoices << create(:broker_invoice)
       e
     }
 
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
 
     let (:entry_snapshot) {
       entry.create_snapshot user

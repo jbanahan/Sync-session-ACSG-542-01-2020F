@@ -2,9 +2,9 @@ require 'omniauth-google-oauth2'
 
 module Api; module V1; class UsersController < Api::V1::ApiController
   include Clearance::Controller
-  skip_around_filter :validate_authtoken, only: [:login, :google_oauth2]
-  skip_around_filter :set_user_settings, only: [:login, :google_oauth2]
-  before_filter :prevent_clearance_response_cookies
+  skip_around_action :validate_authtoken, only: [:login, :google_oauth2]
+  skip_around_action :set_user_settings, only: [:login, :google_oauth2]
+  before_action :prevent_clearance_response_cookies
 
   def login
     # TODO - This really needs account freezing implemented after too many failed attempts

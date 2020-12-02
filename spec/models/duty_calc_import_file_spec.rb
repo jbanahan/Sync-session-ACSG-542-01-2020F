@@ -1,14 +1,14 @@
 describe DutyCalcImportFile do
   before :each do
-    @importer = FactoryBot(:company, :importer=>true)
-    @product = FactoryBot(:product)
+    @importer = create(:company, :importer=>true)
+    @product = create(:product)
     2.times {DrawbackImportLine.create!(importer_id:@importer.id,
       product:@product, quantity:10
     )}
     @zip_path = 'spec/support/tmp/dci.zip'
     File.delete(@zip_path) if File.exist?(@zip_path)
     @to_del = [@zip_path]
-    @user = FactoryBot(:user)
+    @user = create(:user)
   end
 
   after :each do

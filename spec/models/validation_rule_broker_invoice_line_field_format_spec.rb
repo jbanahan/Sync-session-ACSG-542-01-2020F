@@ -1,9 +1,9 @@
 describe ValidationRuleBrokerInvoiceLineFieldFormat do
   before do
     @rule = described_class.new(rule_attributes_json:{model_field_uid: 'bi_line_charge_amount', operator: 'gt', value: 5000}.to_json)
-    @bil = FactoryBot(:broker_invoice_line, charge_description: 'Something', charge_amount: 5100)
-    @bi = FactoryBot(:broker_invoice, customer_number: '123', broker_invoice_lines: [@bil])
-    @e = FactoryBot(:entry, broker_invoices: [@bi])
+    @bil = create(:broker_invoice_line, charge_description: 'Something', charge_amount: 5100)
+    @bi = create(:broker_invoice, customer_number: '123', broker_invoice_lines: [@bil])
+    @e = create(:entry, broker_invoices: [@bi])
   end
 
   it 'should pass if all lines are valid' do
@@ -17,7 +17,7 @@ describe ValidationRuleBrokerInvoiceLineFieldFormat do
 
   it 'should pass if invoice that does not meet search criteria is invalid' do
     @rule.search_criterions.new(model_field_uid: 'bi_line_charge_code', operator:'eq', value:'123')
-    @bad_bil = FactoryBot(:broker_invoice_line, charge_code: '321', charge_amount: 4900)
+    @bad_bil = create(:broker_invoice_line, charge_code: '321', charge_amount: 4900)
     @bi.update_attributes(broker_invoice_lines: [@bil, @bad_bil])
     expect(@rule.run_validation(@bil.broker_invoice.entry)).to be_nil
   end

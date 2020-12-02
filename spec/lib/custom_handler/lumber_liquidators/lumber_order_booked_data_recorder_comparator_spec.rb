@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBookedDataRecor
   }
 
   let (:order) {
-    order = Order.create! order_number: "4500230506", importer_id: FactoryBot(:importer).id
+    order = Order.create! order_number: "4500230506", importer_id: create(:importer).id
     order.update_custom_value! cdefs[:ord_country_of_origin], "CN"
     # Don't set anything that's not required, we want to ensure the data that's set comes from the
     # snapshot data.

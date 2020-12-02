@@ -1,6 +1,6 @@
 describe Api::V1::AllianceReportsController do
   before :each do
-    @user = FactoryBot(:admin_user, api_auth_token: "Token")
+    @user = create(:admin_user, api_auth_token: "Token")
     allow_api_access @user
   end
 

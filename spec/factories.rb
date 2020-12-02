@@ -22,27 +22,27 @@ FactoryBot.define do
     sequence(:name) { |n| "cname#{n}"}
   end
 
-  factory :importer, class: Company do
+  factory :importer, parent: :company do
     importer { true }
   end
 
-  factory :consignee, class: Company do
+  factory :consignee, parent: :company do
     consignee { true }
   end
 
-  factory :vendor, class: Company do
+  factory :vendor, parent: :company do
     vendor { true }
   end
 
-  factory :factory, class: Company do
+  factory :factory, parent: :company do
     add_attribute(:factory) { true }
   end
 
-  factory :master_company, class: Company do
+  factory :master_company, parent: :company do
     master { true }
   end
 
-  factory :broker, class: Company do
+  factory :broker, parent: :company do
     broker { true }
   end
 
@@ -55,15 +55,15 @@ FactoryBot.define do
     company
   end
 
-  factory :full_address, class: Address do
+  factory :full_address, parent: :address do
     line_1 { '99 Fake Street' }
     city { 'Fakesville' }
     state { 'PA' }
     postal_code { '19191' }
   end
 
-  factory :blank_address, class: Address do
-    :company
+  factory :blank_address, parent: :address do
+    company
   end
 
 end
@@ -101,6 +101,13 @@ FactoryBot.define :container do |f|
   f.container_number {FactoryBot.next :alpha_numeric}
   f.association :entry
 end
+  factory :user do
+    sequence(:username) { |n| "foo#{n}" }
+    password { "foobar" }
+    sequence(:email) { |n| "foo#{n}@example.com" }
+    company
+    api_auth_token { "auth_token" }
+  end
 
 Factory.define :bill_of_lading do |f|
 end
@@ -130,41 +137,41 @@ end
     association :company, factory: :master_company
   end
 
-  factory :admin_user, :parent=>:master_user do
-    after_create do |f|
+  factory :admin_user, parent: :master_user do
+    after(:create) do |f|
       f.admin = true
-      save!
+      f.save!
     end
   end
 
-  factory :sys_admin_user, :parent=>:master_user do
-    after_create do |u|
+  factory :sys_admin_user, parent: :master_user do
+    after(:create) do |u|
       u.admin = true
       u.sys_admin = true
       u.save!
     end
   end
 
-  factory :broker_user, class: User do
+  factory :broker_user, parent: :user do
     entry_view { true }
     broker_invoice_view { true }
-    after_create { |u| u.company.update_attributes(:broker=>true) }
+    after(:create) { |u| u.company.update_attributes(:broker=>true) }
   end
 
-  factory :importer_user, class: User do
+  factory :importer_user, parent: :user do
     entry_view { true }
     broker_invoice_view { true }
-    after_create { |u| u.company.update_attributes(:importer=>true) }
+    after(:create) { |u| u.company.update_attributes(:importer=>true) }
   end
 
-  factory :vendor_user, class: User do
-    after_create { |u| u.company.update_attributes(:vendor=>true) }
+  factory :vendor_user, parent: :user do
+    after(:create) { |u| u.company.update_attributes(:vendor=>true) }
   end
 
-  factory :drawback_user, class: User do
+  factory :drawback_user, parent: :user do
     drawback_view { true }
     drawback_edit { true }
-    after_create { |u| u.company.update_attributes(:drawback=>true) }
+    after(:create) { |u| u.company.update_attributes(:drawback=>true) }
   end
 
   factory :user_template do
@@ -173,7 +180,7 @@ end
   end
 
   factory :country do
-    iso_code { FactoryBot.next :iso }
+    iso_code { generate(:iso) }
     sequence(:name) {|n| "Country #{n}"}
   end
 
@@ -430,8 +437,8 @@ end
 
   factory :broker_invoice_line do
     broker_invoice
-    charge_description { FactoryBot.next :alpha_numeric }
-    charge_code { FactoryBot.next :alpha_numeric }
+    charge_description { generate(:alpha_numeric) }
+    charge_code { generate(:alpha_numeric) }
     charge_amount { 1 }
   end
 
@@ -454,8 +461,8 @@ end
 
   factory :email_attachment do
     email { "ea@example.com" }
-    after_create do |ea|
-      ea.attachment = FactoryBot(:attachment, attachable: ea)
+    after(:create) do |ea|
+      ea.attachment = create(:attachment, attachable: ea)
       ea.save
     end
   end
@@ -579,7 +586,7 @@ end
 
   factory :business_validation_rule_result do
     business_validation_rule
-    after_create do |rr|
+    after(:create) do |rr|
       bvt = rr.business_validation_rule.business_validation_template
       rr.business_validation_result = bvt.business_validation_results.create!
       rr.save!
@@ -590,7 +597,7 @@ end
   end
 
   factory :container do
-    container_number { FactoryBot.next(:alpha_numeric) }
+    container_number { generate(:alpha_numeric) }
     entry
   end
 
@@ -724,7 +731,7 @@ end
   factory :vfi_invoice_line do
     vfi_invoice
     sequence :line_number
-    charge_description { FactoryBot.next(:alpha_numeric) }
+    charge_description { generate(:alpha_numeric) }
     unit_price { 5 }
     quantity { 1 }
     charge_amount { 1 }

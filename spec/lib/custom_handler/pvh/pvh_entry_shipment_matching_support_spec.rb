@@ -6,9 +6,9 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
     end.new
   }
 
-  let (:importer) { FactoryBot(:importer, system_code: "PVH")}
-  let! (:ocean_shipment) { FactoryBot(:shipment, mode: "Ocean", master_bill_of_lading: "MBOL", house_bill_of_lading: "SEAHBOL", importer: importer)}
-  let! (:air_shipment) { FactoryBot(:shipment, mode: "Air", master_bill_of_lading: "AIRMBOL", house_bill_of_lading: "HBOL", importer: importer)}
+  let (:importer) { create(:importer, system_code: "PVH")}
+  let! (:ocean_shipment) { create(:shipment, mode: "Ocean", master_bill_of_lading: "MBOL", house_bill_of_lading: "SEAHBOL", importer: importer)}
+  let! (:air_shipment) { create(:shipment, mode: "Air", master_bill_of_lading: "AIRMBOL", house_bill_of_lading: "HBOL", importer: importer)}
 
   describe "find_shipments" do
 
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
     end
 
     it "does not find non-PVH shipments" do
-      ocean_shipment.update_attributes! importer_id: FactoryBot(:importer).id
+      ocean_shipment.update_attributes! importer_id: create(:importer).id
       expect(subject.find_shipments "10", "MBOL", "HBOL").to eq []
     end
   end
@@ -72,18 +72,18 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
       ocean_shipment.containers.create! container_number: "CONTAINER"
     }
 
-    let! (:product) { FactoryBot(:product, unique_identifier: "PVH-12345", importer: importer) }
+    let! (:product) { create(:product, unique_identifier: "PVH-12345", importer: importer) }
 
     let! (:order) {
-      o = FactoryBot(:order, order_number: "PVH-ORDER_1", customer_order_number: "ORDER_1")
+      o = create(:order, order_number: "PVH-ORDER_1", customer_order_number: "ORDER_1")
       o.order_lines.create! line_number: 1, product_id: product.id, quantity: 100
       o.order_lines.create! line_number: 2, product_id: product.id, quantity: 200
       o
     }
 
     let! (:ocean_shipment_lines) {
-      l = FactoryBot(:shipment_line, shipment: ocean_shipment, container: ocean_container, quantity: 100, product: product, linked_order_line_id: order.order_lines.first.id)
-      l2 = FactoryBot(:shipment_line, shipment: ocean_shipment, container: ocean_container, quantity: 200, product: product, linked_order_line_id: order.order_lines.second.id)
+      l = create(:shipment_line, shipment: ocean_shipment, container: ocean_container, quantity: 100, product: product, linked_order_line_id: order.order_lines.first.id)
+      l2 = create(:shipment_line, shipment: ocean_shipment, container: ocean_container, quantity: 200, product: product, linked_order_line_id: order.order_lines.second.id)
       ocean_shipment.reload
       [l, l2]
     }

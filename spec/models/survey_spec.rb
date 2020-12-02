@@ -1,12 +1,12 @@
 describe Survey do
   describe "copy!" do
     before :each do
-      @survey = FactoryBot(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"rat")
+      @survey = create(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"rat")
     end
     it 'should copy all questions with new ids' do
-      q1 = FactoryBot(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
-      q2 = FactoryBot(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
-      q3 = FactoryBot(:question, :rank=>3, :survey_id=>@survey.id, :content=>'my question content 3')
+      q1 = create(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
+      q2 = create(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
+      q3 = create(:question, :rank=>3, :survey_id=>@survey.id, :content=>'my question content 3')
       new_survey = @survey.copy!
       expect(new_survey.id).to be > 0
       expect(new_survey.id).not_to eq(@survey.id)
@@ -24,35 +24,35 @@ describe Survey do
       expect(new_survey.questions.where(:rank=>3).first.content).to eq(q3.content)
     end
     it 'should not copy subscriptions' do
-      @survey.survey_subscriptions.create!(:user_id=>FactoryBot(:user).id)
+      @survey.survey_subscriptions.create!(:user_id=>create(:user).id)
       expect(@survey.copy!.survey_subscriptions).to be_blank
     end
     it 'should not copy assigned users' do
-      @survey.generate_response! FactoryBot(:user)
+      @survey.generate_response! create(:user)
       expect(@survey.copy!.assigned_users).to be_blank
     end
     it 'should not copy responses' do
-      @survey.generate_response! FactoryBot(:user)
+      @survey.generate_response! create(:user)
       expect(@survey.copy!.survey_responses).to be_blank
     end
   end
   it 'should link to user' do
-    u = FactoryBot(:user)
-    s = FactoryBot(:survey, :created_by_id=>u.id)
+    u = create(:user)
+    s = create(:survey, :created_by_id=>u.id)
     expect(s.created_by).to eq(u)
   end
   it "should be locked if responses exist" do
-    sr = FactoryBot(:survey_response)
+    sr = create(:survey_response)
     expect(sr.survey).to be_locked
   end
   it 'should not allow edits if locked' do
-    s = FactoryBot(:survey)
+    s = create(:survey)
     allow(s).to receive(:has_responses?).and_return(true)
     expect(s.save).to be_falsey
     expect(s.errors.full_messages.first).to eq("You cannot change a locked survey.")
   end
   it "should update nested questions" do
-    s = FactoryBot(:survey)
+    s = create(:survey)
     s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
     s = Survey.find(s.id)
     expect(s.questions.find_by(content: "09876543210").rank).to eq(1)
@@ -60,8 +60,8 @@ describe Survey do
   end
   describe 'generate_response' do
     it 'should make a response with all answers' do
-      u = FactoryBot(:user)
-      s = FactoryBot(:survey)
+      u = create(:user)
+      s = create(:survey)
       s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
       sr = s.generate_response! u, "abc"
       expect(sr.answers.size).to eq 2
@@ -71,10 +71,10 @@ describe Survey do
   end
   describe 'generate_group_response' do
     it 'should make a response with all answers' do
-      u = FactoryBot(:user)
+      u = create(:user)
       group = Group.create! system_code: "G", name: "Group"
       u.groups << group
-      s = FactoryBot(:survey)
+      s = create(:survey)
       s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
       sr = s.generate_group_response! group, 'abc'
       expect(sr.answers.size).to eq 2
@@ -84,10 +84,10 @@ describe Survey do
   end
   describe "assigned_users" do
     it "should return all assigned users" do
-      u1 = FactoryBot(:user)
-      u2 = FactoryBot(:user)
-      u3 = FactoryBot(:user)
-      s = FactoryBot(:survey)
+      u1 = create(:user)
+      u2 = create(:user)
+      u3 = create(:user)
+      s = create(:survey)
       s.generate_response! u1
       s.generate_response! u2
       # no response for user 3
@@ -97,35 +97,35 @@ describe Survey do
   end
   describe "can_edit?" do
     before :each do
-      @s = FactoryBot(:survey)
+      @s = create(:survey)
     end
     it "should allow editing if user has permission and is from survey's company" do
-      u = FactoryBot(:user, :company=>@s.company, :survey_edit=>true)
+      u = create(:user, :company=>@s.company, :survey_edit=>true)
       expect(@s.can_edit?(u)).to be_truthy
     end
     it "should not allow editing if user doesn't have permission" do
-      u = FactoryBot(:user, :company=>@s.company)
+      u = create(:user, :company=>@s.company)
       expect(@s.can_edit?(u)).to be_falsey
     end
     it "should not allow editing if user isn't from survey's company" do
-      u = FactoryBot(:user, :survey_edit=>true)
+      u = create(:user, :survey_edit=>true)
       expect(@s.can_edit?(u)).to be_falsey
     end
   end
   describe "can_view?" do
     before :each do
-      @s = FactoryBot(:survey)
+      @s = create(:survey)
     end
     it "should allow view/download if user has permission and is from survey's company" do
-      u = FactoryBot(:user, :company=>@s.company, :survey_edit=>true)
+      u = create(:user, :company=>@s.company, :survey_edit=>true)
       expect(@s.can_view?(u)).to be_truthy
     end
     it "should not allow view/download if user doesn't have permission" do
-      u = FactoryBot(:user, :company=>@s.company)
+      u = create(:user, :company=>@s.company)
       expect(@s.can_view?(u)).to be_falsey
     end
     it "should not allow view/download if user isn't from survey's company" do
-      u = FactoryBot(:user, :survey_edit=>true)
+      u = create(:user, :survey_edit=>true)
       expect(@s.can_view?(u)).to be_falsey
     end
   end
@@ -140,21 +140,21 @@ describe Survey do
   end
   describe "to_xls" do
     before :each do
-      @survey = FactoryBot(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"1\n2")
-      @q1 = FactoryBot(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
-      @q2 = FactoryBot(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
+      @survey = create(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"1\n2")
+      @q1 = create(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
+      @q2 = create(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
 
-      @r1 = FactoryBot(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now)
-      @r2 = FactoryBot(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub2", :submitted_date=>Time.now)
-      @r3 = FactoryBot(:survey_response, :survey_id=>@survey.id, :submitted_date=>nil)
+      @r1 = create(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now)
+      @r2 = create(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub2", :submitted_date=>Time.now)
+      @r3 = create(:survey_response, :survey_id=>@survey.id, :submitted_date=>nil)
       # Add archived response, which who's answer shouldn't show in the stats tested below
-      @r4 = FactoryBot(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now, :archived=>true)
+      @r4 = create(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now, :archived=>true)
 
 
-      @a1 = FactoryBot(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r1.id)
-      @a2 = FactoryBot(:answer, :question_id=>@q2.id, :rating=>"2", :survey_response_id=>@r2.id)
-      @a3 = FactoryBot(:answer, :question_id=>@q1.id, :rating=>"2", :survey_response_id=>@r3.id)
-      @a4 = FactoryBot(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r4.id)
+      @a1 = create(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r1.id)
+      @a2 = create(:answer, :question_id=>@q2.id, :rating=>"2", :survey_response_id=>@r2.id)
+      @a3 = create(:answer, :question_id=>@q1.id, :rating=>"2", :survey_response_id=>@r3.id)
+      @a4 = create(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r4.id)
     end
 
     it "should create an excel file" do
@@ -200,7 +200,7 @@ describe Survey do
     context "on survey with responses" do
 
       it "allows archiving" do
-        survey = FactoryBot(:survey, archived: false)
+        survey = create(:survey, archived: false)
         allow(survey).to receive(:has_responses?).and_return true
         survey.update_attributes! archived: true
         survey.reload
@@ -208,7 +208,7 @@ describe Survey do
       end
 
       it "allows de-archiving" do
-        survey = FactoryBot(:survey, archived: true)
+        survey = create(:survey, archived: true)
 
         allow(survey).to receive(:has_responses?).and_return true
         survey.update_attributes! archived: false

@@ -4,9 +4,9 @@ describe OpenChain::InactiveAccountChecker do
     # Let's be stupid paranoid and wrap /everything/ in Timecop. Lovely feature, this.
     Timecop.freeze(Time.zone.now) do
       before do
-        @active_user = FactoryBot(:user, last_request_at: 89.days.ago)
-        @inactive_user = FactoryBot(:user, last_request_at: 90.days.ago)
-        @system_user = FactoryBot(:user, system_user: true, last_request_at: 180.days.ago)
+        @active_user = create(:user, last_request_at: 89.days.ago)
+        @inactive_user = create(:user, last_request_at: 90.days.ago)
+        @system_user = create(:user, system_user: true, last_request_at: 180.days.ago)
       end
 
       it 'does nothing for active users' do

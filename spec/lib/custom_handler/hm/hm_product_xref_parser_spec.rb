@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmProductXrefParser do
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
   let(:custom_file) { double "custom file "}
   before { allow(custom_file).to receive(:attached_file_name).and_return "file.xls" }
 

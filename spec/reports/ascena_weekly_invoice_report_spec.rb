@@ -1,9 +1,9 @@
 describe OpenChain::Report::AscenaWeeklyInvoiceReport do
   let(:report) { described_class.new }
   let(:date) { Date.new(2017, 04, 10) }
-  let(:ent) { FactoryBot(:entry, customer_number: "ASCE") }
-  let(:bi) { FactoryBot(:broker_invoice, entry: ent, broker_reference: 'brok ref', invoice_number: 'inv num', invoice_date: date) }
-  let(:bil) { FactoryBot(:broker_invoice_line, broker_invoice: bi, charge_code: '0002', charge_description: 'charge descr', charge_amount: 1) }
+  let(:ent) { create(:entry, customer_number: "ASCE") }
+  let(:bi) { create(:broker_invoice, entry: ent, broker_reference: 'brok ref', invoice_number: 'inv num', invoice_date: date) }
+  let(:bil) { create(:broker_invoice_line, broker_invoice: bi, charge_code: '0002', charge_description: 'charge descr', charge_amount: 1) }
   let(:sr) { SyncRecord.create!(syncable: bi, sent_at: date, trading_partner: 'ASCE_BROKERAGE_BILLING') }
   let(:header) { ["Broker Reference", "Invoice Number", "Invoice Date", "Charge Description", "Charge Amount"] }
 

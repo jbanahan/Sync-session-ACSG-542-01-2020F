@@ -5,19 +5,19 @@ describe BusinessValidationTemplate do
     end
 
     it "runs all templates" do
-      FactoryBot(:business_validation_template)
+      create(:business_validation_template)
       expect_any_instance_of(described_class).to receive(:create_results!).with(run_validation: true)
       described_class.create_all! run_validation: true
     end
 
     it "skips disabled templates" do
-      FactoryBot(:business_validation_template, disabled: true)
+      create(:business_validation_template, disabled: true)
       expect_any_instance_of(described_class).not_to receive(:create_results!)
       described_class.create_all!
     end
 
     it "skips delete_pending templates" do
-      FactoryBot(:business_validation_template, delete_pending: true)
+      create(:business_validation_template, delete_pending: true)
       expect_any_instance_of(described_class).not_to receive(:create_results!)
       described_class.create_all!
     end
@@ -25,7 +25,7 @@ describe BusinessValidationTemplate do
 
   describe "create_results!" do
     let(:business_validation_template) do
-      bvt = FactoryBot(:business_validation_template)
+      bvt = create(:business_validation_template)
       bvt.search_criterions.create!(model_field_uid: 'ent_cust_num', operator: 'eq', value: '12345')
       bvt.business_validation_rules.create!(name: "Name", description: "Description", type: 'ValidationRuleFieldFormat',
                                             rule_attributes_json: {model_field_uid: 'ent_entry_num', regex: 'X'}.to_json)
@@ -33,9 +33,9 @@ describe BusinessValidationTemplate do
     end
 
     it "creates results for entries that match search criterions and don't have business_validation_result" do
-      match = FactoryBot(:entry, customer_number: '12345')
+      match = create(:entry, customer_number: '12345')
       # don't match
-      FactoryBot(:entry, customer_number: '54321')
+      create(:entry, customer_number: '54321')
       business_validation_template.create_results!
       expect(BusinessValidationResult.all.count).to eq 1
       expect(BusinessValidationResult.first.validatable).to eq match
@@ -43,13 +43,13 @@ describe BusinessValidationTemplate do
     end
 
     it "runs validation if flag set" do
-      FactoryBot(:entry, customer_number: '12345')
+      create(:entry, customer_number: '12345')
       expect {business_validation_template.create_results! run_validation: true}.to change(BusinessValidationResult, :count).from(0).to(1)
       expect(BusinessValidationResult.first.state).not_to be_nil
     end
 
     it "updates results for entries that match search criterions and have old business_validation_result" do
-      match = FactoryBot(:entry, customer_number: '12345')
+      match = create(:entry, customer_number: '12345')
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(match).twice
       business_validation_template.create_results! run_validation: true
       bvr = BusinessValidationResult.first
@@ -69,15 +69,15 @@ describe BusinessValidationTemplate do
     end
 
     it "only calls once per entry" do
-      match = FactoryBot(:entry, customer_number: '12345')
-      FactoryBot(:commercial_invoice, entry: match)
-      FactoryBot(:commercial_invoice, entry: match)
+      match = create(:entry, customer_number: '12345')
+      create(:commercial_invoice, entry: match)
+      create(:commercial_invoice, entry: match)
       business_validation_template.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 1
     end
 
     it 'rescues exceptions raise in create_result! call' do
-      match = FactoryBot(:entry, customer_number: '12345')
+      match = create(:entry, customer_number: '12345')
       expect(business_validation_template).to receive(:create_result!).and_raise "Error"
       business_validation_template.create_results!
       expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to generate rule results for Entry id #{match.id}"]
@@ -85,10 +85,10 @@ describe BusinessValidationTemplate do
 
     it "limits query results to only those associated w/ the current template" do
       # This makes sure we're not getting results back from other templates that have outdated rule results...bug resolution
-      entry = FactoryBot(:entry, customer_number: '12345')
+      entry = create(:entry, customer_number: '12345')
       business_validation_template.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at - 1.hour)
 
-      template = FactoryBot(:business_validation_template)
+      template = create(:business_validation_template)
       template.search_criterions.create!(model_field_uid: 'ent_cust_num', operator: 'eq', value: '12345')
       template.business_validation_rules.create!(name: "Name", description: "Description", type: 'ValidationRuleFieldFormat',
                                                  rule_attributes_json: {model_field_uid: 'ent_entry_num', regex: '12345'}.to_json)
@@ -103,14 +103,14 @@ describe BusinessValidationTemplate do
     it "does not evaulate anything if there are no criterions associated with the template" do
       expect(Entry).not_to receive(:select)
       business_validation_template.search_criterions.destroy_all
-      FactoryBot(:entry, customer_number: '12345')
+      create(:entry, customer_number: '12345')
       business_validation_template.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
 
     it "does not evaluate anything if template is disabled" do
       expect(Entry).not_to receive(:select)
-      FactoryBot(:entry, customer_number: '12345')
+      create(:entry, customer_number: '12345')
       business_validation_template.update! disabled: true
       business_validation_template.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
@@ -118,14 +118,14 @@ describe BusinessValidationTemplate do
 
     it "does not evaluate anything if template is delete_pending" do
       expect(Entry).not_to receive(:select)
-      FactoryBot(:entry, customer_number: '12345')
+      create(:entry, customer_number: '12345')
       business_validation_template.update! delete_pending: true
       business_validation_template.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
 
     it "does not re-snapshot objects where the rule state doesn't change" do
-      match = FactoryBot(:entry, customer_number: '12345')
+      match = create(:entry, customer_number: '12345')
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(match).once
       business_validation_template.create_results! run_validation: true
       bvr = BusinessValidationResult.first
@@ -142,7 +142,7 @@ describe BusinessValidationTemplate do
   end
 
   describe "create_result!" do
-    let(:order) { FactoryBot(:order, order_number: "ajklsdfajl") }
+    let(:order) { create(:order, order_number: "ajklsdfajl") }
 
     let(:business_validation_template) do
       bvt = described_class.create!(module_type: 'Order')
@@ -233,7 +233,7 @@ describe BusinessValidationTemplate do
     end
 
     it "does not snapshot the entity if instructed not to" do
-      order = FactoryBot(:order, order_number: "ajklsdfajl")
+      order = create(:order, order_number: "ajklsdfajl")
       business_validation_template = described_class.create!(module_type: 'Order')
       business_validation_template.business_validation_rules.create!(name: "Name", description: "Description", type: 'ValidationRuleFieldFormat')
       business_validation_template.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
@@ -275,7 +275,7 @@ describe BusinessValidationTemplate do
       bvt2.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       described_class.create!(module_type: 'Entry')
 
-      ord = FactoryBot(:order, order_number: "ABCD")
+      ord = create(:order, order_number: "ABCD")
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord)
       expect {described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult, :count).from(0).to(2)
       [bvt1, bvt2].each do |b|
@@ -294,14 +294,14 @@ describe BusinessValidationTemplate do
       bvt2.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       described_class.create!(module_type: 'Entry')
 
-      ord = FactoryBot(:order, order_number: "ABCD")
+      ord = create(:order, order_number: "ABCD")
 
       expect_any_instance_of(Order).not_to receive(:create_snapshot)
       described_class.create_results_for_object!(ord, snapshot_entity: false)
     end
 
     it "does not snapshot if the overall rule state stays the same and no rule states change" do
-      ord = FactoryBot(:order, order_number: "ABCD")
+      ord = create(:order, order_number: "ABCD")
       bvt = described_class.create!(module_type: 'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       bvt.business_validation_rules.create! name: "Name", description: "Description", type: 'ValidationRuleFieldFormat',
@@ -333,7 +333,7 @@ describe BusinessValidationTemplate do
     end
 
     it "snapshots if the overall rule state stays the same but rule status changes" do
-      ord = FactoryBot(:order, order_number: "ABCD")
+      ord = create(:order, order_number: "ABCD")
       bvt = described_class.create!(module_type: 'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       bvt.business_validation_rules.create! name: "Name", description: "Description", type: 'ValidationRuleFieldFormat',
@@ -368,7 +368,7 @@ describe BusinessValidationTemplate do
 
   describe "async_destroy" do
     it "destroys record" do
-      template = FactoryBot(:business_validation_template)
+      template = create(:business_validation_template)
       described_class.async_destroy template.id
       expect(described_class.count).to eq 0
     end
@@ -377,7 +377,7 @@ describe BusinessValidationTemplate do
   describe "create_results_for_object_ids!" do
     subject {described_class }
 
-    let (:object) { FactoryBot(:product) }
+    let (:object) { create(:product) }
 
     it "looks up the object and passes it to create_results_for_object" do
       expect(subject).to receive(:create_results_for_object!).with(object, snapshot_entity: true)
@@ -401,7 +401,7 @@ describe BusinessValidationTemplate do
   end
 
   describe "active?" do
-   subject { FactoryBot(:business_validation_template, disabled: false, delete_pending: false, search_criterions: [FactoryBot(:search_criterion)]) }
+   subject { create(:business_validation_template, disabled: false, delete_pending: false, search_criterions: [create(:search_criterion)]) }
 
    it "returns false if disabled" do
      subject.update! disabled: true
@@ -424,8 +424,8 @@ describe BusinessValidationTemplate do
   end
 
   describe "copy_attributes" do
-    let!(:search_criterion_template) { FactoryBot(:search_criterion, model_field_uid: "ent_cust_num") }
-    let!(:search_criterion_rule) { FactoryBot(:search_criterion, model_field_uid: "ent_brok_ref") }
+    let!(:search_criterion_template) { create(:search_criterion, model_field_uid: "ent_cust_num") }
+    let!(:search_criterion_rule) { create(:search_criterion, model_field_uid: "ent_brok_ref") }
     let!(:rule) do
       r = ValidationRuleFieldFormat.new description: "rule descr", name: "rule name"
       r.search_criterions << search_criterion_rule
@@ -433,7 +433,7 @@ describe BusinessValidationTemplate do
       r
     end
     let!(:template) do
-      FactoryBot(:business_validation_template, delete_pending: true, description: "templ descr", disabled: true, module_type: "Entry",
+      create(:business_validation_template, delete_pending: true, description: "templ descr", disabled: true, module_type: "Entry",
                                              name: "templ name", private: true, search_criterions: [search_criterion_template],
                                              business_validation_rules: [rule])
     end

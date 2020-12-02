@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   describe "audit" do
     it "executes #gather_unrolled and :gather_entry" do
-      ent = FactoryBot(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
+      ent = create(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
       unrolled_results = double("unrolled_results")
       fenix_results = double("fenix_results")
       unrolled_by_hts_coo = double("unrolled_by_hts_coo")
@@ -98,15 +98,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   describe "invoice_list_diff" do
     before do
-      @ent = FactoryBot(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+      @ent = create(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
 
-      fenix_ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
-      fenix_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: fenix_ci)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
+      fenix_ci = create(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
+      fenix_cil = create(:commercial_invoice_line, commercial_invoice: fenix_ci)
+      create(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
 
-      unrolled_ci = FactoryBot(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
-      unrolled_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+      unrolled_ci = create(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = create(:commercial_invoice_line, commercial_invoice: unrolled_ci)
+      create(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
     end
 
     it "returns empty if every invoice on the entry has at least one unrolled invoice" do
@@ -117,9 +117,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "returns list of missing unrolled invoices" do
-      ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)
-      cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil)
+      ci = create(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)
+      cil = create(:commercial_invoice_line, commercial_invoice: ci)
+      create(:commercial_invoice_tariff, commercial_invoice_line: cil)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       fenix = validator.send(:gather_entry, @ent)
 
@@ -193,17 +193,17 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   describe "total_diff" do
     before do
-      @ent = FactoryBot(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+      @ent = create(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
 
-      fenix_ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
-      fenix_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: fenix_ci, value: 10)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
+      fenix_ci = create(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
+      fenix_cil = create(:commercial_invoice_line, commercial_invoice: fenix_ci, value: 10)
+      create(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
 
-      unrolled_ci = FactoryBot(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
-      unrolled_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 7)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
-      @unrolled_cil_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 3)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
+      unrolled_ci = create(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = create(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 7)
+      create(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+      @unrolled_cil_2 = create(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 3)
+      create(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
     end
 
     it "returns empty if the summed field of the unrolled invoices matches that of the corresponding Fenix entry" do
@@ -224,18 +224,18 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   describe "hts_list_diff" do
     before do
-      @ent = FactoryBot(:entry, importer_id: 1137, commercial_invoice_numbers: '123456789')
+      @ent = create(:entry, importer_id: 1137, commercial_invoice_numbers: '123456789')
 
-      fenix_ci = FactoryBot(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
-      fenix_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "CA", subheader_number: 2, customs_line_number: 1)
-      @fenix_cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil, hts_code: '6106200010' )
+      fenix_ci = create(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
+      fenix_cil = create(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "CA", subheader_number: 2, customs_line_number: 1)
+      @fenix_cit = create(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil, hts_code: '6106200010' )
 
-      fenix_cil_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "US", subheader_number: 2, customs_line_number: 2)
-      @fenix_cit_2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil_2, hts_code: '6106200010' )
+      fenix_cil_2 = create(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "US", subheader_number: 2, customs_line_number: 2)
+      @fenix_cit_2 = create(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil_2, hts_code: '6106200010' )
 
-      unrolled_ci = FactoryBot(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
-      unrolled_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci)
-      @unrolled_cit = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil, hts_code: '6106200010')
+      unrolled_ci = create(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = create(:commercial_invoice_line, commercial_invoice: unrolled_ci)
+      @unrolled_cit = create(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil, hts_code: '6106200010')
     end
 
     it "returns empty if the unrolled invoices contain the same HTS numbers as the corresponding Fenix entry" do
@@ -261,13 +261,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   describe "style_set_match" do
     before do
-      @ent = FactoryBot(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
+      @ent = create(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
 
-      unrolled_ci = FactoryBot(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
-      unrolled_cil = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '1278-603-494')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
-      @unrolled_cil_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '5847-603-494')
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
+      unrolled_ci = create(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
+      unrolled_cil = create(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '1278-603-494')
+      create(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
+      @unrolled_cil_2 = create(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '5847-603-494')
+      create(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
 
       @unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
     end

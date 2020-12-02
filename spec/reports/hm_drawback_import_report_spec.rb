@@ -2,35 +2,35 @@ describe OpenChain::Report::HmDrawbackImportReport do
 
   describe "write_report_to_builder" do
     it "writes to builder" do
-      ent_1 = FactoryBot(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE",
+      ent_1 = create(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE",
                       import_date:Date.new(2017, 5, 3), entry_port_code:"YYZ", total_duty:5, total_fees:6,
                       liquidation_date:DateTime.new(2017, 4, 2, 5, 30), entered_value:7, mpf:8, merchandise_description:"Merch_X",
                       transport_mode_code:"10", total_taxes:9, summary_line_count:5)
-      inv_1 = FactoryBot(:commercial_invoice, entry:ent_1, invoice_number:"123456", exchange_rate:1)
+      inv_1 = create(:commercial_invoice, entry:ent_1, invoice_number:"123456", exchange_rate:1)
       # This line has a matching receipt file line and product XREF, and 2 tariffs.
-      inv_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A",
+      inv_line_1 = create(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A",
                            customs_line_number:1, quantity:5, country_origin_code:"CN", country_export_code:"US",
                            unit_of_measure:"CM", unit_price:5.99)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, hts_code:"123456789", tariff_description:"tar-1",
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, hts_code:"123456789", tariff_description:"tar-1",
               classification_qty_1: 55, classification_qty_2:88, duty_rate:0.55, duty_amount:5.35, entered_value:4.62,
               entered_value_7501:5.34, spi_primary:"G")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, hts_code:"234567890", tariff_description:"tar-2",
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, hts_code:"234567890", tariff_description:"tar-2",
               classification_qty_1: 66, classification_qty_2:77, duty_rate:0.45, duty_amount:5.36, entered_value:5.63,
               entered_value_7501:6.35, spi_primary:"H")
       HmReceiptLine.create!(order_number:"123456", sku:"part-A-55555", delivery_date:Date.new(2017, 4, 2), quantity:3)
       HmProductXref.create!(sku:"part-A-55555", color_description:"color-desc-A", size_description:"size-desc-A")
 
       # This line has no tariffs, receipt file line match or product XREF.
-      inv_line_2 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-B",
+      inv_line_2 = create(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-B",
                            customs_line_number:2, quantity:6, country_origin_code:"CO", country_export_code:"UT",
                            unit_of_measure:"GA", unit_price:6.88)
 
-      inv_2 = FactoryBot(:commercial_invoice, entry:ent_1, invoice_number:"123460", exchange_rate:0.5)
+      inv_2 = create(:commercial_invoice, entry:ent_1, invoice_number:"123460", exchange_rate:0.5)
       # This line has two matching receipt file lines and product XREFs, one tariff.
-      inv_line_3 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_2, po_number:"PO-B", part_number:"part-B",
+      inv_line_3 = create(:commercial_invoice_line, commercial_invoice:inv_2, po_number:"PO-B", part_number:"part-B",
                            customs_line_number:1, quantity:7, country_origin_code:"CP", country_export_code:"UU",
                            unit_of_measure:"KM", unit_price:7.77)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_3, hts_code:"456789012", tariff_description:"tar-3",
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_3, hts_code:"456789012", tariff_description:"tar-3",
               classification_qty_1: 77, classification_qty_2:66, duty_rate:0.35, duty_amount:5.37, entered_value:6.64,
               entered_value_7501:7.36, spi_primary:"I")
       HmReceiptLine.create!(order_number:"123460", sku:"part-B-55555", delivery_date:Date.new(2017, 4, 3), quantity:4)
@@ -38,30 +38,30 @@ describe OpenChain::Report::HmDrawbackImportReport do
       HmProductXref.create!(sku:"part-B-55555", color_description:"color-desc-B", size_description:"size-desc-B")
       HmProductXref.create!(sku:"part-B-55556", color_description:"color-desc-C", size_description:"size-desc-C")
 
-      ent_2 = FactoryBot(:entry, entry_number:"ent-2", entry_filed_date:Date.new(2017, 3, 2), customer_number:"HENNE",
+      ent_2 = create(:entry, entry_number:"ent-2", entry_filed_date:Date.new(2017, 3, 2), customer_number:"HENNE",
                       import_date:Date.new(2017, 5, 2), entry_port_code:"ZYZ", total_duty:6, total_fees:7,
                       liquidation_date:DateTime.new(2017, 4, 3, 6, 25), entered_value:8, mpf:9, merchandise_description:"Merch_Y",
                       transport_mode_code:"11", total_taxes:9, summary_line_count:6)
-      inv_3 = FactoryBot(:commercial_invoice, entry:ent_2, invoice_number:"123457", exchange_rate:0.75)
+      inv_3 = create(:commercial_invoice, entry:ent_2, invoice_number:"123457", exchange_rate:0.75)
       # This line has a matching receipt file line and product XREF, one tariff.
-      inv_line_4 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_3, po_number:"PO-C", part_number:"part-C",
+      inv_line_4 = create(:commercial_invoice_line, commercial_invoice:inv_3, po_number:"PO-C", part_number:"part-C",
                            customs_line_number:1, quantity:8, country_origin_code:"CQ", country_export_code:"UV",
                            unit_of_measure:"ML", unit_price:8.66)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_4, hts_code:"123456789", tariff_description:"tar-4",
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_4, hts_code:"123456789", tariff_description:"tar-4",
               classification_qty_1: 88, classification_qty_2:55, duty_rate:0.25, duty_amount:5.37, entered_value:7.65,
               entered_value_7501:8.37, spi_primary:"J")
       HmReceiptLine.create!(order_number:"123457", sku:"part-C-55555", delivery_date:Date.new(2017, 4, 2), quantity:2)
       HmProductXref.create!(sku:"part-C-55555", color_description:"color-desc-D", size_description:"size-desc-D")
 
       # This line is ignored because it's before the date range.
-      ent_3 = FactoryBot(:entry, entry_number:"ent-3", entry_filed_date:Date.new(2017, 2, 28), customer_number:"HENNE")
-      inv_4 = FactoryBot(:commercial_invoice, entry:ent_3, invoice_number:"123458")
-      FactoryBot(:commercial_invoice_line, commercial_invoice:inv_4, po_number:"PO-D", part_number:"part-D", quantity:9)
+      ent_3 = create(:entry, entry_number:"ent-3", entry_filed_date:Date.new(2017, 2, 28), customer_number:"HENNE")
+      inv_4 = create(:commercial_invoice, entry:ent_3, invoice_number:"123458")
+      create(:commercial_invoice_line, commercial_invoice:inv_4, po_number:"PO-D", part_number:"part-D", quantity:9)
 
       # This line is ignored because it's after the date range.
-      ent_4 = FactoryBot(:entry, entry_number:"ent-4", entry_filed_date:Date.new(2017, 4, 1), customer_number:"HENNE")
-      inv_5 = FactoryBot(:commercial_invoice, entry:ent_4, invoice_number:"123459")
-      FactoryBot(:commercial_invoice_line, commercial_invoice:inv_5, po_number:"PO-E", part_number:"part-E", quantity:10)
+      ent_4 = create(:entry, entry_number:"ent-4", entry_filed_date:Date.new(2017, 4, 1), customer_number:"HENNE")
+      inv_5 = create(:commercial_invoice, entry:ent_4, invoice_number:"123459")
+      create(:commercial_invoice_line, commercial_invoice:inv_5, po_number:"PO-E", part_number:"part-E", quantity:10)
 
       # This is receipt line content that does not match to anything in the invoice data above.  The first two lines are
       # within our date range, and should be included at the end of the dataset.  The second two receipt lines are
@@ -91,10 +91,10 @@ describe OpenChain::Report::HmDrawbackImportReport do
     end
 
     it "handles nils and missing values" do
-      ent_1 = FactoryBot(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
-      inv_1 = FactoryBot(:commercial_invoice, entry:ent_1, invoice_number:"123456")
-      inv_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1)
+      ent_1 = create(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
+      inv_1 = create(:commercial_invoice, entry:ent_1, invoice_number:"123456")
+      inv_line_1 = create(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A")
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1)
       HmReceiptLine.create!(order_number:"123456", sku:"part-A-55555")
       HmProductXref.create!(sku:"part-A-55555")
 
@@ -112,10 +112,10 @@ describe OpenChain::Report::HmDrawbackImportReport do
     # Ensures we are preventing a divide by zero exception caused when HTS duty amount had a value and invoice line
     # quantity had a zero value.
     it "handles zero invoice line quantity" do
-      ent_1 = FactoryBot(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
-      inv_1 = FactoryBot(:commercial_invoice, entry:ent_1, invoice_number:"123456")
-      inv_line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A", quantity:0)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, duty_amount:5.55)
+      ent_1 = create(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
+      inv_1 = create(:commercial_invoice, entry:ent_1, invoice_number:"123456")
+      inv_line_1 = create(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A", quantity:0)
+      create(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, duty_amount:5.55)
 
       builder = subject.builder("csv")
       subject.write_report_to_builder builder, Date.new(2017, 3, 1), Date.new(2017, 3, 31)

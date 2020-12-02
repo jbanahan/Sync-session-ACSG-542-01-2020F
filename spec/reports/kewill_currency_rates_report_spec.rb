@@ -22,11 +22,11 @@ describe OpenChain::Report::KewillCurrencyRatesReport do
     end
 
     it "allows master users permission" do
-      expect(described_class.permission? FactoryBot(:master_user)).to be_truthy
+      expect(described_class.permission? create(:master_user)).to be_truthy
     end
 
     it "disallows non-master user" do
-      expect(described_class.permission? FactoryBot(:user)).to be_falsey
+      expect(described_class.permission? create(:user)).to be_falsey
     end
   end
 

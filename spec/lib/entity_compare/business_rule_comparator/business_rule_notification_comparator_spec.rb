@@ -1,13 +1,13 @@
 describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificationComparator do
   let! (:master_setup) { stub_master_setup }
-  let(:co) { FactoryBot(:company, name: "ACME") }
-  let(:entry) { FactoryBot(:entry, broker_reference: "brok ref", importer: co, customer_number: "cust num") }
+  let(:co) { create(:company, name: "ACME") }
+  let(:entry) { create(:entry, broker_reference: "brok ref", importer: co, customer_number: "cust num") }
   let(:url) { Rails.application.routes.url_helpers.entry_url(entry.id, host: master_setup.request_host, protocol: 'http' ) }
-  let(:bvre) { FactoryBot(:business_validation_result, validatable: entry)}
-  let(:bvru_1) { FactoryBot(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
-  let(:bvru_2) { FactoryBot(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
-  let!(:bvrr_1) { FactoryBot(:business_validation_rule_result_without_callback, business_validation_rule: bvru_1, business_validation_result: bvre) }
-  let!(:bvrr_2) { FactoryBot(:business_validation_rule_result_without_callback, business_validation_rule: bvru_2, business_validation_result: bvre) }
+  let(:bvre) { create(:business_validation_result, validatable: entry)}
+  let(:bvru_1) { create(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
+  let(:bvru_2) { create(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
+  let!(:bvrr_1) { create(:business_validation_rule_result_without_callback, business_validation_rule: bvru_1, business_validation_result: bvre) }
+  let!(:bvrr_2) { create(:business_validation_rule_result_without_callback, business_validation_rule: bvru_2, business_validation_result: bvre) }
   let!(:old_json) do
     {
     recordable_type: "Entry",
@@ -68,7 +68,7 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
     end
 
     it "notifies with nil customer number for non-entry" do
-      prod = FactoryBot(:product, unique_identifier: "prod uid", importer: co)
+      prod = create(:product, unique_identifier: "prod uid", importer: co)
       bvre.update_attributes! validatable: prod
       old_json[:recordable_type] = new_json[:recordable_type] = "Product"
       old_json[:recordable_id] = new_json[:recordable_id] = prod.id
@@ -349,11 +349,11 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
     subject { described_class }
 
     let (:entry) {
-      FactoryBot(:entry)
+      create(:entry)
     }
 
     let (:business_validation_rule_result) {
-      result = FactoryBot(:business_validation_rule_result)
+      result = create(:business_validation_rule_result)
       entry.business_validation_results << result.business_validation_result
 
       result

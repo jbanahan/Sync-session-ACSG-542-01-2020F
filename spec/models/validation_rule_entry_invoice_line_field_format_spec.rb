@@ -1,8 +1,8 @@
 describe ValidationRuleEntryInvoiceLineFieldFormat do
   before :each do
     @rule = described_class.new(rule_attributes_json:{model_field_uid:'cil_part_number', regex:'ABC'}.to_json)
-    @ci_line = FactoryBot(:commercial_invoice_line, line_number:1, part_number:'ABC123', commercial_invoice: FactoryBot(:commercial_invoice, invoice_number: "INV"))
-    @ci_line2 = FactoryBot(:commercial_invoice_line, line_number:2, part_number:'123ABC', commercial_invoice:@ci_line.commercial_invoice)
+    @ci_line = create(:commercial_invoice_line, line_number:1, part_number:'ABC123', commercial_invoice: create(:commercial_invoice, invoice_number: "INV"))
+    @ci_line2 = create(:commercial_invoice_line, line_number:2, part_number:'123ABC', commercial_invoice:@ci_line.commercial_invoice)
   end
   it "should pass if all lines are valid" do
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
@@ -29,7 +29,7 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
   it "should pass if line that does not meet search criteria is invalid" do
     @rule.search_criterions.new(model_field_uid:'ci_invoice_number', operator:'eq', value:'123')
     @ci_line.commercial_invoice.update_attributes(invoice_number:'123')
-    bad_ci_line = FactoryBot(:commercial_invoice_line, part_number:'789', commercial_invoice:FactoryBot(:commercial_invoice, invoice_number:'456', entry:@ci_line.entry))
+    bad_ci_line = create(:commercial_invoice_line, part_number:'789', commercial_invoice:create(:commercial_invoice, invoice_number:'456', entry:@ci_line.entry))
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
   end
 

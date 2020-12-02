@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header_2) { ["H", "11152016", "PEACE", nil, "37109", "1991", nil, "FRANCH", "qgroup", "83", "SUM 2016", "CCL", "4", "12092016", "000257", "MG PRODUCTS PTE. LTD", "Jones", "001424", "JDSELKAU0105BEK", "XIASHAN JSL CASE & BAG CO., LTD", "000023", "ZCHOI", "GCA", "TAIWAN", "PCN", "01182017", "01182018", "KING KONG", "BGS", nil, nil, nil, "USD", nil, nil, nil, nil] }
   let(:detail_2) { ["D", nil, "2", nil, nil, "820799", "451152", "AB-YING YANG IRRI", "618", "GRAY", "2", "11", nil, nil, "13010848311526700486", nil, nil, "2", nil, "3.02", "4.46", "4.13", "8.00", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil] }
 
-  let!(:importer) { FactoryBot(:company, system_code: "ASCENA", importer:true) }
+  let!(:importer) { create(:company, system_code: "ASCENA", importer:true) }
 
   def convert_pipe_delimited array_of_str
     array_of_str.map { |arr| arr.join("|") }.join("\n")
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "ignores file if PO exists and has revision number greater than the file header's" do
-      ord = FactoryBot(:order, importer: importer, order_number: "ASCENA-37109")
+      ord = create(:order, importer: importer, order_number: "ASCENA-37109")
       ord.update_custom_value!(cdefs[:ord_revision], 3)
       subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       ord.reload
@@ -160,9 +160,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "updates existing orders, replaces order lines, uses existing product" do
-      o = FactoryBot(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
-      product = FactoryBot(:product, unique_identifier: "ASCENA-820799", importer: importer)
-      order_line = FactoryBot(:order_line, order: o, line_number: 2, product: product)
+      o = create(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
+      product = create(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = create(:order_line, order: o, line_number: 2, product: product)
 
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration, nil, "path 2")
       # The product shouldn't be snapshotted, we didn't update it
@@ -225,10 +225,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "doesn't delete the order line, sends warning email if line is associated with shipment" do
-      o = FactoryBot(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
-      product = FactoryBot(:product, unique_identifier: "ASCENA-820799", importer: importer)
-      order_line = FactoryBot(:order_line, order: o, line_number: 2, product: product)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "Pinafore"), product: order_line.product)
+      o = create(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
+      product = create(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = create(:order_line, order: o, line_number: 2, product: product)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
       subject.parse_file_chunk convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
@@ -254,10 +254,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "skips shipped lines, adds other lines from file that weren't shipping" do
-      o = FactoryBot(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
-      product = FactoryBot(:product, unique_identifier: "ASCENA-820799", importer: importer)
-      order_line = FactoryBot(:order_line, order: o, line_number: 2, product: product)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "Pinafore"), product: order_line.product)
+      o = create(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
+      product = create(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = create(:order_line, order: o, line_number: 2, product: product)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
       subject.parse_file_chunk convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
@@ -271,11 +271,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "skips shipped lines, updates other lines from file that weren't shipping" do
-      o = FactoryBot(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
-      product = FactoryBot(:product, unique_identifier: "ASCENA-820799", importer: importer)
-      order_line = FactoryBot(:order_line, order: o, line_number: 2, product: product)
-      order_line_2 = FactoryBot(:order_line, order: o, line_number: 1, product: product)
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "Pinafore"), product: order_line.product)
+      o = create(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
+      product = create(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = create(:order_line, order: o, line_number: 2, product: product)
+      order_line_2 = create(:order_line, order: o, line_number: 1, product: product)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
       subject.parse_file_chunk convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
@@ -299,9 +299,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "doesn't create parties if already present" do
-      factory = FactoryBot(:company, system_code: "001423")
+      factory = create(:company, system_code: "001423")
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
-      vendor = FactoryBot(:company, system_code: "000256")
+      vendor = create(:company, system_code: "000256")
       vendor_id = vendor.system_identifiers.create! system: "Ascena PO", code: "000256"
       expect {subject.parse_file_chunk(convert_pipe_delimited [header, detail])}.to_not change(Company, :count)
       expect(Order.first.factory.id).to eq factory.id
@@ -337,7 +337,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "does not update factory names to blank if name is missing" do
-      factory = FactoryBot(:company, system_code: "001423", name: "FactoryBot")
+      factory = create(:company, system_code: "001423", name: "create")
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[19] = nil
 
@@ -345,11 +345,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       order = Order.first
       expect(order.factory).to eq factory
       factory.reload
-      expect(factory.name).to eq "FactoryBot"
+      expect(factory.name).to eq "create"
     end
 
     it "updates factory MID if existing mid is blank" do
-      factory = FactoryBot(:company, system_code: "001423", name: "FactoryBot")
+      factory = create(:company, system_code: "001423", name: "create")
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       described_class.parse_file_chunk(convert_pipe_delimited [header, detail])
       factory.reload
@@ -358,7 +358,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "does not blank an existing factory MID" do
-      factory = FactoryBot(:company, system_code: "001423", name: "FactoryBot", mid: "EXISTING")
+      factory = create(:company, system_code: "001423", name: "create", mid: "EXISTING")
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[18] = ""
 

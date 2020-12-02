@@ -1,5 +1,5 @@
 describe OpenChain::Validations::Password::PreviousPasswordValidator do
-  let!(:user) { FactoryBot.create(:user) }
+  let!(:user) { create(:user) }
 
   before do
     multiples_of_five = (1..130).select { |i| i % 5 == 0 }

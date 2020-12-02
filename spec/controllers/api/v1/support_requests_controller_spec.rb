@@ -1,6 +1,6 @@
 describe Api::V1::SupportRequestsController do
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   before :each do
     # Intialize the user, this also sets up the api environment

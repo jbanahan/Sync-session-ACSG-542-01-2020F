@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Pvh::PvhFiscalCalendarSchedulingSupport do
   let (:biannually) { OpenChain::FiscalCalendarSchedulingSupport::BIANNUAL_SCHEDULING }
 
   describe "get_fiscal_period_dates" do
-    let! (:importer) { FactoryBot(:company, system_code: "ARF") }
+    let! (:importer) { create(:company, system_code: "ARF") }
 
     it "raises error if importer record can't be found" do
       expect { subject.get_fiscal_period_dates("2020-05", nil, monthly, "SNARF") }.to raise_error "SNARF company account could not be found."

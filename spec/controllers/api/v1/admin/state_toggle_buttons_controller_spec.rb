@@ -1,5 +1,5 @@
 describe Api::V1::Admin::StateToggleButtonsController do
-  let!(:user) { FactoryBot(:admin_user) }
+  let!(:user) { create(:admin_user) }
 
   before do
     allow_api_user user
@@ -7,7 +7,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "edit" do
-    let!(:stb) { FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
+    let!(:stb) { create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
 
     it "renders template JSON for a admin" do
       sc_mfs = [{mfid: :prod_attachment_count, label: "Attachment Count", datatype: :integer}]
@@ -15,7 +15,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       date_mfs = [{mfid: "ord_closed_at", label: "Closed At"}]
       user_cdefs = [{cdef_id: 1, label: "QA Hold By"}]
       date_cdefs = [{cdef_id: 2, label: "QA Hold Date"}]
-      stb.search_criterions << FactoryBot(:search_criterion)
+      stb.search_criterions << create(:search_criterion)
 
       expect_any_instance_of(described_class).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
       expect_any_instance_of(described_class).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
@@ -33,7 +33,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
 
     it "prevents access by non-admins" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       get :edit, id: 1, format: "json"
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
@@ -42,7 +42,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   describe "update" do
     context "search_criterions" do
       let(:stb) do
-        FactoryBot(:state_toggle_button, module_type: 'Shipment',
+        create(:state_toggle_button, module_type: 'Shipment',
                                       date_attribute: 'shp_canceled_date',
                                       user_attribute: 'shp_canceled_by')
       end
@@ -57,7 +57,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       end
 
       before do
-        stb.search_criterions << FactoryBot(:search_criterion, model_field_uid: "ent_brok_ref",
+        stb.search_criterions << create(:search_criterion, model_field_uid: "ent_brok_ref",
                                                             "operator" => "eq",
                                                             "value" => "w",
                                                             "include_empty" => true)
@@ -75,7 +75,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       end
 
       it "prevents access by non-admins" do
-        allow_api_access FactoryBot(:user)
+        allow_api_access create(:user)
         put :update, id: stb.id, stb: {}, criteria: stb_new_criteria
         stb.reload
         criteria = stb.search_criterions
@@ -87,7 +87,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
     context "standard fields" do
       let(:stb) do
-        FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by',
+        create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by',
                                       permission_group_system_codes: "CODE",
                                       activate_text: "activate!",
                                       activate_confirmation_text: "activate sure?",
@@ -115,7 +115,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       end
 
       it "prevents access by non-admins" do
-        allow_api_access FactoryBot(:user)
+        allow_api_access create(:user)
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
 
@@ -127,8 +127,8 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
 
     context "mfs and cdefs" do
-      let!(:stb) { FactoryBot(:state_toggle_button, user_attribute: "ord_closed_by", date_custom_definition: FactoryBot(:custom_definition))}
-      let!(:new_cdef) { FactoryBot(:custom_definition) }
+      let!(:stb) { create(:state_toggle_button, user_attribute: "ord_closed_by", date_custom_definition: create(:custom_definition))}
+      let!(:new_cdef) { create(:custom_definition) }
 
       context "for admins" do
         it "updates mfs/cdefs with existing values" do
@@ -169,7 +169,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
       context "for non-admins" do
         it "doesn't update mfs/cdefs" do
-          allow_api_access FactoryBot(:user)
+          allow_api_access create(:user)
           current_cdef = stb.date_custom_definition
           put :update, id: stb.id, stb: {user_attribute: "ord_accepted_by", date_custom_definition_id: new_cdef.id }, criteria: {}
           stb.reload
@@ -182,7 +182,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "destroy" do
-    let!(:stb) { FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
+    let!(:stb) { create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
 
     it "deletes STB for an admin" do
       delete :destroy, id: stb.id
@@ -191,7 +191,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
 
     it "prevents access by non-admins" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       delete :destroy, id: stb.id
       expect(StateToggleButton.count).to eq 1
       expect(JSON.parse(response.body)["errors"]).to include "Access denied."
@@ -219,7 +219,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_user_and_date_mfs" do
     it "returns two arrays of model fields associated with button's module, the second including only those of type date/datetime" do
-      stb = FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
+      stb = create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
 
       user_list, date_list = described_class.new.get_user_and_date_mfs(stb)
       # Just make sure the list includes a known date field and user field and does not include a field we know is not either
@@ -235,7 +235,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_sc_mfs" do
     it "takes the model fields associated with a button's module returning only the mfid, label, and datatype fields" do
-      stb = FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
+      stb = create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
       mfs = described_class.new.get_sc_mfs stb
       expect(mfs.find {|mf| mf[:mfid] == :shp_ref}).to eq({mfid: :shp_ref, label: "Reference Number", datatype: :string })
     end
@@ -243,10 +243,10 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_user_and_date_cdefs" do
     it "returns two arrays of cdefs associated with the button's module, the first including only those of user_type, the second only those of datetime" do
-      stb = FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
-      user = FactoryBot(:custom_definition, module_type: "Shipment", data_type: "integer", is_user: true, label: "QA Hold By")
-      date = FactoryBot(:custom_definition, module_type: "Shipment", data_type: "datetime", label: "QA Hold Date")
-      FactoryBot(:custom_definition, module_type: "Shipment", data_type: "integer", label: "Foo")
+      stb = create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
+      user = create(:custom_definition, module_type: "Shipment", data_type: "integer", is_user: true, label: "QA Hold By")
+      date = create(:custom_definition, module_type: "Shipment", data_type: "datetime", label: "QA Hold Date")
+      create(:custom_definition, module_type: "Shipment", data_type: "integer", label: "Foo")
 
       user_list, date_list = described_class.new.get_user_and_date_cdefs(stb)
       expect(user_list).to eq [{cdef_id: user.id, label: "QA Hold By"}]

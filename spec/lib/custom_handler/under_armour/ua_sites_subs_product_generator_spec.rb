@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator do
   describe "run_and_send_email" do
     it "sends email with attached reports for sites and subs" do
-      u = FactoryBot(:user, time_zone: "Eastern Time (US & Canada)")
+      u = create(:user, time_zone: "Eastern Time (US & Canada)")
       sites_generator = OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator
       subs_generator = OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator
 

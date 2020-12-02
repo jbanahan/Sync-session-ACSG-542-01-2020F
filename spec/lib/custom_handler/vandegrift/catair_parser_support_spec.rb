@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
   end
 
   describe "find_customer_number" do
-    let! (:importer) { with_customs_management_id(FactoryBot(:importer, irs_number: "XX-XXXXXXX"), "CMUS")}
+    let! (:importer) { with_customs_management_id(create(:importer, irs_number: "XX-XXXXXXX"), "CMUS")}
     let! (:inbound_file) {
       i = InboundFile.new
       allow(subject).to receive(:inbound_file).and_return i
@@ -74,8 +74,8 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
   end
 
   describe "send_email_notification" do
-    let (:importer) { with_customs_management_id(FactoryBot(:importer), "CUST")}
-    let! (:mailing_list) { MailingList.create! system_code: "CUST 3461 EDI", email_addresses: "me@there.com", company: importer, name: "3461 EDI", user: FactoryBot(:user, company: importer) }
+    let (:importer) { with_customs_management_id(create(:importer), "CUST")}
+    let! (:mailing_list) { MailingList.create! system_code: "CUST 3461 EDI", email_addresses: "me@there.com", company: importer, name: "3461 EDI", user: create(:user, company: importer) }
     let (:shipment) {
       e = OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser::CiLoadEntry.new
       e.customer = "CUST"

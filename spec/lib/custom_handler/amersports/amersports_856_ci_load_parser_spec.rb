@@ -5,16 +5,16 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
   }
 
   describe "parse" do
-    let (:importer) { with_customs_management_id(FactoryBot(:importer, system_code: "WILSON"), "WILSON") }
-    let (:us) { FactoryBot(:country, iso_code: "US") }
+    let (:importer) { with_customs_management_id(create(:importer, system_code: "WILSON"), "WILSON") }
+    let (:us) { create(:country, iso_code: "US") }
     let (:product_1) {
-      p = FactoryBot(:product, unique_identifier: "WILSON-WTDPCH00251", importer: importer)
+      p = create(:product, unique_identifier: "WILSON-WTDPCH00251", importer: importer)
       c = p.classifications.create! country_id: us.id
       c.tariff_records.create! hts_1: "1234567890"
       p
     }
     let (:product_2) {
-      p = FactoryBot(:product, unique_identifier: "WILSON-WTDPCH00218", importer: importer)
+      p = create(:product, unique_identifier: "WILSON-WTDPCH00218", importer: importer)
       c = p.classifications.create! country_id: us.id
       c.tariff_records.create! hts_1: "1234567890"
       p
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
 
       it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
-        with_customs_management_id(FactoryBot(:importer, system_code: "SALOMON"), "SALOMON")
+        with_customs_management_id(create(:importer, system_code: "SALOMON"), "SALOMON")
         # This also tests that ATOMIC is translated to Salomon
         described_class.parse data.gsub("WILSON    ", "ATOMIC    ")
         expect(entries.length).to eq 1
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
 
       it "translates ARMADA to Salomon account" do
-        with_customs_management_id(FactoryBot(:importer, system_code: "SALOMON"), "SALOMON")
+        with_customs_management_id(create(:importer, system_code: "SALOMON"), "SALOMON")
         described_class.parse data.gsub("WILSON    ", "ARMADA    ")
         expect(entries.length).to eq 1
 

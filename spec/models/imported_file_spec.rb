@@ -19,15 +19,15 @@ describe ImportedFile do
 
   describe "result_keys" do
     it "returns empty array if no file import results" do
-      f = FactoryBot(:imported_file)
+      f = create(:imported_file)
       expect(f.result_keys).to eq([])
     end
 
     it "returns results" do
-      f = FactoryBot(:imported_file)
+      f = create(:imported_file)
       fir = f.file_import_results.create!(finished_at: Time.zone.now) # only shows for last finished result
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
+      p1 = create(:product)
+      p2 = create(:product)
       [p1, p2].each {|p| fir.change_records.create!(recordable: p)}
       expect(f.result_keys).to eq([p1.id, p2.id])
     end
@@ -35,7 +35,7 @@ describe ImportedFile do
 
   describe 'email_updated_file' do
     it 'generates and send the file' do
-      current_user = FactoryBot(:user)
+      current_user = create(:user)
       to = 'a@b.com'
       cc = 'c@d.com'
       subj = 's'
@@ -44,7 +44,7 @@ describe ImportedFile do
       original_attachment_name = 'abc.xls'
       temp = Tempfile.new ["abc", ".xls"]
       begin
-        f = FactoryBot(:imported_file, user: current_user, attached_file_name: original_attachment_name)
+        f = create(:imported_file, user: current_user, attached_file_name: original_attachment_name)
         mail = double "mail delivery" # rubocop:disable RSpec/VerifiedDoubles
         allow(mail).to receive(:deliver_now).and_return(nil)
         expect(OpenMailer).to receive(:send_s3_file).with(current_user, to, cc, subj, body, 'chain-io', s3_path, original_attachment_name).and_return(mail)
@@ -66,7 +66,7 @@ describe ImportedFile do
 
       let(:xlc) { instance_double OpenChain::XLClient }
       let(:attached) { instance_double Attachment }
-      let(:imported_file) { FactoryBot(:imported_file, module_type: "Product", user: FactoryBot(:user), attached_file_name: 'abc.xls') }
+      let(:imported_file) { create(:imported_file, module_type: "Product", user: create(:user), attached_file_name: 'abc.xls') }
       let(:expected_alternate_location) { %r{#{master_setup.uuid}/updated_imported_files/#{imported_file.user_id}/[0-9]{10}\.xls} }
 
       before do
@@ -85,9 +85,9 @@ describe ImportedFile do
 
       it 'updates header level products' do
         ["prod_name", "prod_uid"].each_with_index {|v, i| imported_file.search_columns.create!(model_field_uid: v, rank: i)}
-        p1 = FactoryBot(:product, name: "p1name")
-        p2 = FactoryBot(:product, name: "p2name")
-        p3 = FactoryBot(:product, name: "p3name")
+        p1 = create(:product, name: "p1name")
+        p2 = create(:product, name: "p2name")
+        p3 = create(:product, name: "p3name")
         expect(xlc).to receive(:last_row_number).and_return(2)
         # first row has extra whitespace that should be stripped
         expect(xlc).to receive(:get_row).with(0, 0).and_return([{"position" => {"column" => 0}, "cell" => {"value" => "oldname1", "datatype" => "string"}},
@@ -113,8 +113,8 @@ describe ImportedFile do
       end
 
       it 'updates custom values' do
-        cd = FactoryBot(:custom_definition, module_type: "Product")
-        p = FactoryBot(:product)
+        cd = create(:custom_definition, module_type: "Product")
+        p = create(:product)
         cv = p.get_custom_value(cd)
         cv.value = "x"
         cv.save!
@@ -126,10 +126,10 @@ describe ImportedFile do
       end
 
       it 'updates classification level items' do
-        cd = FactoryBot(:custom_definition, module_type: "Classification")
+        cd = create(:custom_definition, module_type: "Classification")
         ["prod_uid", "class_cntry_iso", cd.model_field_uid].each_with_index {|v, i| imported_file.search_columns.create!(model_field_uid: v, rank: i)}
-        p = FactoryBot(:product)
-        ctry = FactoryBot(:country)
+        p = create(:product)
+        ctry = create(:country)
         c = p.classifications.create!(country_id: ctry.id)
         cv = c.get_custom_value cd
         cv.value = "y"
@@ -143,10 +143,10 @@ describe ImportedFile do
       end
 
       it 'clears fields for missing child object' do
-        cd = FactoryBot(:custom_definition, module_type: "Classification")
+        cd = create(:custom_definition, module_type: "Classification")
         ["prod_uid", "class_cntry_iso", cd.model_field_uid].each_with_index {|v, i| imported_file.search_columns.create!(model_field_uid: v, rank: i)}
-        p = FactoryBot(:product)
-        ctry = FactoryBot(:country)
+        p = create(:product)
+        ctry = create(:country)
         c = p.classifications.create!(country_id: ctry.id)
         cv = c.get_custom_value cd
         cv.value = "y"
@@ -161,10 +161,10 @@ describe ImportedFile do
 
       it 'updates tariff level items' do
         ["prod_uid", "class_cntry_iso", "hts_line_number", "hts_hts_1"].each_with_index {|v, i| imported_file.search_columns.create!(model_field_uid: v, rank: i)}
-        ctry = FactoryBot(:country)
-        bad_product = FactoryBot(:product)
+        ctry = create(:country)
+        bad_product = create(:product)
         bad_product.classifications.create!(country_id: ctry.id).tariff_records.create(line_number: 4, hts_1: '0984717191')
-        p = FactoryBot(:product)
+        p = create(:product)
         c = p.classifications.create!(country_id: ctry.id)
         t = c.tariff_records.create(line_number: 4, hts_1: '1234567890')
         expect(xlc).to receive(:last_row_number).and_return(0)
@@ -178,18 +178,18 @@ describe ImportedFile do
 
       it 'adds extra countries' do
         ["prod_uid", "class_cntry_iso", "hts_line_number", "hts_hts_1"].each_with_index {|v, i| imported_file.search_columns.create!(model_field_uid: v, rank: i)}
-        ctry = FactoryBot(:country)
-        ctry_2 = FactoryBot(:country)
-        bad_product = FactoryBot(:product)
+        ctry = create(:country)
+        ctry_2 = create(:country)
+        bad_product = create(:product)
         bad_product.classifications.create!(country_id: ctry.id).tariff_records.create(line_number: 4, hts_1: '0984717191')
 
-        p_a = FactoryBot(:product)
+        p_a = create(:product)
         c_a = p_a.classifications.create!(country_id: ctry.id)
         t_a = c_a.tariff_records.create(line_number: 4, hts_1: '1234567890')
         c_a_2 = p_a.classifications.create!(country_id: ctry_2.id)
         t_a_2 = c_a_2.tariff_records.create!(line_number: 4, hts_1: '988777789')
 
-        p_b = FactoryBot(:product)
+        p_b = create(:product)
         c_b = p_b.classifications.create!(country_id: ctry.id)
         t_b = c_b.tariff_records.create(line_number: 4, hts_1: '0987654321')
         c_b_2 = p_b.classifications.create!(country_id: ctry_2.id)
@@ -235,8 +235,8 @@ describe ImportedFile do
   end
 
   describe "process" do
-    let(:user) { FactoryBot(:user) }
-    let(:file) { FactoryBot(:imported_file, search_setup: FactoryBot(:search_setup)) }
+    let(:user) { create(:user) }
+    let(:file) { create(:imported_file, search_setup: create(:search_setup)) }
 
     it "processes an imported file" do
 
@@ -271,8 +271,8 @@ describe ImportedFile do
 
   describe "FileImportProcessJob#perform" do
     let! (:master_setup) { stub_master_setup }
-    let(:user) { FactoryBot(:user) }
-    let(:file) { FactoryBot(:imported_file, search_setup: FactoryBot(:search_setup), attached_file_name: "test.txt") }
+    let(:user) { create(:user) }
+    let(:file) { create(:imported_file, search_setup: create(:search_setup), attached_file_name: "test.txt") }
 
     it "calls process on FileImportProcessor" do
       expect(FileImportProcessor).to receive(:process) do |file, listener|
@@ -326,8 +326,8 @@ describe ImportedFile do
     end
 
     it "downloads file from s3 and imports it" do
-      user = FactoryBot(:user)
-      ss = FactoryBot(:search_setup, user: user)
+      user = create(:user)
+      ss = create(:search_setup, user: user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "myfile.csv").and_yield temp
       expect_any_instance_of(described_class).to receive(:process).with(user, {defer: true})
       path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
@@ -342,8 +342,8 @@ describe ImportedFile do
     end
 
     it "errors if user is missing" do
-      user = FactoryBot(:user)
-      ss = FactoryBot(:search_setup, user: user)
+      user = create(:user)
+      ss = create(:search_setup, user: user)
       path = "/notauser/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
 
       described_class.process_integration_imported_file 'bucket', 'path', path
@@ -351,8 +351,8 @@ describe ImportedFile do
     end
 
     it "errors if search module is wrong is missing" do
-      user = FactoryBot(:user)
-      ss = FactoryBot(:search_setup, user: user)
+      user = create(:user)
+      ss = create(:search_setup, user: user)
       path = "/#{user.username}/to_chain/notamodule/#{ss.name}/myfile.csv"
 
       described_class.process_integration_imported_file 'bucket', 'path', path
@@ -360,8 +360,8 @@ describe ImportedFile do
     end
 
     it "errors if search name is wrong" do
-      user = FactoryBot(:user)
-      ss = FactoryBot(:search_setup, user: user)
+      user = create(:user)
+      ss = create(:search_setup, user: user)
       path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/notaname/myfile.csv"
 
       described_class.process_integration_imported_file 'bucket', 'path', path
@@ -371,9 +371,9 @@ describe ImportedFile do
 
   describe ImportedFile::FileImportProcessorListener do
     describe "process_row" do
-      let!(:user) { FactoryBot(:user) }
-      let!(:imported_file) { FactoryBot(:imported_file, module_type: "Product", starting_row: 2, note: "nota bene") }
-      let(:obj) { FactoryBot(:product) }
+      let!(:user) { create(:user) }
+      let!(:imported_file) { create(:imported_file, module_type: "Product", starting_row: 2, note: "nota bene") }
+      let(:obj) { create(:product) }
       let(:listener) do
         l = described_class.new(imported_file, user.id)
         l.process_start Time.zone.now

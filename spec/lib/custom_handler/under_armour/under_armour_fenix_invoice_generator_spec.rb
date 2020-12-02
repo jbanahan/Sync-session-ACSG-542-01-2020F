@@ -2,10 +2,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
 
   describe "generate_invoice" do
     let (:cdefs) { subject.send(:cdefs) }
-    let (:ca) { FactoryBot(:country, iso_code: "CA") }
-    let (:importer) { FactoryBot(:importer, system_code: "UNDAR", name: "Under Armour")}
+    let (:ca) { create(:country, iso_code: "CA") }
+    let (:importer) { create(:importer, system_code: "UNDAR", name: "Under Armour")}
     let (:shipment) {
-      s = FactoryBot(:shipment, importer: importer, importer_reference: "REF")
+      s = create(:shipment, importer: importer, importer_reference: "REF")
       line = s.shipment_lines.create! quantity: 10, product: standard_product, variant: standard_product.variants.first, carton_qty: 2, gross_kgs: 8
       line.update_custom_value!(cdefs[:shpln_coo], "CN")
       line.piece_sets.create! quantity: 10, order_line: order.order_lines.first
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     }
 
     let (:variant_hts_product) {
-      p = FactoryBot(:product, importer: importer, unique_identifier: "UNDAR-PROD-1", name: "Name Description 1")
+      p = create(:product, importer: importer, unique_identifier: "UNDAR-PROD-1", name: "Name Description 1")
       p.update_custom_value! cdefs[:prod_part_number], "PROD-1"
       c = p.classifications.create! country_id: ca.id
       t = c.tariff_records.create! hts_1: "1234567890"
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     }
 
     let (:standard_product) {
-      p = FactoryBot(:product, importer: importer, unique_identifier: "UNDAR-PROD-2", name: "Name Description 2")
+      p = create(:product, importer: importer, unique_identifier: "UNDAR-PROD-2", name: "Name Description 2")
       p.update_custom_value! cdefs[:prod_part_number], "PROD-2"
       c = p.classifications.create! country_id: ca.id
       c.update_custom_value! cdefs[:class_customs_description], "Customs Description 2"
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     }
 
     let (:copy_product) {
-      p = FactoryBot(:product, importer: importer, unique_identifier: "UNDAR-PROD-3", name: "Name Description 2")
+      p = create(:product, importer: importer, unique_identifier: "UNDAR-PROD-3", name: "Name Description 2")
       p.update_custom_value! cdefs[:prod_part_number], "PROD-2"
       c = p.classifications.create! country_id: ca.id
       c.update_custom_value! cdefs[:class_customs_description], "Customs Description 2"
@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     }
 
     let (:order) {
-      order = FactoryBot(:order, order_number: "UNDAR-PO", customer_order_number: "PO")
+      order = create(:order, order_number: "UNDAR-PO", customer_order_number: "PO")
       line1 = order.order_lines.create! product: standard_product, variant: standard_product.variants.first, price_per_unit: BigDecimal("1.55")
       line2 = order.order_lines.create! product: variant_hts_product, variant: variant_hts_product.variants.first, price_per_unit: BigDecimal("1.99")
       # Make a 3rd line which can be utilized for roll-up scenarios
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
       end
 
       it "does not roll up if the PO # is different" do
-        copy_order = FactoryBot(:order, order_number: "UNDAR-PO2", customer_order_number: "PO2")
+        copy_order = create(:order, order_number: "UNDAR-PO2", customer_order_number: "PO2")
         line = copy_order.order_lines.create! product: standard_product, variant: standard_product.variants.first, price_per_unit: BigDecimal("1.55")
 
         s_line = shipment.shipment_lines.first

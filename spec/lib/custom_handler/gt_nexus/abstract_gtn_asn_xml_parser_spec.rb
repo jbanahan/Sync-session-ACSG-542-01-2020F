@@ -20,17 +20,17 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
   let (:xml_data) { IO.read 'spec/fixtures/files/gtn_generic_asn.xml' }
   let (:xml) { REXML::Document.new(xml_data) }
   let (:asn_xml) { REXML::XPath.first(xml, "/ASNMessage/ASN") }
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:ca) { FactoryBot(:country, iso_code: "CA") }
-  let (:importer) { FactoryBot(:importer, system_code: "SYS") }
-  let (:user) { FactoryBot(:user) }
-  let (:order) { FactoryBot(:order, order_number: "SYS-RTTC216384", customer_order_number: "RTTC216384", importer: importer)}
-  let (:product) { FactoryBot(:product, importer: importer, unique_identifier: "SYS-7696164") }
-  let (:order_line_1) { FactoryBot(:order_line, order: order, line_number: 1, product: product) }
-  let (:order_line_2) { FactoryBot(:order_line, order: order, line_number: 2, product: product) }
-  let (:lading_port) { FactoryBot(:port, name: "Chennai", iata_code: "MAA")}
-  let (:unlading_port) { FactoryBot(:port, name: "Montréal", iata_code: "YUL")}
-  let (:final_dest_port) { FactoryBot(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:ca) { create(:country, iso_code: "CA") }
+  let (:importer) { create(:importer, system_code: "SYS") }
+  let (:user) { create(:user) }
+  let (:order) { create(:order, order_number: "SYS-RTTC216384", customer_order_number: "RTTC216384", importer: importer)}
+  let (:product) { create(:product, importer: importer, unique_identifier: "SYS-7696164") }
+  let (:order_line_1) { create(:order_line, order: order, line_number: 1, product: product) }
+  let (:order_line_2) { create(:order_line, order: order, line_number: 2, product: product) }
+  let (:lading_port) { create(:port, name: "Chennai", iata_code: "MAA")}
+  let (:unlading_port) { create(:port, name: "Montréal", iata_code: "YUL")}
+  let (:final_dest_port) { create(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
   let (:inbound_file) { InboundFile.new s3_path: "/path/to/file.xml"}
 
   describe "process_asn_update" do
@@ -144,8 +144,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
     end
 
     it "updates a shipment" do
-      shipment = FactoryBot(:shipment, reference: "SYS-5093094M01", importer: importer)
-      container = FactoryBot(:container, shipment: shipment, container_number: "SGIND25321")
+      shipment = create(:shipment, reference: "SYS-5093094M01", importer: importer)
+      container = create(:container, shipment: shipment, container_number: "SGIND25321")
       line = shipment.shipment_lines.create! product: product, container: container
 
       s = subject.process_asn_update asn_xml, user, "bucket", "key"
@@ -155,7 +155,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
     end
 
     it "does not update a shipment if xml is outdated" do
-      shipment = FactoryBot(:shipment, reference: "SYS-5093094M01", importer: importer, last_exported_from_source: "2018-09-10 12:00")
+      shipment = create(:shipment, reference: "SYS-5093094M01", importer: importer, last_exported_from_source: "2018-09-10 12:00")
       s = subject.process_asn_update asn_xml, user, "bucket", "key"
       expect(s).to be_nil
       shipment.reload
@@ -287,7 +287,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
   end
 
   describe "process_asn_cancel" do
-    let (:shipment) { FactoryBot(:shipment, reference: "SYS-5093094M01", importer: importer) }
+    let (:shipment) { create(:shipment, reference: "SYS-5093094M01", importer: importer) }
 
     it "cancels the shipment" do
       shipment

@@ -24,8 +24,8 @@ describe QuickSearchController do
   }
 
   before :each do
-    c = FactoryBot(:company, :master=>true, :show_business_rules=>true)
-    @u = FactoryBot(:user, vendor_view: true, entry_view: true, company: c, broker_invoice_view: true)
+    c = create(:company, :master=>true, :show_business_rules=>true)
+    @u = create(:user, vendor_view: true, entry_view: true, company: c, broker_invoice_view: true)
 
     sign_in_as @u
   end
@@ -47,11 +47,11 @@ describe QuickSearchController do
   context "by_module" do
     it "should return result for core module" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
-      cd_1 = FactoryBot(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
-      ent = FactoryBot(:entry, :entry_number=>'12345678901')
+      cd_1 = create(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
+      ent = create(:entry, :entry_number=>'12345678901')
       ent.update_custom_value! cd_1, "Test"
-      bvre_1 = FactoryBot(:business_validation_result, state: "Pass", validatable: ent)
-      bvre_2 = FactoryBot(:business_validation_result, state: "Fail", validatable: ent)
+      bvre_1 = create(:business_validation_result, state: "Pass", validatable: ent)
+      bvre_2 = create(:business_validation_result, state: "Fail", validatable: ent)
 
       expected_response = {
         'qs_result'=>{
@@ -82,8 +82,8 @@ describe QuickSearchController do
     end
 
     it "returns a limited search, if specified" do
-      FactoryBot(:entry, :broker_reference => "123")
-      FactoryBot(:entry, :entry_number => "123")
+      create(:entry, :broker_reference => "123")
+      create(:entry, :entry_number => "123")
       expect(CoreModule::ENTRY).to receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
 
       get :by_module, module_type:'Entry', v: '123', limit_fields: 'ent_entry_num'
@@ -95,9 +95,9 @@ describe QuickSearchController do
     end
 
     it "sorts results by qualified field name specified in Core Module" do
-      FactoryBot(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
-      FactoryBot(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
-      FactoryBot(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
+      create(:entry, :broker_reference => "123_second", :file_logged_date => DateTime.now - 1)
+      create(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
+      create(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
       expect(CoreModule::ENTRY).to receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
 
       get :by_module, module_type:'Entry', v: '123'
@@ -111,7 +111,7 @@ describe QuickSearchController do
 
     it "should return a result for Vendor" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
-      vendor = FactoryBot(:company, :name=>'Company', vendor: true, system_code: "CODE")
+      vendor = create(:company, :name=>'Company', vendor: true, system_code: "CODE")
       get :by_module, module_type: "Company", v: 'Co'
       expect(response).to be_success
       r = JSON.parse response.body
@@ -123,12 +123,12 @@ describe QuickSearchController do
 
     it "should return a result for BrokerInvoice for an importer company" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
-      c = FactoryBot(:company, importer: true)
-      user = FactoryBot(:user, company: c, broker_invoice_view: true)
+      c = create(:company, importer: true)
+      user = create(:user, company: c, broker_invoice_view: true)
       sign_in_as user
 
-      entry = FactoryBot(:entry, broker_reference: "REFERENCE", importer: c)
-      broker_invoice = FactoryBot(:broker_invoice, entry: entry, invoice_number: "INV#")
+      entry = create(:entry, broker_reference: "REFERENCE", importer: c)
+      broker_invoice = create(:broker_invoice, entry: entry, invoice_number: "INV#")
 
       get :by_module, module_type: "BrokerInvoice", v: 'INV#'
       expect(response).to be_success
@@ -139,8 +139,8 @@ describe QuickSearchController do
     end
 
     it "returns extra fields" do
-      e = FactoryBot(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1")
-      e2 = FactoryBot(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2")
+      e = create(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1")
+      e2 = create(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2")
       allow(Entry).to receive(:can_view_importer?).and_return true
       allow_any_instance_of(CoreModule).to receive(:quicksearch_fields).and_return [:ent_location_of_goods]
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return [:ent_importer_tax_id]
@@ -153,8 +153,8 @@ describe QuickSearchController do
     end
 
     it "overrides extra fields if specified" do
-      e = FactoryBot(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1", carrier_code: "CARRIER 1")
-      e2 = FactoryBot(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2", carrier_code: "CARRIER 2")
+      e = create(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 1", carrier_code: "CARRIER 1")
+      e2 = create(:entry, location_of_goods: "Cleveland", importer_tax_id: "TAX_ID 2", carrier_code: "CARRIER 2")
       allow(Entry).to receive(:can_view_importer?).and_return true
       allow_any_instance_of(CoreModule).to receive(:quicksearch_fields).and_return [:ent_location_of_goods]
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return [:ent_importer_tax_id]
@@ -168,10 +168,10 @@ describe QuickSearchController do
 
     it "suppresses attachments and rule results if specified" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
-      ent = FactoryBot(:entry, :entry_number=>'12345678901')
+      ent = create(:entry, :entry_number=>'12345678901')
 
-      FactoryBot(:business_validation_result, state: "Pass", validatable: ent)
-      FactoryBot(:business_validation_result, state: "Fail", validatable: ent)
+      create(:business_validation_result, state: "Pass", validatable: ent)
+      create(:business_validation_result, state: "Fail", validatable: ent)
 
       get :by_module, module_type:'Entry', v: '123', hide_attachments: "true", hide_business_rules: "true"
       expect(response).to be_success

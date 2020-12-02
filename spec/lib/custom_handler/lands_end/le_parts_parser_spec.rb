@@ -1,18 +1,18 @@
 describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
   let (:row) {
-    ['style', 'suf ind', 'exc code', 'suf', 'FactoryBot', "FactoryBot Name", "Addr 1", "Addr 2", "Addr 3", "City", "", "", "ZZ", "", "1234567890", "5", "Comments"]
+    ['style', 'suf ind', 'exc code', 'suf', 'create', "create Name", "Addr 1", "Addr 2", "Addr 3", "City", "", "", "ZZ", "", "1234567890", "5", "Comments"]
   }
 
   before :each do
-    @importer = FactoryBot(:company, system_code: "LERETURNS", importer: true)
-    @us = FactoryBot(:country, iso_code: "US")
+    @importer = create(:company, system_code: "LERETURNS", importer: true)
+    @us = create(:country, iso_code: "US")
     @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_suffix_indicator, :prod_exception_code, :prod_suffix, :prod_comments]
   end
 
   context "process lines" do
     before :each do
-      @country = FactoryBot(:country, iso_code: row[12])
+      @country = create(:country, iso_code: row[12])
     end
 
     describe "process_product_line" do
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "updates an existing product" do
-        exist = FactoryBot(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer)
+        exist = create(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer)
         c = exist.classifications.create! country: @us
         c.tariff_records.create! hts_1: "9876354321"
 
@@ -65,8 +65,8 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "updates an existing product adding existing factory" do
-        exist = FactoryBot(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer)
-        factory = FactoryBot(:address, company: @importer, system_code: row[4])
+        exist = create(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer)
+        factory = create(:address, company: @importer, system_code: row[4])
 
         prod = subject.process_product_line row
         expect(prod.factories.first).to eq factory
@@ -77,8 +77,8 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "does not add an existing factory to a product" do
-        factory = FactoryBot(:address, company: @importer, system_code: row[4])
-        exist = FactoryBot(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer, factories: [factory])
+        factory = create(:address, company: @importer, system_code: row[4])
+        exist = create(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer, factories: [factory])
 
         prod = subject.process_product_line row
         expect(prod.factories.size).to eq 1

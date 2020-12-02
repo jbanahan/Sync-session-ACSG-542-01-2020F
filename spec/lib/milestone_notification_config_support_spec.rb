@@ -5,7 +5,7 @@ describe OpenChain::MilestoneNotificationConfigSupport do
       include OpenChain::MilestoneNotificationConfigSupport
     end.new
   end
-  let(:user) { FactoryBot(:sys_admin_user) }
+  let(:user) { create(:sys_admin_user) }
   let(:mf1) { ModelField.by_uid "ent_release_date" }
   let(:mf2) { ModelField.by_uid "ent_duty_due_date" }
   let(:mf3) { ModelField.by_uid "ent_cust_num"}

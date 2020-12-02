@@ -1,6 +1,6 @@
 describe Api::V1::DivisionsController do
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
     allow_api_access @u
   end
   describe "autocomplete" do

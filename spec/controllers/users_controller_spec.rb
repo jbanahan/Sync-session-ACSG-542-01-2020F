@@ -1,5 +1,5 @@
 describe UsersController do
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
 
   before do
     sign_in_as user
@@ -21,15 +21,15 @@ describe UsersController do
     end
 
     context "when copying an existing user" do
-      let! (:copied_user) { FactoryBot(:user) }
+      let! (:copied_user) { create(:user) }
 
       before do
         user.admin = true
       end
 
       it "adds existing user's group memberships" do
-        copied_user.groups << gr_assigned_1 = FactoryBot(:group)
-        copied_user.groups << gr_assigned_2 = FactoryBot(:group)
+        copied_user.groups << gr_assigned_1 = create(:group)
+        copied_user.groups << gr_assigned_2 = create(:group)
 
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id, password: "pw12345", password_confirmation: "pw12345",
                            group_ids: copied_user.group_ids}
@@ -42,8 +42,8 @@ describe UsersController do
       end
 
       it "adds existing user's search setups" do
-        ss_assigned_1 = FactoryBot(:search_setup, name: 'foo', user: copied_user)
-        ss_assigned_2 = FactoryBot(:search_setup, name: 'bar', user: copied_user)
+        ss_assigned_1 = create(:search_setup, name: 'foo', user: copied_user)
+        ss_assigned_2 = create(:search_setup, name: 'bar', user: copied_user)
 
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id, password: "pw12345", password_confirmation: "pw12345"}
         post :create, {company_id: copied_user.company.id, user: new_user_params, assigned_search_setup_ids: [ss_assigned_1.id, ss_assigned_2.id]}
@@ -56,8 +56,8 @@ describe UsersController do
       end
 
       it "adds existing user's custom reports" do
-        cr_assigned_1 = FactoryBot(:custom_report, name: 'foo', user: copied_user)
-        cr_assigned_2 = FactoryBot(:custom_report, name: 'bar', user: copied_user)
+        cr_assigned_1 = create(:custom_report, name: 'foo', user: copied_user)
+        cr_assigned_2 = create(:custom_report, name: 'bar', user: copied_user)
 
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id, password: "pw12345", password_confirmation: "pw12345"}
         post :create, {company_id: copied_user.company.id, user: new_user_params, assigned_custom_report_ids: [cr_assigned_1.id, cr_assigned_2.id]}
@@ -70,10 +70,10 @@ describe UsersController do
       end
 
       it "does not attempt to add search setups or custom reports if the the user fails to save" do
-        ss_assigned_1 = FactoryBot(:search_setup, name: 'foo', user: copied_user)
-        ss_assigned_2 = FactoryBot(:search_setup, name: 'bar', user: copied_user)
-        cr_assigned_1 = FactoryBot(:custom_report, name: 'foo', user: copied_user)
-        cr_assigned_2 = FactoryBot(:custom_report, name: 'bar', user: copied_user)
+        ss_assigned_1 = create(:search_setup, name: 'foo', user: copied_user)
+        ss_assigned_2 = create(:search_setup, name: 'bar', user: copied_user)
+        cr_assigned_1 = create(:custom_report, name: 'foo', user: copied_user)
+        cr_assigned_2 = create(:custom_report, name: 'bar', user: copied_user)
 
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id} # missing password/confirmation
         post :create, {company_id: copied_user.company.id, user: new_user_params, assigned_search_setup_ids: [ss_assigned_1.id, ss_assigned_2.id],
@@ -88,10 +88,10 @@ describe UsersController do
   end
 
   describe "show_create_from_template" do
-    let! (:t) { FactoryBot(:user_template) }
+    let! (:t) { create(:user_template) }
 
     it "onlies allow admins" do
-      u = FactoryBot(:user)
+      u = create(:user)
       sign_in_as u
       get :show_create_from_template, company_id: u.company_id
       expect(response).to be_redirect
@@ -99,7 +99,7 @@ describe UsersController do
     end
 
     it "assigns user templates" do
-      u = FactoryBot(:admin_user)
+      u = create(:admin_user)
       sign_in_as u
       get :show_create_from_template, company_id: u.company_id
       expect(response).to be_success
@@ -108,13 +108,13 @@ describe UsersController do
   end
 
   describe "create_from_template" do
-    let! (:t) { FactoryBot(:user_template) }
-    let (:c) { FactoryBot(:company) }
+    let! (:t) { create(:user_template) }
+    let (:c) { create(:company) }
 
     it "onlies allow admins" do
       expect(OpenChain::UserSupport::CreateUserFromTemplate).not_to receive(:transactional_user_creation)
       expect(OpenChain::UserSupport::CreateUserFromTemplate).not_to receive(:build_user)
-      u = FactoryBot(:user)
+      u = create(:user)
       sign_in_as u
       post :create_from_template, {
         company_id: c.id,
@@ -129,7 +129,7 @@ describe UsersController do
     end
 
     it "creates user based on template" do
-      u = FactoryBot(:admin_user)
+      u = create(:admin_user)
       sign_in_as u
 
       expect(OpenChain::UserSupport::CreateUserFromTemplate)
@@ -152,7 +152,7 @@ describe UsersController do
 
   describe "new" do
     context "with admin authorization" do
-      let! (:copied_user) { FactoryBot(:user) }
+      let! (:copied_user) { create(:user) }
 
       before do
         user.admin = true
@@ -160,9 +160,9 @@ describe UsersController do
 
       it "makes search setups belonging to a copied user available to the view" do
 
-        ss_assigned_1 = FactoryBot(:search_setup, name: 'bar', user: copied_user)
-        ss_assigned_2 = FactoryBot(:search_setup, name: 'foo', user: copied_user)
-        3.times { FactoryBot(:search_setup) }
+        ss_assigned_1 = create(:search_setup, name: 'bar', user: copied_user)
+        ss_assigned_2 = create(:search_setup, name: 'foo', user: copied_user)
+        3.times { create(:search_setup) }
 
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
@@ -174,9 +174,9 @@ describe UsersController do
 
       it "makes custom reports belonging to a copied user available to the view" do
 
-        cr_assigned_1 = FactoryBot(:custom_report, name: 'bar', user: copied_user)
-        cr_assigned_2 = FactoryBot(:custom_report, name: 'foo', user: copied_user)
-        3.times { FactoryBot(:custom_report) }
+        cr_assigned_1 = create(:custom_report, name: 'bar', user: copied_user)
+        cr_assigned_2 = create(:custom_report, name: 'foo', user: copied_user)
+        3.times { create(:custom_report) }
 
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
@@ -186,11 +186,11 @@ describe UsersController do
       end
 
       it "makes group memberships belonging to a copied user available to the view" do
-        copied_user.groups << gr_assigned_1 = FactoryBot(:group)
-        copied_user.groups << gr_assigned_2 = FactoryBot(:group)
-        gr_available_1 = FactoryBot(:group)
-        gr_available_2 = FactoryBot(:group)
-        gr_available_3 = FactoryBot(:group)
+        copied_user.groups << gr_assigned_1 = create(:group)
+        copied_user.groups << gr_assigned_2 = create(:group)
+        gr_available_1 = create(:group)
+        gr_available_2 = create(:group)
+        gr_available_3 = create(:group)
 
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
@@ -208,7 +208,7 @@ describe UsersController do
 
     context "without authorization" do
       it "redirects" do
-        copied_user = FactoryBot(:user)
+        copied_user = create(:user)
         get :new, company_id: copied_user.company.id, copy: copied_user.id
         expect(response).to be_redirect
       end
@@ -216,7 +216,7 @@ describe UsersController do
   end
 
   describe "update" do
-    let! (:update_user) { FactoryBot(:user, password: "blah") }
+    let! (:update_user) { create(:user, password: "blah") }
 
     before do
       user.admin = true
@@ -224,8 +224,8 @@ describe UsersController do
     end
 
     it "updates a user's info without password" do
-      update_user = FactoryBot(:user, password: "blah")
-      group = FactoryBot(:group)
+      update_user = create(:user, password: "blah")
+      group = create(:group)
       # Verify the password doesn't change if we don't include it in the params
       pwd = update_user.encrypted_password
       params = {company_id: update_user.company.id, id: update_user.id, user: {username: 'testing', group_ids: [group.id], password: "   ", password_confirmation: "  "}}
@@ -240,8 +240,8 @@ describe UsersController do
     end
 
     it "updates a user's password" do
-      update_user = FactoryBot(:user, password: "blah")
-      FactoryBot(:group)
+      update_user = create(:user, password: "blah")
+      create(:group)
       # Verify the password doesn't change if we don't include it in the params
       pwd = update_user.encrypted_password
       params = {company_id: update_user.company.id, id: update_user.id, user: {username: 'testing', password: "testing", password_confirmation: "testing"}}
@@ -258,7 +258,7 @@ describe UsersController do
 
   describe "event_subscriptions" do
     it "works with user id" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect_any_instance_of(User).to receive(:can_edit?).and_return true
       get :event_subscriptions, id: u.id, company_id: u.company_id
       expect(assigns(:user)).to eq u
@@ -423,10 +423,10 @@ describe UsersController do
 
   describe "move_to_new_company" do
 
-    let! (:user1) { FactoryBot(:user) }
-    let! (:user2) { FactoryBot(:user) }
-    let! (:user3) { FactoryBot(:user) }
-    let! (:company) { FactoryBot(:company) }
+    let! (:user1) { create(:user) }
+    let! (:user2) { create(:user) }
+    let! (:user3) { create(:user) }
+    let! (:company) { create(:company) }
 
     before do
       # So the :back redirect in the controller returns something
@@ -477,8 +477,8 @@ describe UsersController do
       user.admin = false
       user.save
 
-      company = FactoryBot.create(:company)
-      locked_user = FactoryBot(:user, username: "AugustusGloop", password_locked: true, company: company)
+      company = create(:company)
+      locked_user = create(:user, username: "AugustusGloop", password_locked: true, company: company)
 
       post :unlock_user, id: locked_user.id
 
@@ -490,8 +490,8 @@ describe UsersController do
       user.admin = true
       user.save
 
-      company = FactoryBot.create(:company)
-      locked_user = FactoryBot(:user, username: "AugustusGloop", password_locked: true, company: company, password_expired: true, failed_logins: 10)
+      company = create(:company)
+      locked_user = create(:user, username: "AugustusGloop", password_locked: true, company: company, password_expired: true, failed_logins: 10)
 
       post :unlock_user, id: locked_user.id
 
@@ -514,7 +514,7 @@ describe UsersController do
       user.admin = true
       user.save
 
-      run_as_user = FactoryBot(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false, password_reset: false)
+      run_as_user = create(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false, password_reset: false)
 
       now = Time.zone.parse("2017-12-01 12:00")
       Timecop.freeze(now) do
@@ -557,7 +557,7 @@ describe UsersController do
       user.admin = true
       user.save
 
-      FactoryBot(:user, username: "AugustusGloop", disabled: true, password_locked: false, password_expired: false,
+      create(:user, username: "AugustusGloop", disabled: true, password_locked: false, password_expired: false,
                      password_reset: false)
 
       post :enable_run_as, username: "AugustusGloop"
@@ -571,7 +571,7 @@ describe UsersController do
       user.admin = true
       user.save
 
-      FactoryBot(:user, username: "AugustusGloop", disabled: false, password_locked: true, password_expired: false, password_reset: false)
+      create(:user, username: "AugustusGloop", disabled: false, password_locked: true, password_expired: false, password_reset: false)
 
       post :enable_run_as, username: "AugustusGloop"
 
@@ -584,7 +584,7 @@ describe UsersController do
       user.admin = true
       user.save
 
-      FactoryBot(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: true,
+      create(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: true,
                      password_reset: false)
 
       post :enable_run_as, username: "AugustusGloop"
@@ -598,7 +598,7 @@ describe UsersController do
       user.admin = true
       user.save
 
-      FactoryBot(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false,
+      create(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false,
                      password_reset: true)
 
       post :enable_run_as, username: "AugustusGloop"
@@ -610,7 +610,7 @@ describe UsersController do
   end
 
   describe "disable_run_as" do
-    let (:run_as_user) { FactoryBot(:user, username: "RunAs") }
+    let (:run_as_user) { create(:user, username: "RunAs") }
 
     before do
       user.admin = true

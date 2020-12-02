@@ -105,9 +105,9 @@
       <PackingStatus>Not Packed</PackingStatus>
       <LabelStatus>NONE</LabelStatus>
       <PartyInfo>
-        <Type>FactoryBot</Type>
+        <Type>create</Type>
         <Code>None</Code>
-        <Name>FactoryBot Not Listed</Name>
+        <Name>create Not Listed</Name>
       </PartyInfo>
       <ShipWindow>
         <StartDate>2017-06-08T12:00:00.000-07:00</StartDate>
@@ -158,7 +158,7 @@
     <PickupType>None</PickupType>
     <PickupOrDropoffFlag>Pickup</PickupOrDropoffFlag>
     <AppointmentType>PickUp</AppointmentType>
-    <FactoryBotIsShipper>false</FactoryBotIsShipper>
+    <createIsShipper>false</createIsShipper>
     <ShippingDeclaration1 Label="Shipping Order Declaration 1">false</ShippingDeclaration1>
     <ShippingDeclaration2 Label="Shipping Order Declaration 2">false</ShippingDeclaration2>
     <ShippingDeclaration3 Label="Shipping Order Declaration 3">false</ShippingDeclaration3>

@@ -8,7 +8,7 @@ class ProductsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::NextPreviousSupport
   include BulkSendToTestSupport
-  before_filter :secure_classifications
+  before_action :secure_classifications
 
   def set_page_title
     @page_title ||= 'Product'

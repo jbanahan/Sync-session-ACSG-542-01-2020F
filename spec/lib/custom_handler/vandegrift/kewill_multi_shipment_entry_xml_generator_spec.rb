@@ -2,23 +2,23 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
 
   let (:xml_generator) { instance_double(OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator) }
   let (:xml_output) { instance_double(REXML::Document) }
-  let (:importer) { FactoryBot(:importer, system_code: "IMP") }
+  let (:importer) { create(:importer, system_code: "IMP") }
   let (:cdefs) { described_class.new.cdefs }
   let (:run_opts) { {"importer_system_code" => "IMP"} }
-  let (:us) { FactoryBot(:country, iso_code: "US")}
+  let (:us) { create(:country, iso_code: "US")}
 
   subject { described_class.new xml_generator }
 
   describe "find_generate_and_send" do
 
     let! (:unsynced_shipment) {
-      shipment = FactoryBot(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF2", country_import: us)
+      shipment = create(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF2", country_import: us)
       shipment.update_custom_value! cdefs[:shp_entry_prepared_date], Time.zone.now
       shipment
     }
 
     let! (:synced_shipment) {
-      shipment = FactoryBot(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF1", country_import: us)
+      shipment = create(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF1", country_import: us)
       shipment.update_custom_value! cdefs[:shp_entry_prepared_date], Time.zone.now
       shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: (Time.zone.now - 1.day)
       shipment
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
     end
 
     it "does not find synced shipments to combine if they are not US imports" do
-      ca = FactoryBot(:country, iso_code: "CA")
+      ca = create(:country, iso_code: "CA")
       synced_shipment.update_attributes! country_import_id: ca.id
 
       expect(xml_generator).to receive(:generate_xml_and_send) do |shipments, sync_records|
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
       end
 
       it "sends nothing if unsynced shipment is not for US" do
-        ca = FactoryBot(:country, iso_code: "CA")
+        ca = create(:country, iso_code: "CA")
         unsynced_shipment.update_attributes! country_import_id: ca.id
       end
     end

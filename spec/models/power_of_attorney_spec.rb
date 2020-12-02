@@ -1,6 +1,6 @@
 describe PowerOfAttorney do
-  let(:company) { FactoryBot(:company) }
-  let(:user) { FactoryBot(:user, company_id: company.id) }
+  let(:company) { create(:company) }
+  let(:user) { create(:user, company_id: company.id) }
 
   let(:attributes) do
     {company_id: company.id,

@@ -2,9 +2,9 @@ describe Product do
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   describe "product_importer" do
-    let(:imp) { FactoryBot(:company, system_code: "ACME")}
-    let(:entry) { FactoryBot(:entry, importer: imp) }
-    let!(:imp1) { FactoryBot(:company, system_code: "NOTACME")}
+    let(:imp) { create(:company, system_code: "ACME")}
+    let(:entry) { create(:entry, importer: imp) }
+    let!(:imp1) { create(:company, system_code: "NOTACME")}
     let(:rule_attr) {{}}
 
     it "returns the company associated with the entry with no importer system code specified" do
@@ -21,20 +21,20 @@ describe Product do
     before do
       @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
     end
-    let(:imp) { FactoryBot(:company, system_code: "ACME") }
-    let(:entry) { FactoryBot(:entry, importer: imp) }
-    let(:invoice_1) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "123456")}
-    let!(:line_1) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_1,
+    let(:imp) { create(:company, system_code: "ACME") }
+    let(:entry) { create(:entry, importer: imp) }
+    let(:invoice_1) { create(:commercial_invoice, entry: entry, invoice_number: "123456")}
+    let!(:line_1) { create(:commercial_invoice_line, commercial_invoice: invoice_1,
       line_number: 1, part_number: "attr_part_1") }
-    let(:invoice_2) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "654321") }
-    let!(:line_2) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_2,
+    let(:invoice_2) { create(:commercial_invoice, entry: entry, invoice_number: "654321") }
+    let!(:line_2) { create(:commercial_invoice_line, commercial_invoice: invoice_2,
       line_number: 1, part_number: "attr_part_2") }
-    let!(:line_2_2) { FactoryBot(:commercial_invoice_line,
+    let!(:line_2_2) { create(:commercial_invoice_line,
       commercial_invoice: invoice_2, line_number: 2, part_number: "attr_part_3") }
 
-    let!(:product_1) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_1")}
-    let!(:product_2) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_2")}
-    let!(:product_3) { FactoryBot(:product, importer: imp, unique_identifier: "attr_part_3")}
+    let!(:product_1) { create(:product, importer: imp, unique_identifier: "attr_part_1")}
+    let!(:product_2) { create(:product, importer: imp, unique_identifier: "attr_part_2")}
+    let!(:product_3) { create(:product, importer: imp, unique_identifier: "attr_part_3")}
 
     let!(:cval_fw_1) { CustomValue.create! custom_definition: @cdefs[:prod_part_number], customizable: product_1, string_value: "attr_part_1" }
     let!(:cval_fw_2) { CustomValue.create! custom_definition: @cdefs[:prod_part_number], customizable: product_2, string_value: "attr_part_2" }
@@ -83,11 +83,11 @@ describe Product do
       @product = Product.new
     end
     it "should include all classifications even if they are not in a region" do
-      region = FactoryBot(:region)
+      region = create(:region)
 
-      country_in_region = FactoryBot(:country)
+      country_in_region = create(:country)
       region.countries << country_in_region
-      country_not_in_region = FactoryBot(:country)
+      country_not_in_region = create(:country)
 
       classification_in_region = @product.classifications.build
       classification_in_region.country = country_in_region
@@ -101,8 +101,8 @@ describe Product do
 
     end
     it "should work with no regions" do
-      country_1 = FactoryBot(:country)
-      country_2 = FactoryBot(:country)
+      country_1 = create(:country)
+      country_2 = create(:country)
 
       expected_array = [country_1, country_2].collect do |cntry|
         cls = @product.classifications.build
@@ -115,10 +115,10 @@ describe Product do
       expect(@product.classifications_by_region).to eq expected
     end
     it "should include classifications multiple times if they are in multiple regions" do
-      region_1 = FactoryBot(:region)
-      region_2 = FactoryBot(:region)
+      region_1 = create(:region)
+      region_2 = create(:region)
 
-      country = FactoryBot(:country)
+      country = create(:country)
 
       [region_1, region_2].each {|r| r.countries << country}
 
@@ -130,10 +130,10 @@ describe Product do
       expect(@product.classifications_by_region).to eq expected
     end
     it "should include regions with no classifications" do
-      region_1 = FactoryBot(:region)
-      empty_region = FactoryBot(:region)
+      region_1 = create(:region)
+      empty_region = create(:region)
 
-      country = FactoryBot(:country)
+      country = create(:country)
 
       region_1.countries << country
 
@@ -148,8 +148,8 @@ describe Product do
 
   describe "wto6_changed_after?", :snapshot do
     before :each do
-      @u = FactoryBot(:user)
-      @tr = FactoryBot(:tariff_record, hts_1:'1234567890', hts_2:'9876543210', hts_3:'5555550000')
+      @u = create(:user)
+      @tr = create(:tariff_record, hts_1:'1234567890', hts_2:'9876543210', hts_3:'5555550000')
       @p = @tr.product
       @snapshot = @p.create_snapshot(@u)
       @snapshot.update!(created_at:1.month.ago)
@@ -160,12 +160,12 @@ describe Product do
       expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return true if record added with new wto6" do
-      FactoryBot(:tariff_record, hts_1:'6666660000', classification:FactoryBot(:classification, product:@p))
+      create(:tariff_record, hts_1:'6666660000', classification:create(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return false if record added with same wto6" do
-      FactoryBot(:tariff_record, hts_1:'1234560000', classification:FactoryBot(:classification, product:@p))
+      create(:tariff_record, hts_1:'1234560000', classification:create(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
@@ -184,28 +184,28 @@ describe Product do
     end
     it "should return true if change happened in same day" do
       @snapshot.update!(created_at:5.minutes.ago)
-      FactoryBot(:tariff_record, hts_1:'6666660000', classification:FactoryBot(:classification, product:@p))
+      create(:tariff_record, hts_1:'6666660000', classification:create(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(3.minutes.ago)).to be_truthy
     end
   end
   describe "validate_tariff_numbers" do
     it "should pass" do
-      ot = FactoryBot(:official_tariff)
+      ot = create(:official_tariff)
       p = Product.new
       p.classifications.build(country:ot.country).tariff_records.build(hts_1:ot.hts_code)
       p.validate_tariff_numbers
       expect(p.errors[:base]).to be_empty
     end
     it "should pass if not tariffs for country in OfficialTariff" do
-      c = FactoryBot(:country)
+      c = create(:country)
       p = Product.new
       p.classifications.build(country:c).tariff_records.build(hts_1:'123')
       p.validate_tariff_numbers
       expect(p.errors[:base]).to be_empty
     end
     it "should fail if tariff doesn't exist" do
-      ot = FactoryBot(:official_tariff)
+      ot = create(:official_tariff)
       p = Product.new
       p.classifications.build(country:ot.country).tariff_records.build(hts_1:"#{ot.hts_code}9")
       p.validate_tariff_numbers
@@ -214,14 +214,14 @@ describe Product do
   end
   context "saved classifications exist" do
     before :each do
-      @p = FactoryBot(:product)
+      @p = create(:product)
     end
     it "should return false for unsaved classification" do
       @p.classifications.build
       expect(@p.saved_classifications_exist?).to be_falsey
     end
     it "should return true for mix" do
-      FactoryBot(:classification, :product=>@p)
+      create(:classification, :product=>@p)
       @p.classifications.build
       expect(@p.saved_classifications_exist?).to be_truthy
     end
@@ -230,8 +230,8 @@ describe Product do
     describe "on_bill_of_materials?" do
       context "true tests" do
         before :each do
-          @parent = FactoryBot(:product)
-          @child = FactoryBot(:product)
+          @parent = create(:product)
+          @child = create(:product)
           @parent.bill_of_materials_children.create!(:child_product_id=>@child.id, :quantity=>3)
         end
         it "should be true if parent" do
@@ -242,7 +242,7 @@ describe Product do
         end
       end
       it "should be false if not parent or child" do
-        expect(FactoryBot(:product)).not_to be_on_bill_of_materials
+        expect(create(:product)).not_to be_on_bill_of_materials
       end
     end
   end
@@ -255,14 +255,14 @@ describe Product do
     }
 
     before :each do
-      @master_user = FactoryBot(:master_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
-      @importer_user = FactoryBot(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
-        @other_importer_user = FactoryBot(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
-      @linked_importer_user = FactoryBot(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+      @master_user = create(:master_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+      @importer_user = create(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+        @other_importer_user = create(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+      @linked_importer_user = create(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
       @importer_user.company.linked_companies << @linked_importer_user.company
-      @unassociated_product = FactoryBot(:product)
-      @importer_product = FactoryBot(:product, :importer=>@importer_user.company)
-      @linked_product = FactoryBot(:product, :importer=>@linked_importer_user.company)
+      @unassociated_product = create(:product)
+      @importer_product = create(:product, :importer=>@importer_user.company)
+      @linked_product = create(:product, :importer=>@linked_importer_user.company)
     end
     describe "item permissions" do
       it "should allow master company to handle any product" do
@@ -309,11 +309,11 @@ describe Product do
       end
       context "vendor" do
         before :each do
-          @vendor_user = FactoryBot(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+          @vendor_user = create(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
           @vendor_user.company.linked_companies << @linked_importer_user.company
-          @vendor_product = FactoryBot(:product)
+          @vendor_product = create(:product)
           @vendor_product.vendors << @vendor_user.company
-          @linked_vendor_user = FactoryBot(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+          @linked_vendor_user = create(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
           @linked_vendor_user.company.linked_companies << @vendor_user.company
         end
 
@@ -379,8 +379,8 @@ describe Product do
   describe 'linkable attachments' do
 
     it 'should have linkable attachments' do
-      product = FactoryBot(:product)
-      linkable = FactoryBot(:linkable_attachment, :model_field_uid=>'prod', :value=>'ordn')
+      product = create(:product)
+      linkable = create(:linkable_attachment, :model_field_uid=>'prod', :value=>'ordn')
       LinkedAttachment.create(:linkable_attachment_id=>linkable.id, :attachable=>product)
       product.reload
       expect(product.linkable_attachments.first).to eq(linkable)
@@ -389,8 +389,8 @@ describe Product do
 
   describe "missing_classification_country?" do
     it "should reject making classification records without a country of some sort" do
-      p = FactoryBot(:product)
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      p = create(:product)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
 
       params = {
         'id' => p.id,
@@ -407,9 +407,9 @@ describe Product do
     end
 
     it "should not reject if updating an existing classification" do
-      c = FactoryBot(:classification)
+      c = create(:classification)
       p = c.product
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'prod_uid' => "unique_identifier123",
@@ -426,9 +426,9 @@ describe Product do
     end
 
     it "should allow creating classification if country id used" do
-      country = FactoryBot(:country)
-      p = FactoryBot(:product)
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+      country = create(:country)
+      p = create(:product)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [
@@ -443,9 +443,9 @@ describe Product do
     end
 
     it "should allow creating classification if country iso used" do
-      country = FactoryBot(:country)
-      p = FactoryBot(:product)
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+      country = create(:country)
+      p = create(:product)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [
@@ -460,9 +460,9 @@ describe Product do
     end
 
     it "should allow creating classification if country name used" do
-      country = FactoryBot(:country)
-      p = FactoryBot(:product)
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:string)
+      country = create(:country)
+      p = create(:product)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [
@@ -480,12 +480,12 @@ describe Product do
   describe "hts_for_country" do
 
     let (:product) {
-      p = FactoryBot(:product)
-      c = FactoryBot(:classification, product: p, country: FactoryBot(:country, iso_code: "CA"))
+      p = create(:product)
+      c = create(:classification, product: p, country: create(:country, iso_code: "CA"))
       c.tariff_records.create! hts_1: "1234567890", hts_2: "987654321", hts_3: "12731289"
       c.tariff_records.create! hts_1: "1890231908"
 
-      c = FactoryBot(:classification, product: p, country: FactoryBot(:country, iso_code: "US"))
+      c = create(:classification, product: p, country: create(:country, iso_code: "US"))
       c.tariff_records.create! hts_1: "1289731280"
 
       p.reload
@@ -519,12 +519,12 @@ describe Product do
 
   describe "update_hts_for_country" do
     let (:product) {
-      p = FactoryBot(:product)
-      c = FactoryBot(:classification, product: p, country: FactoryBot(:country, iso_code: "CA"))
+      p = create(:product)
+      c = create(:classification, product: p, country: create(:country, iso_code: "CA"))
       c.tariff_records.create! hts_1: "1234567890", hts_2: "987654321", hts_3: "12731289"
       c.tariff_records.create! hts_1: "1890231908"
 
-      c = FactoryBot(:classification, product: p, country: FactoryBot(:country, iso_code: "US"))
+      c = create(:classification, product: p, country: create(:country, iso_code: "US"))
       c.tariff_records.create! hts_1: "1289731280"
 
       p.reload

@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
         :class_add_cvd, :class_fta_end, :class_fta_start, :class_fta_notes, :class_fta_name,
         :class_ior, :class_tariff_shift, :class_val_content, :class_ruling_number, :class_customs_desc_override
       ]
-      p = FactoryBot(:product, unique_identifier:'uid')
+      p = create(:product, unique_identifier:'uid')
       expected = {
         'prod_uid'=>'uid',
         'classifications'=>{}
@@ -80,11 +80,11 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
         p.update_custom_value!(cd, val)
         expected[k.to_s] = (cd.data_type=="boolean" ? val : val.to_s)
       end
-      us = FactoryBot(:country, iso_code:'US')
-      ca = FactoryBot(:country, iso_code:'CA')
+      us = create(:country, iso_code:'US')
+      ca = create(:country, iso_code:'CA')
 
-      us_class = FactoryBot(:classification, country:us, product:p)
-      ca_class = FactoryBot(:classification, country:ca, product:p)
+      us_class = create(:classification, country:us, product:p)
+      ca_class = create(:classification, country:ca, product:p)
 
       [us_class, ca_class].each do |cls|
         iso = cls.country.iso_code
@@ -105,13 +105,13 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
           expected['classifications'][iso][k.to_s] = (cd.data_type=="boolean" ? val : val.to_s)
         end
 
-        FactoryBot(:tariff_record, hts_1:'1234567890', line_number:1, classification:cls)
+        create(:tariff_record, hts_1:'1234567890', line_number:1, classification:cls)
         expected['classifications'][iso]['tariff_records'] = {}
         expected['classifications'][iso]['tariff_records']['1'] = {'hts_hts_1'=>'1234567890'.hts_format}
       end
 
       p.reload
-      es = p.create_snapshot(FactoryBot(:user))
+      es = p.create_snapshot(create(:user))
 
       fp = subject.fingerprint(es.snapshot_hash)
       fp_h = JSON.parse(fp)
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
 
     it 'should reset pepsi quaker approved by and approved date' do
       expect_any_instance_of(Product).to receive(:create_snapshot)
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value!(cdefs[:prod_quaker_validated_by], 100)
       p.update_custom_value!(cdefs[:prod_quaker_validated_date], Time.now)
 

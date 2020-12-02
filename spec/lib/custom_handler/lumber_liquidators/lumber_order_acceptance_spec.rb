@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
     }
 
     let! (:order) {
-      o = FactoryBot(:order, fob_point:'Shanghai', terms_of_sale:'FOB', ship_from:FactoryBot(:address))
+      o = create(:order, fob_point:'Shanghai', terms_of_sale:'FOB', ship_from:create(:address))
       o.update_custom_value! cdefs[:ord_country_of_origin], 'CN'
       o
     }
@@ -34,8 +34,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
   end
 
   describe "can_accept?" do
-    let (:user) { FactoryBot(:user) }
-    let (:order) { FactoryBot(:order)}
+    let (:user) { create(:user) }
+    let (:order) { create(:order)}
 
     it "returns true if user is an admin" do
       u = User.new

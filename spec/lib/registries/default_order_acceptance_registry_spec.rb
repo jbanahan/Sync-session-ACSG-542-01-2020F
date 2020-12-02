@@ -10,8 +10,8 @@ describe OpenChain::Registries::DefaultOrderAcceptanceRegistry do
   end
 
   describe "can_accept?" do
-    let (:user) { FactoryBot(:user) }
-    let (:order) { FactoryBot(:order)}
+    let (:user) { create(:user) }
+    let (:order) { create(:order)}
 
     it "returns true if user is an admin" do
       u = User.new

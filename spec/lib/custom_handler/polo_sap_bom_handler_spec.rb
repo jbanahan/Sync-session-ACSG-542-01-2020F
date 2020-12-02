@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10004', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'2', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       p = Product.find_by unique_identifier: 'parentuid'
       expect(p.bill_of_materials_children.size).to eq(2)
       r = p.bill_of_materials_children.to_a
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10006', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'2', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       p2 = Product.find_by(unique_identifier: 'parentuid2')
       expect(p2.bill_of_materials_children.size).to eq(2)
       expect(p2.child_products.first.unique_identifier).to eq('10005')
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10006', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'2', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       p = Product.find_by_unique_identifier 'parentuid'
       expect(p.bill_of_materials_children.size).to eq(2)
       r = p.bill_of_materials_children.to_a
@@ -115,8 +115,8 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       expect(r.last.quantity).to eq(2)
     end
     it "should associate existing parent / child" do
-      p = FactoryBot(:product, :unique_identifier=>'parentuid')
-      c = FactoryBot(:product, :unique_identifier=>'10003')
+      p = create(:product, :unique_identifier=>'parentuid')
+      c = create(:product, :unique_identifier=>'10003')
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'parentuid', 'datatype'=>'string'}, # parent material number
@@ -124,12 +124,12 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10003', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'1', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       expect(Product.count).to eq(2)
       expect(p.child_products.to_a).to eq([c])
     end
     it "should associate new child with existing parent" do
-      p = FactoryBot(:product, :unique_identifier=>'parentuid')
+      p = create(:product, :unique_identifier=>'parentuid')
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'parentuid', 'datatype'=>'string'}, # parent material number
@@ -137,15 +137,15 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10003', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'1', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       expect(Product.count).to eq(2)
       c = Product.find_by_unique_identifier '10003'
       expect(c).not_to be_nil
       expect(p.child_products.to_a).to eq([c])
     end
     it "should maintain existing parent when new parent added for child" do
-      old_parent = FactoryBot(:product)
-      c = FactoryBot(:product, :unique_identifier=>'10003')
+      old_parent = create(:product)
+      c = create(:product, :unique_identifier=>'10003')
       c.bill_of_materials_parents.create!(:parent_product_id=>old_parent.id, :quantity=>1)
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -154,14 +154,14 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10003', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'1', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       expect(Product.count).to eq(3)
       c.reload
       expect(c.bill_of_materials_parents.size).to eq(2)
     end
     it "should clear existing children (but shouldn't delete them) when parent is processed" do
-      p = FactoryBot(:product, :unique_identifier=>'parentuid')
-      old_c = FactoryBot(:product)
+      p = create(:product, :unique_identifier=>'parentuid')
+      old_c = create(:product)
       p.bill_of_materials_children.create!(:child_product_id=>old_c.id, :quantity=>1)
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
@@ -170,7 +170,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         4=>{'value'=>'10003', 'datatype'=>'number'}, # child material number
         6=>{'value'=>'1', 'datatype'=>'number'} # quantity
       )
-      described_class.new(@cf).process FactoryBot(:user)
+      described_class.new(@cf).process create(:user)
       expect(Product.count).to eq(3)
       old_c.reload
       expect(old_c.parent_products).to be_empty
@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       expect(p.child_products.first.unique_identifier).to eq('10003')
     end
     it "should write message to user account" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'parentuid', 'datatype'=>'string'}, # parent material number

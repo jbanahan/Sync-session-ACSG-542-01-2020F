@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser do
 
   let (:file_contents) { IO.read 'spec/fixtures/files/eddie_fenix_invoice.csv' }
-  let! (:eddie_parts) { FactoryBot(:importer, system_code: "EDDIE")}
+  let! (:eddie_parts) { create(:importer, system_code: "EDDIE")}
   let (:row_arrays) {
     CSV.parse file_contents, col_sep: "|", quote_char: "\007"
   }
@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
 
   describe "parse_file" do
     subject { described_class }
-    let! (:country) { FactoryBot(:country, iso_code: "CA")}
+    let! (:country) { create(:country, iso_code: "CA")}
 
     it "parse a file and sends invoices" do
       sent_invoices = []
@@ -28,12 +28,12 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
   end
 
   describe "process_ca_invoice_rows" do
-    let (:country) { FactoryBot(:country, iso_code: "CA")}
-    let! (:eddie) { with_fenix_id(FactoryBot(:importer), "855157855RM0001") }
+    let (:country) { create(:country, iso_code: "CA")}
+    let! (:eddie) { with_fenix_id(create(:importer), "855157855RM0001") }
     let! (:product) {
-      p = FactoryBot(:product, unique_identifier: "EDDIE-009-5123")
-      classification = FactoryBot(:classification, product: p, country: country)
-      tariff = FactoryBot(:tariff_record, hts_1: "9876543210", classification: classification)
+      p = create(:product, unique_identifier: "EDDIE-009-5123")
+      classification = create(:classification, product: p, country: country)
+      tariff = create(:tariff_record, hts_1: "9876543210", classification: classification)
       p
     }
 
@@ -123,11 +123,11 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
 
   describe "process_us_invoice_rows" do
 
-    let (:country) { FactoryBot(:country, iso_code: "US")}
+    let (:country) { create(:country, iso_code: "US")}
     let! (:product) {
-      p = FactoryBot(:product, unique_identifier: "EDDIE-009-5123")
-      classification = FactoryBot(:classification, product: p, country: country)
-      tariff = FactoryBot(:tariff_record, hts_1: "9876543210", classification: classification)
+      p = create(:product, unique_identifier: "EDDIE-009-5123")
+      classification = create(:classification, product: p, country: country)
+      tariff = create(:tariff_record, hts_1: "9876543210", classification: classification)
       p
     }
 

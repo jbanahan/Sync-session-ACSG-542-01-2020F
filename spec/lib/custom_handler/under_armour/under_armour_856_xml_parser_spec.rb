@@ -2,10 +2,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
   let (:data) { IO.read "spec/fixtures/files/ua_856.xml" }
   let (:xml) { REXML::Document.new(data) }
-  let (:user) { FactoryBot(:user) }
-  let! (:ua) { FactoryBot(:importer, system_code: "UNDAR")}
+  let (:user) { create(:user) }
+  let! (:ua) { create(:importer, system_code: "UNDAR")}
   let (:product) {
-    FactoryBot(:product, importer_id: ua.id, unique_identifier: "UNDAR-1242757-001")
+    create(:product, importer_id: ua.id, unique_identifier: "UNDAR-1242757-001")
   }
 
   let (:variant) {
@@ -13,8 +13,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
   }
 
   let (:order) {
-    order = FactoryBot(:order, importer_id: ua.id, order_number: "UNDAR-4200001938", customer_order_number: "4200001938")
-    line = FactoryBot(:order_line, order_id: order.id, product_id: product.id, variant_id: variant.id, sku: "1242757-001-XL")
+    order = create(:order, importer_id: ua.id, order_number: "UNDAR-4200001938", customer_order_number: "4200001938")
+    line = create(:order_line, order_id: order.id, product_id: product.id, variant_id: variant.id, sku: "1242757-001-XL")
     order
   }
 
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     end
 
     it "updates a shipment" do
-      shipment = FactoryBot(:shipment, importer: ua, reference: "UNDAR-ASN0001045")
+      shipment = create(:shipment, importer: ua, reference: "UNDAR-ASN0001045")
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       ms = stub_master_setup
       expect(ms).to receive(:custom_feature?).with("UA EEM Conversion").and_return true
 
-      shipment = FactoryBot(:shipment, importer: ua, reference: "UNDAR-ASN0001045")
+      shipment = create(:shipment, importer: ua, reference: "UNDAR-ASN0001045")
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 

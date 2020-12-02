@@ -1,22 +1,22 @@
 describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet do
   let(:rule) { described_class.new }
   let(:cdefs) { rule.cdefs }
-  let!(:us) { FactoryBot(:country, iso_code: "US")}
+  let!(:us) { create(:country, iso_code: "US")}
 
-  let(:prod) { FactoryBot(:product) }
+  let(:prod) { create(:product) }
   let(:classi) do
-    cl = FactoryBot(:classification, product: prod, country: us)
+    cl = create(:classification, product: prod, country: us)
     co = cl.country; co.name = "United States"; co.save!
     cl.update_custom_value! cdefs[:classification_type], "Multi"
     cl
   end
   let!(:tariff_1) do
-    t = FactoryBot(:tariff_record, classification: classi, line_number: 1)
+    t = create(:tariff_record, classification: classi, line_number: 1)
     t.update_custom_value! cdefs[:percent_of_value], 20
     t
   end
   let!(:tariff_2) do
-    t = FactoryBot(:tariff_record, classification: classi, line_number: 2)
+    t = create(:tariff_record, classification: classi, line_number: 2)
     t.update_custom_value! cdefs[:percent_of_value], 30
     t
   end

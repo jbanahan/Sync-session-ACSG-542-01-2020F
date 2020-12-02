@@ -1,5 +1,5 @@
 describe Api::V1::GroupsController do
-  let (:user) { FactoryBot(:user, company: FactoryBot(:company, name: "ACME", system_code: "AC")) }
+  let (:user) { create(:user, company: create(:company, name: "ACME", system_code: "AC")) }
   let (:group) { Group.create! system_code: "GROUP", name: "Name", description: "Description" }
 
   before :each do
@@ -74,7 +74,7 @@ describe Api::V1::GroupsController do
 
   describe "show_excluded_users" do
     before { group.users << user }
-    let!(:user2) {FactoryBot(:user, company: FactoryBot(:company, name: "Konvenientz", system_code: "KZ"))}
+    let!(:user2) {create(:user, company: create(:company, name: "Konvenientz", system_code: "KZ"))}
 
     it "returns excluded user fields" do
       get :show_excluded_users, id: group.id
@@ -131,7 +131,7 @@ describe Api::V1::GroupsController do
     end
 
     it "fails if object does not respond to groups" do
-      order = FactoryBot(:order)
+      order = create(:order)
       expect_any_instance_of(Order).to receive(:can_edit?).and_return true
       post :add_to_object, base_object_type: "orders", base_object_id: order.id, id: group.id
       expect(response).not_to be_success

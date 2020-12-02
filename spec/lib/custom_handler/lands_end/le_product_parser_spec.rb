@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
   let(:user) do
-    u = FactoryBot(:master_user)
+    u = create(:master_user)
     allow(u).to receive(:edit_products?).and_return true
     u
   end
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
   end
 
   describe "process" do
-    let(:user) { FactoryBot :user }
+    let(:user) { create :user }
 
     subject { described_class.new cf }
 
@@ -65,13 +65,13 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
   end
 
   describe "process_file" do
-    let(:header) { ["Style_Nbr", "Style_Desc", "SKU_Nbr", "Vendor_Nbr", "Vendor_Name", "FactoryBot_Nbr", "COO", "Exception_Cd", "Suffix_Ind", "Suffix_Desc", "HTS_Cd"] }
+    let(:header) { ["Style_Nbr", "Style_Desc", "SKU_Nbr", "Vendor_Nbr", "Vendor_Name", "create_Nbr", "COO", "Exception_Cd", "Suffix_Ind", "Suffix_Desc", "HTS_Cd"] }
     let(:row_1) { ["2196", "WM MATERNITY 3Q SLVE FLIP CUFF STRETCH BLOUSE", "4996236", "3676", "LF MENS GROUP LLC", "", "ID", "", "", "", "6206.30.3041"] }
     let(:row_2) { ["2197", "WM MATERNITY 3Q SLVE FLIP CUFF STRETCH BLOUSE", "4996236", "3676", "LF MENS GROUP LLC", "", "ID", "", "", "", "6206.30.3041"] }
     let(:row_3) { ["51356", "COED LS INTERLOCK POLO - LK", "3388954", "2997", "SEARS.", "", "CN", "", "", "", "6105.10.0030"] }
     let(:row_4) { ["51357", "COED LS INTERLOCK POLO - LK", "3388954", "2997", "SEARS.", "", "CN", "", "", "", "6105.10.0031"] }
-    let(:us) { FactoryBot(:country, iso_code: "US") }
-    let(:imp) { FactoryBot(:company, system_code: "LANDS1") }
+    let(:us) { create(:country, iso_code: "US") }
+    let(:imp) { create(:company, system_code: "LANDS1") }
     subject { described_class.new cf }
     let(:cdefs) { subject.cdefs }
     before { us; cf; imp }

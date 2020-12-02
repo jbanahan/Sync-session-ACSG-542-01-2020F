@@ -3,7 +3,7 @@ describe CustomReportBillingAllocationByValue do
   let! (:ms) { stub_master_setup }
 
   let (:user) {
-    u = FactoryBot(:master_user)
+    u = create(:master_user)
     u.company.update! broker: true
     allow(u).to receive(:view_broker_invoices?).and_return(true)
     u
@@ -38,7 +38,7 @@ describe CustomReportBillingAllocationByValue do
 
   describe "run" do
     before :each do
-      @ent = Entry.create!(:entry_number=>"12345678901", :broker_reference=>"4567890", :importer_id=>FactoryBot(:company).id)
+      @ent = Entry.create!(:entry_number=>"12345678901", :broker_reference=>"4567890", :importer_id=>create(:company).id)
       @ci_1 = @ent.commercial_invoices.create!(:invoice_number=>"ci_1")
       @cil_1_1 = @ci_1.commercial_invoice_lines.create!(:line_number=>"1", :value=>50)
       @cil_1_2 = @ci_1.commercial_invoice_lines.create!(:line_number=>"2", :value=>200)
@@ -205,7 +205,7 @@ describe CustomReportBillingAllocationByValue do
       expect(arrays[2][3]).to eq(20) # use the first tariff row
     end
     it "should secure entries for importers" do
-      imp_user = FactoryBot(:importer_user)
+      imp_user = create(:importer_user)
       @e2 = Entry.create!(:broker_reference=>'8888', :importer_id=>imp_user.company_id)
       @e2.broker_invoices.
         create!(:invoice_date=>0.seconds.ago, :invoice_total=>20, :invoice_number=>'e2').

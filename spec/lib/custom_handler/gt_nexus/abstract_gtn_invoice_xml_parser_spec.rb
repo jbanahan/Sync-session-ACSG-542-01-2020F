@@ -26,14 +26,14 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
     REXML::XPath.first(xml, "/Invoice/invoiceDetail")
   }
 
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:ca) { FactoryBot(:country, iso_code: "CA") }
-  let (:importer) { FactoryBot(:importer, system_code: "SYSTEM_CODE") }
-  let (:user) { FactoryBot(:user) }
-  let (:order) { FactoryBot(:order, order_number: "SYSTEM_CODE-RTTC216384", importer: importer)}
-  let (:product) { FactoryBot(:product, unique_identifier: "SYSTEM_CODE-7695775") }
-  let (:variant) { FactoryBot(:variant, product: product) }
-  let (:order_line) { FactoryBot(:order_line, order: order, line_number: 1, product: product, variant: variant) }
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:ca) { create(:country, iso_code: "CA") }
+  let (:importer) { create(:importer, system_code: "SYSTEM_CODE") }
+  let (:user) { create(:user) }
+  let (:order) { create(:order, order_number: "SYSTEM_CODE-RTTC216384", importer: importer)}
+  let (:product) { create(:product, unique_identifier: "SYSTEM_CODE-7695775") }
+  let (:variant) { create(:variant, product: product) }
+  let (:order_line) { create(:order_line, order: order, line_number: 1, product: product, variant: variant) }
   let (:inbound_file) { InboundFile.new }
 
   subject { MockGtnInvoiceXmlParser.new }
@@ -216,7 +216,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
       i = p.process_invoice invoice_xml, user, "bucket", "key"
 
       expect(i.vendor).to have_system_identifier("GTN Vendor", "vendor-code")
-      expect(i.factory).to have_system_identifier("GTN FactoryBot", "factory-code")
+      expect(i.factory).to have_system_identifier("GTN create", "factory-code")
       expect(i.importer.addresses.first.system_code).to eq "GTN Ship To-ship_to-code"
     end
 

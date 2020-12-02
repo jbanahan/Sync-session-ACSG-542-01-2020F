@@ -10,9 +10,9 @@ describe FakeController, type: :controller do # rubocop:disable RSpec/MultipleDe
     end
   end
 
-  let!(:ent1) { FactoryBot(:entry, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
-  let!(:ent2) { FactoryBot(:entry, last_file_bucket: 'the_bucket', last_file_path: 'bad_file') }
-  let(:user) { FactoryBot(:user) }
+  let!(:ent1) { create(:entry, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
+  let!(:ent2) { create(:entry, last_file_bucket: 'the_bucket', last_file_path: 'bad_file') }
+  let(:user) { create(:user) }
 
   before do
     allow_any_instance_of(Entry).to receive(:can_view?).and_return true
@@ -49,12 +49,12 @@ end
 
 describe OpenChain::SendFilesToTestSupport do
   describe described_class::MessageHandler do
-    let!(:user) { FactoryBot(:sys_admin_user) }
+    let!(:user) { create(:sys_admin_user) }
 
     context "object with integration file" do
       subject { described_class.new true }
 
-      let!(:prod) { FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
+      let!(:prod) { create(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
 
       before { allow(prod).to receive(:can_view?).and_return true }
 
@@ -74,7 +74,7 @@ describe OpenChain::SendFilesToTestSupport do
       end
 
       it "returns error message if object doesn't support this behavior" do
-        company = FactoryBot(:company)
+        company = create(:company)
 
         allow(company).to receive(:can_view?).and_return true
 
@@ -94,23 +94,23 @@ describe OpenChain::SendFilesToTestSupport do
       end
 
       it "returns multiple error messages" do
-        missing_prod_1 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'bad_file')
-        missing_prod_2 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'bad_file')
+        missing_prod_1 = create(:product, last_file_bucket: 'the_bucket', last_file_path: 'bad_file')
+        missing_prod_2 = create(:product, last_file_bucket: 'the_bucket', last_file_path: 'bad_file')
         allow(missing_prod_1).to receive(:can_view?).and_return true
         allow(missing_prod_2).to receive(:can_view?).and_return true
 
-        missing_path_prod_1 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: nil)
-        missing_path_prod_2 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: nil)
+        missing_path_prod_1 = create(:product, last_file_bucket: 'the_bucket', last_file_path: nil)
+        missing_path_prod_2 = create(:product, last_file_bucket: 'the_bucket', last_file_path: nil)
         allow(missing_path_prod_1).to receive(:can_view?).and_return true
         allow(missing_path_prod_2).to receive(:can_view?).and_return true
 
-        wrong_type_1 = FactoryBot(:company)
-        wrong_type_2 = FactoryBot(:company)
+        wrong_type_1 = create(:company)
+        wrong_type_2 = create(:company)
         allow(wrong_type_1).to receive(:can_view?).and_return true
         allow(wrong_type_2).to receive(:can_view?).and_return true
 
-        no_permission_1 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path')
-        no_permission_2 = FactoryBot(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path')
+        no_permission_1 = create(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path')
+        no_permission_2 = create(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path')
         allow(no_permission_1).to receive(:can_view?).and_return false
         allow(no_permission_2).to receive(:can_view?).and_return false
 
@@ -133,7 +133,7 @@ describe OpenChain::SendFilesToTestSupport do
     end
 
     context "object with standard file" do
-      let(:inbound) { FactoryBot(:inbound_file, s3_bucket: "bucket", s3_path: "path") }
+      let(:inbound) { create(:inbound_file, s3_bucket: "bucket", s3_path: "path") }
 
       before { allow(inbound).to receive(:can_view?).and_return true }
 

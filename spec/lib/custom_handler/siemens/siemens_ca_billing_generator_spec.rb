@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       before do
 
         tax_ids.split(', ').each do |id|
-          entries << FactoryBot(:entry, importer: with_fenix_id(FactoryBot(:importer), id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
+          entries << create(:entry, importer: with_fenix_id(create(:importer), id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
         end
       end
 
@@ -59,13 +59,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     end
 
     it "only returns siemens entries" do
-      FactoryBot(:entry, importer: with_fenix_id(FactoryBot(:importer), "another_id"), entry_number: "entry_number", k84_receive_date: Time.zone.now)
+      create(:entry, importer: with_fenix_id(create(:importer), "another_id"), entry_number: "entry_number", k84_receive_date: Time.zone.now)
       expect(subject.find_entries.size).to eq 0
     end
   end
 
   describe "run_schedulable" do
-    let!(:user) { FactoryBot(:user, email: "me@there.com") }
+    let!(:user) { create(:user, email: "me@there.com") }
 
     before do
       KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
@@ -74,9 +74,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     end
 
     it "finds entries and generate and send them" do
-      t = FactoryBot(:commercial_invoice_tariff)
+      t = create(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
-      e.update! importer: with_fenix_id(FactoryBot(:importer), "868220450RM0001"), k84_receive_date: Time.zone.now,
+      e.update! importer: with_fenix_id(create(:importer), "868220450RM0001"), k84_receive_date: Time.zone.now,
                 entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
@@ -417,7 +417,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
     describe "generate_and_send" do
       context "transactional fixtures" do
-        let(:user) { FactoryBot(:user, email: "me@there.com") }
+        let(:user) { create(:user, email: "me@there.com") }
         let!(:counter) { KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}' }
 
         before do

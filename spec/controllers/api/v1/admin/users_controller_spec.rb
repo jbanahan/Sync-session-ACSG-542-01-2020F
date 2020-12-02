@@ -1,8 +1,8 @@
 describe Api::V1::Admin::UsersController do
   describe "add_templates" do
     it "creates new search setups based on the template" do
-      allow_api_access FactoryBot(:admin_user)
-      u = FactoryBot(:user)
+      allow_api_access create(:admin_user)
+      u = create(:user)
       st = SearchTemplate.create!(name: 'x', search_json: "{'a':'b'}")
       expect_any_instance_of(SearchTemplate).to receive(:add_to_user!).with(u)
       post :add_templates, id: u.id, template_ids: [st.id.to_s]
@@ -11,8 +11,8 @@ describe Api::V1::Admin::UsersController do
   end
 
   describe "change_user_password" do
-    let (:admin_user) { FactoryBot(:admin_user) }
-    let!(:user) { u = FactoryBot(:user); u.update_user_password("TEST123", "TEST123"); u}
+    let (:admin_user) { create(:admin_user) }
+    let!(:user) { u = create(:user); u.update_user_password("TEST123", "TEST123"); u}
 
     before do
       allow_api_access(admin_user)

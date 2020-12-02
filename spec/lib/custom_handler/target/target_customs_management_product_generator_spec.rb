@@ -1,10 +1,10 @@
 describe OpenChain::CustomHandler::Target::TargetCustomsManagementProductGenerator do
 
   describe "build_data" do
-    let (:us) { FactoryBot(:country, iso_code: "US") }
+    let (:us) { create(:country, iso_code: "US") }
     let (:cdefs) { subject.send(:cdefs) }
     let (:product) do
-      p = FactoryBot(:product, unique_identifier: "12345-67", name: "DESCRIPTION")
+      p = create(:product, unique_identifier: "12345-67", name: "DESCRIPTION")
       p.update_custom_value! cdefs[:prod_tsca], true
 
       c = p.classifications.create! country: us
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsManagementProductGenerat
   end
 
   describe "importer" do
-    let!(:target) { with_customs_management_id(FactoryBot(:importer), "TARGEN") }
+    let!(:target) { with_customs_management_id(create(:importer), "TARGEN") }
 
     context "with default customer number" do
       let (:importer_number) { "TARGEN" }

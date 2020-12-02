@@ -9,10 +9,10 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
   end
 
   let (:cdefs) { subject.cdefs }
-  let (:product) { FactoryBot(:product, unique_identifier: "uid") }
+  let (:product) { create(:product, unique_identifier: "uid") }
   let (:exported_product) {
     product.update_column(:updated_at, Time.zone.now - 7.days)
-    c = product.classifications.create! country_id: FactoryBot(:country, iso_code: "US").id
+    c = product.classifications.create! country_id: create(:country, iso_code: "US").id
     c.tariff_records.create hts_1: "9999999999"
 
     product.update_custom_value! cdefs[:ax_export_status], "EXPORTED"
@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
   end
 
   describe "preprocess_row" do
-    let (:us) { FactoryBot(:country, iso_code: "US") }
+    let (:us) { create(:country, iso_code: "US") }
 
     let (:full_product) {
       classification = product.classifications.create! country_id: us.id
@@ -298,7 +298,7 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
     end
 
     it "generates multiple rows per product, one per classification" do
-      ca = FactoryBot(:country, iso_code: "CA")
+      ca = create(:country, iso_code: "CA")
       c = full_product.classifications.create country_id: ca.id
       t = c.tariff_records.create! hts_1: "1234567890"
 
@@ -357,7 +357,7 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
 
     context "with taiwan classification" do
 
-      let (:taiwan) { FactoryBot(:country, iso_code: "TW") }
+      let (:taiwan) { create(:country, iso_code: "TW") }
       let! (:official_tariff) { OfficialTariff.create! hts_code: "123456789012", import_regulations: "A B MP1 C", country_id: taiwan.id }
 
       before :each do

@@ -5,8 +5,8 @@ describe OpenChain::Report::AllianceWebtrackingMonitorReport do
   describe "process_alliance_query_details" do
 
     before :each do
-      @existing_entry = FactoryBot(:entry, broker_reference: "existing", source_system: "Alliance", last_exported_from_source: Time.zone.parse("2018-04-01"))
-      @existing_invoice = FactoryBot(:broker_invoice, entry: @existing_entry)
+      @existing_entry = create(:entry, broker_reference: "existing", source_system: "Alliance", last_exported_from_source: Time.zone.parse("2018-04-01"))
+      @existing_invoice = create(:broker_invoice, entry: @existing_entry)
     end
 
     it "parses query results and emails report about missing file numbers" do

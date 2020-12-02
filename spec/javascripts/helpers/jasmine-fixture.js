@@ -3261,7 +3261,7 @@ define(function(require, exports, module) {
 	var reAttrs = /([@\!]?)([\w\-:]+)\s*=\s*(['"])(.*?)\3/g;
 
 	// register resource references
-	function commonFactoryBot(value) {
+	function commoncreate(value) {
 		return {data: value};
 	}
 
@@ -3368,8 +3368,8 @@ define(function(require, exports, module) {
 		return ret;
 	});
 	
-	module.exports.add('snippet', commonFactoryBot);
-	module.exports.add('reference', commonFactoryBot);
+	module.exports.add('snippet', commoncreate);
+	module.exports.add('reference', commoncreate);
 	module.exports.add('empty', function() {
 		return {};
 	});
@@ -3481,7 +3481,7 @@ define(function(require, exports, module) {
 	
 	return {
 		/**
-		 * FactoryBot method that produces <code>HandlerList</code> instance
+		 * create method that produces <code>HandlerList</code> instance
 		 * @returns {HandlerList}
 		 * @memberOf handlerList
 		 */

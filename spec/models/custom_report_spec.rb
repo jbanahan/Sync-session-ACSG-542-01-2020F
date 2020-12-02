@@ -11,8 +11,8 @@ describe CustomReport do
   let! (:master_setup) { stub_master_setup }
 
   describe "give_to" do
-    let(:user) { FactoryBot(:user, first_name: "A", last_name: "B") }
-    let(:user2) { FactoryBot(:user) }
+    let(:user) { create(:user, first_name: "A", last_name: "B") }
+    let(:user2) { create(:user) }
 
     let(:custom_report) do
       CustomReportEntryInvoiceBreakdown.create!(name: "ABC", user: user, include_links: true, include_rule_links: true)
@@ -40,7 +40,7 @@ describe CustomReport do
   end
 
   describe "deep_copy" do
-    let(:user) { FactoryBot(:user) }
+    let(:user) { create(:user) }
 
     let(:custom_report) do
       CustomReportEntryInvoiceBreakdown.create!(name: "ABC", user: user, include_links: true, include_rule_links: true)
@@ -109,7 +109,7 @@ describe CustomReport do
     end
 
     it 'outputs xls to tmp file' do
-      user = FactoryBot(:user)
+      user = create(:user)
       report.name = "my&report.xls"
       temp, * = report.xls_file user
       expect(temp.path).to match(/my_report.xls/) # swaps out illegal characters
@@ -128,7 +128,7 @@ describe CustomReport do
 
     it 'outputs to given xls file' do
       Tempfile.open('custom_report_spec') do |f|
-        t, * = report.xls_file FactoryBot(:user), file: f
+        t, * = report.xls_file create(:user), file: f
         expect(t.path).to eq(f.path)
         sheet = Spreadsheet.open(f.path).worksheet(0)
         expect(sheet.row(0)[0]).to eq("MY HEADING")
@@ -136,7 +136,7 @@ describe CustomReport do
     end
 
     it 'outputs to array of arrays' do
-      r = report.to_arrays FactoryBot(:user)
+      r = report.to_arrays create(:user)
       expect(r[0][0]).to eq("MY HEADING")
       expect(r[1][0]).to eq("my data")
       expect(r[1][1]).to eq(7)
@@ -151,7 +151,7 @@ describe CustomReport do
 
     it 'outputs csv' do
       report.name = "my/report.csv"
-      temp, * = report.csv_file FactoryBot(:user)
+      temp, * = report.csv_file create(:user)
       expect(temp.path).to match(/my_report.csv/) # swaps out illegal characters
       r = CSV.read temp.path
       expect(r[0][0]).to eq("MY HEADING")
@@ -172,20 +172,20 @@ describe CustomReport do
       end
 
       it "does not truncate time from datetime in array-based output" do
-        r = report.to_arrays FactoryBot(:user)
+        r = report.to_arrays create(:user)
         expect(r[1][3]).to eq Time.zone.local(2014, 1, 1)
       end
 
       it "truncates time from datetime in xls-based output" do
         temp = Tempfile.new('custom_report_spec')
-        t, * = report.xls_file FactoryBot(:user), file: temp
+        t, * = report.xls_file create(:user), file: temp
         expect(t.path).to eq(temp.path)
         sheet = Spreadsheet.open(temp.path).worksheet(0)
         expect(sheet.row(1).format(3).number_format).to eq "YYYY-MM-DD"
       end
 
       it "truncates time from datetime in csv output" do
-        temp, * = report.csv_file FactoryBot(:user)
+        temp, * = report.csv_file create(:user)
         expect(temp.path).to match(/csv/)
         r = CSV.read temp.path
         expect(r[1][3]).to eq(Time.zone.local(2014, 1, 1).strftime("%Y-%m-%d"))
@@ -195,7 +195,7 @@ describe CustomReport do
   end
 
   describe "validate_access" do
-    let(:user) { FactoryBot(:user) }
+    let(:user) { create(:user) }
 
     it "raises an error if the can_view? class method is false" do
       CustomReportSpecImpl.view = false
@@ -222,20 +222,20 @@ describe CustomReport do
     end
 
     it "adds all passed in values to the listener row specified as headers" do
-      r = report.to_arrays FactoryBot(:user)
+      r = report.to_arrays create(:user)
       expect(r[0]).to eq ["Header1", ModelField.by_uid(:prod_uid).label, ModelField.by_uid(:prod_uid).label]
     end
 
     it "adds web links as first columns when include_links/include_rule_links is true" do
       report.include_links = true
       report.include_rule_links = true
-      r = report.to_arrays FactoryBot(:user)
+      r = report.to_arrays create(:user)
       expect(r[0]).to eq ["Web Links", "Business Rule Links", "Header1", ModelField.by_uid(:prod_uid).label, ModelField.by_uid(:prod_uid).label]
     end
 
     it "prints disabled for fields the user can't view" do
       uid = ModelField.by_uid(:prod_uid)
-      u = FactoryBot(:user)
+      u = create(:user)
       allow(uid).to receive(:can_view?).with(u).and_return false
 
       r = report.to_arrays u
@@ -244,8 +244,8 @@ describe CustomReport do
   end
 
   describe "write_row" do
-    let!(:product) { FactoryBot(:product) }
-    let(:user) { FactoryBot(:user, product_view: true) }
+    let!(:product) { create(:product) }
+    let(:user) { create(:user, product_view: true) }
     let(:report) do
       rpt = described_class.new
 
@@ -300,7 +300,7 @@ describe CustomReport do
       r
     end
 
-    let (:user) { FactoryBot(:user, product_view: true) }
+    let (:user) { create(:user, product_view: true) }
 
     it "generates a report query base" do
       query = subject.send(:setup_report_query, Product, user, nil).to_sql
@@ -334,7 +334,7 @@ describe CustomReport do
 
     it "adds a new tab when told to" do
       Tempfile.open('custom_report_spec') do |f|
-        subject.xls_file FactoryBot(:user), file: f
+        subject.xls_file create(:user), file: f
         sheet = Spreadsheet.open(f.path).worksheet("First")
         expect(sheet.row(0)[0]).to eq("Data1")
         sheet = Spreadsheet.open(f.path).worksheet("Second")

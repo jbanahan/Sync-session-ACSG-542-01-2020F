@@ -1,6 +1,6 @@
 describe TradeLanesController do
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
     allow_any_instance_of(User).to receive(:view_trade_lanes?).and_return true
     sign_in_as @u
   end

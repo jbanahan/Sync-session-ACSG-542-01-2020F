@@ -1,7 +1,7 @@
 describe OpenChain::Report::PumaDivisionQuarterBreakdown do
 
   describe "permission?" do
-    let (:u) { FactoryBot(:user) }
+    let (:u) { create(:user) }
     let (:group) { Group.use_system_group 'puma_division_quarter_breakdown', create: true }
 
     it "allows access for users in group" do
@@ -16,15 +16,15 @@ describe OpenChain::Report::PumaDivisionQuarterBreakdown do
   end
 
   describe "run_report" do
-    let (:u) { FactoryBot(:user) }
-    let(:importer_cgolf) { with_customs_management_id(FactoryBot(:company, name:'CGOLF'), "CGOLF") }
-    let(:importer_puma_us) { with_customs_management_id(FactoryBot(:company, name:'Puma USA'), "PUMA") }
-    let(:importer_puma_ca) { with_fenix_id(FactoryBot(:company, name:'Puma Canada'), "892892654RM0001") }
+    let (:u) { create(:user) }
+    let(:importer_cgolf) { with_customs_management_id(create(:company, name:'CGOLF'), "CGOLF") }
+    let(:importer_puma_us) { with_customs_management_id(create(:company, name:'Puma USA'), "PUMA") }
+    let(:importer_puma_ca) { with_fenix_id(create(:company, name:'Puma Canada'), "892892654RM0001") }
 
     after { @temp.close if @temp }
 
     def make_entry importer, release_date, counter
-      FactoryBot(:entry, importer_id:importer.id, release_date:release_date, entered_value:(123.45+counter),
+      create(:entry, importer_id:importer.id, release_date:release_date, entered_value:(123.45+counter),
               total_invoiced_value:(234.56+counter), total_duty:(45.67+counter), cotton_fee:(56.78+counter),
               hmf:(67.89+counter), mpf:(78.90+counter), total_gst:(89.01+counter))
     end
@@ -51,7 +51,7 @@ describe OpenChain::Report::PumaDivisionQuarterBreakdown do
       ent_2015_Dec = make_entry importer_puma_us, make_utc_date(2015, 12, 13), 18
 
       # Belongs to another importer.  Should be ignored.
-      importer_not_puma = FactoryBot(:company, name:'Crudco Bitter Rival')
+      importer_not_puma = create(:company, name:'Crudco Bitter Rival')
       ent_not_puma_2016_Feb = make_entry importer_not_puma, make_utc_date(2016, 2, 11), 19
 
       @temp = described_class.run_report(u, {'year' => '2016'})

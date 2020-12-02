@@ -2,18 +2,18 @@ describe ScheduledReportsController do
 
   let! (:ms) { stub_master_setup }
   let! (:user) {
-    u = FactoryBot(:master_user, :email=>'a@example.com')
+    u = create(:master_user, :email=>'a@example.com')
     sign_in_as(u)
     u
   }
 
   describe "index" do
     let! (:search_setup) {
-      FactoryBot(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "A")
+      create(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "A")
     }
 
     let! (:search_setup_2) {
-      search_setup_2 = FactoryBot(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "B")
+      search_setup_2 = create(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "B")
       search_setup_2.search_criterions.build model_field_uid: "bi_brok_ref", operator: "eq", value: "1"
       search_setup_2.search_schedules.build :email_addresses => "me@there.com"
       search_setup_2.search_runs.build :last_accessed => Time.zone.now
@@ -76,7 +76,7 @@ describe ScheduledReportsController do
 
     it "should error if non-admin user attempts to access another user's reports" do
       user.update! :admin => false, :sys_admin => false
-      another_user = FactoryBot(:user)
+      another_user = create(:user)
 
       get :index, :user_id => another_user.id
       expect(response).to be_redirect
@@ -86,8 +86,8 @@ describe ScheduledReportsController do
 
   describe "give_reports" do
 
-    let (:another_user) { FactoryBot(:user) }
-    let (:search_setup) { FactoryBot(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "A") }
+    let (:another_user) { create(:user) }
+    let (:search_setup) { create(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "A") }
     let (:custom_report) {
       custom_report = CustomReport.new :user => user, :name => "A Custom Report"
       custom_report.search_criterions.build model_field_uid: "bi_brok_ref", operator: "eq", value: "1"

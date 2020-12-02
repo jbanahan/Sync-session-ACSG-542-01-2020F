@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
   describe "sync" do
 
     before :each do
-      @p1 = FactoryBot(:product, :name=>'x')
+      @p1 = create(:product, :name=>'x')
     end
 
     it "resets synced product ids" do
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
       it "notifies preprocess_rows when the final row of the result set is being processed" do
         # Add a second product so we can ensure the first call to preprocess_row receives false as last_row and the second true
-        p2 = FactoryBot(:product, name: 'y')
+        p2 = create(:product, name: 'y')
 
         # don't care about the actual row values for this test, only the last result opt
         expect(subject).to receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: false, product_id: @p1.id).and_return []
@@ -209,8 +209,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   describe "sync_csv" do
     before :each do
-      @p1 = FactoryBot(:product, :name=>'x')
-      @p2 = FactoryBot(:product, :name=>'y')
+      @p1 = create(:product, :name=>'x')
+      @p2 = create(:product, :name=>'y')
     end
     after :each do
       @tmp.unlink if @tmp
@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
   describe "sync_fixed_position" do
     before :each do
       @t = 0.seconds.ago
-      @p1 = FactoryBot(:product, :name=>'ABCDEFG', :created_at=>@t)
+      @p1 = create(:product, :name=>'ABCDEFG', :created_at=>@t)
       @b = subject
       def @b.query
         'select id, name, created_at, 5 from products'
@@ -284,13 +284,13 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
   describe "sync_xls" do
     before :each do
-      @p1 = FactoryBot(:product, :name=>'x')
+      @p1 = create(:product, :name=>'x')
     end
     after :each do
       @tmp.unlink if @tmp
     end
     it "should create workbook from results" do
-      p2 = FactoryBot(:product, :name=>'y')
+      p2 = create(:product, :name=>'y')
       @tmp = subject.sync_xls
       sheet = Spreadsheet.open(@tmp).worksheet(0)
       [@p1, p2].each_with_index do |p, i|
@@ -309,12 +309,12 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   describe "cd_s" do
     it "should generate a subselect with an alias" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       subselect = subject.cd_s cd.id
       expect(subselect).to eq("(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`")
     end
     it "should generate a subselect without an alias" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       subselect = subject.cd_s cd.id, suppress_alias: true
       expect(subselect).to eq("(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id})")
     end
@@ -327,7 +327,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(subselect).to eq("(SELECT \"\")")
     end
     it "should cache the custom defintion lookup" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       gen = subject
       subselect = gen.cd_s cd.id
       cd.delete
@@ -337,19 +337,19 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
 
     it "should allow disabling custom definition select" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       subselect = subject.cd_s cd.id, suppress_data: true
       expect(subselect).to eq("NULL as `#{cd.label}`")
     end
 
     it "receives a custom definition and uses that instead of an id value" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       subselect = subject.cd_s cd
       expect(subselect).to eq "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
     end
 
     it "allows passing alternate alias" do
-      cd = FactoryBot(:custom_definition, :module_type=>'Product')
+      cd = create(:custom_definition, :module_type=>'Product')
       subselect = subject.cd_s cd, query_alias: "Testing"
       expect(subselect).to eq "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `Testing`"
     end
@@ -359,9 +359,9 @@ describe OpenChain::CustomHandler::ProductGenerator do
     it "replaces old sync records, incorporates values of #autoconfirm and #has_fingerprint into record insertions", :without_partial_double_verification do
       inst = subject
       allow(inst).to receive(:sync_code).and_return('SYNC_CODE')
-      prod_1 = FactoryBot(:product)
-      prod_2 = FactoryBot(:product)
-      prod_3 = FactoryBot(:product)
+      prod_1 = create(:product)
+      prod_2 = create(:product)
+      prod_3 = create(:product)
       SyncRecord.create!(syncable: prod_1, trading_partner: inst.sync_code, fingerprint: "finger_1_old", created_at: DateTime.now-2.day)
       SyncRecord.create!(syncable: prod_2, trading_partner: inst.sync_code, fingerprint: "finger_2_old", created_at: DateTime.now-2.day)
       SyncRecord.create!(syncable: prod_3, trading_partner: inst.sync_code, fingerprint: "finger_3_old", created_at: DateTime.now-2.day)
@@ -414,7 +414,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   describe "set_ftp_session_for_synced_products" do
     let (:product) {
-      p = FactoryBot(:product)
+      p = create(:product)
       p.sync_records.create! trading_partner: "TEST"
       p
     }

@@ -2,14 +2,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
 
   describe "run" do
     let (:entry) {
-      e = FactoryBot(:entry, broker_reference: "REF", entry_number: "EN", master_bills_of_lading: "A\n B", house_bills_of_lading: "A\n B", customer_number: "J0000", arrival_date: Time.zone.parse("2016-04-01 04:00"), release_date: Time.zone.now)
-      inv = FactoryBot(:commercial_invoice, entry: e)
-      inv_line = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, po_number: "PO", part_number: "PART", country_origin_code: "CN", quantity: 20)
+      e = create(:entry, broker_reference: "REF", entry_number: "EN", master_bills_of_lading: "A\n B", house_bills_of_lading: "A\n B", customer_number: "J0000", arrival_date: Time.zone.parse("2016-04-01 04:00"), release_date: Time.zone.now)
+      inv = create(:commercial_invoice, entry: e)
+      inv_line = create(:commercial_invoice_line, commercial_invoice: inv, po_number: "PO", part_number: "PART", country_origin_code: "CN", quantity: 20)
       e
     }
 
     let (:user) {
-      FactoryBot(:user, time_zone: "America/New_York")
+      create(:user, time_zone: "America/New_York")
     }
 
     after :each do
@@ -58,8 +58,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
   end
 
   describe "permission?" do
-    let (:jcrew) { with_customs_management_id(FactoryBot(:company), "JCREW")}
-    let (:user) { FactoryBot(:user, company: jcrew) }
+    let (:jcrew) { with_customs_management_id(create(:company), "JCREW")}
+    let (:user) { create(:user, company: jcrew) }
 
     it "allows users with entry view and can view company to see reporting" do
       expect(user).to receive(:view_entries?).and_return true
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
 
     it "prevents users who can't see crew company" do
       allow(user).to receive(:view_entries?).and_return true
-      expect(described_class.permission? FactoryBot(:user)).to be_falsey
+      expect(described_class.permission? create(:user)).to be_falsey
     end
   end
 end

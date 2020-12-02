@@ -25,27 +25,27 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
     end
 
     let (:entry) {
-      entry = FactoryBot(:entry, master_bills_of_lading: "MB1\nMB2", house_bills_of_lading: "HB1\nHB2", broker_reference: "REF", entry_number: "NUM", entry_type: "TYPE", export_date: Date.new(2014, 11, 1),
+      entry = create(:entry, master_bills_of_lading: "MB1\nMB2", house_bills_of_lading: "HB1\nHB2", broker_reference: "REF", entry_number: "NUM", entry_type: "TYPE", export_date: Date.new(2014, 11, 1),
         release_date: "2014-11-02 12:00", entry_filed_date: "2014-11-03 12:00", vessel: "VESS", voyage: "VOY", carrier_code: "CAR", unlading_port_code: "UNL",
         entry_port_code: "EPC", lading_port_code: "LPC", total_invoiced_value: "666.66", hmf: "123.45", mpf: "234.56", cotton_fee: "345.67", total_duty: "456.78", arrival_date: "2014-11-04 12:00")
 
     }
 
     let (:commercial_invoice) {
-      com_invoice = FactoryBot(:commercial_invoice, invoice_number: "COMINV", entry: entry)
+      com_invoice = create(:commercial_invoice, invoice_number: "COMINV", entry: entry)
       # Line 1 and 2 will be the same detail data, so they will be squeezed into a single line on the xml
-      tar1 = FactoryBot(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: FactoryBot(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#", part_number: "part1"))
-      tar2 = FactoryBot(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: FactoryBot(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#", part_number: "part1"))
-      tar3 = FactoryBot(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: FactoryBot(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#2", part_number: "part3"))
+      tar1 = create(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: create(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#", part_number: "part1"))
+      tar2 = create(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: create(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#", part_number: "part1"))
+      tar3 = create(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: create(:commercial_invoice_line, commercial_invoice: com_invoice, po_number: "PO#2", part_number: "part3"))
       com_invoice
     }
 
     let (:broker_invoice) {
-      invoice = FactoryBot(:broker_invoice, invoice_number: "INV1", invoice_date: Date.new(2014, 11, 1), invoice_total: "100.99", entry: entry)
-      invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_type: "1", charge_code: "Code", charge_description: "Desc", charge_amount: "50.00")
-      invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_type: "2", charge_code: "Code2", charge_description: "Desc2", charge_amount: "25.00")
+      invoice = create(:broker_invoice, invoice_number: "INV1", invoice_date: Date.new(2014, 11, 1), invoice_total: "100.99", entry: entry)
+      invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: invoice, charge_type: "1", charge_code: "Code", charge_description: "Desc", charge_amount: "50.00")
+      invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: invoice, charge_type: "2", charge_code: "Code2", charge_description: "Desc2", charge_amount: "25.00")
       # Duty Paid direct lines should be included...FOLO wants these for reporting purposes
-      dpd_line = FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_type: "D", charge_code: "0099", charge_description: "Duty Paid Direct", charge_amount: "10.00")
+      dpd_line = create(:broker_invoice_line, broker_invoice: invoice, charge_type: "D", charge_code: "0099", charge_description: "Duty Paid Direct", charge_amount: "10.00")
       invoice.broker_invoice_lines << dpd_line
 
       invoice
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
     it "generates and sends xml for entry's invoices" do
       # This charge would be skipped for Canada, but since this is not a Canadian 810, it should be included.
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
 
       commercial_invoice
       xml = subject.generate_xml broker_invoice
@@ -142,18 +142,18 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       entry.update_attributes! customer_number: "FOOT LOCKER CANADA C"
 
       # All of these lines should be excluded apart from the final one.
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "250", charge_description: "GST (A)", charge_amount: "14.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "251", charge_description: "GST (B)", charge_amount: "13.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "252", charge_description: "GST (C)", charge_amount: "12.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "253", charge_description: "GST (D)", charge_amount: "11.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "254", charge_description: "GST (E)", charge_amount: "10.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "255", charge_description: "GST (F)", charge_amount: "9.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "256", charge_description: "GST (G)", charge_amount: "8.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "257", charge_description: "GST (H)", charge_amount: "7.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "258", charge_description: "GST (I)", charge_amount: "6.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "259", charge_description: "GST (J)", charge_amount: "5.00")
-      broker_invoice.broker_invoice_lines << FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "3", charge_description: "NOT TAX", charge_amount: "4.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "250", charge_description: "GST (A)", charge_amount: "14.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "251", charge_description: "GST (B)", charge_amount: "13.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "252", charge_description: "GST (C)", charge_amount: "12.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "253", charge_description: "GST (D)", charge_amount: "11.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "254", charge_description: "GST (E)", charge_amount: "10.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "255", charge_description: "GST (F)", charge_amount: "9.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "256", charge_description: "GST (G)", charge_amount: "8.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "257", charge_description: "GST (H)", charge_amount: "7.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "258", charge_description: "GST (I)", charge_amount: "6.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "259", charge_description: "GST (J)", charge_amount: "5.00")
+      broker_invoice.broker_invoice_lines << create(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "3", charge_description: "NOT TAX", charge_amount: "4.00")
 
       commercial_invoice
       xml = subject.generate_xml broker_invoice

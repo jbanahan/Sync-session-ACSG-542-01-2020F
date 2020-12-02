@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRul
 
   let (:entry) {
     # Create an entry / statement that is by default valid
-    e = FactoryBot(:entry, pay_type: 2, total_duty: BigDecimal("10"), total_fees: BigDecimal("20"), total_taxes: BigDecimal("30"), total_cvd: BigDecimal("40"), total_add: BigDecimal("50"), cotton_fee: BigDecimal("3"), hmf: BigDecimal("7"), mpf: BigDecimal("10"))
+    e = create(:entry, pay_type: 2, total_duty: BigDecimal("10"), total_fees: BigDecimal("20"), total_taxes: BigDecimal("30"), total_cvd: BigDecimal("40"), total_add: BigDecimal("50"), cotton_fee: BigDecimal("3"), hmf: BigDecimal("7"), mpf: BigDecimal("10"))
     inv = e.commercial_invoices.create! invoice_number: "INV"
     line = inv.commercial_invoice_lines.create! line_number: 1, cvd_duty_amount: BigDecimal("40"), add_duty_amount: BigDecimal("50"), cotton_fee: BigDecimal("3"), hmf: BigDecimal("7"), prorated_mpf: BigDecimal("10")
     tariff = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("10")

@@ -1,10 +1,10 @@
 describe ValidatesEntityChildren do
 
   let (:entry) {
-    entry = FactoryBot(:entry)
-    inv = FactoryBot(:commercial_invoice, entry: entry)
-    line = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, po_number: "ABC")
-    line_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: inv, po_number: "DEF")
+    entry = create(:entry)
+    inv = create(:commercial_invoice, entry: entry)
+    line = create(:commercial_invoice_line, commercial_invoice: inv, po_number: "ABC")
+    line_2 = create(:commercial_invoice_line, commercial_invoice: inv, po_number: "DEF")
     entry
   }
 

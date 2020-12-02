@@ -1,6 +1,6 @@
 class VendorPlantsController < ApplicationController
-  around_filter :view_permission_filter, only: [:show, :unassigned_product_groups]
-  around_filter :edit_permission_filter, only: [:assign_product_group]
+  around_action :view_permission_filter, only: [:show, :unassigned_product_groups]
+  around_action :edit_permission_filter, only: [:assign_product_group]
   def show
     @vendor = @plant.company
 

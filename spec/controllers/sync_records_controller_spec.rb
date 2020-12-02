@@ -1,13 +1,13 @@
 describe SyncRecordsController do
 
   before :each do
-    @user = FactoryBot(:master_user, :email=>'a@example.com', :product_view => true)
+    @user = create(:master_user, :email=>'a@example.com', :product_view => true)
 
     sign_in_as @user
   end
 
   it "should mark a sync record to be resent" do
-    p = FactoryBot(:product)
+    p = create(:product)
     p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing", :fingerprint => "fingerprint", ignore_updates_before: Time.zone.now
 
     post :resend, :id=>p.sync_records.first.id
@@ -31,7 +31,7 @@ describe SyncRecordsController do
     @user.product_view = false
     @user.save!
 
-    p = FactoryBot(:product)
+    p = create(:product)
     p.sync_records.create! sent_at: Time.zone.now, confirmed_at: Time.zone.now + 1.minute, confirmation_file_name: "file.txt", failure_message: "Message!", :trading_partner => "Testing"
 
     post :resend, :id=>p.sync_records.first.id

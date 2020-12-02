@@ -271,7 +271,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
   </Lines>
 </Orders>'
     }
-    let (:master_company) { FactoryBot(:master_company) }
+    let (:master_company) { create(:master_company) }
     let (:cdefs) { subject.instance_variable_get(:@cdefs)}
     let (:log) { InboundFile.new }
 
@@ -322,7 +322,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
 
     it "reuses an order" do
       order = Order.create! importer_id: master_company.id, order_number: "4700447521", customer_order_number: "4700447521"
-      line = order.order_lines.create! line_number: 42, product: FactoryBot(:product)
+      line = order.order_lines.create! line_number: 42, product: create(:product)
 
       described_class.parse_file standard_xml, log
 
@@ -332,7 +332,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
     end
 
     it "re-uses a product" do
-      product = FactoryBot(:product, unique_identifier: "209629423004")
+      product = create(:product, unique_identifier: "209629423004")
       described_class.parse_file standard_xml, log
       order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
       expect(order).not_to be_nil

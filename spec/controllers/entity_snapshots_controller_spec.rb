@@ -1,6 +1,6 @@
 describe EntitySnapshotsController do
-  let (:product) { FactoryBot(:product, :name=>'nm') }
-  let (:user) { FactoryBot(:user) }
+  let (:product) { create(:product, :name=>'nm') }
+  let (:user) { create(:user) }
   let (:snapshot) { product.create_snapshot user }
 
   describe "restore", :snapshot do
@@ -29,7 +29,7 @@ describe EntitySnapshotsController do
   end
 
   describe "download" do
-    let (:admin_user) { FactoryBot(:sys_admin_user) }
+    let (:admin_user) { create(:sys_admin_user) }
     before :each do
       sign_in_as admin_user
     end
@@ -54,7 +54,7 @@ describe EntitySnapshotsController do
 
   describe "download_integration_file" do
     let (:snapshot) { product.create_snapshot user }
-    let (:admin_user) { FactoryBot(:sys_admin_user) }
+    let (:admin_user) { create(:sys_admin_user) }
     before :each do
       sign_in_as admin_user
     end

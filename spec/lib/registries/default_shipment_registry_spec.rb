@@ -35,9 +35,9 @@ describe OpenChain::Registries::DefaultShipmentRegistry do
 
     # tests code located in shipment.rb
     context "can_cancel_by_role?" do
-      let(:imp) { FactoryBot(:company, system_code: "ACME", agent: true) }
-      let(:u) { FactoryBot(:user, company: imp) }
-      let(:s) { FactoryBot(:shipment, canceled_date: nil, importer: imp) }
+      let(:imp) { create(:company, system_code: "ACME", agent: true) }
+      let(:u) { create(:user, company: imp) }
+      let(:s) { create(:shipment, canceled_date: nil, importer: imp) }
       before do
         allow(s).to receive(:can_edit?).with(u).and_return true
         allow(s).to receive(:can_cancel_as_vendor?).with(u).and_return false
@@ -53,19 +53,19 @@ describe OpenChain::Registries::DefaultShipmentRegistry do
 
       # This really ought to also have sections for #can_cancel_as_vendor?, #can_cancel_as_importer?, #can_cancel_as_carrier?
       context "can_cancel_as_agent?" do
-        let!(:agent_2) { FactoryBot(:company, agent: true, system_code: "Konvenientz") }
-        let!(:o1) { FactoryBot(:order, agent: imp, order_lines: [FactoryBot(:order_line)]) }
-        let!(:o2) { FactoryBot(:order, agent: imp, order_lines: [FactoryBot(:order_line)]) }
-        let!(:o3) { FactoryBot(:order, agent: imp, booking_lines: [FactoryBot(:booking_line, order_line: FactoryBot(:order_line))]) }
-        let!(:o4) { FactoryBot(:order, agent: imp, booking_lines: [FactoryBot(:booking_line, order_line: FactoryBot(:order_line))]) }
+        let!(:agent_2) { create(:company, agent: true, system_code: "Konvenientz") }
+        let!(:o1) { create(:order, agent: imp, order_lines: [create(:order_line)]) }
+        let!(:o2) { create(:order, agent: imp, order_lines: [create(:order_line)]) }
+        let!(:o3) { create(:order, agent: imp, booking_lines: [create(:booking_line, order_line: create(:order_line))]) }
+        let!(:o4) { create(:order, agent: imp, booking_lines: [create(:booking_line, order_line: create(:order_line))]) }
         let!(:ol1) { ol = o1.order_lines.first; ol.update! order: o1; ol }
         let!(:ol2) { ol = o2.order_lines.first; ol.update! order: o2; ol }
         let!(:ol3) { ol = o3.booking_lines.first.order_line; ol.update! order: o3; ol }
         let!(:ol4) { ol = o4.booking_lines.first.order_line; ol.update! order: o4; ol }
-        let!(:sl1) { sl = FactoryBot(:shipment_line, product: ol1.product, shipment: s); sl.update! linked_order_line_id: ol1.id; sl}
-        let!(:sl2) { sl = FactoryBot(:shipment_line, product: ol2.product, shipment: s); sl.update! linked_order_line_id: ol2.id; sl}
-        let!(:sl3) { sl = FactoryBot(:shipment_line, product: ol3.product, shipment: s); sl.update! linked_order_line_id: ol3.id; sl}
-        let!(:sl4) { sl = FactoryBot(:shipment_line, product: ol4.product, shipment: s); sl.update! linked_order_line_id: ol4.id; sl}
+        let!(:sl1) { sl = create(:shipment_line, product: ol1.product, shipment: s); sl.update! linked_order_line_id: ol1.id; sl}
+        let!(:sl2) { sl = create(:shipment_line, product: ol2.product, shipment: s); sl.update! linked_order_line_id: ol2.id; sl}
+        let!(:sl3) { sl = create(:shipment_line, product: ol3.product, shipment: s); sl.update! linked_order_line_id: ol3.id; sl}
+        let!(:sl4) { sl = create(:shipment_line, product: ol4.product, shipment: s); sl.update! linked_order_line_id: ol4.id; sl}
 
 
         before do

@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       described_class.new(@cf).process(u)
     end
     it "should write error message to user" do
-      u = FactoryBot(:user)
+      u = create(:user)
       allow(OpenChain::XLClient).to receive(:new_from_attachable).and_return(double('x'))
       expect(described_class).to receive(:can_view?).and_return true
       expect_any_instance_of(described_class).to receive(:parse).and_raise "some error"
@@ -64,19 +64,19 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
     end
     it "should be false if user not from LENOX or master" do
-      u = FactoryBot(:user, shipment_view:true)
+      u = create(:user, shipment_view:true)
       expect(described_class.new(@cf).can_view?(u)).to eq false
     end
     it "should be false if user cannot view shipments" do
-      u = FactoryBot(:master_user, shipment_view:false)
+      u = create(:master_user, shipment_view:false)
       expect(described_class.new(@cf).can_view?(u)).to eq false
     end
     it "should pass for master user who can view shipments" do
-      u = FactoryBot(:master_user, shipment_view:true)
+      u = create(:master_user, shipment_view:true)
       expect(described_class.new(@cf).can_view?(u)).to eq true
     end
     it "should pass for lenox user who can view shipments" do
-      u = FactoryBot(:user, shipment_view:true, company:FactoryBot(:company, :system_code=>'LENOX'))
+      u = create(:user, shipment_view:true, company:create(:company, :system_code=>'LENOX'))
       allow(u).to receive(:view_shipments?).and_return true
       expect(described_class.new(@cf).can_view?(u)).to eq true
     end
@@ -106,17 +106,17 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
 
   describe "process_shipment" do
     before :each do
-      @u = FactoryBot(:master_user, shipment_edit:true)
+      @u = create(:master_user, shipment_edit:true)
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       @p = described_class.new(double(:custom_file))
-      @c = FactoryBot(:company, system_code:'LENOX')
-      @v = FactoryBot(:company)
-      @o = FactoryBot(:order, importer:@c, order_number:'LENOX-ORD123', customer_order_number:'ORD123', vendor:@v)
-      @prod = FactoryBot(:product, unique_identifier:'LENOX-PART', importer:@c)
+      @c = create(:company, system_code:'LENOX')
+      @v = create(:company)
+      @o = create(:order, importer:@c, order_number:'LENOX-ORD123', customer_order_number:'ORD123', vendor:@v)
+      @prod = create(:product, unique_identifier:'LENOX-PART', importer:@c)
       @ol = @o.order_lines.create!(product_id:@prod.id, quantity:1000)
-      @pol = FactoryBot(:port, name:'Yantian, China')
-      @pod = FactoryBot(:port, name:'Norfolk, VA')
+      @pol = create(:port, name:'Yantian, China')
+      @pod = create(:port, name:'Norfolk, VA')
     end
     it "should create shipment" do
       r = default_row
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     it "should skip shipment that already exists" do
       r = default_row
       t = 1.week.ago
-      s = FactoryBot(:shipment, reference:"LENOX-#{r[9]}", importer:@c, updated_at:t)
+      s = create(:shipment, reference:"LENOX-#{r[9]}", importer:@c, updated_at:t)
       expect {@p.process_shipment [r]}.to_not change(Shipment.order(:updated_at), :first)
       expect(Shipment.count).to eq 1
     end
@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
     it "should fail if item doesn't exist on order" do
-      @ol.update_attributes(product_id:FactoryBot(:product).id)
+      @ol.update_attributes(product_id:create(:product).id)
       expect {@p.process_shipment [default_row({po:'anotherpo'})]}.to raise_error(/not found/)
     end
   end

@@ -1,7 +1,7 @@
 describe CorrectiveActionPlan do
   before :each do
-    @cap = FactoryBot(:corrective_action_plan)
-    @u = FactoryBot(:user)
+    @cap = create(:corrective_action_plan)
+    @u = create(:user)
   end
   describe "log_update" do
     it "should log against survey_response if cap is active" do
@@ -91,7 +91,7 @@ describe CorrectiveActionPlan do
   end
   describe "status" do
     it "should set status on create" do
-      expect(FactoryBot(:survey_response).create_corrective_action_plan!.status).to eq(described_class::STATUSES[:new])
+      expect(create(:survey_response).create_corrective_action_plan!.status).to eq(described_class::STATUSES[:new])
     end
   end
 end

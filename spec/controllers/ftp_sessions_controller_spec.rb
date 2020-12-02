@@ -1,9 +1,9 @@
 describe FtpSessionsController do
   before :each do
 
-    @u = FactoryBot(:user, :admin => true, :sys_admin => true, :company => FactoryBot(:company, :master=>true))
+    @u = create(:user, :admin => true, :sys_admin => true, :company => create(:company, :master=>true))
     sign_in_as @u
-    @ftp = FactoryBot(:ftp_session)
+    @ftp = create(:ftp_session)
   end
 
   describe "GET 'index'" do

@@ -3,17 +3,17 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
   let (:xml_path) { "spec/fixtures/files/advan_prep_7501.xml"}
   let (:xml_data) { IO.read(xml_path) }
   let (:xml) { Nokogiri::XML(xml_data) }
-  let (:user) { FactoryBot(:user) }
-  let (:advance_importer) { FactoryBot(:importer, system_code: "ADVAN") }
-  let (:carquest_importer) { FactoryBot(:importer, system_code: "CQ") }
-  let (:cn) { FactoryBot(:country, iso_code: "CN") }
-  let (:vn) { FactoryBot(:country, iso_code: "VN") }
-  let (:us) { FactoryBot(:country, iso_code: "US") }
-  let (:lading_port) { FactoryBot(:port, name: "Qingdao", schedule_k_code: "57047") }
-  let (:unlading_port) { FactoryBot(:port, name: "Norfolk", schedule_d_code: "1401") }
-  let (:final_dest) { FactoryBot(:port, name: "Roanoke", unlocode: "USROA") }
+  let (:user) { create(:user) }
+  let (:advance_importer) { create(:importer, system_code: "ADVAN") }
+  let (:carquest_importer) { create(:importer, system_code: "CQ") }
+  let (:cn) { create(:country, iso_code: "CN") }
+  let (:vn) { create(:country, iso_code: "VN") }
+  let (:us) { create(:country, iso_code: "US") }
+  let (:lading_port) { create(:port, name: "Qingdao", schedule_k_code: "57047") }
+  let (:unlading_port) { create(:port, name: "Norfolk", schedule_d_code: "1401") }
+  let (:final_dest) { create(:port, name: "Roanoke", unlocode: "USROA") }
   # This makes sure the UNLocode is the prefered code utilized.
-  let (:final_dest_d) { FactoryBot(:port, name: "Roanoke", schedule_d_code: "1234") }
+  let (:final_dest_d) { create(:port, name: "Roanoke", schedule_d_code: "1234") }
   let (:cdefs) { subject.send(:cdefs) }
   let (:log) { InboundFile.new }
 
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
     it "updates an existing shipment" do
       # Make sure it's clearing existing containers / lines
-      shipment_line = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096"))
+      shipment_line = create(:shipment_line, shipment: create(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096"))
       shipment = shipment_line.shipment
       container = shipment.containers.create! container_number: "1234"
 
@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     end
 
     it "skips updating shipments when the xml is outdated" do
-      FactoryBot(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
+      create(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
 
       expect(subject.parse(xml, user, xml_path)).to be_nil
       expect(log).to have_warning_message("Shipment could not be updated. The Prep 7501 file's Created time of " +

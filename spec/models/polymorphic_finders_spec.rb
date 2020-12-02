@@ -3,13 +3,13 @@ describe PolymorphicFinders do
 
   describe "polymorphic_find" do
     it "executes a find on a given class and id value" do
-      product = FactoryBot(:product)
+      product = create(:product)
 
       expect(subject.polymorphic_find("Product", product.id)).to eq product
     end
 
     it "handles lowercase and underscorized version of classname" do
-      broker_inv = FactoryBot(:broker_invoice)
+      broker_inv = create(:broker_invoice)
       expect(subject.polymorphic_find("broker_invoice", broker_inv.id)).to eq broker_inv
     end
 
@@ -60,7 +60,7 @@ describe PolymorphicFinders do
   end
 
   describe "polymorphic_where" do
-    let! (:obj) { FactoryBot(:entry) }
+    let! (:obj) { create(:entry) }
 
     it "returns a relation scoped to the given class and id value of the model" do
       expect(subject.polymorphic_where("entries", obj.id).first).to eq obj

@@ -1,12 +1,12 @@
 describe OpenChain::Report::MonthlyUserAuditReport do
   it "sends an email to unlocked, admin users with a correctly-formatted xls sorted by users.disabled/companies.name" do
     stub_master_setup
-    FactoryBot(:user, company: FactoryBot(:company, name: "c"), username: "Tinker", email: "tinker@vandegriftinc.com")
-    FactoryBot(:user, company: FactoryBot(:company, name: "e"), username: "Tailor", email: "tailor@vandegriftinc.com")
-    FactoryBot(:admin_user, company: FactoryBot(:company, name: "b"), username: "Soldier", email: "soldier@vandegriftinc.com")
-    FactoryBot(:admin_user, company: FactoryBot(:company, name: "a"), username: "Sailor", email: "sailor@vandegriftinc.com", disabled: true)
-    FactoryBot(:admin_user, company: FactoryBot(:company, name: "d"), username: "Rich Man", email: "rich_man@vandegriftinc.com")
-    FactoryBot(:sys_admin_user, company: FactoryBot(:company, name: "f"), username: "Poor Man", email: "poor_man@vandegriftinc.com", system_user: true)
+    create(:user, company: create(:company, name: "c"), username: "Tinker", email: "tinker@vandegriftinc.com")
+    create(:user, company: create(:company, name: "e"), username: "Tailor", email: "tailor@vandegriftinc.com")
+    create(:admin_user, company: create(:company, name: "b"), username: "Soldier", email: "soldier@vandegriftinc.com")
+    create(:admin_user, company: create(:company, name: "a"), username: "Sailor", email: "sailor@vandegriftinc.com", disabled: true)
+    create(:admin_user, company: create(:company, name: "d"), username: "Rich Man", email: "rich_man@vandegriftinc.com")
+    create(:sys_admin_user, company: create(:company, name: "f"), username: "Poor Man", email: "poor_man@vandegriftinc.com", system_user: true)
     month = Time.now.strftime('%B')
 
     OpenChain::Report::MonthlyUserAuditReport.run_schedulable

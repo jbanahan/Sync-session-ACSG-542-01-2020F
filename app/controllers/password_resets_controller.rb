@@ -1,7 +1,7 @@
 class PasswordResetsController < ApplicationController
-  before_filter :load_user_using_perishable_token, :only => [:edit, :update]
-  skip_before_filter :require_user
-  skip_before_filter :force_reset
+  before_action :load_user_using_perishable_token, :only => [:edit, :update]
+  skip_before_action :require_user
+  skip_before_action :force_reset
 
   def create
     @user = User.find_by(email: params[:email])

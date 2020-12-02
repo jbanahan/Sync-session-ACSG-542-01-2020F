@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
   describe "accepts?" do
 
     before :each do
-      @entry = FactoryBot(:entry, customer_number: "TEST")
+      @entry = create(:entry, customer_number: "TEST")
       @master_setup = double("MasterSetup")
       allow(MasterSetup).to receive(:get).and_return @master_setup
       allow(@master_setup).to receive(:system_code).and_return "www-vfitrack-net"
@@ -40,10 +40,10 @@ describe OpenChain::CustomHandler::Generic210Generator do
         @ftped_files << tempfile.read
       end
 
-      line = FactoryBot(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
-                      broker_invoice: FactoryBot(:broker_invoice, invoice_number: "INV", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
-                        customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: FactoryBot(:country),
-                        entry: FactoryBot(:entry, broker_reference: "REF", entry_number: "ENT", customer_number: "CUST", carrier_code: "CARR",
+      line = create(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
+                      broker_invoice: create(:broker_invoice, invoice_number: "INV", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
+                        customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: create(:country),
+                        entry: create(:entry, broker_reference: "REF", entry_number: "ENT", customer_number: "CUST", carrier_code: "CARR",
                           lading_port_code: "LAD", unlading_port_code: "UNL", merchandise_description: "DESC", total_packages: 10, gross_weight: 10,
                           arrival_date: Time.zone.parse("2015-01-01 12:00"), export_date: Date.new(2015, 3, 1), ult_consignee_name: "CONS", ult_consignee_code: "UC", consignee_address_1: "UADD1",
                           consignee_address_2: "UADD2", consignee_city: "UCITY", consignee_state: "UST", master_bills_of_lading: "A\nB", house_bills_of_lading: "C\nD", container_numbers: "E\nF",
@@ -115,9 +115,9 @@ describe OpenChain::CustomHandler::Generic210Generator do
     end
 
     it "sends one 210 per broker invoice" do
-      line2 = FactoryBot(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
-                      broker_invoice: FactoryBot(:broker_invoice, invoice_number: "INV2", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
-                        customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: FactoryBot(:country),
+      line2 = create(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
+                      broker_invoice: create(:broker_invoice, invoice_number: "INV2", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
+                        customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: create(:country),
                         entry: @entry)
                      )
 
@@ -140,9 +140,9 @@ describe OpenChain::CustomHandler::Generic210Generator do
     end
 
     it "strips duty lines if duty paid direct line is present" do
-      duty_line = FactoryBot(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "0001", charge_description: "Duty",
+      duty_line = create(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "0001", charge_description: "Duty",
                             broker_invoice: @broker_invoice)
-      duty_direct_line = FactoryBot(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "0099", charge_description: "Duty Pd Direct",
+      duty_direct_line = create(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "0099", charge_description: "Duty Pd Direct",
                             broker_invoice: @broker_invoice)
 
       @broker_invoice.reload

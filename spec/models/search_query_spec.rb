@@ -9,9 +9,9 @@ describe SearchQuery do
   end
 
   let!(:search_query) { described_class.new search_setup, User.new }
-  let!(:product_1) { FactoryBot(:product, name: 'B') }
-  let!(:product_2) { FactoryBot(:product, name: 'A') }
-  let!(:product_3) { FactoryBot(:product, name: 'C') }
+  let!(:product_1) { create(:product, name: 'B') }
+  let!(:product_2) { create(:product, name: 'A') }
+  let!(:product_3) { create(:product, name: 'C') }
 
   before do
     allow(Product).to receive(:search_where).and_return("1=1")
@@ -48,15 +48,15 @@ describe SearchQuery do
     end
 
     it "processes values via ModelField#process_query_result" do
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
       search_setup.search_columns.build(model_field_uid: 'hts_hts_1', rank: 2)
       r = search_query.execute per_page: 1000
       expect(r[1][:result][2]).to eq("1234.56.7890")
     end
 
     it "prevents DISTINCT from combining child level values in a multi-level query" do
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
 
       search_setup.search_columns.build(model_field_uid: 'hts_hts_1', rank: 2)
       r = search_query.execute per_page: 1000
@@ -67,8 +67,8 @@ describe SearchQuery do
 
     it "combines child level values in a multi-level query if no child level column is selected" do
       search_setup.search_criterions.first.value = product_1.name.to_s
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
       r = search_query.execute per_page: 1000
       expect(r.size).to eq(1)
       expect(r[0][:result][1]).to eq(product_1.name)
@@ -107,15 +107,15 @@ describe SearchQuery do
       search_setup.search_columns.build(model_field_uid: 'class_cntry_iso', rank: 2)
       search_setup.search_columns.build(model_field_uid: 'hts_hts_1', rank: 3)
 
-      country_ax = FactoryBot(:country, iso_code: 'AX')
-      country_bx = FactoryBot(:country, iso_code: 'BX')
+      country_ax = create(:country, iso_code: 'AX')
+      country_bx = create(:country, iso_code: 'BX')
       # building these in a jumbled order so the test can properly sort them
-      tr2_a_3 = FactoryBot(:tariff_record, hts_1: '311111111', classification: FactoryBot(:classification, country: country_ax, product: product_2))
-      tr1_b_9 = FactoryBot(:tariff_record, hts_1: '911111111', classification: FactoryBot(:classification, country: country_bx, product: product_1))
-      FactoryBot(:tariff_record, hts_1: '511111111', classification: tr1_b_9.classification, line_number: 2)
-      tr1_a_9 = FactoryBot(:tariff_record, hts_1: '911111111', classification: FactoryBot(:classification, country: country_ax, product: product_1))
-      FactoryBot(:tariff_record, hts_1: '511111111', classification: tr1_a_9.classification, line_number: 2)
-      FactoryBot(:tariff_record, hts_1: '111111111', classification: tr2_a_3.classification, line_number: 2)
+      tr2_a_3 = create(:tariff_record, hts_1: '311111111', classification: create(:classification, country: country_ax, product: product_2))
+      tr1_b_9 = create(:tariff_record, hts_1: '911111111', classification: create(:classification, country: country_bx, product: product_1))
+      create(:tariff_record, hts_1: '511111111', classification: tr1_b_9.classification, line_number: 2)
+      tr1_a_9 = create(:tariff_record, hts_1: '911111111', classification: create(:classification, country: country_ax, product: product_1))
+      create(:tariff_record, hts_1: '511111111', classification: tr1_a_9.classification, line_number: 2)
+      create(:tariff_record, hts_1: '111111111', classification: tr2_a_3.classification, line_number: 2)
 
       r = search_query.execute per_page: 1000
       expect(r.size).to eq(6)
@@ -153,7 +153,7 @@ describe SearchQuery do
     it "handles relative fields referencing different core modules" do
       # Make sure that the search criterion's value is the only thing referencing a different module level so
       # that we're sure that we're testing the code that handles collecting this field's core module
-      classification = FactoryBot(:classification, product: product_1)
+      classification = create(:classification, product: product_1)
       classification.update_column :updated_at, 1.day.from_now # rubocop:disable Rails/SkipsModelValidations
 
       search_setup.search_criterions.clear
@@ -226,7 +226,7 @@ describe SearchQuery do
     end
 
     context "custom_values" do
-      let!(:custom_definition) { FactoryBot(:custom_definition, module_type: "Product", data_type: :string) }
+      let!(:custom_definition) { create(:custom_definition, module_type: "Product", data_type: :string) }
 
       before do
         product_1.update_custom_value! custom_definition, "MYVAL"
@@ -262,7 +262,7 @@ describe SearchQuery do
         crit.operator = "sw"
         crit.value = "D"
         10.times do |i|
-          FactoryBot(:product, name: "D#{i}")
+          create(:product, name: "D#{i}")
         end
         r = search_query.execute per_page: 2, page: 2
         expect(r.size).to eq(2)
@@ -279,7 +279,7 @@ describe SearchQuery do
         crit.value = product_1.name
 
         6.times do |_i|
-          product_1.classifications.create! country: FactoryBot(:country)
+          product_1.classifications.create! country: create(:country)
         end
 
         c = product_1.classifications.joins(:country).order("countries.iso_code ASC")
@@ -313,7 +313,7 @@ describe SearchQuery do
 
   describe "count" do
     it "returns row count for multi level query" do
-      FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
+      create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
       search_setup.search_columns.build(model_field_uid: 'hts_hts_1', rank: 2)
       expect(search_query.count).to eq(2)
     end
@@ -337,8 +337,8 @@ describe SearchQuery do
 
   describe "result_keys" do
     it "returns unique key list for multi level query" do
-      tr = FactoryBot(:tariff_record, hts_1: '1234567890', classification: FactoryBot(:classification, product: product_1))
-      FactoryBot(:tariff_record, hts_1: '9876543210', line_number: 2, classification: tr.classification)
+      tr = create(:tariff_record, hts_1: '1234567890', classification: create(:classification, product: product_1))
+      create(:tariff_record, hts_1: '9876543210', line_number: 2, classification: tr.classification)
       search_setup.search_columns.build(model_field_uid: 'hts_hts_1', rank: 2)
       keys = search_query.result_keys
       expect(keys).to eq([product_2.id, product_1.id])
@@ -358,7 +358,7 @@ describe SearchQuery do
   describe "unique_parent_count" do
     it "returns parent count when there are details" do
       search_setup.search_columns.build(model_field_uid: 'class_cntry_iso', rank: 2)
-      2.times {|_i| FactoryBot(:classification, product: product_1)}
+      2.times {|_i| create(:classification, product: product_1)}
       expect(search_query.count).to eq(3) # confirming we're setup properly
       expect(search_query.unique_parent_count).to eq(2) # the real test
     end

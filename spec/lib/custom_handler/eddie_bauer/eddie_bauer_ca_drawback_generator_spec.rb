@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerCaDrawbackGenerator do
   describe "generate_exports_from_us_entry" do
     it "should make DutyCalcExportFileLines" do
-      ent = FactoryBot(:entry, importer:FactoryBot(:importer, name:'EBC'), entry_number:'123456', arrival_date:Date.new(2014, 1, 10), export_date:Date.new(2013, 12, 24), carrier_name:'FEDEX', master_bills_of_lading:'MBOL')
-      ci = FactoryBot(:commercial_invoice, invoice_number:'INVNUM', entry:ent)
-      cil1 = FactoryBot(:commercial_invoice_line, commercial_invoice:ci, quantity:50, part_number:'pn1', unit_of_measure:'uom1')
-      ct1 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:cil1, hts_code:'1234567890', tariff_description:'td1')
-      cil2 = FactoryBot(:commercial_invoice_line, commercial_invoice:ci, quantity:23, part_number:'pn2', unit_of_measure:'uom2')
-      ct2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:cil2, hts_code:'0987654321', tariff_description:'td2')
+      ent = create(:entry, importer:create(:importer, name:'EBC'), entry_number:'123456', arrival_date:Date.new(2014, 1, 10), export_date:Date.new(2013, 12, 24), carrier_name:'FEDEX', master_bills_of_lading:'MBOL')
+      ci = create(:commercial_invoice, invoice_number:'INVNUM', entry:ent)
+      cil1 = create(:commercial_invoice_line, commercial_invoice:ci, quantity:50, part_number:'pn1', unit_of_measure:'uom1')
+      ct1 = create(:commercial_invoice_tariff, commercial_invoice_line:cil1, hts_code:'1234567890', tariff_description:'td1')
+      cil2 = create(:commercial_invoice_line, commercial_invoice:ci, quantity:23, part_number:'pn2', unit_of_measure:'uom2')
+      ct2 = create(:commercial_invoice_tariff, commercial_invoice_line:cil2, hts_code:'0987654321', tariff_description:'td2')
       expect { described_class.new.generate_exports_from_us_entry(ent) }.to change(DutyCalcExportFileLine, :count).from(0).to(2)
 
       ln1 = DutyCalcExportFileLine.first
@@ -28,12 +28,12 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCaDrawbackGenerator do
 
   describe "generate_imports_from_ca_entry" do
     it "should generate DrawbackImportLines" do
-      ent = FactoryBot(:entry, importer:FactoryBot(:importer, name:'EBC'), entry_number:'123456', eta_date:Date.new(2014, 1, 10), direct_shipment_date:Date.new(2013, 12, 24), carrier_name:'FEDEX', master_bills_of_lading:'MBOL')
-      ci = FactoryBot(:commercial_invoice, invoice_number:'INVNUM', entry:ent)
-      cil1 = FactoryBot(:commercial_invoice_line, commercial_invoice:ci, quantity:50, part_number:'pn1', unit_of_measure:'uom1', country_origin_code:'CN')
-      ct1 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:cil1, hts_code:'1234567890', tariff_description:'td1', entered_value:'100', duty_amount:20, duty_rate:0.2)
-      cil2 = FactoryBot(:commercial_invoice_line, commercial_invoice:ci, quantity:23, part_number:'pn2', unit_of_measure:'uom2', country_origin_code:'GB')
-      ct2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:cil2, hts_code:'0987654321', tariff_description:'td2', entered_value:'100', duty_amount:20, duty_rate:0.2)
+      ent = create(:entry, importer:create(:importer, name:'EBC'), entry_number:'123456', eta_date:Date.new(2014, 1, 10), direct_shipment_date:Date.new(2013, 12, 24), carrier_name:'FEDEX', master_bills_of_lading:'MBOL')
+      ci = create(:commercial_invoice, invoice_number:'INVNUM', entry:ent)
+      cil1 = create(:commercial_invoice_line, commercial_invoice:ci, quantity:50, part_number:'pn1', unit_of_measure:'uom1', country_origin_code:'CN')
+      ct1 = create(:commercial_invoice_tariff, commercial_invoice_line:cil1, hts_code:'1234567890', tariff_description:'td1', entered_value:'100', duty_amount:20, duty_rate:0.2)
+      cil2 = create(:commercial_invoice_line, commercial_invoice:ci, quantity:23, part_number:'pn2', unit_of_measure:'uom2', country_origin_code:'GB')
+      ct2 = create(:commercial_invoice_tariff, commercial_invoice_line:cil2, hts_code:'0987654321', tariff_description:'td2', entered_value:'100', duty_amount:20, duty_rate:0.2)
       expect { described_class.new.generate_imports_from_ca_entry(ent) }.to change(DrawbackImportLine, :count).from(0).to(2)
       ln = DrawbackImportLine.first
       expect(ln.importer).to eql(ent.importer)

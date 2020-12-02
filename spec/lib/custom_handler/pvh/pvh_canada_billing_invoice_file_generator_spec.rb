@@ -1,15 +1,15 @@
 describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
   let! (:pvh) {
-    FactoryBot(:importer, system_code: "PVH")
+    create(:importer, system_code: "PVH")
   }
 
   let (:product) {
-    FactoryBot(:product, importer: pvh, unique_identifier: "PVH-PART")
+    create(:product, importer: pvh, unique_identifier: "PVH-PART")
   }
 
   let (:order) {
-    order = FactoryBot(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
+    order = create(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
     # Create two order lines with different quantities / unit prices and make sure the best one is used on the invoic
     order_line = order.order_lines.create! product_id: product.id, quantity: 10, line_number: 1, price_per_unit: 10
     order_line = order.order_lines.create! product_id: product.id, quantity: 20, line_number: 8, price_per_unit: 5
@@ -17,17 +17,17 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
   }
 
   let (:shipment) {
-    s = FactoryBot(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "Ocean", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
+    s = create(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "Ocean", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
-    l = FactoryBot(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 100, invoice_number: "INVOICE")
-    l2 = FactoryBot(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 200, invoice_number: "INVOICE")
+    l = create(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 100, invoice_number: "INVOICE")
+    l2 = create(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 200, invoice_number: "INVOICE")
 
     l.shipment.reload
   }
 
   let (:entry) {
-    e = FactoryBot(:entry, entry_number: "1198001123", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: 9)
+    e = create(:entry, entry_number: "1198001123", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: 9)
     invoice = e.commercial_invoices.create! invoice_number: "INVOICE"
     line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("10"), unit_price: BigDecimal("5"), value: BigDecimal("100")
     tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50"), gst_amount: BigDecimal("5")

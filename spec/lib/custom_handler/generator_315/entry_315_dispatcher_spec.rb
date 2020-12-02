@@ -60,10 +60,10 @@ describe OpenChain::CustomHandler::Generator315::Entry315Dispatcher do
 
       context "with linked importer company" do
 
-        let (:importer) { FactoryBot(:importer) }
+        let (:importer) { create(:importer) }
 
         let (:parent) do
-          imp = FactoryBot(:importer, system_code: "PARENT")
+          imp = create(:importer, system_code: "PARENT")
           imp.linked_companies << importer
           imp
         end
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Generator315::Entry315Dispatcher do
       config
     end
     let! (:entry) do
-      FactoryBot(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00",
+      create(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00",
                       master_bills_of_lading: "A\nB", container_numbers: "E\nF", cargo_control_number: "CCN1\nCCN2")
     end
 

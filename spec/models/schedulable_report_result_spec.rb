@@ -15,7 +15,7 @@ describe SchedulableReportResult do
   end
 
   describe "run_schedulable" do
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:report_class) { "FakeSchedulableReportResult"}
     let (:valid_options) {
       {'username' => user.username, 'report_class' => report_class, 'report_name' => "Testing"}

@@ -64,8 +64,8 @@ describe RequestLoggingSupport, type: :model do
   end
 
   describe "log_run_as_request" do
-    let (:run_as) { FactoryBot(:user, username: "run_as") }
-    let (:user) { FactoryBot(:user, username: "user", run_as: run_as) }
+    let (:run_as) { create(:user, username: "run_as") }
+    let (:user) { create(:user, username: "user", run_as: run_as) }
 
     it "logs the run as request" do
       expect(subject).to receive(:current_user).at_least(1).times.and_return run_as

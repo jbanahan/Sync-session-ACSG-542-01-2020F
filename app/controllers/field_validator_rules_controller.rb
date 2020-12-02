@@ -1,5 +1,5 @@
 class FieldValidatorRulesController < ApplicationController
-  skip_before_filter :portal_redirect, only: [:validate]
+  skip_before_action :portal_redirect, only: [:validate]
   def set_page_title
     @page_title = 'Tools'
   end

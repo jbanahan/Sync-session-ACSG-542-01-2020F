@@ -2,8 +2,8 @@ describe OpenChain::PurgeShipment do
 
   subject { described_class }
 
-  let(:commercial_invoice_line) {FactoryBot(:commercial_invoice_line)}
-  let(:some_product) {FactoryBot(:product)}
+  let(:commercial_invoice_line) {create(:commercial_invoice_line)}
+  let(:some_product) {create(:product)}
 
   describe "run_schedulable" do
 
@@ -30,9 +30,9 @@ describe OpenChain::PurgeShipment do
 
   describe "purge" do
     it "removes shipments which are older than 2 years from the estimated departure date by default" do
-      shipment = FactoryBot(:shipment, est_departure_date: 2.years.ago)
-      shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: some_product)
-      FactoryBot(:piece_set, shipment_line: shipment_line,
+      shipment = create(:shipment, est_departure_date: 2.years.ago)
+      shipment_line = create(:shipment_line, shipment: shipment, product: some_product)
+      create(:piece_set, shipment_line: shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -41,9 +41,9 @@ describe OpenChain::PurgeShipment do
     end
 
     it "removes shipments of a given age" do
-      young_shipment = FactoryBot(:shipment, est_departure_date: 1.year.ago)
-      young_shipment_line = FactoryBot(:shipment_line, shipment: young_shipment, product: some_product)
-      FactoryBot(:piece_set, shipment_line: young_shipment_line,
+      young_shipment = create(:shipment, est_departure_date: 1.year.ago)
+      young_shipment_line = create(:shipment_line, shipment: young_shipment, product: some_product)
+      create(:piece_set, shipment_line: young_shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
@@ -52,9 +52,9 @@ describe OpenChain::PurgeShipment do
     end
 
     it "removes based on created_at if estimated departure date is missing" do
-      shipment = FactoryBot(:shipment, created_at: 2.years.ago)
-      shipment_line = FactoryBot(:shipment_line, shipment: shipment, product: some_product)
-      FactoryBot(:piece_set, shipment_line: shipment_line,
+      shipment = create(:shipment, created_at: 2.years.ago)
+      shipment_line = create(:shipment_line, shipment: shipment, product: some_product)
+      create(:piece_set, shipment_line: shipment_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
       subject.purge older_than: 1.year.ago

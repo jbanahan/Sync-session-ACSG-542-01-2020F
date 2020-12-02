@@ -8,7 +8,7 @@ describe ModelFieldsController do
   }
 
   it "should filter fields w/o permission" do
-    u = FactoryBot(:user)
+    u = create(:user)
 
     sign_in_as u
     get :find_by_module_type, :module_type=>"Entry"
@@ -18,7 +18,7 @@ describe ModelFieldsController do
   end
 
   it "should include fields w permission" do
-    u = FactoryBot(:user, :company=>FactoryBot(:company, :master=>true), :broker_invoice_view=>true)
+    u = create(:user, :company=>create(:company, :master=>true), :broker_invoice_view=>true)
 
     sign_in_as u
     get :find_by_module_type, :module_type=>"Entry"
@@ -35,7 +35,7 @@ describe ModelFieldsController do
     end
 
     it "should return product model fields with the proper label" do
-      u = FactoryBot(:user)
+      u = create(:user)
       sign_in_as u
 
       get :glossary, {core_module: 'Product'}
@@ -45,7 +45,7 @@ describe ModelFieldsController do
     end
 
     it "should redirect when the module is not found" do
-      u = FactoryBot(:user)
+      u = create(:user)
       sign_in_as u
 
       get :glossary, {core_module: 'nonexistent'}

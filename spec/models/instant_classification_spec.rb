@@ -9,12 +9,12 @@ describe InstantClassification do
       @third_ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'ew', :value=>'me')
     end
     it "should find a match" do
-      p = FactoryBot(:product, :unique_identifier=>'findme')
-      expect(InstantClassification.find_by_product(p, FactoryBot(:user))).to eq(@second_ic)
+      p = create(:product, :unique_identifier=>'findme')
+      expect(InstantClassification.find_by_product(p, create(:user))).to eq(@second_ic)
     end
     it "should not find a match" do
-      p = FactoryBot(:product, :unique_identifier=>'dont')
-      expect(InstantClassification.find_by_product(p, FactoryBot(:user))).to be_nil
+      p = create(:product, :unique_identifier=>'dont')
+      expect(InstantClassification.find_by_product(p, create(:user))).to be_nil
     end
   end
   describe "test" do
@@ -23,18 +23,18 @@ describe InstantClassification do
       @ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'eq', :value=>'puidict')
     end
     it "should match" do
-      expect(@ic.test?(FactoryBot(:product, :unique_identifier=>'puidict'), FactoryBot(:user))).to be_truthy
+      expect(@ic.test?(create(:product, :unique_identifier=>'puidict'), create(:user))).to be_truthy
     end
     it "shouldn't match" do
-      expect(@ic.test?(FactoryBot(:product, :unique_identifier=>'not puidict'), FactoryBot(:user))).to be_falsey
+      expect(@ic.test?(create(:product, :unique_identifier=>'not puidict'), create(:user))).to be_falsey
     end
   end
 
   describe "update_model_field_attributes" do
     before :each do
-      @country = FactoryBot(:country)
-      @class_cd = FactoryBot(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
-      @tariff_cd = FactoryBot(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
+      @country = create(:country)
+      @class_cd = create(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      @tariff_cd = create(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
     end
 
     it "creates child classification / tariff records from params" do

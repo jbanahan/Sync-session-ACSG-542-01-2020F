@@ -1,6 +1,6 @@
 describe OpenChain::Api::V1::ShipmentApiJsonGenerator do
 
-  let (:user) { FactoryBot(:user) }
+  let (:user) { create(:user) }
   let (:params) { {} }
   let (:shipment) { Shipment.new }
 

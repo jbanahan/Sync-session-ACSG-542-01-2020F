@@ -58,7 +58,7 @@ describe CustomFile do
     end
 
     describe "process" do
-      let (:user) { FactoryBot(:user) }
+      let (:user) { create(:user) }
 
       class SingleArgHandler # rubocop:disable RSpec/LeakyConstantDeclaration
         def process _user; end

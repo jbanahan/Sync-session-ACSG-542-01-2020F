@@ -1,6 +1,6 @@
 describe OpenChain::ArchivePacketGenerator do
   describe 'has_archive?' do
-    let(:entry) { FactoryBot(:entry) }
+    let(:entry) { create(:entry) }
 
     it 'returns false if entry does not have an archive' do
       entry.attachments.destroy_all
@@ -16,9 +16,9 @@ describe OpenChain::ArchivePacketGenerator do
   end
 
   describe 'generate_packets' do
-    let!(:company) { FactoryBot(:company) }
-    let!(:entry) { FactoryBot(:entry, importer: company, entry_number: 'ABCDEFG') }
-    let!(:user) { FactoryBot(:admin_user) }
+    let!(:company) { create(:company) }
+    let!(:entry) { create(:entry, importer: company, entry_number: 'ABCDEFG') }
+    let!(:user) { create(:admin_user) }
 
     it 'runs the EntryAttachmentStitchRequestComparator for matching entries' do
       entry_attachment_comparator = OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestComparator.new

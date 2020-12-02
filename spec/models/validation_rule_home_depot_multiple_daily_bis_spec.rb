@@ -2,14 +2,14 @@ describe ValidationRuleHomeDepotMultipleDailyBis do
   before(:each) do
     @rule = described_class.new
 
-    @e = FactoryBot(:entry)
+    @e = create(:entry)
   end
 
   describe "run_validation" do
     it "passes if there are no duplicate broker invoices on a day" do
       Timecop.freeze(Date.today) do
-        bi1 = FactoryBot(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
-        bi2 = FactoryBot(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456789/B", entry: @e)
+        bi1 = create(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
+        bi2 = create(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456789/B", entry: @e)
 
         expect(@rule.run_validation(@e)).to be_falsey
       end
@@ -19,8 +19,8 @@ describe ValidationRuleHomeDepotMultipleDailyBis do
       Timecop.freeze(Date.today) do
         today_string = Date.today.strftime("%m/%d/%Y")
 
-        bi1 = FactoryBot(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
-        bi2 = FactoryBot(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/B", entry: @e)
+        bi1 = create(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
+        bi2 = create(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/B", entry: @e)
 
         expect(@rule.run_validation(@e)).to eql(["123456789/A, 123456789/B were all sent on #{today_string}"])
       end
@@ -31,10 +31,10 @@ describe ValidationRuleHomeDepotMultipleDailyBis do
         today_string = Date.today.strftime("%m/%d/%Y")
         yesterday_string = (Date.today - 1.day).strftime("%m/%d/%Y")
 
-        bi1 = FactoryBot(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
-        bi2 = FactoryBot(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/B", entry: @e)
-        bi3 = FactoryBot(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456799/A", entry: @e)
-        bi4 = FactoryBot(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456799/B", entry: @e)
+        bi1 = create(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/A", entry: @e)
+        bi2 = create(:broker_invoice, invoice_date: Date.today, invoice_number: "123456789/B", entry: @e)
+        bi3 = create(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456799/A", entry: @e)
+        bi4 = create(:broker_invoice, invoice_date: Date.today - 1.day, invoice_number: "123456799/B", entry: @e)
 
         expect(@rule.run_validation(@e)).to eql(["123456789/A, 123456789/B were all sent on #{today_string}", "123456799/A, 123456799/B were all sent on #{yesterday_string}"])
       end

@@ -1,19 +1,19 @@
 describe OneTimeAlertsController do
-  let(:user) { FactoryBot(:user, first_name: "David", last_name: "St. Hubbins", username: "dsthubbins") }
+  let(:user) { create(:user, first_name: "David", last_name: "St. Hubbins", username: "dsthubbins") }
 
   before { sign_in_as user }
 
   describe "index" do
     let!(:ota1) do
-      FactoryBot(:one_time_alert, inactive: true, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1",
-                               expire_date: Date.new(2018, 3, 15), search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_entry_num"),
-                                                                                       FactoryBot(:search_criterion, model_field_uid: "ent_ent_released_date")])
+      create(:one_time_alert, inactive: true, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1",
+                               expire_date: Date.new(2018, 3, 15), search_criterions: [create(:search_criterion, model_field_uid: "ent_entry_num"),
+                                                                                       create(:search_criterion, model_field_uid: "ent_ent_released_date")])
     end
 
     let!(:ota2) do
-      FactoryBot(:one_time_alert, inactive: false, user: user, expire_date_last_updated_by: user, module_type: "Entry",
-                               name: "ota 2", expire_date: Date.new(2018, 3, 20), search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_cust_num"),
-                                                                                                      FactoryBot(:search_criterion, model_field_uid: "ent_arrival_date")])
+      create(:one_time_alert, inactive: false, user: user, expire_date_last_updated_by: user, module_type: "Entry",
+                               name: "ota 2", expire_date: Date.new(2018, 3, 20), search_criterions: [create(:search_criterion, model_field_uid: "ent_cust_num"),
+                                                                                                      create(:search_criterion, model_field_uid: "ent_arrival_date")])
     end
 
     let(:ota3) do
@@ -23,12 +23,12 @@ describe OneTimeAlertsController do
     end
 
     before do
-      FactoryBot(:one_time_alert, inactive: false, user: FactoryBot(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"),
+      create(:one_time_alert, inactive: false, user: create(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"),
                                name: "ota 3", module_type: "Entry", expire_date: Date.new(2018, 3, 15))
 
-      FactoryBot(:one_time_alert, inactive: false, user: FactoryBot(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"),
+      create(:one_time_alert, inactive: false, user: create(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"),
                                name: "ota 4", module_type: "Entry", expire_date: Date.new(2018, 3, 20),
-                               search_criterions: [FactoryBot(:search_criterion, model_field_uid: "ent_entry_num")])
+                               search_criterions: [create(:search_criterion, model_field_uid: "ent_entry_num")])
     end
 
     it "renders for user with permission" do
@@ -125,7 +125,7 @@ describe OneTimeAlertsController do
   end
 
   describe "edit" do
-    let(:ota) { FactoryBot(:one_time_alert, user: user) }
+    let(:ota) { create(:one_time_alert, user: user) }
 
     it "renders for alert's creator" do
       get :edit, id: ota.id, display_all: true
@@ -134,13 +134,13 @@ describe OneTimeAlertsController do
     end
 
     it "renders for admin" do
-      sign_in_as FactoryBot(:admin_user)
+      sign_in_as create(:admin_user)
       get :edit, id: ota.id
       expect(response).to be_success
     end
 
     it "rejects other users" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :edit, id: ota.id
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to include "You do not have permission to edit One Time Alerts."
@@ -176,15 +176,15 @@ describe OneTimeAlertsController do
   end
 
   describe "copy" do
-    let!(:user2) { FactoryBot(:user) }
+    let!(:user2) { create(:user) }
     let!(:alert) do
-      FactoryBot(:one_time_alert, module_type: "Product", inactive: false, blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body",
+      create(:one_time_alert, module_type: "Product", inactive: false, blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body",
                                email_subject: "subject", name: "OTA Name", enabled_date: Date.new(2018, 3, 15), expire_date: Date.new(2019, 3, 15),
-                               expire_date_last_updated_by: user2, mailing_list: FactoryBot(:mailing_list), user: user2)
+                               expire_date_last_updated_by: user2, mailing_list: create(:mailing_list), user: user2)
     end
 
     it "duplicates alert if populated" do
-      sc = FactoryBot(:search_criterion, model_field_uid: 'prod_uid')
+      sc = create(:search_criterion, model_field_uid: 'prod_uid')
       alert.search_criterions << sc
 
       expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
@@ -242,10 +242,10 @@ describe OneTimeAlertsController do
   end
 
   context "mass update" do
-    let!(:ota_1) { FactoryBot(:one_time_alert, user: user, name: "ota 1", expire_date: Date.new(2018, 3, 15)) }
-    let!(:ota_2) { FactoryBot(:one_time_alert, user: user, name: "ota 2", expire_date: Date.new(2018, 3, 15)) }
-    let!(:ota_3) { FactoryBot(:one_time_alert, user: user, name: "ota 3", expire_date: Date.new(2018, 3, 15)) }
-    let!(:ota_4) { FactoryBot(:one_time_alert, user: FactoryBot(:user), name: "ota 4", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_1) { create(:one_time_alert, user: user, name: "ota 1", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_2) { create(:one_time_alert, user: user, name: "ota 2", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_3) { create(:one_time_alert, user: user, name: "ota 3", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_4) { create(:one_time_alert, user: create(:user), name: "ota 4", expire_date: Date.new(2018, 3, 15)) }
 
     describe "mass_delete" do
       it "deletes multiple alerts for permitted user" do
@@ -343,7 +343,7 @@ describe OneTimeAlertsController do
       end
 
       it "prevents access by other users" do
-        sign_in_as FactoryBot(:user)
+        sign_in_as create(:user)
         Timecop.freeze(DateTime.new(2018, 4, 1)) { put :mass_enable, ids: [ota_1.id, ota_3.id] }
 
         [ota_1, ota_2, ota_3].each(&:reload)
@@ -416,7 +416,7 @@ describe OneTimeAlertsController do
   end
 
   describe "log_index" do
-    let!(:alert) { FactoryBot(:one_time_alert, user: user) }
+    let!(:alert) { create(:one_time_alert, user: user) }
 
     it "renders for user with permission" do
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return true

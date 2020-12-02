@@ -11,12 +11,12 @@ describe OpenChain::CustomHandler::ThomsonReutersEntryXmlGenerator do
 
   describe "generate_xml" do
     it "generates an XML" do
-      broker = FactoryBot(:company, name: "Vandegrift Forwarding Co.", broker: true)
+      broker = create(:company, name: "Vandegrift Forwarding Co.", broker: true)
       broker.addresses.create!(system_code: "4", name: "Vandegrift Forwarding Co., Inc.", line_1: "180 E Ocean Blvd",
                                line_2: "Suite 270", city: "Long Beach", state: "CA", postal_code: "90802")
       broker.system_identifiers.create!(system: "Filer Code", code: "316")
 
-      entry = FactoryBot(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
+      entry = create(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
                               lading_port_code: "57035", entry_port_code: "1402", transport_mode_code: 11,
                               ult_consignee_name: "Consignco",
                               release_date: ActiveSupport::TimeZone['UTC'].parse('2020-04-28 10:35:11'),

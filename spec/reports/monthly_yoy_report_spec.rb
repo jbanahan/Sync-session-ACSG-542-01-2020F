@@ -1,15 +1,15 @@
 describe OpenChain::Report::MonthlyYoyReport do
-  let(:co1) { FactoryBot(:country, iso_code: "CA") }
-  let(:co2) { FactoryBot(:country, iso_code: "US") }
+  let(:co1) { create(:country, iso_code: "CA") }
+  let(:co2) { create(:country, iso_code: "US") }
   let(:today) { Date.new(2016, 5, 15) }
   let(:month_ago) { today - 1.month }
   let(:two_months_ago) { month_ago - 1.month }
-  let!(:e1) { FactoryBot(:entry, file_logged_date: two_months_ago, division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co1) }
-  let!(:e2) { FactoryBot(:entry, file_logged_date: month_ago, division_number: '2', customer_number: '2', transport_mode_code: '10', import_country: co1) }
-  let!(:e3) { FactoryBot(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '3', transport_mode_code: '10', import_country: co1) }
-  let!(:e4) { FactoryBot(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '2', transport_mode_code: '40', import_country: co1) }
+  let!(:e1) { create(:entry, file_logged_date: two_months_ago, division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co1) }
+  let!(:e2) { create(:entry, file_logged_date: month_ago, division_number: '2', customer_number: '2', transport_mode_code: '10', import_country: co1) }
+  let!(:e3) { create(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '3', transport_mode_code: '10', import_country: co1) }
+  let!(:e4) { create(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '2', transport_mode_code: '40', import_country: co1) }
   # Ensures we are including the final day of the previous month.
-  let!(:e5) { FactoryBot(:entry, file_logged_date: Date.new(2016, 4, 30), division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
+  let!(:e5) { create(:entry, file_logged_date: Date.new(2016, 4, 30), division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
 
   describe "run_schedulable" do
     it "sends email with attached xls" do
@@ -32,7 +32,7 @@ describe OpenChain::Report::MonthlyYoyReport do
     end
 
     it "sends email with attached xls (invoice date)" do
-      ci1 = FactoryBot(:commercial_invoice, entry: e1, invoice_date: two_months_ago)
+      ci1 = create(:commercial_invoice, entry: e1, invoice_date: two_months_ago)
 
       Timecop.freeze(today) { described_class.run_schedulable({"email" => "test@vandegriftinc.com", "range_field" => "invoice_date"}) }
       mail = ActionMailer::Base.deliveries.pop
@@ -69,12 +69,12 @@ describe OpenChain::Report::MonthlyYoyReport do
     end
 
     it "produces expected data (for invoice_date)" do
-      ci1 = FactoryBot(:commercial_invoice, entry: e1, invoice_date: two_months_ago)
-      ci1b = FactoryBot(:commercial_invoice, entry: e1, invoice_date: nil)
-      ci2 = FactoryBot(:commercial_invoice, entry: e2, invoice_date: two_months_ago)
-      ci2b = FactoryBot(:commercial_invoice, entry: e2, invoice_date: month_ago)
-      ci3 = FactoryBot(:commercial_invoice, entry: e3, invoice_date: month_ago)
-      ci4 = FactoryBot(:commercial_invoice, entry: e4, invoice_date: month_ago)
+      ci1 = create(:commercial_invoice, entry: e1, invoice_date: two_months_ago)
+      ci1b = create(:commercial_invoice, entry: e1, invoice_date: nil)
+      ci2 = create(:commercial_invoice, entry: e2, invoice_date: two_months_ago)
+      ci2b = create(:commercial_invoice, entry: e2, invoice_date: month_ago)
+      ci3 = create(:commercial_invoice, entry: e3, invoice_date: month_ago)
+      ci4 = create(:commercial_invoice, entry: e4, invoice_date: month_ago)
 
       res = nil
       Timecop.freeze(today) { res = ActiveRecord::Base.connection.execute(subject.query("invoice_date")) }

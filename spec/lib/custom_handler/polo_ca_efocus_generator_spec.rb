@@ -3,7 +3,7 @@ require 'rexml/document'
 describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
   before :each do
     @tax_ids = ['806167003RM0001', '871349163RM0001', '866806458RM0001']
-    @e1 = FactoryBot(:entry, :importer_tax_id=>@tax_ids[0],
+    @e1 = create(:entry, :importer_tax_id=>@tax_ids[0],
       :entry_number=>'123456789',
       :broker_reference=>'666666',
       :arrival_date=>5.days.ago,
@@ -35,21 +35,21 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       expect(f.first.path.end_with?(".xml")).to be_truthy
     end
     it "should find entries for all 3 importer ids" do
-      @e2 = FactoryBot(:entry, :importer_tax_id=>@tax_ids[1], :container_numbers=>'C', :master_bills_of_lading=>"M")
-      @e3 = FactoryBot(:entry, :importer_tax_id=>@tax_ids[2], :container_numbers=>'C', :master_bills_of_lading=>"M")
+      @e2 = create(:entry, :importer_tax_id=>@tax_ids[1], :container_numbers=>'C', :master_bills_of_lading=>"M")
+      @e3 = create(:entry, :importer_tax_id=>@tax_ids[2], :container_numbers=>'C', :master_bills_of_lading=>"M")
       expect(@g).to receive(:generate_xml_file).with(@e1, instance_of(StringIO))
       expect(@g).to receive(:generate_xml_file).with(@e2, instance_of(StringIO))
       expect(@g).to receive(:generate_xml_file).with(@e3, instance_of(StringIO))
       @g.sync_xml
     end
     it "should not find entries that are not for polo importer ids" do
-      @e2 = FactoryBot(:entry, :importer_tax_id=>'somethingelse', :container_numbers=>'C', :master_bills_of_lading=>"M")
+      @e2 = create(:entry, :importer_tax_id=>'somethingelse', :container_numbers=>'C', :master_bills_of_lading=>"M")
       expect(@g).to receive(:generate_xml_file).with(@e1, instance_of(StringIO))
       expect(@g).not_to receive(:generate_xml_file).with(@e2, instance_of(StringIO))
       @g.sync_xml
     end
     it "should not find entries that don't need sync" do
-      @e2 = FactoryBot(:entry, :importer_tax_id=>@tax_ids[1], :updated_at=>1.day.ago, :container_numbers=>'C', :master_bills_of_lading=>"M")
+      @e2 = create(:entry, :importer_tax_id=>@tax_ids[1], :updated_at=>1.day.ago, :container_numbers=>'C', :master_bills_of_lading=>"M")
       @e2.sync_records.create!(:trading_partner=>'polo_ca_efocus', :sent_at=>1.hour.ago, :confirmed_at=>10.minutes.ago)
       expect(@g).to receive(:generate_xml_file).with(@e1, instance_of(StringIO))
       expect(@g).not_to receive(:generate_xml_file).with(@e2, instance_of(StringIO))
@@ -222,7 +222,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       expect(get_entry_element.elements['country-export'].text).to eq('CN')
     end
     it "should use port codes table for unlading port codes" do
-      p = FactoryBot(:port, :cbsa_port=>'0009', :unlocode=>'CAHAL')
+      p = create(:port, :cbsa_port=>'0009', :unlocode=>'CAHAL')
       @e1.entry_port_code = '9'
       expect(get_entry_element.elements['port-unlading'].text).to eq('CAHAL')
     end

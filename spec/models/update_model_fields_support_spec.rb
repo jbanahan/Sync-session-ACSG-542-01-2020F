@@ -10,14 +10,14 @@ end
 
 describe UpdateModelFieldsSupport do
   before do
-    User.current = FactoryBot(:user)
+    User.current = create(:user)
   end
 
   describe "update_model_field_attributes" do
-    let(:prod_cd) { FactoryBot(:custom_definition, module_type: 'Product', data_type: :string) }
-    let(:class_cd) { FactoryBot(:custom_definition, module_type: 'Classification', data_type: :decimal) }
-    let(:tariff_cd) { FactoryBot(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
-    let(:country) { FactoryBot(:country) }
+    let(:prod_cd) { create(:custom_definition, module_type: 'Product', data_type: :string) }
+    let(:class_cd) { create(:custom_definition, module_type: 'Classification', data_type: :decimal) }
+    let(:tariff_cd) { create(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
+    let(:country) { create(:country) }
 
     it "updates model field attributes and custom fields (creating new nested children) using request params hash layout" do
       params = {
@@ -50,9 +50,9 @@ describe UpdateModelFieldsSupport do
     end
 
     it "updates existing models adding new child model" do
-      p = FactoryBot(:product, unique_identifier: "unique_id")
-      cl = FactoryBot(:classification, product: p)
-      FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      p = create(:product, unique_identifier: "unique_id")
+      cl = create(:classification, product: p)
+      create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -77,9 +77,9 @@ describe UpdateModelFieldsSupport do
     end
 
     it "updates existing models adding new grand-child model" do
-      p = FactoryBot(:product, unique_identifier: "unique_id")
-      cl = FactoryBot(:classification, product: p)
-      FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      p = create(:product, unique_identifier: "unique_id")
+      cl = create(:classification, product: p)
+      create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -167,7 +167,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "does not raise an error on active record validation errors" do
-      existing = FactoryBot(:product)
+      existing = create(:product)
       p = Product.new
 
       # Product has a unique identifier validation
@@ -186,7 +186,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "includes both ActiveRecord and model field import errors in errors" do
-      existing = FactoryBot(:product)
+      existing = create(:product)
       p = Product.new
 
       result = ProcessImportResult.new "fail"
@@ -200,9 +200,9 @@ describe UpdateModelFieldsSupport do
     end
 
     it "skips fields that user cannot edit" do
-      p = FactoryBot(:product, name: 'XYZ')
+      p = create(:product, name: 'XYZ')
       mf = ModelField.by_uid(:prod_name)
-      u = FactoryBot(:user)
+      u = create(:user)
       attrs = { prod_name: 'ABC'}
       opts = {user: u, skip_not_editable: true}
 
@@ -216,10 +216,10 @@ describe UpdateModelFieldsSupport do
   end
 
   describe "update_model_field_attributes!" do
-    let(:prod_cd) { FactoryBot(:custom_definition, module_type: 'Product', data_type: :string) }
-    let(:class_cd) { FactoryBot(:custom_definition, module_type: 'Classification', data_type: :decimal) }
-    let(:tariff_cd) { FactoryBot(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
-    let(:country) { FactoryBot(:country) }
+    let(:prod_cd) { create(:custom_definition, module_type: 'Product', data_type: :string) }
+    let(:class_cd) { create(:custom_definition, module_type: 'Classification', data_type: :decimal) }
+    let(:tariff_cd) { create(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
+    let(:country) { create(:country) }
 
     it "updates model field attributes and custom fields (creating new nested children) using request params hash layout" do
       params = {
@@ -309,7 +309,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "does raises an error on active record validation errors" do
-      existing = FactoryBot(:product)
+      existing = create(:product)
       p = Product.new
 
       # Product has a unique identifier validation
@@ -336,7 +336,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "includes both ActiveRecord and model field import errors in errors" do
-      existing = FactoryBot(:product)
+      existing = create(:product)
       p = Product.new
 
       result = ProcessImportResult.new "fail"
@@ -353,10 +353,10 @@ describe UpdateModelFieldsSupport do
     end
 
     it "skips blank fields when instructed to with params-style hash" do
-      p = FactoryBot(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
+      p = create(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
       p.update_custom_value! prod_cd, 'custom'
-      cl = FactoryBot(:classification, product: p)
-      t = FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      cl = create(:classification, product: p)
+      t = create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -384,10 +384,10 @@ describe UpdateModelFieldsSupport do
     end
 
     it "skips blank fields when instructed to with standard hash" do
-      p = FactoryBot(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
+      p = create(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
       p.update_custom_value! prod_cd, 'custom'
-      cl = FactoryBot(:classification, product: p)
-      t = FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      cl = create(:classification, product: p)
+      t = create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -415,10 +415,10 @@ describe UpdateModelFieldsSupport do
     end
 
     t "skips blank fields when instructed to with abbreviated hash" do
-      p = FactoryBot(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
+      p = create(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
       p.update_custom_value! prod_cd, 'custom'
-      cl = FactoryBot(:classification, product: p)
-      t = FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      cl = create(:classification, product: p)
+      t = create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -446,10 +446,10 @@ describe UpdateModelFieldsSupport do
     end
 
     it "skips custom fields if instructed" do
-      p = FactoryBot(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
+      p = create(:product, unique_identifier: "unique_id", unit_of_measure: "UOM")
       p.update_custom_value! prod_cd, 'custom'
-      cl = FactoryBot(:classification, product: p)
-      t = FactoryBot(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
+      cl = create(:classification, product: p)
+      t = create(:tariff_record, classification: cl, line_number: 1, hts_1: "9876543210")
 
       params = {
         'id' => p.id,
@@ -472,10 +472,10 @@ describe UpdateModelFieldsSupport do
   end
 
   describe "assign_model_field_attributes" do
-    let(:prod_cd) { FactoryBot(:custom_definition, module_type: 'Product', data_type: :string) }
-    let(:class_cd) { FactoryBot(:custom_definition, module_type: 'Classification', data_type: :decimal) }
-    let(:tariff_cd) { FactoryBot(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
-    let(:country) { FactoryBot(:country) }
+    let(:prod_cd) { create(:custom_definition, module_type: 'Product', data_type: :string) }
+    let(:class_cd) { create(:custom_definition, module_type: 'Classification', data_type: :decimal) }
+    let(:tariff_cd) { create(:custom_definition, module_type: 'TariffRecord', data_type: :date) }
+    let(:country) { create(:country) }
 
     it "converts ActionController::Parameters to a hash" do
       params = ActionController::Parameters.new({
@@ -546,7 +546,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "runs validations on assigned object" do
-      FactoryBot(:product, unique_identifier: 'unique_id')
+      create(:product, unique_identifier: 'unique_id')
       result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       allow_any_instance_of(ModelField).to receive(:process_import).and_return result
@@ -572,7 +572,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "does not run validations on assigned object if instructed not to" do
-      FactoryBot(:product, unique_identifier: 'unique_id')
+      create(:product, unique_identifier: 'unique_id')
       result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       allow(ModelField.by_uid(:prod_uid)).to receive(:process_import).and_return result
@@ -606,8 +606,8 @@ describe UpdateModelFieldsSupport do
       l = ->(attrs) { !attrs.include? :class_cntry_iso}
       expect(Product).to receive(:model_field_attribute_rejections).and_return [l]
 
-      p = FactoryBot(:product, unique_identifier: "unique_id")
-      cl = FactoryBot(:classification, product: p)
+      p = create(:product, unique_identifier: "unique_id")
+      cl = create(:classification, product: p)
 
       params = {
         'id' => p.id,
@@ -628,7 +628,7 @@ describe UpdateModelFieldsSupport do
       l = ->(attrs) { !attrs.include? :class_cntry_iso}
       expect(Product).to receive(:model_field_attribute_rejections).and_return [l]
 
-      p = FactoryBot(:product, unique_identifier: "unique_id")
+      p = create(:product, unique_identifier: "unique_id")
       params = {
         'id' => p.id,
         'classifications_attributes' => {'0' => {
@@ -644,8 +644,8 @@ describe UpdateModelFieldsSupport do
       expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
       expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 
-      p = FactoryBot(:product, unique_identifier: "unique_id")
-      cl = FactoryBot(:classification, product: p)
+      p = create(:product, unique_identifier: "unique_id")
+      cl = create(:classification, product: p)
 
       params = {
         'id' => p.id,
@@ -666,7 +666,7 @@ describe UpdateModelFieldsSupport do
       expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
       expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 
-      p = FactoryBot(:product, unique_identifier: "unique_id")
+      p = create(:product, unique_identifier: "unique_id")
       params = {
         'id' => p.id,
         'classifications_attributes' => {'0' => {
@@ -681,8 +681,8 @@ describe UpdateModelFieldsSupport do
     it "does not attempt to call reject on objects marked for destruction" do
       expect(Product).not_to receive(:reject_child_model_field_assignment?)
 
-      p = FactoryBot(:product, unique_identifier: "unique_id")
-      cl = FactoryBot(:classification, product: p)
+      p = create(:product, unique_identifier: "unique_id")
+      cl = create(:classification, product: p)
 
       params = {
         'classifications_attributes' => {'0' => {

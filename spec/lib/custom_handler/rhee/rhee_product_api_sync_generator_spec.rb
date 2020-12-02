@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
       @c = described_class.new api_client: @api_client
       @fda_def = @c.class.prep_custom_definitions([:fda_product_code])[:fda_product_code]
 
-      tariff = FactoryBot(:tariff_record, hts_1: "1234567890", classification: FactoryBot(:classification, country: FactoryBot(:country, iso_code: "US")))
+      tariff = create(:tariff_record, hts_1: "1234567890", classification: create(:classification, country: create(:country, iso_code: "US")))
       @product = tariff.product
       @product.update_custom_value! @fda_def, "FDA-123"
     end

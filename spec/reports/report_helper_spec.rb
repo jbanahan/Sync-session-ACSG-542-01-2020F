@@ -21,7 +21,7 @@ describe OpenChain::Report::ReportHelper do
     }
 
     it "runs a query, adds headers to sheet, passing control to write result sheet" do
-      e = FactoryBot(:entry, entry_number: "123")
+      e = create(:entry, entry_number: "123")
       q = "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       expect(subject.run q).to eq 1
 
@@ -31,7 +31,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "shifts off the leftmost X columns if query column offset is used" do
-      e = FactoryBot(:entry, entry_number: "123")
+      e = create(:entry, entry_number: "123")
       q = "SELECT 'test' as 'TEST', entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       subject.run q, {}, query_column_offset: 1
       sheet = subject.sheet
@@ -41,7 +41,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "uses conversions associated with column aliases, even if columns are not displayed on report" do
-      FactoryBot(:entry, broker_reference: "123")
+      create(:entry, broker_reference: "123")
       query = "SELECT e.id 'ID', e.broker_reference 'REF' FROM entries e"
       id = nil
       # By setting id value in the conversion lambda on a column that's not on the report, we ensure that conversions
@@ -87,8 +87,8 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should write results to the given sheet" do
-      e1 = FactoryBot(:entry, :entry_number=>'12345')
-      e2 = FactoryBot(:entry, :entry_number=>'65432')
+      e1 = create(:entry, :entry_number=>'12345')
+      e2 = create(:entry, :entry_number=>'65432')
       results = ActiveRecord::Base.connection.execute "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       # Start at row 5 just to make sure the return value is actually giving us the # of rows written and not the ending line number
       expect(subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
@@ -99,7 +99,7 @@ describe OpenChain::Report::ReportHelper do
 
     it "should handle timezone conversion for datetime columns" do
       release_date = 0.seconds.ago
-      e1 = FactoryBot(:entry, :entry_number=>'12345', :release_date => release_date)
+      e1 = create(:entry, :entry_number=>'12345', :release_date => release_date)
       results = ActiveRecord::Base.connection.execute "SELECT release_date 'REL1', date(release_date) as 'Rel2' FROM entries order by entry_number ASC"
       Time.use_zone("Hawaii") do
         subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0

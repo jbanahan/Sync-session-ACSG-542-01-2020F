@@ -1,8 +1,8 @@
 describe InboundFilesController do
 
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
   let(:inbound_file) do
-    FactoryBot(:inbound_file, file_name: "f.txt", s3_bucket: "the_bucket", s3_path: "the_path", receipt_location: "the_folder")
+    create(:inbound_file, file_name: "f.txt", s3_bucket: "the_bucket", s3_path: "the_path", receipt_location: "the_folder")
   end
 
   before do
@@ -116,7 +116,7 @@ describe InboundFilesController do
     end
 
     it "sends multiple files" do
-      inbound_file2 = FactoryBot(:inbound_file, s3_bucket: "the_bucket2", s3_path: "the_path2")
+      inbound_file2 = create(:inbound_file, s3_bucket: "the_bucket2", s3_path: "the_path2")
       post :send_to_test, ids: [inbound_file.id, inbound_file2.id]
       expect(flash[:notices]).to eq ["Files have been queued to be sent to test."]
       expect(flash[:errors]).to be_nil

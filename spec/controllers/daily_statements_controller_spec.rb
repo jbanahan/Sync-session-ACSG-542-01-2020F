@@ -1,5 +1,5 @@
 describe DailyStatementsController do
-  let (:user) { FactoryBot(:master_user) }
+  let (:user) { create(:master_user) }
 
   before :each do
     sign_in_as user
@@ -74,16 +74,16 @@ describe DailyStatementsController do
   end
 
   context "attachments" do
-    let(:statement) { FactoryBot(:daily_statement, statement_number: "123456789") }
-    let(:line_1) { FactoryBot(:daily_statement_entry, daily_statement: statement, entry: FactoryBot(:entry, entry_number: "ent_num_1", attachments: [FactoryBot(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "ENTRY SUMMARY PACK")])) }
-    let(:line_2) { FactoryBot(:daily_statement_entry, daily_statement: statement, entry: FactoryBot(:entry, entry_number: "ent_num_2", attachments: [FactoryBot(:attachment, attached_file_name: "test_sheet_2.xlsx", attached_file_size: 1500, attachment_type: "ENTRY SUMMARY PACK")])) }
-    let(:line_3) { FactoryBot(:daily_statement_entry, daily_statement: statement, entry: FactoryBot(:entry, entry_number: "ent_num_3", attachments: [FactoryBot(:attachment, attached_file_name: "test_sheet_3.csv", attached_file_size: 2000, attachment_type: "ENTRY PACKET")])) }
+    let(:statement) { create(:daily_statement, statement_number: "123456789") }
+    let(:line_1) { create(:daily_statement_entry, daily_statement: statement, entry: create(:entry, entry_number: "ent_num_1", attachments: [create(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "ENTRY SUMMARY PACK")])) }
+    let(:line_2) { create(:daily_statement_entry, daily_statement: statement, entry: create(:entry, entry_number: "ent_num_2", attachments: [create(:attachment, attached_file_name: "test_sheet_2.xlsx", attached_file_size: 1500, attachment_type: "ENTRY SUMMARY PACK")])) }
+    let(:line_3) { create(:daily_statement_entry, daily_statement: statement, entry: create(:entry, entry_number: "ent_num_3", attachments: [create(:attachment, attached_file_name: "test_sheet_3.csv", attached_file_size: 2000, attachment_type: "ENTRY PACKET")])) }
     let(:att_1) { line_1.entry.attachments.first }
     let(:att_2) { line_2.entry.attachments.first }
     let(:att_3) { line_3.entry.attachments.first }
 
-    let(:statement_2) { FactoryBot(:daily_statement, statement_number: "987654321") }
-    let(:line_2_1) { FactoryBot(:daily_statement_entry, daily_statement: statement_2, entry: FactoryBot(:entry, entry_number: "ent_num_4", attachments: [FactoryBot(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "HAHA")])) }
+    let(:statement_2) { create(:daily_statement, statement_number: "987654321") }
+    let(:line_2_1) { create(:daily_statement_entry, daily_statement: statement_2, entry: create(:entry, entry_number: "ent_num_4", attachments: [create(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "HAHA")])) }
     let(:att_2_1) { line_2_1.entry.attachments.first }
 
     before do

@@ -7,32 +7,32 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
   end
 
   let (:importer) {
-    with_fenix_id(FactoryBot(:importer, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address]), "TAXID")
+    with_fenix_id(create(:importer, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address]), "TAXID")
   }
 
   let (:vendor) {
-    FactoryBot(:company, :vendor=>true, :name=>"Vendor", :addresses=>[make_address])
+    create(:company, :vendor=>true, :name=>"Vendor", :addresses=>[make_address])
   }
 
   let (:consignee) {
-    FactoryBot(:company, :consignee=>true, :name=>"Consignee", :addresses=>[make_address])
+    create(:company, :consignee=>true, :name=>"Consignee", :addresses=>[make_address])
   }
 
   let! (:invoice) {
     # Use a full datetime so that we're sure it's getting trim'ed back to just a date in the output
-    FactoryBot(:commercial_invoice, :invoice_number=>"Inv. Number", :invoice_date=>Time.zone.parse("2018-12-15 12:00"), :country_origin_code => "US",
+    create(:commercial_invoice, :invoice_number=>"Inv. Number", :invoice_date=>Time.zone.parse("2018-12-15 12:00"), :country_origin_code => "US",
                       :currency => "CAD", :total_quantity => 10, :total_quantity_uom => "CTNS", :gross_weight => 100, :invoice_value=>100.10,
                       :importer => importer, :vendor => vendor, :consignee => consignee, master_bills_of_lading: "SCAC1234567890")
   }
 
   let! (:invoice_line_1) {
-    line = FactoryBot(:commercial_invoice_line, :commercial_invoice => invoice, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
+    line = create(:commercial_invoice_line, :commercial_invoice => invoice, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
     line.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff", :tariff_provision => "1"
     line
   }
 
   let! (:invoice_line_2) {
-    line = FactoryBot(:commercial_invoice_line, :commercial_invoice => invoice, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER", :customer_reference => "CUSTREF")
+    line = create(:commercial_invoice_line, :commercial_invoice => invoice, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER", :customer_reference => "CUSTREF")
     line.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff", :tariff_provision => "2"
     line
   }
@@ -180,12 +180,12 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
     it "should handle nils in all default field values" do
       # Just make sure it doesn't blow up with nil values in every field
-      importer = FactoryBot(:company, :importer=>true, :addresses=>[Address.new])
-      vendor = FactoryBot(:company, :vendor=>true, :addresses=>[Address.new])
-      consignee = FactoryBot(:company, :consignee=>true, :addresses=>[Address.new])
+      importer = create(:company, :importer=>true, :addresses=>[Address.new])
+      vendor = create(:company, :vendor=>true, :addresses=>[Address.new])
+      consignee = create(:company, :consignee=>true, :addresses=>[Address.new])
 
-      i = FactoryBot(:commercial_invoice, :importer => importer, :vendor => vendor, :consignee => consignee)
-      l1 = FactoryBot(:commercial_invoice_line, :commercial_invoice => i)
+      i = create(:commercial_invoice, :importer => importer, :vendor => vendor, :consignee => consignee)
+      l1 = create(:commercial_invoice_line, :commercial_invoice => i)
       l1.commercial_invoice_tariffs << CommercialInvoiceTariff.new
 
       contents = generate

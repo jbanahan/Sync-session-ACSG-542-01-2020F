@@ -1,5 +1,5 @@
 describe VfiInvoiceLine do
-  let(:inv_line) { FactoryBot(:vfi_invoice_line, unit_price: 15.30, quantity: 2) }
+  let(:inv_line) { create(:vfi_invoice_line, unit_price: 15.30, quantity: 2) }
 
   describe "get_charge_amount" do
     it "multiplies the quantity on the invoice by its unit price" do

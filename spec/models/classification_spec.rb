@@ -1,7 +1,7 @@
 describe Classification do
   describe 'classified?' do
     before :each do
-      @c = FactoryBot(:classification)
+      @c = create(:classification)
     end
     it "should return true for classified classification" do
       @c.tariff_records.create!(:hts_1=>'12345678')
@@ -17,16 +17,16 @@ describe Classification do
   end
   describe 'find_same' do
     it 'should return nil when no matches' do
-      c = FactoryBot(:classification)
+      c = create(:classification)
       expect(c.find_same).to be_nil
     end
     it 'should return the match when there is one' do
-      c = FactoryBot(:classification)
+      c = create(:classification)
       new_one = Classification.new(:product_id=>c.product_id, :country_id=>c.country_id)
       expect(new_one.find_same).to eq(c)
     end
     it 'should ignore instant_classification children for matching purposes' do
-      c = FactoryBot(:classification, :instant_classification_id=>1)
+      c = create(:classification, :instant_classification_id=>1)
       new_one = Classification.new(:product_id=>c.product_id, :country_id=>c.country_id)
       expect(new_one.find_same).to be_nil
     end
@@ -34,7 +34,7 @@ describe Classification do
 
   describe "reject_nested_model_field_attributes_if" do
     before :each do
-      @c = FactoryBot(:classification)
+      @c = create(:classification)
       @params = {
         tariff_records_attributes: {
             '0' => {

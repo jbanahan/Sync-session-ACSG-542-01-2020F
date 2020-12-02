@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
   describe "generate_xml" do
-    let!(:target) { with_customs_management_id(FactoryBot(:importer), "TARGEN") }
+    let!(:target) { with_customs_management_id(create(:importer), "TARGEN") }
 
     it "generates an XML" do
-      broker = FactoryBot(:company, name: "Vandegrift Forwarding Co.", broker: true)
+      broker = create(:company, name: "Vandegrift Forwarding Co.", broker: true)
       broker.addresses.create!(system_code: "4", name: "Vandegrift Forwarding Co., Inc.", line_1: "180 E Ocean Blvd",
                                line_2: "Suite 270", city: "Long Beach", state: "CA", postal_code: "90802")
       broker.system_identifiers.create!(system: "Filer Code", code: "316")
 
-      entry = FactoryBot(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
+      entry = create(:entry, entry_number: "31679758714", entry_type: "01", broker_reference: "ARGH58285",
                               master_bills_of_lading: "EGLV142050488076Z", lading_port_code: "57035",
                               unlading_port_code: "1401", entry_port_code: "1402", location_of_goods: "M801",
                               location_of_goods_description: "SOMEWHERE", first_it_date: Date.new(2020, 5, 11),
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
                                                           mid: "383878", hmf_rate: BigDecimal(".106"), mpf_rate: BigDecimal(".117"),
                                                           cotton_fee_rate: BigDecimal("12.8"), customs_line_number: 1, department: "20")
       expect(inv_1_line_1).to receive(:duty_plus_fees_amount).and_return(BigDecimal("42.66"))
-      FactoryBot(:product, importer_id: target.id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
+      create(:product, importer_id: target.id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
       tar_1 = inv_1_line_1.commercial_invoice_tariffs.build(duty_amount: BigDecimal("1000"), gross_weight: 13,
                                                             hts_code: "9506910030", spi_primary: "SP1", spi_secondary: "SP2",
                                                             classification_uom_1: "NO", classification_qty_1: BigDecimal("2578"),
@@ -406,7 +406,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "handles assorted nil and missing values" do
-      entry = FactoryBot(:entry, entry_number: "31679758714")
+      entry = create(:entry, entry_number: "31679758714")
       inv = entry.commercial_invoices.build(invoice_number: "E1I0954293")
       inv_line = inv.commercial_invoice_lines.build(customs_line_number: 1)
       inv_line.commercial_invoice_tariffs.build(hts_code: "9506910030")
@@ -477,7 +477,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "shows consolidatedEntry value of 'Y' when multiple bills of lading present" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", master_bills_of_lading: "A\n B")
+      entry = create(:entry, entry_number: "31679758714", master_bills_of_lading: "A\n B")
       entry.commercial_invoices.build(invoice_number: "E1I0954293")
 
       doc = subject.generate_xml entry
@@ -487,12 +487,12 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "defaults broker address to Baltimore if no division match" do
-      broker = FactoryBot(:company, name: "Vandegrift Forwarding Co.", broker: true)
+      broker = create(:company, name: "Vandegrift Forwarding Co.", broker: true)
       broker.addresses.create!(system_code: "10", name: "Vandegrift Forwarding Co., Inc.", line_1: "20 South Charles Street",
                                line_2: "STE 501", city: "Baltimore", state: "MD", postal_code: "21201")
       broker.system_identifiers.create!(system: "Filer Code", code: "316")
 
-      entry = FactoryBot(:entry, entry_number: "31679758714", division_number: "004")
+      entry = create(:entry, entry_number: "31679758714", division_number: "004")
 
       doc = subject.generate_xml entry
 
@@ -506,7 +506,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "shows statusRequestCode value of 'DOCS' when not paperless release" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", paperless_release: false)
+      entry = create(:entry, entry_number: "31679758714", paperless_release: false)
 
       doc = subject.generate_xml entry
 
@@ -515,7 +515,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "shows paymentTypeIndicator value of nil when pay type is 0" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", pay_type: nil)
+      entry = create(:entry, entry_number: "31679758714", pay_type: nil)
 
       doc = subject.generate_xml entry
 
@@ -524,7 +524,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "handles abnormal invoice customer ref" do
-      entry = FactoryBot(:entry, entry_number: "31679758714")
+      entry = create(:entry, entry_number: "31679758714")
       entry.commercial_invoices.build(invoice_number: "E1I0954293", customer_reference: "SHORT")
 
       doc = subject.generate_xml entry
@@ -534,7 +534,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "rounds money fields" do
-      entry = FactoryBot(:entry, entry_number: "31679758714", cotton_fee: BigDecimal("5.095"))
+      entry = create(:entry, entry_number: "31679758714", cotton_fee: BigDecimal("5.095"))
       inv = entry.commercial_invoices.build(invoice_number: "E1I0954293", invoice_value: BigDecimal("45323.516"),
                                             invoice_value_foreign: BigDecimal("45324.617"),
                                             non_dutiable_amount: BigDecimal("13.308"))
@@ -650,7 +650,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "handles XVV tariff instances" do
-      entry = FactoryBot(:entry, entry_number: "31679758714")
+      entry = create(:entry, entry_number: "31679758714")
       inv = entry.commercial_invoices.build(invoice_number: "E1I0954293")
       inv_line = inv.commercial_invoice_lines.build(customs_line_number: 1, prorated_mpf: BigDecimal("100"),
                                                     hmf: BigDecimal("53.33"), cotton_fee: BigDecimal("75.31"),
@@ -796,7 +796,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
 
     it "handles chapter 99 tariffs" do
-      entry = FactoryBot(:entry, entry_number: "31679758714")
+      entry = create(:entry, entry_number: "31679758714")
       inv = entry.commercial_invoices.build(invoice_number: "E1I0954293")
       inv_line = inv.commercial_invoice_lines.build(customs_line_number: 1, prorated_mpf: BigDecimal("100"),
                                                     hmf: BigDecimal("53.33"), cotton_fee: BigDecimal("75.31"),
@@ -1154,7 +1154,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
 
     describe "recon variants" do
       it "returns recon indicator of 007 when VALUE, CLASS and 9802 are part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "CLASS value 9802 SOMETHING")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "CLASS value 9802 SOMETHING")
 
         doc = subject.generate_xml entry
 
@@ -1162,7 +1162,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 006 when CLASS and 9802 are part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "SOMETHING class 9802")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "SOMETHING class 9802")
 
         doc = subject.generate_xml entry
 
@@ -1170,7 +1170,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 005 when VALUE and 9802 are part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "VALUE SOMETHING 9802")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "VALUE SOMETHING 9802")
 
         doc = subject.generate_xml entry
 
@@ -1178,7 +1178,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 004 when VALUE and CLASS are part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "vaLue clAss 9803")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "vaLue clAss 9803")
 
         doc = subject.generate_xml entry
 
@@ -1186,7 +1186,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 003 when only 9802 is part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "SOMETHING 9802")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "SOMETHING 9802")
 
         doc = subject.generate_xml entry
 
@@ -1194,7 +1194,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 002 when only CLASS is part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "cLASS SOMETHING")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "cLASS SOMETHING")
 
         doc = subject.generate_xml entry
 
@@ -1202,7 +1202,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       end
 
       it "returns recon indicator of 001 when only VALUE is part of recon flags" do
-        entry = FactoryBot(:entry, entry_number: "31679758714", recon_flags: "SOMETHING vALUE")
+        entry = create(:entry, entry_number: "31679758714", recon_flags: "SOMETHING vALUE")
 
         doc = subject.generate_xml entry
 
@@ -1215,7 +1215,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     let (:packet_generator) { instance_double(OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator) }
 
     it "generates and sends a file" do
-      entry = FactoryBot(:entry)
+      entry = create(:entry)
 
       expect(subject).to receive(:generate_xml).with(entry).and_return REXML::Document.new("<FakeXml><child>A</child></FakeXml>")
       expect(subject).to receive(:packet_generator).and_return packet_generator
@@ -1247,27 +1247,27 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
   describe "find_generate_and_send_entries" do
 
     it "calls generate and send method for each matching entry" do
-      target = with_customs_management_id(FactoryBot(:importer), "TARGEN")
+      target = with_customs_management_id(create(:importer), "TARGEN")
 
-      entry_no_sync = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
+      entry_no_sync = create(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
 
-      entry_old_sync = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
+      entry_old_sync = create(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
       entry_old_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 13))
 
       # This should be excluded because it has a sync record with a sent at date later than the entry's summary accepted date.
-      entry_new_sync = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
+      entry_new_sync = create(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
       entry_new_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 15))
 
       # This should be excluded because it belongs to a different importer.
-      entry_not_target = FactoryBot(:entry, importer_id: target.id - 1, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
+      entry_not_target = create(:entry, importer_id: target.id - 1, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: nil)
 
       # This should be excluded because it has no accepted date.
-      entry_no_summary_accepted_date = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: nil, final_statement_date: nil)
+      entry_no_summary_accepted_date = create(:entry, importer_id: target.id, summary_accepted_date: nil, final_statement_date: nil)
 
       # This should not be excluded because it has a final statement date, but has not been sent previously
-      entry_finalized = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
+      entry_finalized = create(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
 
-      entry_finalized_sent = FactoryBot(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
+      entry_finalized_sent = create(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
       entry_finalized_sent.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 13))
 
       expect(subject).to receive(:generate_and_send).with(entry_old_sync)

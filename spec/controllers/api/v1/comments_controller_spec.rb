@@ -1,6 +1,6 @@
 describe Api::V1::CommentsController do
-  let!(:user) { FactoryBot(:user, first_name: 'Joe', last_name: 'Coward', time_zone: "America/New_York") }
-  let(:shipment) { FactoryBot(:shipment) }
+  let!(:user) { create(:user, first_name: 'Joe', last_name: 'Coward', time_zone: "America/New_York") }
+  let(:shipment) { create(:shipment) }
 
   before do
     allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
@@ -17,13 +17,13 @@ describe Api::V1::CommentsController do
     it "destroys if user is sys_admin" do
       user.sys_admin = true
       user.save!
-      c = shipment.comments.create!(user_id: FactoryBot(:user).id, subject: 's1', body: 'b1')
+      c = shipment.comments.create!(user_id: create(:user).id, subject: 's1', body: 'b1')
       expect {delete :destroy, id: c.id.to_s}.to change(Comment, :count).from(1).to(0)
       expect(response).to be_success
     end
 
     it "does not destroy if user is not current_user" do
-      c = shipment.comments.create!(user_id: FactoryBot(:user).id, subject: 's1', body: 'b1')
+      c = shipment.comments.create!(user_id: create(:user).id, subject: 's1', body: 'b1')
       expect {delete :destroy, id: c.id.to_s}.not_to change(Comment, :count)
       expect(response.status).to eq 401
     end
@@ -211,7 +211,7 @@ describe Api::V1::CommentsController do
       end
 
       it "does not destroy comments owned by another user" do
-        u = FactoryBot(:user)
+        u = create(:user)
         c = shipment.comments.create! user_id: u.id, subject: "Sub", body: "Bod"
 
         expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)

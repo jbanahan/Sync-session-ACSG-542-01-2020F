@@ -28,22 +28,22 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
 
   describe "compare", :snapshot do
-    let (:importer) { FactoryBot(:importer, system_code: "HENNE")}
-    let (:entry) { FactoryBot(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) }
+    let (:importer) { create(:importer, system_code: "HENNE")}
+    let (:entry) { create(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) }
     let (:snapshot) { entry.create_snapshot user }
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:tempfile) { Tempfile.new(['testfile', '.pdf']) }
     let (:cdefs) { subject.cdefs}
     let (:us) { Country.where(iso_code: "US").first_or_create! }
     let (:official_tariff) { OfficialTariff.create! country_id: us.id, hts_code: "1234567890"}
-    let (:broker_invoice) { FactoryBot(:broker_invoice, entry: entry)}
+    let (:broker_invoice) { create(:broker_invoice, entry: entry)}
 
     before :each do
       us
       official_tariff
-      invoice = FactoryBot(:commercial_invoice, entry: entry, invoice_number: "12345")
-      invoice_line = FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5)
-      invoice_tariff = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description")
+      invoice = create(:commercial_invoice, entry: entry, invoice_number: "12345")
+      invoice_line = create(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5)
+      invoice_tariff = create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description")
       broker_invoice
 
       entry.attachments.create! attachment_type: "Entry Packet", attached_file_name: "file.pdf", attached_file_size: 1, attached_updated_at: Time.zone.now
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
     end
 
     it "removes existing Entry Packet attachment from product when an updated one is attached to the entry" do
-      product = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+      product = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART")).product
       existing_attachment = product.attachments.create! attached_file_name: "Entry Packet - REF.pdf", attachment_type: "Entry Packet"
 
       subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
     end
 
     it "skips adding attachment if product already has it" do
-      product = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+      product = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART")).product
       existing_attachment = product.attachments.create! attached_file_name: "Entry Packet - REF.pdf", attachment_type: "Entry Packet", attached_file_size: 1
 
       subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version

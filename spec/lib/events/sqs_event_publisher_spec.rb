@@ -5,7 +5,7 @@ describe OpenChain::Events::SqsEventPublisher do
 
     let (:object) { Order.new }
     let (:descriptor) { {event: "descriptor"} }
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let! (:master_setup) { stub_master_setup }
 
     it "delays processing to DelayedJobEventProcessor" do

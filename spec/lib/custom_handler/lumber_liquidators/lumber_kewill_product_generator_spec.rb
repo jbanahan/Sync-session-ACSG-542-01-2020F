@@ -3,11 +3,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
   describe "run_schedulable" do
     subject { described_class }
 
-    let (:us) { FactoryBot(:country, iso_code: "US")}
-    let (:importer) { with_customs_management_id(FactoryBot(:importer), "LUMBER")}
+    let (:us) { create(:country, iso_code: "US")}
+    let (:importer) { with_customs_management_id(create(:importer), "LUMBER")}
     let (:cdefs) { subject.new("", {}).custom_defs }
     let! (:product) {
-      p = FactoryBot(:product, importer: importer, unique_identifier: "0000000123", name: "Description")
+      p = create(:product, importer: importer, unique_identifier: "0000000123", name: "Description")
       c = p.classifications.create! country: us
       c.update_custom_value!(cdefs[:class_special_program_indicator], "SP")
       c.tariff_records.create! hts_1: "12345678"

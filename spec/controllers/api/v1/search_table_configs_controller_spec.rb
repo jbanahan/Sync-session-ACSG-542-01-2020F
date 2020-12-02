@@ -1,12 +1,12 @@
 describe Api::V1::SearchTableConfigsController do
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
     allow_api_access @u
   end
   describe '#for_page' do
     it "should render all for page" do
       config_hash = {'a'=>'b'}
-      stc = FactoryBot(:search_table_config, page_uid:'pid', config_json:config_hash.to_json)
+      stc = create(:search_table_config, page_uid:'pid', config_json:config_hash.to_json)
       get :for_page, page_uid: 'pid'
       expect(response).to be_success
       expected = {

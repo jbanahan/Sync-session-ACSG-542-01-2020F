@@ -1,8 +1,8 @@
 describe BusinessValidationRule do
   describe "recipients_and_mailing_lists" do
-    let(:bvt) { FactoryBot(:business_validation_template)}
+    let(:bvt) { create(:business_validation_template)}
     let(:bvru) do
-      FactoryBot(:business_validation_rule, type: 'ValidationRuleEntryInvoiceLineFieldFormat',
+      create(:business_validation_rule, type: 'ValidationRuleEntryInvoiceLineFieldFormat',
                                          business_validation_template: bvt)
     end
 
@@ -20,7 +20,7 @@ describe BusinessValidationRule do
     end
 
     it 'returns the mailing list emails if no notification_recipients are present' do
-      mailing_list = FactoryBot(:mailing_list, user: FactoryBot(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
+      mailing_list = create(:mailing_list, user: create(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
       bvru.notification_recipients = ""
       bvru.mailing_list = mailing_list
       bvru.save!
@@ -29,7 +29,7 @@ describe BusinessValidationRule do
     end
 
     it 'appends mailing_list recipients to notification_recipients if a mailing_list is present and notification_recipients exist' do
-      mailing_list = FactoryBot(:mailing_list, user: FactoryBot(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
+      mailing_list = create(:mailing_list, user: create(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
       bvru.notification_recipients = 'abc@domain.com, def@domain.com'
       bvru.mailing_list = mailing_list
       bvru.save!
@@ -69,7 +69,7 @@ describe BusinessValidationRule do
 
   describe "destroy" do
     it "destroys record" do
-      rule = FactoryBot(:business_validation_rule)
+      rule = create(:business_validation_rule)
       rule.destroy
       expect(described_class.count).to eq 0
     end
@@ -77,7 +77,7 @@ describe BusinessValidationRule do
     context "validate result deletes", :disable_delayed_jobs do
 
       it "destroys validation rule and dependents" do
-        rule_result = FactoryBot(:business_validation_rule_result)
+        rule_result = create(:business_validation_rule_result)
         rule = rule_result.business_validation_rule
 
         rule.destroy
@@ -109,8 +109,8 @@ describe BusinessValidationRule do
   end
 
   describe "active?" do
-    let(:bvt) { FactoryBot(:business_validation_template)}
-    let(:bvru) { FactoryBot(:business_validation_rule, business_validation_template: bvt, disabled: false, delete_pending: false)}
+    let(:bvt) { create(:business_validation_template)}
+    let(:bvru) { create(:business_validation_rule, business_validation_template: bvt, disabled: false, delete_pending: false)}
 
     before { allow(bvt).to receive(:active?).and_return true }
 
@@ -135,9 +135,9 @@ describe BusinessValidationRule do
   end
 
   describe "copy_attributes" do
-    let!(:group) { FactoryBot(:group) }
-    let!(:mailing_list) { FactoryBot(:mailing_list) }
-    let!(:search_criterion) { FactoryBot(:search_criterion, model_field_uid: "ent_cust_num", operator: "eq", value: "lumber")}
+    let!(:group) { create(:group) }
+    let!(:mailing_list) { create(:mailing_list) }
+    let!(:search_criterion) { create(:search_criterion, model_field_uid: "ent_cust_num", operator: "eq", value: "lumber")}
     let(:rule) do
       r = ValidationRuleFieldFormat.new description: "descr", fail_state: "Fail", group_id: group.id,
                                         mailing_list_id: mailing_list.id, message_pass: "mess pass", message_review_fail: "mess rev/fail",

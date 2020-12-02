@@ -1,5 +1,5 @@
 describe SurveysController do
-  let(:user) { FactoryBot(:user, survey_view: true, survey_edit: true) }
+  let(:user) { create(:user, survey_view: true, survey_edit: true) }
   let(:controller) { @controller } # rubocop:disable RSpec/InstanceVariable
 
   before do
@@ -8,9 +8,9 @@ describe SurveysController do
 
   describe 'index' do
     it "only shows surveys for logged in company" do
-      to_find = FactoryBot(:survey, company: user.company)
-      FactoryBot(:survey, company: user.company, archived: true)
-      FactoryBot(:survey)
+      to_find = create(:survey, company: user.company)
+      create(:survey, company: user.company, archived: true)
+      create(:survey)
       get :index
       expect(assigns(:surveys)).to eq [to_find]
       expect(assigns(:archived_surveys)).to be_nil
@@ -24,8 +24,8 @@ describe SurveysController do
     end
 
     it "shows archived surveys if prompted" do
-      to_find = FactoryBot(:survey, company: user.company)
-      archived = FactoryBot(:survey, company: user.company, archived: true)
+      to_find = create(:survey, company: user.company)
+      archived = create(:survey, company: user.company, archived: true)
       get :index, show_archived: true
 
       expect(assigns(:surveys)).to eq [to_find]
@@ -48,7 +48,7 @@ describe SurveysController do
   end
 
   describe "show" do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id, name: "Name") }
+    let(:survey) { create(:survey, company_id: user.company_id, name: "Name") }
 
     it "fails if user doesn't have view survey permission" do
       user.update(survey_view: false)
@@ -119,7 +119,7 @@ describe SurveysController do
   end
 
   describe "edit" do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id) }
+    let(:survey) { create(:survey, company_id: user.company_id) }
 
     it "rejects if survey is locked" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
@@ -145,7 +145,7 @@ describe SurveysController do
   end
 
   describe "update" do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id) }
+    let(:survey) { create(:survey, company_id: user.company_id) }
 
     it "rejects is survey is locked" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
@@ -233,7 +233,7 @@ describe SurveysController do
   end
 
   describe "destroy" do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id) }
+    let(:survey) { create(:survey, company_id: user.company_id) }
 
     it "rejects if survey is locked" do
       expect_any_instance_of(Survey).to receive(:locked?).and_return(true)
@@ -261,10 +261,10 @@ describe SurveysController do
   end
 
   describe "show_assign" do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id) }
+    let(:survey) { create(:survey, company_id: user.company_id) }
 
     it "shows assignment page if user can edit survey" do
-      c = FactoryBot(:company, name: "Z is my Company Name")
+      c = create(:company, name: "Z is my Company Name")
       user.company.linked_companies << c
 
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
@@ -283,15 +283,15 @@ describe SurveysController do
   end
 
   describe "assign", :disable_delayed_jobs do
-    let(:survey) { FactoryBot(:survey) }
+    let(:survey) { create(:survey) }
 
     before do
       allow_any_instance_of(SurveyResponse).to receive(:invite_user!) # don't want to deal with this except in the notify test
     end
 
     it "assigns if user can edit survey" do
-      u2 = FactoryBot(:user)
-      u3 = FactoryBot(:user)
+      u2 = create(:user)
+      u3 = create(:user)
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
       post :assign, id: survey.id, assign: {"0" => u2.id.to_s, "1" => u3.id.to_s}
       expect(response).to redirect_to survey_path(survey)
@@ -301,7 +301,7 @@ describe SurveysController do
     end
 
     it "notifies user when assigned" do
-      u2 = FactoryBot(:user)
+      u2 = create(:user)
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
       sr = instance_double('survey_response')
       expect(sr).to receive(:invite_user!)
@@ -310,7 +310,7 @@ describe SurveysController do
     end
 
     it "does not assign if user cannot edit survey" do
-      u2 = FactoryBot(:user)
+      u2 = create(:user)
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(false)
       post :assign, id: survey.id, assign: {"0" => u2.id.to_s}
       expect(response).to redirect_to request.referer
@@ -318,9 +318,9 @@ describe SurveysController do
     end
 
     it "assigns to the same user twice" do
-      u2 = FactoryBot(:user)
-      FactoryBot(:survey_response, survey: survey, user: u2) # making this one exist already
-      u3 = FactoryBot(:user) # this user should still have one created
+      u2 = create(:user)
+      create(:survey_response, survey: survey, user: u2) # making this one exist already
+      u3 = create(:user) # this user should still have one created
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
       post :assign, id: survey.id, assign: {"0" => u2.id.to_s, "1" => u3.id.to_s}
       expect(response).to redirect_to survey_path(survey)
@@ -330,7 +330,7 @@ describe SurveysController do
     end
 
     it "sets subtitle" do
-      u2 = FactoryBot(:user)
+      u2 = create(:user)
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
       post :assign, id: survey.id, assign: {"0" => u2.id.to_s}, subtitle: 'sub'
       expect(response).to redirect_to survey_path(survey)
@@ -382,10 +382,10 @@ describe SurveysController do
   end
 
   describe "toggle subscription", :disable_delayed_jobs do
-    let(:survey) { FactoryBot(:survey, company_id: user.company_id) }
+    let(:survey) { create(:survey, company_id: user.company_id) }
 
     it "does not create subscription if user cannot see surveys" do
-      user = FactoryBot(:user, survey_view: false)
+      user = create(:user, survey_view: false)
       sign_in_as user
       expect do
         user.survey_view = false
@@ -408,7 +408,7 @@ describe SurveysController do
     end
 
     it "destroys existing subscription" do
-      FactoryBot(:survey_subscription, survey_id: survey.id, user_id: user.id)
+      create(:survey_subscription, survey_id: survey.id, user_id: user.id)
       expect do
         survey.update(company_id: user.company_id)
         get :toggle_subscription, id: survey.id
@@ -418,7 +418,7 @@ describe SurveysController do
 
   describe "archive" do
     it "archives surveys" do
-      to_find = FactoryBot(:survey, company: user.company)
+      to_find = create(:survey, company: user.company)
 
       put :archive, id: to_find.id
 
@@ -429,7 +429,7 @@ describe SurveysController do
     end
 
     it "does not allow archiving of surveys user cannot edit" do
-      to_find = FactoryBot(:survey, company: user.company)
+      to_find = create(:survey, company: user.company)
       expect_any_instance_of(Survey).to receive(:can_edit?).and_return false
 
       put :archive, id: to_find.id
@@ -440,7 +440,7 @@ describe SurveysController do
 
   describe "restore" do
     it "restores surveys" do
-      to_find = FactoryBot(:survey, company: user.company, archived: true)
+      to_find = create(:survey, company: user.company, archived: true)
 
       put :restore, id: to_find.id
 
@@ -451,7 +451,7 @@ describe SurveysController do
     end
 
     it "does not allow restoring of surveys user cannot edit" do
-      to_find = FactoryBot(:survey, company: user.company)
+      to_find = create(:survey, company: user.company)
       expect_any_instance_of(Survey).to receive(:can_edit?).and_return false
 
       put :restore, id: to_find.id

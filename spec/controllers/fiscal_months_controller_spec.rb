@@ -1,13 +1,13 @@
 describe FiscalMonthsController do
-  let(:user) { FactoryBot(:sys_admin_user) }
-  let(:co) { FactoryBot(:company, fiscal_reference: "release_date") }
-  let(:fm_1) { FactoryBot(:fiscal_month, company: co) }
-  let(:fm_2) { FactoryBot(:fiscal_month, company: co) }
-  let(:fm_3) { FactoryBot(:fiscal_month) }
+  let(:user) { create(:sys_admin_user) }
+  let(:co) { create(:company, fiscal_reference: "release_date") }
+  let(:fm_1) { create(:fiscal_month, company: co) }
+  let(:fm_2) { create(:fiscal_month, company: co) }
+  let(:fm_3) { create(:fiscal_month) }
 
   before { sign_in_as(user) }
 
-  describe "company_enabled? (before_filter)" do
+  describe "company_enabled? (before_action)" do
     it "prevents use of routes for companies without a fiscal_reference" do
       co.update(fiscal_reference: nil)
       fm_1

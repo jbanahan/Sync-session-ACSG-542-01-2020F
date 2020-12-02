@@ -86,8 +86,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
     subject { described_class }
 
     let (:entry) {
-      e = FactoryBot(:entry)
-      e.broker_invoices << FactoryBot(:broker_invoice, entry: e)
+      e = create(:entry)
+      e.broker_invoices << create(:broker_invoice, entry: e)
       e
     }
 
@@ -107,8 +107,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
 
   describe "generate_and_send" do
     let (:entry) {
-      e = FactoryBot(:entry, customer_number:'FOOLO')
-      e.broker_invoices << FactoryBot(:broker_invoice, entry: e)
+      e = create(:entry, customer_number:'FOOLO')
+      e.broker_invoices << create(:broker_invoice, entry: e)
       e
     }
 

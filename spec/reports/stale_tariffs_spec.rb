@@ -1,11 +1,11 @@
 describe OpenChain::Report::StaleTariffs do
 
   before(:each) do
-    c = FactoryBot(:company, :master=>true)
-    @u = FactoryBot(:user, :product_view=>true, :company_id => c.id)
-    official_tariff = FactoryBot(:official_tariff)
-    @fresh_classification = FactoryBot(:classification, :country_id=>official_tariff.country_id)
-    @fresh_tariff_record = FactoryBot(:tariff_record, :hts_1=>official_tariff.hts_code, :classification_id=>@fresh_classification.id)
+    c = create(:company, :master=>true)
+    @u = create(:user, :product_view=>true, :company_id => c.id)
+    official_tariff = create(:official_tariff)
+    @fresh_classification = create(:classification, :country_id=>official_tariff.country_id)
+    @fresh_tariff_record = create(:tariff_record, :hts_1=>official_tariff.hts_code, :classification_id=>@fresh_classification.id)
   end
 
   describe 'permission' do
@@ -34,16 +34,16 @@ describe OpenChain::Report::StaleTariffs do
 
   context 'run_report with stale tariffs' do
 
-    let (:importer) { FactoryBot(:importer, system_code: "ACME") }
+    let (:importer) { create(:importer, system_code: "ACME") }
 
     before(:each) do
-      @stale_classification = FactoryBot(:classification, :country_id=>@fresh_classification.country_id)
+      @stale_classification = create(:classification, :country_id=>@fresh_classification.country_id)
       @stale_classification.product.update_attributes! importer_id: importer
 
-      @stale_tariff_record = FactoryBot(:tariff_record, :classification_id=>@stale_classification.id)
+      @stale_tariff_record = create(:tariff_record, :classification_id=>@stale_classification.id)
       @stale_tariff_record.classification.product.update_attributes! importer_id: importer.id
-      empty_tariff_record = FactoryBot(:tariff_record, :hts_1=>'', :classification_id=>FactoryBot(:classification).id) # should not be on reports
-      classification_with_no_tariffs = FactoryBot(:classification) # should not be on reports
+      empty_tariff_record = create(:tariff_record, :hts_1=>'', :classification_id=>create(:classification).id) # should not be on reports
+      classification_with_no_tariffs = create(:classification) # should not be on reports
     end
 
     it 'should show missing tariffs in hts_1' do
@@ -101,7 +101,7 @@ describe OpenChain::Report::StaleTariffs do
       end
 
       it "excludes others" do
-        FactoryBot(:company, system_code: "KONVENIENTZ")
+        create(:company, system_code: "KONVENIENTZ")
         reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers" => ["KONVENIENTZ"])).raw_workbook_data
         sheet = reader[reader.keys[0]]
         expect(sheet[1][0]).to eq("Congratulations! You don't have any stale tariffs.")
@@ -135,9 +135,9 @@ describe OpenChain::Report::StaleTariffs do
   describe "with ids_from_customer_numbers" do
     let(:report) { described_class.new }
     before do
-      @acme = FactoryBot(:company, system_code: "ACME")
-      @konvenientz = FactoryBot(:company, system_code: "KONVENIENTZ")
-      @food_marmot = FactoryBot(:company, system_code: "FOOD MARMOT")
+      @acme = create(:company, system_code: "ACME")
+      @konvenientz = create(:company, system_code: "KONVENIENTZ")
+      @food_marmot = create(:company, system_code: "FOOD MARMOT")
     end
 
     it "handles string" do

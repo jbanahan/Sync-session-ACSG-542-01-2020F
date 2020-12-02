@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
 
   subject { described_class }
 
-  let (:polo) { FactoryBot(:importer, system_code: "polo") }
-  let (:product) { FactoryBot(:product, importer: polo) }
-  let (:country) { FactoryBot(:country, iso_code: "IT")}
+  let (:polo) { create(:importer, system_code: "polo") }
+  let (:product) { create(:product, importer: polo) }
+  let (:country) { create(:country, iso_code: "IT")}
   let (:cdefs) { subject.new.cdefs }
 
   describe "compare" do
@@ -132,8 +132,8 @@ describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
 
   describe 'collect_classifications' do
     it 'returns an array with no nils' do
-      tariff_record = FactoryBot(:tariff_record, hts_1: "4334567890",
-                              classification: FactoryBot(:classification, country: country,
+      tariff_record = create(:tariff_record, hts_1: "4334567890",
+                              classification: create(:classification, country: country,
                                                       product: product
                               )
       )

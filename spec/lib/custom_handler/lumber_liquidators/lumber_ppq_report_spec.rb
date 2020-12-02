@@ -2,10 +2,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPpqReport do
 
   describe "run_schedulable" do
     let (:entry) {
-      tariff = FactoryBot(:commercial_invoice_tariff, hts_code: "1111111111",
-                          commercial_invoice_line: FactoryBot(:commercial_invoice_line, part_number: "Part", po_number: "PO",
-                            commercial_invoice: FactoryBot(:commercial_invoice, mfid: "MID",
-                              entry: FactoryBot(:entry, customer_number: "LUMBER", customer_name: "LUMBER LIQUIDATORS INC", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: Time.zone.parse("2016-04-30 05:00"))
+      tariff = create(:commercial_invoice_tariff, hts_code: "1111111111",
+                          commercial_invoice_line: create(:commercial_invoice_line, part_number: "Part", po_number: "PO",
+                            commercial_invoice: create(:commercial_invoice, mfid: "MID",
+                              entry: create(:entry, customer_number: "LUMBER", customer_name: "LUMBER LIQUIDATORS INC", source_system: "Alliance", release_date: "2016-05-01", master_bills_of_lading: "MBOL1\nMBOL2", container_numbers: "CONT1\n CONT2", entry_number: "ENTNUM", arrival_date: Time.zone.parse("2016-04-30 05:00"))
                             )
                           )
                         )

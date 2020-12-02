@@ -1,7 +1,7 @@
 describe CustomReportEntryBillingBreakdownByPo do
 
   before :each do
-    @master_user = FactoryBot(:master_user)
+    @master_user = create(:master_user)
   end
 
   context "Class Methods" do
@@ -22,7 +22,7 @@ describe CustomReportEntryBillingBreakdownByPo do
     end
 
     it "should not show column fields that user doesn't have permission to see" do
-      importer_user = FactoryBot(:importer_user)
+      importer_user = create(:importer_user)
       fields = CustomReportEntryBillingBreakdownByPo.column_fields_available importer_user
       expect(fields.index {|mf| mf.uid==:bi_duty_due_date}).to be_nil
     end
@@ -53,10 +53,10 @@ describe CustomReportEntryBillingBreakdownByPo do
     let! (:master_setup) { stub_master_setup }
 
     before :each do
-      @user = FactoryBot(:master_user)
+      @user = create(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)
-      @invoice_line_1 = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00, :broker_invoice=>FactoryBot(:broker_invoice, invoice_number: "ABCD", invoice_date: "2014-01-01"))
-      @invoice_line_2 = FactoryBot(:broker_invoice_line, :broker_invoice=>@invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>99.99)
+      @invoice_line_1 = create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00, :broker_invoice=>create(:broker_invoice, invoice_number: "ABCD", invoice_date: "2014-01-01"))
+      @invoice_line_2 = create(:broker_invoice_line, :broker_invoice=>@invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>99.99)
       @invoice = @invoice_line_1.broker_invoice
       @entry = @invoice.entry
       @entry.update_attributes :broker_reference=>"Entry", :po_numbers=>"1\n 2\r\n 3", :carrier_code => 'SCAC'
@@ -86,8 +86,8 @@ describe CustomReportEntryBillingBreakdownByPo do
 
     it "should handle different charge codes across multiple different invoices" do
       # Re-use one of the charge descriptions and then add a new one
-      invoice_2_line_1 = FactoryBot(:broker_invoice_line, :charge_description=>"CD2", :charge_amount=>100.00)
-      invoice_2_line_2 = FactoryBot(:broker_invoice_line, :broker_invoice=>invoice_2_line_1.broker_invoice, :charge_description=>"CD3", :charge_amount=>99.99)
+      invoice_2_line_1 = create(:broker_invoice_line, :charge_description=>"CD2", :charge_amount=>100.00)
+      invoice_2_line_2 = create(:broker_invoice_line, :broker_invoice=>invoice_2_line_1.broker_invoice, :charge_description=>"CD3", :charge_amount=>99.99)
 
       invoice2 = invoice_2_line_1.broker_invoice
       entry2 = invoice2.entry
@@ -153,7 +153,7 @@ describe CustomReportEntryBillingBreakdownByPo do
     end
 
     it "should raise an error if the user cannot view broker invoices" do
-      unpriv_user = FactoryBot(:user)
+      unpriv_user = create(:user)
       allow(unpriv_user).to receive(:view_broker_invoices?).and_return(false)
 
       expect {@report.to_arrays unpriv_user}.to raise_error {|e|
@@ -163,14 +163,14 @@ describe CustomReportEntryBillingBreakdownByPo do
 
     it "orders by entry number and invoice date" do
       # add a second invoice to the @entry
-      @entry.broker_invoices << FactoryBot(:broker_invoice_line, :charge_description=>"CD5", :charge_amount=>100.00,
-                                          :broker_invoice => FactoryBot(:broker_invoice, invoice_date: "2014-02-01", invoice_number: "EFGH", entry: @entry)).broker_invoice
+      @entry.broker_invoices << create(:broker_invoice_line, :charge_description=>"CD5", :charge_amount=>100.00,
+                                          :broker_invoice => create(:broker_invoice, invoice_date: "2014-02-01", invoice_number: "EFGH", entry: @entry)).broker_invoice
       @entry.save!
 
       # create a second invoice / entry
-      entry2 = FactoryBot(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00,
-                          :broker_invoice=>FactoryBot(:broker_invoice, invoice_date: '2014-01-01', invoice_number: "987654",
-                            entry: FactoryBot(:entry, broker_reference: "AAAA", :carrier_code => 'SCAC')
+      entry2 = create(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00,
+                          :broker_invoice=>create(:broker_invoice, invoice_date: '2014-01-01', invoice_number: "987654",
+                            entry: create(:entry, broker_reference: "AAAA", :carrier_code => 'SCAC')
                           )
                         ).broker_invoice.entry
 

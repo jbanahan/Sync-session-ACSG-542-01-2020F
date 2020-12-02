@@ -2,12 +2,12 @@ describe OpenChain::CustomHandler::Amazon::AmazonLinkedCompanySecurityFilingComp
 
   subject { described_class }
 
-  let!(:amazon) { FactoryBot(:company, system_code: "AMZN")}
-  let!(:customer) { FactoryBot(:company, system_code: "AMZN-ACME")}
-  let!(:isf) { FactoryBot(:security_filing, importer: customer, importer_account_code: "AMZN-ACME")}
+  let!(:amazon) { create(:company, system_code: "AMZN")}
+  let!(:customer) { create(:company, system_code: "AMZN-ACME")}
+  let!(:isf) { create(:security_filing, importer: customer, importer_account_code: "AMZN-ACME")}
 
   describe "accept?" do
-    let!(:snap) { FactoryBot(:entity_snapshot, recordable: isf) }
+    let!(:snap) { create(:entity_snapshot, recordable: isf) }
 
     it "returns 'true' if isf is associated with a customer whose number begins AMZN and is not linked to Amazon" do
       expect(subject.accept? snap).to eq true

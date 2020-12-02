@@ -1,5 +1,5 @@
 module Api; module V1; module Admin; class GroupsController < Api::V1::GroupsController
-  before_filter :require_admin
+  before_action :require_admin
 
   def create
     save_group current_user, Group.new

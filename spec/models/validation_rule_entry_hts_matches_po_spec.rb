@@ -5,25 +5,25 @@ describe ValidationRuleEntryHtsMatchesPo do
       # Create the rule here so we also force creation of the custom def done via its constructor
       @cust_def = subject.custom_definitions[:prod_part_number]
 
-      importer = FactoryBot(:importer)
+      importer = create(:importer)
 
-      tariff_line = FactoryBot(:commercial_invoice_tariff, hts_code: "1234567890",
-        commercial_invoice_line: FactoryBot(:commercial_invoice_line, po_number: "PO", part_number: "1234", country_origin_code: "ZZ")
+      tariff_line = create(:commercial_invoice_tariff, hts_code: "1234567890",
+        commercial_invoice_line: create(:commercial_invoice_line, po_number: "PO", part_number: "1234", country_origin_code: "ZZ")
       )
       @invoice_line = tariff_line.commercial_invoice_line
       @invoice_line.entry.update_attributes! importer_id: importer.id
 
-      tariff_record = FactoryBot(:tariff_record, hts_1: "1234567890",
-        classification: FactoryBot(:classification, country: FactoryBot(:country, iso_code: "US"),
-          product: FactoryBot(:product, importer_id: importer.id)
+      tariff_record = create(:tariff_record, hts_1: "1234567890",
+        classification: create(:classification, country: create(:country, iso_code: "US"),
+          product: create(:product, importer_id: importer.id)
         )
       )
       @product = tariff_record.classification.product
       @product.update_custom_value! @cust_def, @invoice_line.part_number
 
 
-      @order_line = FactoryBot(:order_line, country_of_origin: "ZZ", hts: "1234567890", product: @product,
-        order: FactoryBot(:order, customer_order_number: @invoice_line.po_number, importer: importer)
+      @order_line = create(:order_line, country_of_origin: "ZZ", hts: "1234567890", product: @product,
+        order: create(:order, customer_order_number: @invoice_line.po_number, importer: importer)
       )
       @order = @order_line.order
       @rule = described_class.new
@@ -40,7 +40,7 @@ describe ValidationRuleEntryHtsMatchesPo do
     end
 
     it "fails if Product Country doesn't match" do
-      @product.classifications.first.update_attributes! country_id: FactoryBot(:country).id
+      @product.classifications.first.update_attributes! country_id: create(:country).id
 
       expect(@rule.run_child_validation @invoice_line).to eq "Invoice Line for PO #{@invoice_line.po_number} / Part #{@invoice_line.part_number} matches to an Order line, but not to any Product associated with the Order."
     end
@@ -53,7 +53,7 @@ describe ValidationRuleEntryHtsMatchesPo do
 
     it "uses a different classification country to validate product data against" do
       @rule.update_attributes!  name: "Name", description: "Description", rule_attributes_json: '{"classification_country":"CA"}'
-      @product.classifications.first.update_attributes! country_id: FactoryBot(:country, iso_code: "CA").id
+      @product.classifications.first.update_attributes! country_id: create(:country, iso_code: "CA").id
       expect(@rule.run_child_validation @invoice_line).to be_nil
     end
 

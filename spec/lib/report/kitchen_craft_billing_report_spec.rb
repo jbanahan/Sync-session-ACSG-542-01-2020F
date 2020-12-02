@@ -2,18 +2,18 @@ describe OpenChain::Report::KitchenCraftBillingReport do
 
   context "run" do
     before :each do
-      @entry = FactoryBot(:entry, :customer_number=>'KITCHEN', :release_date=>Time.zone.now, :broker_reference=>'99123456', :entry_number => '1231kl0', :po_numbers => "123\n456", \
+      @entry = create(:entry, :customer_number=>'KITCHEN', :release_date=>Time.zone.now, :broker_reference=>'99123456', :entry_number => '1231kl0', :po_numbers => "123\n456", \
         :carrier_code=>'SCAC', :master_bills_of_lading=>"abc\n123", :container_numbers=>"1\n2", :total_invoiced_value=>100)
       @invoices = []
       @charges = []
       ['Invoice1', 'Invoice2'].each do |inv_num|
-        invoice = FactoryBot(:broker_invoice, :entry_id=>@entry.id, :invoice_total => 100, :invoice_number => inv_num)
+        invoice = create(:broker_invoice, :entry_id=>@entry.id, :invoice_total => 100, :invoice_number => inv_num)
         @invoices << invoice
 
         ['0001', '0009', '0008', '0220', '0007', '0162', '0198', '0022', '0221', '0222'].each do |code|
           # Create 2 charges for each invoice, just so we know we're summing the data correctly
-          @charges << FactoryBot(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>25.50)
-          @charges << FactoryBot(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>20)
+          @charges << create(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>25.50)
+          @charges << create(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>20)
         end
       end
     end

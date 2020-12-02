@@ -1,6 +1,6 @@
 describe Api::V1::FeedbackController do
 
-  let!(:user) { FactoryBot(:user) }
+  let!(:user) { create(:user) }
 
   before :each do
     allow_api_access user

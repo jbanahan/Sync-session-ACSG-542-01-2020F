@@ -1,18 +1,18 @@
 describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestComparator do
-  let (:importer) { FactoryBot(:importer) }
+  let (:importer) { create(:importer) }
 
   let! (:archive_setup) {
     AttachmentArchiveSetup.create! company_id: importer.id, combine_attachments: true, combined_attachment_order: "B\nA"
   }
 
   let (:entry) {
-    e = FactoryBot(:entry, importer: archive_setup.company)
+    e = create(:entry, importer: archive_setup.company)
     e.broker_invoices.create! invoice_number: "INV"
     e
   }
 
   let (:user) {
-    FactoryBot(:user)
+    create(:user)
   }
 
   let (:snapshot) {
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     end
 
     it "does not accept snapshots for importers without archive setups" do
-      entry.update_attributes! importer_id: FactoryBot(:importer).id
+      entry.update_attributes! importer_id: create(:importer).id
       expect(subject.accept? snapshot).to eq false
     end
 
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     end
 
     it "accepts snapshots with importers that have parent attachment setups" do
-      parent = FactoryBot(:company)
+      parent = create(:company)
       parent.linked_companies << importer
       archive_setup.update! company_id: parent.id
       expect(subject.accept? snapshot).to eq true
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     end
 
     it "uses parent's archive setup" do
-      parent = FactoryBot(:company)
+      parent = create(:company)
       parent.linked_companies << importer
       archive_setup.update! company_id: parent.id
 

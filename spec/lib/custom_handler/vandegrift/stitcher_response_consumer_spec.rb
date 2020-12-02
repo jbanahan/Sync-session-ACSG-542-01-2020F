@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
 
   describe "process_entry_stitch_response" do
     let (:entry) do
-      FactoryBot(:entry, entry_number: "1234567890")
+      create(:entry, entry_number: "1234567890")
     end
 
     let (:a1) do

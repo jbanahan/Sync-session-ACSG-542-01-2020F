@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanada
   let(:cdefs) { described_class.prep_custom_definitions [:prod_fta] }
 
   let(:entry) do
-    ent = FactoryBot(:entry)
+    ent = create(:entry)
     ent.commercial_invoices.build
     ent
   end
@@ -18,14 +18,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanada
     inv.commercial_invoice_lines.build(part_number:"888")
     inv.save!
 
-    prod_1 = FactoryBot(:product, unique_identifier:"000000000555")
+    prod_1 = create(:product, unique_identifier:"000000000555")
     prod_1.update_custom_value!(cdefs[:prod_fta], "nope")
 
-    prod_2 = FactoryBot(:product, unique_identifier:"000000000666")
+    prod_2 = create(:product, unique_identifier:"000000000666")
     prod_2.update_custom_value!(cdefs[:prod_fta], "also safe")
 
     # No custom definition for FTA for this product.  Shouldn't cause a failure of this rule.
-    prod_3 = FactoryBot(:product, unique_identifier:"000000000777")
+    prod_3 = create(:product, unique_identifier:"000000000777")
 
     expect(subject.run_validation entry).to be_nil
   end
@@ -40,13 +40,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanada
     inv.commercial_invoice_lines.build(part_number:"555")
     inv.save!
 
-    prod_1 = FactoryBot(:product, unique_identifier:"000000000555")
+    prod_1 = create(:product, unique_identifier:"000000000555")
     prod_1.update_custom_value!(cdefs[:prod_fta], "NAFTA")
 
-    prod_2 = FactoryBot(:product, unique_identifier:"000000000666")
+    prod_2 = create(:product, unique_identifier:"000000000666")
     prod_2.update_custom_value!(cdefs[:prod_fta], "nafta")
 
-    prod_3 = FactoryBot(:product, unique_identifier:"000000000777")
+    prod_3 = create(:product, unique_identifier:"000000000777")
     prod_3.update_custom_value!(cdefs[:prod_fta], "DAFTA")
 
     # 555 message should show up only once even though it's on 3 lines.
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanada
     inv.commercial_invoice_lines.build(part_number:"' OR 1=1")
     inv.save!
 
-    prod_1 = FactoryBot(:product, unique_identifier:"00000000055%5")
+    prod_1 = create(:product, unique_identifier:"00000000055%5")
     prod_1.update_custom_value!(cdefs[:prod_fta], "NAFTA")
 
     expect(subject.run_validation entry).to eq "Product '55%5' has been flagged for NAFTA review."

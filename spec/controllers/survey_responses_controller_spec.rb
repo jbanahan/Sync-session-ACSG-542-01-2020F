@@ -2,20 +2,20 @@ describe SurveyResponsesController do
   describe 'show' do
     before :each do
 
-      @u = FactoryBot(:user)
+      @u = create(:user)
       sign_in_as @u
     end
     it 'should be respond mode if current_user == survey_response.user and not submitted' do
-      sr = FactoryBot(:survey_response, :user=>@u)
+      sr = create(:survey_response, :user=>@u)
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
       expect(assigns(:rate_mode)).to be_falsey
       expect(assigns(:respond_mode)).to be_truthy
     end
     it 'should be respond mode if current_user is in survey group and not submitted' do
-      group = FactoryBot(:group)
+      group = create(:group)
       @u.groups << group
-      sr = FactoryBot(:survey_response, group: group)
+      sr = create(:survey_response, group: group)
 
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
@@ -23,7 +23,7 @@ describe SurveyResponsesController do
       expect(assigns(:respond_mode)).to be_truthy
     end
     it 'should not be respond mode if submitted' do
-      sr = FactoryBot(:survey_response, :user=>@u, :submitted_date=>1.day.ago)
+      sr = create(:survey_response, :user=>@u, :submitted_date=>1.day.ago)
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
       expect(assigns(:rate_mode)).to be_falsey
@@ -31,7 +31,7 @@ describe SurveyResponsesController do
     end
     it 'should be rate mode if current_user.edit_surveys? && current_user.company == survey_response.survey.company and survey_response.submitted_date' do
       @u.update_attributes(:survey_edit=>true)
-      sr = FactoryBot(:survey_response, :survey=>FactoryBot(:survey, :company=>@u.company), :submitted_date=>1.day.ago)
+      sr = create(:survey_response, :survey=>create(:survey, :company=>@u.company), :submitted_date=>1.day.ago)
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
       expect(assigns(:rate_mode)).to be_truthy
@@ -39,53 +39,53 @@ describe SurveyResponsesController do
     end
     it 'should not be rate mode if not submitted' do
       @u.update_attributes(:survey_edit=>true)
-      sr = FactoryBot(:survey_response, :survey=>FactoryBot(:survey, :company=>@u.company))
+      sr = create(:survey_response, :survey=>create(:survey, :company=>@u.company))
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
       expect(assigns(:rate_mode)).to be_falsey
       expect(assigns(:respond_mode)).to be_falsey
     end
     it "should not display if it doesn't pass the other tests" do
-      sr = FactoryBot(:survey_response)
+      sr = create(:survey_response)
       get :show, :id=>sr.id
       expect(response).to redirect_to root_path
       expect(flash[:errors].count).to eq(1)
     end
     it "should mark response_opened_date if current_user == survey_response.user and response_opened_date.nil?" do
-      sr = FactoryBot(:survey_response, :user=>@u)
+      sr = create(:survey_response, :user=>@u)
       get :show, :id=>sr.id
       expect(SurveyResponse.find(sr.id).response_opened_date).to be > 2.minutes.ago
     end
     it "should mark response_opened_date if current_user is in response group and response_opened_date.nil?" do
-      group = FactoryBot(:group)
+      group = create(:group)
       @u.groups << group
 
-      sr = FactoryBot(:survey_response, group: group)
+      sr = create(:survey_response, group: group)
       get :show, :id=>sr.id
       expect(SurveyResponse.find(sr.id).response_opened_date).to be > 2.minutes.ago
     end
     it "should not change response_opened_date if already set" do
       d = 10.hours.ago
-      sr = FactoryBot(:survey_response, :user=>@u, :response_opened_date=>d)
+      sr = create(:survey_response, :user=>@u, :response_opened_date=>d)
       get :show, :id=>sr.id
       expect(SurveyResponse.find(sr.id).response_opened_date.to_i).to eq(d.to_i)
     end
     it "should not set respond mode if response is submitted" do
-      sr = FactoryBot(:survey_response, :user=>@u, :submitted_date=>0.seconds.ago)
+      sr = create(:survey_response, :user=>@u, :submitted_date=>0.seconds.ago)
       get :show, :id=>sr.id
       expect(assigns(:sr)).to eq(sr)
       expect(assigns(:respond_mode)).to be_falsey
     end
     it "should show error if user is using old IE version" do
       @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
-      sr = FactoryBot(:survey_response, :user=>@u)
+      sr = create(:survey_response, :user=>@u)
       get :show, :id=>sr.id
       expect(response).to be_success
       expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
     end
     context "json" do
       it "should load json response" do
-        q = FactoryBot(:question, survey:FactoryBot(:survey, name:'myname', ratings_list:"a\nb", require_contact: true))
+        q = create(:question, survey:create(:survey, name:'myname', ratings_list:"a\nb", require_contact: true))
         sr = q.survey.generate_response! @u, 'subt'
         get :show, :id=>sr.id, :format=>:json
         expect(response).to be_success
@@ -102,7 +102,7 @@ describe SurveyResponsesController do
       it "should remove private comments if user cannot edit" do
         allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false
-        q = FactoryBot(:question, survey:FactoryBot(:survey, name:'myname', ratings_list:"a\nb"))
+        q = create(:question, survey:create(:survey, name:'myname', ratings_list:"a\nb"))
         sr = q.survey.generate_response! @u, 'subt'
         sr.answers.first.answer_comments.create!(content:'mycomment', private:false, user_id:@u.id)
         sr.answers.first.answer_comments.create!(content:'pcomment', private:true, user_id:@u.id)
@@ -117,7 +117,7 @@ describe SurveyResponsesController do
       it "should leave private comments if user can edit" do
         allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return true
-        q = FactoryBot(:question, survey:FactoryBot(:survey, name:'myname', ratings_list:"a\nb"))
+        q = create(:question, survey:create(:survey, name:'myname', ratings_list:"a\nb"))
         sr = q.survey.generate_response! @u, 'subt'
         sr.answers.first.answer_comments.create!(content:'mycomment', private:false, user_id:@u.id)
         sr.answers.first.answer_comments.create!(content:'pcomment', private:true, user_id:@u.id)
@@ -133,7 +133,7 @@ describe SurveyResponsesController do
         allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false
 
-        sr = FactoryBot(:survey_response, user: @u, checkout_by_user: @u)
+        sr = create(:survey_response, user: @u, checkout_by_user: @u)
         get :show, :id=>sr.id, :format=>:json
 
         expect(response).to be_success
@@ -149,8 +149,8 @@ describe SurveyResponsesController do
         allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return true
 
-        taker = FactoryBot(:user)
-        sr = FactoryBot(:survey_response, user: taker, checkout_by_user: taker, submitted_date: Time.zone.now)
+        taker = create(:user)
+        sr = create(:survey_response, user: taker, checkout_by_user: taker, submitted_date: Time.zone.now)
         get :show, :id=>sr.id, :format=>:json
 
         expect(response).to be_success
@@ -164,7 +164,7 @@ describe SurveyResponsesController do
 
       context "archived" do
         it "disables all can_* attributes on archived survey responses" do
-          sr = FactoryBot(:survey_response, user:@u, archived: true)
+          sr = create(:survey_response, user:@u, archived: true)
           get :show, :id=>sr.id, :format=>:json
           expect(response).to be_success
           j = JSON.parse response.body
@@ -177,7 +177,7 @@ describe SurveyResponsesController do
         end
 
         it "disables all can_* attributes on survey responses associated with an archvied survey" do
-          sr = FactoryBot(:survey_response, user:@u, archived: false)
+          sr = create(:survey_response, user:@u, archived: false)
           sr.survey.update_attributes! archived: true
 
           get :show, :id=>sr.id, :format=>:json
@@ -196,16 +196,16 @@ describe SurveyResponsesController do
   context 'authenticated' do
     before :each do
 
-      @survey_user = FactoryBot(:user, survey_edit: true)
-      @survey = FactoryBot(:survey, :company=>@survey_user.company)
+      @survey_user = create(:user, survey_edit: true)
+      @survey = create(:survey, :company=>@survey_user.company)
       @survey.questions.create!(:content=>'1234567890123456')
-      @response_user = FactoryBot(:user)
-      @sr = FactoryBot(:survey_response, :user=>@response_user, :survey=>@survey)
+      @response_user = create(:user)
+      @sr = create(:survey_response, :user=>@response_user, :survey=>@survey)
       @sr.answers.create!(:question=>@survey.questions.first)
     end
     describe 'update' do
       it "should not save if user is not from survey company or the user assigned to the response" do
-        sign_in_as FactoryBot(:user)
+        sign_in_as create(:user)
         post :update, :id=>@sr.id
         expect(response).to redirect_to root_path
         expect(flash[:errors].size).to eq(1)
@@ -222,8 +222,8 @@ describe SurveyResponsesController do
         expect(SurveyResponse.find(@sr.id).submitted_date).to be > 10.seconds.ago
       end
        it "should update submitted date if flag set and user is in survey response user group" do
-        group_user = FactoryBot(:user)
-        group = FactoryBot(:group)
+        group_user = create(:user)
+        group = create(:group)
         group_user.groups << group
         @sr.update_attributes! group: group
         sign_in_as group_user
@@ -331,15 +331,15 @@ describe SurveyResponsesController do
   describe 'index' do
     before :each do
 
-      @u = FactoryBot(:user)
+      @u = create(:user)
       sign_in_as @u
     end
     it 'should only show survey responses assigned to current_user' do
-      to_find = FactoryBot(:survey_response, :user=>@u)
-      dont_find = FactoryBot(:survey_response)
-      group = FactoryBot(:group)
+      to_find = create(:survey_response, :user=>@u)
+      dont_find = create(:survey_response)
+      group = create(:group)
       @u.groups << group
-      group_find = FactoryBot(:survey_response, group: group)
+      group_find = create(:survey_response, group: group)
 
       get :index
       expect(response).to be_success
@@ -351,7 +351,7 @@ describe SurveyResponsesController do
 
     it "shows error if user is using IE < 9" do
       @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
-      to_find = FactoryBot(:survey_response, :user=>@u)
+      to_find = create(:survey_response, :user=>@u)
       get :index
       expect(response).to be_success
       expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
@@ -360,9 +360,9 @@ describe SurveyResponsesController do
 
   describe "remind", :disable_delayed_jobs do
     before(:each) do
-      @u = FactoryBot(:user)
+      @u = create(:user)
       sign_in_as @u
-      @sr = FactoryBot(:survey_response, :user=>@u, survey: FactoryBot(:survey, company: @u.company))
+      @sr = create(:survey_response, :user=>@u, survey: create(:survey, company: @u.company))
       @email_to = "joe@test.com sue@test.com"
       @email_subject = "Reminder: Important Survey"
       @email_body = "Please follow the link below to complete your survey."

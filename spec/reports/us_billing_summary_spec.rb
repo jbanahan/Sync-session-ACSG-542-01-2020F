@@ -1,6 +1,6 @@
 describe OpenChain::Report::UsBillingSummary do
 
-  let(:user) { FactoryBot(:master_user) }
+  let(:user) { create(:master_user) }
 
   let(:date1) { DateTime.new 2019, 3, 15 }
   let(:date2) { DateTime.new 2019, 3, 16 }
@@ -8,16 +8,16 @@ describe OpenChain::Report::UsBillingSummary do
   let(:date4) { DateTime.new 2019, 3, 18 }
 
   def load_data
-    ent =  FactoryBot(:entry, entry_number: "ent num", arrival_date: date1, release_date: date2, entry_port_code: "PORT", broker_reference: "brok ref",
+    ent =  create(:entry, entry_number: "ent num", arrival_date: date1, release_date: date2, entry_port_code: "PORT", broker_reference: "brok ref",
                            customer_name: "cust name", export_date: date3, master_bills_of_lading: "MBOLS", house_bills_of_lading: "HBOLS",
                            total_units: 10, total_packages: 11, container_numbers: "cont numbers")
-    ci = FactoryBot(:commercial_invoice, entry: ent, mfid: "MFID", vendor_name: "vend name", invoice_number: "inv number")
-    cil = FactoryBot(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, quantity: 2, unit_of_measure: "UOM", value: 3,
+    ci = create(:commercial_invoice, entry: ent, mfid: "MFID", vendor_name: "vend name", invoice_number: "inv number")
+    cil = create(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, quantity: 2, unit_of_measure: "UOM", value: 3,
                                             cotton_fee: 4, hmf: 13, mpf: 14, department: "Dept", po_number: "PO", part_number: "part")
-    FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tar descr", hts_code: "HTS", gross_weight: 5,
+    create(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tar descr", hts_code: "HTS", gross_weight: 5,
                                         classification_qty_1: 12, classification_uom_1: "cl uom 1", entered_value: 6,
                                         duty_amount: 7, duty_rate: 8)
-    FactoryBot(:broker_invoice, entry: ent, customer_number: "cust num", invoice_total: 9, invoice_date: date4, suffix: "A")
+    create(:broker_invoice, entry: ent, customer_number: "cust num", invoice_total: 9, invoice_date: date4, suffix: "A")
 
     nil
   end

@@ -1,5 +1,5 @@
 class DutyCalcExportFilesController < ApplicationController
-  before_filter :secure_me
+  before_action :secure_me
 
   def download
     d = DutyCalcExportFile.find params[:id]

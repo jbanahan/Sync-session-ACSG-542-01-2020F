@@ -3,9 +3,9 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     Class.new { include OpenChain::CustomHandler::MassOrderCreator }.new
   end
 
-  let(:country) { FactoryBot(:country) }
-  let(:importer) {FactoryBot(:importer)}
-  let(:user) { FactoryBot(:user, company: importer, product_view: true) }
+  let(:country) { create(:country) }
+  let(:importer) {create(:importer)}
+  let(:user) { create(:user, company: importer, product_view: true) }
 
   describe "create_orders" do
 
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "updates an existing order" do
-      product = FactoryBot(:product, importer: importer)
+      product = create(:product, importer: importer)
       order = Order.create! order_number: "12345", importer: importer, order_date: Date.new(2016, 2, 1)
       order.order_lines.create! product: product, quantity: 20
 
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "does not create an order or product snapshot if existing order/product is unchanged" do
-      product = FactoryBot(:product, importer: importer, unique_identifier: "PROD123", name: "Description")
+      product = create(:product, importer: importer, unique_identifier: "PROD123", name: "Description")
       classification = product.classifications.create! country: country, product: product
       tariff = classification.tariff_records.create! hts_1: 1234567890
 
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "matches updates existing order lines by line number by default" do
-      product = FactoryBot(:product, importer: importer)
+      product = create(:product, importer: importer)
       order = Order.create! order_number: "12345", importer: importer
       order.order_lines.create! product: product, quantity: 20
 
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "matches by product style if configured to do so" do
-      product = FactoryBot(:product, importer: importer)
+      product = create(:product, importer: importer)
       order = Order.create! order_number: "12345", importer: importer
       order_line = order.order_lines.create! product: product, quantity: 20
 
@@ -164,7 +164,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "destroys lines not referenced in attributes hash if configured to do so" do
-      product = FactoryBot(:product, importer: importer)
+      product = create(:product, importer: importer)
       order = Order.create! order_number: "12345", importer: importer
       order_line = order.order_lines.create! product: product, quantity: 20
 
@@ -235,7 +235,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "allows using product id to identify product at order line level" do
-      product = FactoryBot(:product, importer: importer)
+      product = create(:product, importer: importer)
 
       order_attributes[:order_lines_attributes].first.delete :product
       order_attributes[:order_lines_attributes].first[:product] = {id: product.id}

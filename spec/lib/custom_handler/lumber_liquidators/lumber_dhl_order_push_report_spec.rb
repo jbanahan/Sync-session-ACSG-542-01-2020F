@@ -17,13 +17,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
       CustomDefinition.destroy_all
     end
 
-    let (:vendor) { FactoryBot(:company, name: "Vendor Name", vendor: true) }
+    let (:vendor) { create(:company, name: "Vendor Name", vendor: true) }
     let (:order) {
-      order = FactoryBot(:order, approval_status: "Approved", vendor: vendor)
+      order = create(:order, approval_status: "Approved", vendor: vendor)
       order.business_validation_results.create! state: "Pass"
       order
     }
-    let (:user) { FactoryBot(:user, time_zone: "America/New_York") }
+    let (:user) { create(:user, time_zone: "America/New_York") }
 
     after :each do
       @tempfile.close! if @tempfile && !@tempfile.closed?
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
   describe "permission?" do
     let (:logistics_user) {
       group = Group.use_system_group 'LOGISTICS'
-      user = FactoryBot(:user)
+      user = create(:user)
       user.groups << group
       user
     }

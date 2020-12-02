@@ -7,7 +7,7 @@ describe HmController do
 
   describe "index" do
     it "should not allow view unless master user" do
-      u = FactoryBot(:user)
+      u = create(:user)
       sign_in_as u
       get :index
       expect(response).to be_redirect
@@ -15,14 +15,14 @@ describe HmController do
     end
     it "should not allow view unless H&M custom feature enabled" do
       expect(master_setup).to receive(:custom_feature?).with('H&M').and_return false
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       sign_in_as u
       get :index
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq 1
     end
     it "should allow for master user with custom feature enabled" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       sign_in_as u
       get :index
       expect(response).to be_success
@@ -31,7 +31,7 @@ describe HmController do
 
   describe "show_po_lines" do
     before :each do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       sign_in_as u
     end
     it "should render page" do

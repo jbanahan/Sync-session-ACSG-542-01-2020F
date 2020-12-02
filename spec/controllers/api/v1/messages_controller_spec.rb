@@ -1,5 +1,5 @@
 describe Api::V1::MessagesController do
-  let(:user) { FactoryBot(:user) }
+  let(:user) { create(:user) }
 
   before do
     allow_api_access user
@@ -51,7 +51,7 @@ describe Api::V1::MessagesController do
     end
 
     it "404S if message not found for current user" do
-      m = FactoryBot(:user).messages.create!(subject: 'X')
+      m = create(:user).messages.create!(subject: 'X')
 
       post :mark_as_read, id: m.id
 

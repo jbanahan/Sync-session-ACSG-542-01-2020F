@@ -30,9 +30,9 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       ]
     end
     before :each do
-      @importer = FactoryBot(:company, system_code:'CLIENTCODE', importer:true)
-      @china = FactoryBot(:country, iso_code:'CN')
-      @us = FactoryBot(:country, iso_code:'US')
+      @importer = create(:company, system_code:'CLIENTCODE', importer:true)
+      @china = create(:country, iso_code:'CN')
+      @us = create(:country, iso_code:'US')
     end
     it "should map order data" do
       expect {described_class.new.parse_dom(base_dom, log)}.to change(Order, :count).from(0).to(1)
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(o.currency).to eq 'USD'
 
       sf = o.ship_from
-      expect(sf.name).to eq 'ILS FactoryBot #1'
+      expect(sf.name).to eq 'ILS create #1'
       expect(sf.line_1).to eq '100 Any Street'
       expect(sf.line_2).to eq 'Shanghai Economic Development Zone'
       expect(sf.line_3).to eq 'Building 301'
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
     end
     it "should update existing order" do
-      ord = FactoryBot(:order, order_number:'ABC12345', importer:@importer)
+      ord = create(:order, order_number:'ABC12345', importer:@importer)
       expect {described_class.new.parse_dom(base_dom, log)}.to_not change(Order, :count)
       ord.reload
       expect(ord.customer_order_number).to eq 'ABC-12345'
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq ord.id
     end
     it "should find existing vendor by system code (even if name is different) and update name on Company record" do
-      ven = FactoryBot(:company, vendor:true, system_code:'ILSI', name:'x')
+      ven = create(:company, vendor:true, system_code:'ILSI', name:'x')
       expect {described_class.new.parse_dom(base_dom, log)}.to_not change(Company.where(vendor:true), :count)
       ven.reload
       ord = Order.first
@@ -118,9 +118,9 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(ven.name).to eq 'International Lumber Supplier Inc'
     end
     it "should use existing ship from based on hash" do
-      ven = FactoryBot(:company, vendor:true, system_code:'ILSI')
+      ven = create(:company, vendor:true, system_code:'ILSI')
       sf = ven.addresses.create!(
-        name: 'ILS FactoryBot #1',
+        name: 'ILS create #1',
         line_1: '100 Any Street',
         line_2: 'Shanghai Economic Development Zone',
         line_3: 'Building 301',
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(Order.first.ship_from).to eq sf
     end
     it "should use existing product" do
-      p = FactoryBot(:product, unique_identifier:'BRCHERFL')
+      p = create(:product, unique_identifier:'BRCHERFL')
       described_class.new.parse_dom(base_dom, log)
       ord = Order.first
       expect(ord.order_lines.first.product).to eq p
@@ -172,8 +172,8 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(Order.count).to eq 0
     end
     it "should delete other lines" do
-      ord = FactoryBot(:order, order_number:'ABC12345', importer:@importer)
-      ol = FactoryBot(:order_line, order:ord, line_number:999)
+      ord = create(:order, order_number:'ABC12345', importer:@importer)
+      ol = create(:order_line, order:ord, line_number:999)
       expect {described_class.new.parse_dom(base_dom, log)}.to change(OrderLine, :count).from(1).to(2)
       expect(OrderLine.find_by_id(ol.id)).to be_nil
     end
@@ -188,7 +188,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Summary Quantity was 709.9 but actual total was 708.9"
     end
     it "should not reprocess old files" do
-      ord = FactoryBot(:order, order_number:'ABC12345', importer:@importer, customer_order_number:'OTHER', last_exported_from_source:100.years.from_now)
+      ord = create(:order, order_number:'ABC12345', importer:@importer, customer_order_number:'OTHER', last_exported_from_source:100.years.from_now)
       expect {described_class.new.parse_dom(base_dom, log)}.to_not change(OrderLine, :count)
       ord.reload
       expect(ord.customer_order_number).to eq 'OTHER'

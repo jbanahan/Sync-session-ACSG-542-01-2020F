@@ -1,9 +1,9 @@
 describe DrawbackUploadFile do
   describe "process" do
-    let!(:user) { FactoryBot(:user) }
+    let!(:user) { create(:user) }
     let(:temp) { instance_double("tempfile") }
     let(:mock_attachment) { instance_double("Attachment") }
-    let!(:importer) { FactoryBot(:company, importer: true) }
+    let!(:importer) { create(:company, importer: true) }
 
     before do
       allow(temp).to receive(:path).and_return('tmppath')
@@ -71,7 +71,7 @@ describe DrawbackUploadFile do
     it "routes DDB Export file" do
       importer.update! master: true
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      FactoryBot(:company, importer: true)
+      create(:company, importer: true)
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath', importer).and_return('abc')
       expect(d.process(user)).to eq('abc')
     end
@@ -89,35 +89,35 @@ describe DrawbackUploadFile do
     end
 
     it "routes J Crew Canada Export file" do
-      imp = with_customs_management_id(FactoryBot(:importer), "JCREW")
+      imp = with_customs_management_id(create(:importer), "JCREW")
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS)
       expect(OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(user)).to eq('abc')
     end
 
     it 'routes J Crew Borderfree Export file' do
-      imp = with_customs_management_id(FactoryBot(:importer), "JCREW")
+      imp = with_customs_management_id(create(:importer), "JCREW")
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE)
       expect(OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(user)).to eq('abc')
     end
 
     it "routes Lands End Export file" do
-      imp = with_customs_management_id(FactoryBot(:importer), "LANDS")
+      imp = with_customs_management_id(create(:importer), "LANDS")
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS)
       expect(OpenChain::LandsEndExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(user)).to eq('abc')
     end
 
     it "routes Crocs Export file" do
-      imp = with_customs_management_id(FactoryBot(:importer), "CROCS")
+      imp = with_customs_management_id(create(:importer), "CROCS")
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS)
       expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(user)).to eq('abc')
     end
 
     it "routes Crocs Receiving file" do
-      with_customs_management_id(FactoryBot(:importer), "CROCS")
+      with_customs_management_id(create(:importer), "CROCS")
       d = described_class.new(processor: DrawbackUploadFile::PROCESSOR_CROCS_RECEIVING)
       s3_att = instance_double("S3 Attachment")
       allow(s3_att).to receive(:path).and_return('xyz')

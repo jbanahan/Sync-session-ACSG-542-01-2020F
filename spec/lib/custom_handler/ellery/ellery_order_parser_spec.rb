@@ -13,9 +13,9 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     '1,"0020","BE1220","United Linens Limited(Benetex)","Suite 701, Bldg. No. 1","Art & Tech Space","63 Haier Road","Qingdao","State","266061","CHI",14945,20160519,20160713,"FAYETTEVILLE DC","107 TOM STARLING RD.","FAYETTEVILLE","NC","28306","USA","USD","QINDG","FAYD","FAYETTEVILLE - DOMESTI","ANUNEZ","O/A 90 DAYS",4,"15828052084LAK","885308443526","BELK","DERON DISPLAY","052084","LAKE",1.0000,1.0000,"WINDOW","DISPLAYS","DISPLAY","DERON",2,3,"6303.92.2010",20160713,8.5000,55.00,.00,123'
   }
 
-  let! (:ellery) { FactoryBot(:importer, system_code: "ELLHOL") }
-  let! (:us) { FactoryBot(:country, iso_code: "US", iso_3_code: "USA") }
-  let! (:china) { FactoryBot(:country, iso_code: "CN", iso_3_code: "CHN" )}
+  let! (:ellery) { create(:importer, system_code: "ELLHOL") }
+  let! (:us) { create(:country, iso_code: "US", iso_3_code: "USA") }
+  let! (:china) { create(:country, iso_code: "CN", iso_3_code: "CHN" )}
   let (:log) { InboundFile.new }
 
   describe "parse_file" do
@@ -126,8 +126,8 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "updates an order" do
-      existing = FactoryBot(:order, importer: ellery, order_number: "ELLHOL-14945")
-      existing_line = FactoryBot(:order_line, order: existing)
+      existing = create(:order, importer: ellery, order_number: "ELLHOL-14945")
+      existing_line = create(:order_line, order: existing)
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
@@ -143,9 +143,9 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "does not delete unreferenced order lines that have been booked" do
-      existing = FactoryBot(:order, importer: ellery, order_number: "ELLHOL-14945")
-      existing_line = FactoryBot(:order_line, order: existing)
-      booking_line = FactoryBot(:booking_line, product: existing_line.product, order_line: existing_line, order: existing)
+      existing = create(:order, importer: ellery, order_number: "ELLHOL-14945")
+      existing_line = create(:order_line, order: existing)
+      booking_line = create(:booking_line, product: existing_line.product, order_line: existing_line, order: existing)
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
@@ -159,9 +159,9 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "does not delete unreferenced order lines that have been shipped" do
-      existing = FactoryBot(:order, importer: ellery, order_number: "ELLHOL-14945")
-      existing_line = FactoryBot(:order_line, order: existing)
-      shipment_line = FactoryBot(:shipment_line, product: existing_line.product)
+      existing = create(:order, importer: ellery, order_number: "ELLHOL-14945")
+      existing_line = create(:order_line, order: existing)
+      shipment_line = create(:shipment_line, product: existing_line.product)
       piece_set = PieceSet.create! order_line: existing_line, shipment_line: shipment_line, quantity: 100
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "doesn't update existing product data if hts stays the same" do
-      existing = FactoryBot(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
+      existing = create(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "6303922010")
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
@@ -187,7 +187,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "updates hts on existing product if the number changes" do
-      existing = FactoryBot(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
+      existing = create(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "1234567890")
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
@@ -198,7 +198,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "doesn't update vendor data" do
-      vendor = FactoryBot(:vendor, system_code: "ELLHOL-BE1220", name: "Existing Vendor")
+      vendor = create(:vendor, system_code: "ELLHOL-BE1220", name: "Existing Vendor")
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       vendor.reload
@@ -207,7 +207,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "doesn't update ship to data" do
-      ship_to = FactoryBot(:address, company: ellery, name: "FAYETTEVILLE DC")
+      ship_to = create(:address, company: ellery, name: "FAYETTEVILLE DC")
 
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
       ship_to.reload

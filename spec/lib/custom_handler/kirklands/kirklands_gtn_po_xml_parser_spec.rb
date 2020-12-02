@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
     xml.xpath("OrderMessage").first
   }
 
-  let! (:kirklands) { FactoryBot(:importer, system_code: "KLANDS") }
+  let! (:kirklands) { create(:importer, system_code: "KLANDS") }
 
   let (:cdefs) {
     subject.cdefs
@@ -17,19 +17,19 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
   let (:integration) { User.integration }
 
   let (:product) {
-    p = FactoryBot(:product, importer: kirklands, unique_identifier: "219397", name: "PILLOW OPEN PLAID BLK 20IN")
+    p = create(:product, importer: kirklands, unique_identifier: "219397", name: "PILLOW OPEN PLAID BLK 20IN")
     p.update_hts_for_country us, "9404901000"
     p
   }
 
   let (:order) {
-    ol = FactoryBot(:order_line, product: product, line_number: 5, order: FactoryBot(:order, importer: kirklands, order_number: "675974"))
+    ol = create(:order_line, product: product, line_number: 5, order: create(:order, importer: kirklands, order_number: "675974"))
     ol.order
   }
 
   let (:inbound_file) { InboundFile.new }
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:us) { FactoryBot(:country, iso_code: "US")}
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:us) { create(:country, iso_code: "US")}
 
   describe "process_order_update" do
     before :each do

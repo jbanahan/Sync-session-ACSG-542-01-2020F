@@ -1,10 +1,10 @@
 describe OpenChain::CustomHandler::Lt::Lt850Parser do
   let!(:data) { IO.read 'spec/fixtures/files/lt_850.edi' }
-  let!(:importer) { FactoryBot(:company, name: "LT", importer: true, system_code: "LOLLYT")}
+  let!(:importer) { create(:company, name: "LT", importer: true, system_code: "LOLLYT")}
   let(:cdefs) { described_class.new.cdefs }
 
-  let!(:uae) { FactoryBot(:country, iso_code: "AE") }
-  let!(:us) { FactoryBot(:country, iso_code: "US") }
+  let!(:uae) { create(:country, iso_code: "AE") }
+  let!(:us) { create(:country, iso_code: "US") }
 
   before(:all) {
     described_class.new.cdefs
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
 
       factory = o.factory
       expect(factory.name).to eq "FR APPAREL TRADING DMCC"
-      expect(factory.system_code).to eq "LOLLYT-FactoryBot-FRA001"
+      expect(factory.system_code).to eq "LOLLYT-create-FRA001"
       expect(factory.mid).to eq "FRA001"
       addr = factory.addresses.first
       expect(addr.line_1).to eq "UNIT 302-10, MSLI SERVICED OFF 2"
@@ -122,8 +122,8 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
     end
 
     it "replaces existing lines" do
-      old_ord = FactoryBot(:order, importer: importer, order_number: "LOLLYT-417208")
-      old_ord_ln = FactoryBot(:order_line, order: old_ord)
+      old_ord = create(:order, importer: importer, order_number: "LOLLYT-417208")
+      old_ord_ln = create(:order_line, order: old_ord)
 
       subject.parse data, bucket: "bucket", key: "lt.edi"
       expect { old_ord_ln.reload }.to raise_error ActiveRecord::RecordNotFound
@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
   end
 
   describe "update_standard_product" do
-    let(:p) { FactoryBot(:product, unique_identifier: "LOLLYT-ABKLSC", name: nil) }
+    let(:p) { create(:product, unique_identifier: "LOLLYT-ABKLSC", name: nil) }
 
     let(:line) do
       t = REX12.each_transaction(StringIO.new(data)).first

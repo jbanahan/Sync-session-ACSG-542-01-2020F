@@ -3,13 +3,13 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
   describe "parse" do
     before do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return true
-      FactoryBot(:master_user, username: 'integration')
+      create(:master_user, username: 'integration')
     end
 
     let(:path) { 'spec/support/bin/jjill850sample.xml' }
     let(:pathfw) { 'spec/support/bin/jjill850samplefw.xml' }
-    let!(:co) { FactoryBot(:company, importer: true, system_code: 'JJILL') }
-    let!(:us) { FactoryBot(:country, iso_code: 'US') }
+    let!(:co) { create(:company, importer: true, system_code: 'JJILL') }
+    let!(:us) { create(:country, iso_code: 'US') }
 
     let(:log) { InboundFile.new }
 
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
 
     it "reopens order where BEG01 not eq to '03'" do
-      o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', closed_by_id: 7, closed_at: Time.zone.now)
+      o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368', closed_by_id: 7, closed_at: Time.zone.now)
       DataCrossReference.create_jjill_order_fingerprint!(o, 'badfingerprint')
       expect_any_instance_of(Order).to receive(:reopen!).with(instance_of(User))
       expect_any_instance_of(Order).to receive(:post_update_logic!).with(instance_of(User))
@@ -162,8 +162,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
     context "when line numbers are found" do
       it "updates existing order lines when not booked" do
-        o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368')
-        ol = FactoryBot(:order_line, order: o, line_number: 1, quantity: 111)
+        o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = create(:order_line, order: o, line_number: 1, quantity: 111)
 
         run_file
         ol.reload
@@ -171,9 +171,9 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       end
 
       it "updates existing order lines when booked" do
-        o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368')
-        ol = FactoryBot(:order_line, order: o, line_number: 1, quantity: 111)
-        s = FactoryBot(:shipment, reference: "REF")
+        o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = create(:order_line, order: o, line_number: 1, quantity: 111)
+        s = create(:shipment, reference: "REF")
         s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         run_file
@@ -182,10 +182,10 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       end
 
       it "removes order lines not present in the XML except when booked" do
-        o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368')
-        ol = FactoryBot(:order_line, order: o, line_number: 5, quantity: 111)
-        FactoryBot(:order_line, order: o, line_number: 6, quantity: 100)
-        s = FactoryBot(:shipment, reference: "REF")
+        o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = create(:order_line, order: o, line_number: 5, quantity: 111)
+        create(:order_line, order: o, line_number: 6, quantity: 100)
+        s = create(:shipment, reference: "REF")
         s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         run_file
@@ -202,8 +202,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       before { REXML::XPath.each(dom.root, '//PO101') {|el| el.text = ''} }
 
       it "replaces order lines when not booked" do
-        o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368')
-        old_ol = FactoryBot(:order_line, order: o, line_number: 1, quantity: 111)
+        o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        old_ol = create(:order_line, order: o, line_number: 1, quantity: 111)
 
         described_class.parse_dom dom, log
         expect {old_ol.reload}.to raise_error ActiveRecord::RecordNotFound
@@ -212,9 +212,9 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       end
 
       it "doesn't change lines when booked" do
-        o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368')
-        ol = FactoryBot(:order_line, order: o, line_number: 1, quantity: 111)
-        s = FactoryBot(:shipment, reference: "REF")
+        o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = create(:order_line, order: o, line_number: 1, quantity: 111)
+        s = create(:shipment, reference: "REF")
         s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         described_class.parse_dom dom, log
@@ -257,33 +257,33 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
 
     it "auto assigns agent if only one exists" do
-      agent = FactoryBot(:company, agent: true)
+      agent = create(:company, agent: true)
       co.linked_companies << agent
-      vn = FactoryBot(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
+      vn = create(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
       vn.linked_companies << agent
       run_file
       expect(Order.first.agent).to eq agent
     end
 
     it "uses existing vendor" do
-      vn = FactoryBot(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
+      vn = create(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
       run_file
       expect(Order.first.vendor).to eq vn
     end
 
     it "uses existing product" do
-      p = FactoryBot(:product, importer_id: co.id, unique_identifier: 'JJILL-04-1024')
+      p = create(:product, importer_id: co.id, unique_identifier: 'JJILL-04-1024')
       run_file
       expect(OrderLine.first.product).to eq p
     end
 
     it "doesn't use product that isn't for JJILL" do
-      FactoryBot(:product, importer_id: FactoryBot(:company).id, unique_identifier: 'JJILL-04-1024')
+      create(:product, importer_id: create(:company).id, unique_identifier: 'JJILL-04-1024')
       expect {run_file}.to raise_error(/Unique identifier/)
     end
 
     it "updates order" do
-      o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', approval_status: 'Accepted')
+      o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368', approval_status: 'Accepted')
       DataCrossReference.create_jjill_order_fingerprint!(o, 'badfingerprint')
       run_file
       o.reload
@@ -292,9 +292,9 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
 
     it "updates booked (but unshipped) order header" do
-      o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", approval_status: "Accepted")
-      ol = FactoryBot(:order_line, order: o)
-      s = FactoryBot(:shipment, reference: "REF")
+      o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", approval_status: "Accepted")
+      ol = create(:order_line, order: o)
+      s = create(:shipment, reference: "REF")
       s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
       run_file
@@ -304,14 +304,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
 
     it "doesn't update order with newer last_exported_from_source" do
-      o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', last_exported_from_source: Date.new(2014, 8, 1))
+      o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368', last_exported_from_source: Date.new(2014, 8, 1))
       run_file
       o.reload
       expect(o.order_lines).to be_empty
     end
 
     it "doesn't change the original GAC custom field if it is already set" do
-      o = FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', ship_window_end: Date.new(2014, 12, 25))
+      o = create(:order, importer_id: co.id, order_number: 'JJILL-1001368', ship_window_end: Date.new(2014, 12, 25))
       cdefs = described_class.prep_custom_definitions [:ord_original_gac_date]
       o.update_custom_value!(cdefs[:ord_original_gac_date], o.ship_window_end)
       run_file
@@ -321,11 +321,11 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
     context "notifications" do
       let(:u)   { 3.days.ago }
-      let(:o)   { FactoryBot(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", updated_at: u, approval_status: "Accepted") }
-      let(:ol)  { FactoryBot(:order_line, order: o, sku: "SKU") }
-      let(:s)   { FactoryBot(:shipment, reference: "REF1", booking_mode: "Air") }
+      let(:o)   { create(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", updated_at: u, approval_status: "Accepted") }
+      let(:ol)  { create(:order_line, order: o, sku: "SKU") }
+      let(:s)   { create(:shipment, reference: "REF1", booking_mode: "Air") }
       let(:bl)  { s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id) }
-      let(:s2)  { FactoryBot(:shipment, reference: "REF2") }
+      let(:s2)  { create(:shipment, reference: "REF2") }
       let(:bl2) { s2.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id) }
 
       it "doesn't update order assigned to multiple bookings" do

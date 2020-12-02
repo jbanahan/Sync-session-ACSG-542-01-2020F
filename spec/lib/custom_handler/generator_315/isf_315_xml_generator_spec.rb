@@ -6,14 +6,14 @@ describe OpenChain::CustomHandler::Generator315::Isf315XmlGenerator do
   describe "generate_and_send_315s" do
     let (:config) { MilestoneNotificationConfig.new output_style: MilestoneNotificationConfig::OUTPUT_STYLE_STANDARD, customer_number: "config_cust" }
     let(:isf) do
-      FactoryBot(:security_filing, host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",
+      create(:security_filing, host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",
                                 transport_mode_code: "10", scac: "SCAC", vessel: "VES", voyage: "VOY", entry_port_code: "1234",
                                 lading_port_code: "56789", unlading_port_code: "0987", master_bill_of_lading: "M\nB", house_bills_of_lading: "H\nB",
                                 container_numbers: "C\nN", po_numbers: "P\nO", first_accepted_date: "2015-03-01 08:00")
     end
-    let!(:port_entry) { FactoryBot(:port, schedule_d_code: "1234", name: "Entry Port") }
-    let!(:port_unlading) { FactoryBot(:port, schedule_d_code: "0987", name: "Unlading Port") }
-    let!(:port_lading) { FactoryBot(:port, schedule_k_code: "56789", name: "Lading Port") }
+    let!(:port_entry) { create(:port, schedule_d_code: "1234", name: "Entry Port") }
+    let!(:port_unlading) { create(:port, schedule_d_code: "0987", name: "Unlading Port") }
+    let!(:port_lading) { create(:port, schedule_k_code: "56789", name: "Lading Port") }
 
     it "generates and sends data" do
       t = Time.zone.now

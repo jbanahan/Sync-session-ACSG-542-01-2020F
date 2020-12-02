@@ -15,8 +15,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "creates a broker invoice" do
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes: 22.22)
-      country = FactoryBot(:country, iso_code: 'US')
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes: 22.22)
+      country = create(:country, iso_code: 'US')
 
       subject.parse make_document(test_data), { key: "the_key", bucket: "the_bucket" }
 
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "updates an existing broker invoice" do
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
 
       exist_inv = entry.broker_invoices.build(invoice_number: "BQMJ01119290555", suffix: "this field isn't updated by the parser and shouldn't be messed with")
       exist_line = exist_inv.broker_invoice_lines.build(charge_code: "bogus", charge_description: "bogus", charge_amount: BigDecimal(5))
@@ -111,7 +111,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "creates new entry when broker-ref-matching entry is of wrong type" do
-      FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::KEWILL_SOURCE_SYSTEM)
+      create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::KEWILL_SOURCE_SYSTEM)
 
       subject.parse make_document(test_data)
 
@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     it "adds HST13 line" do
       test_data.gsub!(/HST12/, 'HST13')
 
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes: 22.22)
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes: 22.22)
 
       subject.parse make_document(test_data), { key: "the_key", bucket: "the_bucket" }
 
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     it "rejects when invoice number is missing" do
       test_data.gsub!(/JobInvoiceNumber/, 'JorbInvoyseNoumbur')
 
-      FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
+      create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
 
       subject.parse make_document(test_data)
 
@@ -167,7 +167,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
       test_data.gsub!(/Country/, 'Western')
       test_data.gsub!(/LocalAmount/, 'RemoteAmolehill')
 
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
 
       subject.parse make_document(test_data)
 
@@ -185,7 +185,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
 
     it "handles invalid country code" do
       # No country record is saved here, making the code in the document invalid.
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
 
       subject.parse make_document(test_data)
 
@@ -197,7 +197,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "handles UniversalInterchange as root element" do
-      entry = FactoryBot(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = create(:entry, broker_reference: "BQMJ01119290922", source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
 
       subject.parse make_document("<UniversalInterchange><Body>#{test_data}</Body></UniversalInterchange>")
 
@@ -210,7 +210,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     it "clears entry total duty direct if not deferred duty invoice" do
       test_data.gsub!(/201/, '202')
 
-      entry = FactoryBot(:entry,
+      entry = create(:entry,
                       broker_reference: "BQMJ01119290922",
                       source_system: Entry::CARGOWISE_SOURCE_SYSTEM,
                       total_duty: 5.55,

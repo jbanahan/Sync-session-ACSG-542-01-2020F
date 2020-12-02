@@ -22,13 +22,13 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
   end
 
   describe "sync_fixed_position" do
-    let (:us) { FactoryBot(:country, iso_code: "US") }
-    let (:ca) { FactoryBot(:country, iso_code: "CA") }
+    let (:us) { create(:country, iso_code: "US") }
+    let (:ca) { create(:country, iso_code: "CA") }
     before :each do
       @g = described_class.new
       @cust_defs = @g.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number]
 
-      @t = FactoryBot(:tariff_record, line_number: 0, hts_1: "1234567890", classification: FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: FactoryBot(:importer, system_code: "LENOX"))))
+      @t = create(:tariff_record, line_number: 0, hts_1: "1234567890", classification: create(:classification, country: us, product: create(:product, importer: create(:importer, system_code: "LENOX"))))
       @c = @t.classification
       @p = @t.product
 
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     end
 
     it "sends multiple lines for classifications having multiple tariff records" do
-      t2 = FactoryBot(:tariff_record, hts_1: "7531594560", classification: @c, line_number: 2)
+      t2 = create(:tariff_record, hts_1: "7531594560", classification: @c, line_number: 2)
       @t.update_attributes! hts_2: "987654321", line_number: 3
 
       @temp = @g.sync_fixed_position
@@ -81,7 +81,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     end
 
     it "sends lines for each classification" do
-      t2 = FactoryBot(:tariff_record, hts_1: "7531594560", classification: FactoryBot(:classification, product: @p, country: ca))
+      t2 = create(:tariff_record, hts_1: "7531594560", classification: create(:classification, product: @p, country: ca))
 
       @temp = @g.sync_fixed_position
       lines = IO.readlines @temp.path
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
       cdef = described_class.prep_custom_definitions([:class_set_type])[:class_set_type]
       @c.update_custom_value! cdef, "XVV"
 
-      t2 = FactoryBot(:tariff_record, hts_1: "7531594560", classification: @c, line_number: 2)
+      t2 = create(:tariff_record, hts_1: "7531594560", classification: @c, line_number: 2)
       @temp = @g.sync_fixed_position
       lines = IO.readlines @temp.path
 
@@ -121,19 +121,19 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     context "limitations on report" do
       before(:each) do
         # new hts, shares product & classification with @t
-        t2 = FactoryBot(:tariff_record, line_number: 2, hts_1: "0987654321", classification: @c, product: @p)
+        t2 = create(:tariff_record, line_number: 2, hts_1: "0987654321", classification: @c, product: @p)
         fingerprint_t2 = Digest::SHA1.base64digest [["PARTNO", @c.country.iso_code, "MULTI", "000", "FDA"],
                                                     ["PARTNO", @c.country.iso_code, "1234567890", 1, "FDA"],
                                                     ["PARTNO", t2.classification.country.iso_code, "new hts", 2, "FDA"]].flatten.join('/')
         DataCrossReference.create_lenox_hts_fingerprint!(@p.id, @c.country.iso_code, fingerprint_t2)
 
         # unchanged hts, different classification, same product
-        t3 = FactoryBot(:tariff_record, line_number: 3, hts_1: "1234567890", classification: FactoryBot(:classification, product: @p))
+        t3 = create(:tariff_record, line_number: 3, hts_1: "1234567890", classification: create(:classification, product: @p))
         fingerprint_t3 = Digest::SHA1.base64digest ["PARTNO", t3.classification.country.iso_code, "1234567890", "000", "FDA"].join('/')
         DataCrossReference.create_lenox_hts_fingerprint!(t3.product.id, t3.classification.country.iso_code, fingerprint_t3)
 
         # unchanged HTS, different classification, different product
-        @t4 = FactoryBot(:tariff_record, line_number: 4, hts_1: "2468101214", classification: FactoryBot(:classification, product: FactoryBot(:product, importer: @t.product.importer)))
+        @t4 = create(:tariff_record, line_number: 4, hts_1: "2468101214", classification: create(:classification, product: create(:product, importer: @t.product.importer)))
         @t4.product.update_custom_value! @cust_defs[:prod_part_number], "PARTNO_2"
         @t4.product.update_custom_value! @cust_defs[:prod_fda_product_code], "FDA_2"
         fingerprint_t4 = Digest::SHA1.base64digest ["PARTNO_2", @t4.classification.country.iso_code, "2468101214", "000", "FDA_2"].join('/')

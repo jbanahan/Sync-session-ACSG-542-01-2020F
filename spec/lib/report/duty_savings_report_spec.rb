@@ -4,8 +4,8 @@ describe OpenChain::Report::DutySavingsReport do
   let(:release_date) { DateTime.new(2016, 01, 16) }
 
   describe "permission?" do
-    let(:co) { FactoryBot(:company, master: true) }
-    let(:u) { FactoryBot(:user, company: co, entry_view: true)}
+    let(:co) { create(:company, master: true) }
+    let(:u) { create(:user, company: co, entry_view: true)}
 
     it "allows user at master company who can view entries" do
       expect(u).to receive(:view_entries?).and_return true
@@ -26,7 +26,7 @@ describe OpenChain::Report::DutySavingsReport do
   end
 
   describe "run_report" do
-    let(:u) { FactoryBot(:user, time_zone: "Eastern Time (US & Canada)") }
+    let(:u) { create(:user, time_zone: "Eastern Time (US & Canada)") }
     after { @temp.close if @temp }
 
     it "generates spreadsheet" do
@@ -145,11 +145,11 @@ describe OpenChain::Report::DutySavingsReport do
   end
 
   def create_data arrival_date, release_date
-    @ent = FactoryBot(:entry, broker_reference: "brok ref", arrival_date: arrival_date, release_date: release_date, customer_number: "cust num")
-    @ci = FactoryBot(:commercial_invoice, entry: @ent)
-    @cil = FactoryBot(:commercial_invoice_line, commercial_invoice: @ci, vendor_name: "ACME", po_number: "PO num", value: 25, contract_amount: 0)
-    @cit1 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 8, duty_amount: 2)
-    @cit2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 7, duty_amount: 1)
+    @ent = create(:entry, broker_reference: "brok ref", arrival_date: arrival_date, release_date: release_date, customer_number: "cust num")
+    @ci = create(:commercial_invoice, entry: @ent)
+    @cil = create(:commercial_invoice_line, commercial_invoice: @ci, vendor_name: "ACME", po_number: "PO num", value: 25, contract_amount: 0)
+    @cit1 = create(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 8, duty_amount: 2)
+    @cit2 = create(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 7, duty_amount: 1)
   end
 
 end

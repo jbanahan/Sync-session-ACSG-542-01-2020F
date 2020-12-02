@@ -1,6 +1,6 @@
 describe CommentsController do
-  let (:user) { FactoryBot(:user) }
-  let (:prod) { FactoryBot(:product) }
+  let (:user) { create(:user) }
+  let (:prod) { create(:product) }
 
   before do
     sign_in_as user

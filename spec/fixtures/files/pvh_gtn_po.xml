@@ -210,7 +210,7 @@
         <type>AssortmentAdvice</type>
       </reference>
       <reference>
-        <type>FactoryBotManagement</type>
+        <type>createManagement</type>
         <value>Y</value>
       </reference>
       <reference>
@@ -234,7 +234,7 @@
         <value>21410</value>
       </reference>
       <reference>
-        <type>PVHFactoryBotCode</type>
+        <type>PVHcreateCode</type>
         <value>21410002</value>
       </reference>
       <reference>
@@ -1401,7 +1401,7 @@
         <countryCode>IN</countryCode>
       </address>
       <reference>
-        <type>FactoryBotCode</type>
+        <type>createCode</type>
         <value>21410002</value>
       </reference>
       <reference>
@@ -1664,33 +1664,33 @@
           <value>08807</value>
         </reference>
         <reference>
-          <type>FactoryBotCode</type>
+          <type>createCode</type>
           <value>21410002</value>
         </reference>
         <reference>
-          <type>FactoryBotName</type>
+          <type>createName</type>
           <value>GUPTA EXIM (INDIA) PVT. LTD.</value>
         </reference>
         <reference>
-          <type>FactoryBotAddressLine1</type>
+          <type>createAddressLine1</type>
           <value>(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1</value>
         </reference>
         <reference>
-          <type>FactoryBotAddressLine2</type>
+          <type>createAddressLine2</type>
         </reference>
         <reference>
-          <type>FactoryBotCityName</type>
+          <type>createCityName</type>
           <value>FARIDABAD</value>
         </reference>
         <reference>
-          <type>FactoryBotState</type>
+          <type>createState</type>
         </reference>
         <reference>
-          <type>FactoryBotCountryCode</type>
+          <type>createCountryCode</type>
           <value>IN</value>
         </reference>
         <reference>
-          <type>FactoryBotPostalCode</type>
+          <type>createPostalCode</type>
         </reference>
         <reference>
           <type>MIDNumber</type>
@@ -2252,33 +2252,33 @@
           <value>08807</value>
         </reference>
         <reference>
-          <type>FactoryBotCode</type>
+          <type>createCode</type>
           <value>21410002</value>
         </reference>
         <reference>
-          <type>FactoryBotName</type>
+          <type>createName</type>
           <value>GUPTA EXIM (INDIA) PVT. LTD.</value>
         </reference>
         <reference>
-          <type>FactoryBotAddressLine1</type>
+          <type>createAddressLine1</type>
           <value>(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1</value>
         </reference>
         <reference>
-          <type>FactoryBotAddressLine2</type>
+          <type>createAddressLine2</type>
         </reference>
         <reference>
-          <type>FactoryBotCityName</type>
+          <type>createCityName</type>
           <value>FARIDABAD</value>
         </reference>
         <reference>
-          <type>FactoryBotState</type>
+          <type>createState</type>
         </reference>
         <reference>
-          <type>FactoryBotCountryCode</type>
+          <type>createCountryCode</type>
           <value>IN</value>
         </reference>
         <reference>
-          <type>FactoryBotPostalCode</type>
+          <type>createPostalCode</type>
         </reference>
         <reference>
           <type>MIDNumber</type>

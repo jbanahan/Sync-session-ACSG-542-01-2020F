@@ -26,7 +26,7 @@ describe OpenChain::FtpSiteMonitor do
     end
 
     it "looks up mailing list and sets into email_to" do
-      list = MailingList.create! company_id: FactoryBot(:company).id, user_id: FactoryBot(:user).id, system_code: "list", name: "list", email_addresses: "me@there.com"
+      list = MailingList.create! company_id: create(:company).id, user_id: create(:user).id, system_code: "list", name: "list", email_addresses: "me@there.com"
       valid_opts[:mailing_list] = "list"
       expect_any_instance_of(subject).to receive(:run).with anything, anything, instance_of(MailingList), nil, nil
       subject.run_schedulable valid_opts

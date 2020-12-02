@@ -1,11 +1,11 @@
 describe OfficialTariffsController do
-  let!(:us) { FactoryBot(:country, iso_code: "US", import_location: true) }
-  let!(:ca) { FactoryBot(:country, iso_code: "CA", import_location: true) }
+  let!(:us) { create(:country, iso_code: "US", import_location: true) }
+  let!(:ca) { create(:country, iso_code: "CA", import_location: true) }
 
   before do
-    FactoryBot(:official_tariff, hts_code: '1234567890', country: us, remaining_description: 'abc', general_rate: '11', use_count: 5)
-    FactoryBot(:official_tariff, hts_code: '1234567899', country: us, remaining_description: 'def', general_rate: 'aa', use_count: 3)
-    FactoryBot(:official_tariff, hts_code: '1234567777', country: ca, remaining_description: 'xyz', most_favored_nation_rate: '123', use_count: 6)
+    create(:official_tariff, hts_code: '1234567890', country: us, remaining_description: 'abc', general_rate: '11', use_count: 5)
+    create(:official_tariff, hts_code: '1234567899', country: us, remaining_description: 'def', general_rate: 'aa', use_count: 3)
+    create(:official_tariff, hts_code: '1234567777', country: ca, remaining_description: 'xyz', most_favored_nation_rate: '123', use_count: 6)
   end
 
   describe "auto_complete" do
@@ -25,7 +25,7 @@ describe OfficialTariffsController do
     context "limits" do
       before do
         25.times do |i|
-          FactoryBot(:official_tariff, hts_code: "4455667#{(i + 1).to_s.rjust(3, "0")}", country: us)
+          create(:official_tariff, hts_code: "4455667#{(i + 1).to_s.rjust(3, "0")}", country: us)
         end
       end
 

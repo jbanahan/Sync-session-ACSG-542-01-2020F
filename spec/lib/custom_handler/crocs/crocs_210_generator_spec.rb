@@ -14,9 +14,9 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       end
 
       it "accepts 'CROCS' entries with broker invoices" do
-        line = FactoryBot(:broker_invoice_line,
-          broker_invoice: FactoryBot(:broker_invoice,
-            entry: FactoryBot(:entry, customer_number: "CROCS", last_billed_date: Time.now)
+        line = create(:broker_invoice_line,
+          broker_invoice: create(:broker_invoice,
+            entry: create(:entry, customer_number: "CROCS", last_billed_date: Time.now)
           )
         )
 
@@ -24,9 +24,9 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       end
 
       it "accepts 'CROCSSAM' entries with broker invoices" do
-        line = FactoryBot(:broker_invoice_line,
-          broker_invoice: FactoryBot(:broker_invoice,
-            entry: FactoryBot(:entry, customer_number: "CROCSSAM", last_billed_date: Time.now)
+        line = create(:broker_invoice_line,
+          broker_invoice: create(:broker_invoice,
+            entry: create(:entry, customer_number: "CROCSSAM", last_billed_date: Time.now)
           )
         )
 
@@ -34,13 +34,13 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       end
 
       it "doesn't accept entries without broker invoices" do
-        expect(described_class.new.accepts?(:save, FactoryBot(:entry, customer_number: "CROCS"))).to be_falsey
+        expect(described_class.new.accepts?(:save, create(:entry, customer_number: "CROCS"))).to be_falsey
       end
 
       it "doesn't accept entries without last bill dates" do
-        line = FactoryBot(:broker_invoice_line,
-          broker_invoice: FactoryBot(:broker_invoice,
-            entry: FactoryBot(:entry, customer_number: "CROCSSAM")
+        line = create(:broker_invoice_line,
+          broker_invoice: create(:broker_invoice,
+            entry: create(:entry, customer_number: "CROCSSAM")
           )
         )
 
@@ -49,9 +49,9 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     end
 
     it "does not accept when not vfitrack system" do
-      line = FactoryBot(:broker_invoice_line,
-        broker_invoice: FactoryBot(:broker_invoice,
-          entry: FactoryBot(:entry, customer_number: "CROCS", last_billed_date: Time.now)
+      line = create(:broker_invoice_line,
+        broker_invoice: create(:broker_invoice,
+          entry: create(:entry, customer_number: "CROCS", last_billed_date: Time.now)
         )
       )
 
@@ -69,17 +69,17 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
 
   describe "generate_xml" do
     before :each do
-      line = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
-          broker_invoice: FactoryBot(:broker_invoice, invoice_total: 50, currency: "CAD", invoice_number: "A",
-            entry: FactoryBot(:entry, broker_reference: "12345", entry_number: "65432", lading_port_code: "1", unlading_port_code: "2",
+      line = create(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+          broker_invoice: create(:broker_invoice, invoice_total: 50, currency: "CAD", invoice_number: "A",
+            entry: create(:entry, broker_reference: "12345", entry_number: "65432", lading_port_code: "1", unlading_port_code: "2",
               merchandise_description: "GOODS", total_packages: 10, gross_weight: 20, arrival_date: Time.zone.now, ult_consignee_name: "CONSIGNEE",
               master_bills_of_lading: "12345\n54321", house_bills_of_lading: "123\n456",
-              importer: FactoryBot(:company, name: "Importer")
+              importer: create(:company, name: "Importer")
             )
           )
       )
-      line2 = FactoryBot(:broker_invoice_line, charge_type: "O", charge_amount: 20, charge_description: "Charge", charge_code: "1234", broker_invoice: line.broker_invoice)
-      line3 = FactoryBot(:broker_invoice_line, charge_type: "C", charge_amount: 20, charge_description: "Charge", charge_code: "1234", broker_invoice: line.broker_invoice)
+      line2 = create(:broker_invoice_line, charge_type: "O", charge_amount: 20, charge_description: "Charge", charge_code: "1234", broker_invoice: line.broker_invoice)
+      line3 = create(:broker_invoice_line, charge_type: "C", charge_amount: 20, charge_description: "Charge", charge_code: "1234", broker_invoice: line.broker_invoice)
 
       @invoice = line.broker_invoice
       @invoice.entry.importer.addresses.create! name: "210", line_1: "123 Fake St", city: "City", state: "St", postal_code: "123456"
@@ -149,8 +149,8 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     end
 
     it "skips invoices without any valid lines" do
-      invoice_2 = FactoryBot(:broker_invoice_line, charge_type: "X", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
-              broker_invoice: FactoryBot(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
+      invoice_2 = create(:broker_invoice_line, charge_type: "X", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+              broker_invoice: create(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
 
       x = @g.generate_xml invoice_2
       expect(x).to be_nil
@@ -160,19 +160,19 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
   describe "receive" do
 
     before :each do
-      @invoice = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
-            broker_invoice: FactoryBot(:broker_invoice, invoice_total: 50, currency: "CAD", invoice_number: "A",
-              entry: FactoryBot(:entry, broker_reference: "12345", entry_number: "65432", lading_port_code: "1", unlading_port_code: "2",
+      @invoice = create(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+            broker_invoice: create(:broker_invoice, invoice_total: 50, currency: "CAD", invoice_number: "A",
+              entry: create(:entry, broker_reference: "12345", entry_number: "65432", lading_port_code: "1", unlading_port_code: "2",
                 merchandise_description: "GOODS", total_packages: 10, gross_weight: 20, arrival_date: Time.zone.now, ult_consignee_name: "CONSIGNEE",
-                importer: FactoryBot(:company, name: "Importer")
+                importer: create(:company, name: "Importer")
               )
             )
         ).broker_invoice
     end
 
     it "generates xml for multiple invoices and ftps them in individual files" do
-      invoice_2 = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
-                    broker_invoice: FactoryBot(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
+      invoice_2 = create(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+                    broker_invoice: create(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
       @invoice.entry.broker_invoices << invoice_2
 
       contents = []
@@ -195,8 +195,8 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     end
 
     it "skips invoices already sent but sends unsent ones" do
-      invoice_2 = FactoryBot(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
-              broker_invoice: FactoryBot(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
+      invoice_2 = create(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+              broker_invoice: create(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
       @invoice.entry.broker_invoices << invoice_2
       @invoice.entry.sync_records.create! trading_partner: "crocs 210", fingerprint: "B\nC"
 

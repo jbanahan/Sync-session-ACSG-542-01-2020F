@@ -2,7 +2,7 @@ describe OpenChain::Wto6ChangeResetter do
   describe "reset_fields_if_changed" do
     before(:each) do
       @cr = 50.days.ago
-      @p = FactoryBot(:product, name:'myname', created_at:@cr)
+      @p = create(:product, name:'myname', created_at:@cr)
       @flds = ['prod_name']
     end
     it "should reset fields if changed" do
@@ -12,7 +12,7 @@ describe OpenChain::Wto6ChangeResetter do
       expect(@p.name).to be_blank
     end
     it "should reset read_only field" do
-      cd = FactoryBot(:custom_definition, module_type:'Product', data_type:'string')
+      cd = create(:custom_definition, module_type:'Product', data_type:'string')
       FieldValidatorRule.create!(module_type:'Product', model_field_uid:"*cf_#{cd.id}", read_only:true)
       ModelField.reload
 
@@ -37,8 +37,8 @@ describe OpenChain::Wto6ChangeResetter do
   describe "run_schedulable" do
     it "should get products based on last_started_at" do
       cr = 12.days.ago
-      p = FactoryBot(:product, updated_at:6.days.ago, created_at:cr)
-      p2 = FactoryBot(:product, updated_at:4.days.ago, created_at:cr)
+      p = create(:product, updated_at:6.days.ago, created_at:cr)
+      p2 = create(:product, updated_at:4.days.ago, created_at:cr)
       d = 5.days.ago
 
       # this is the expectation
@@ -54,8 +54,8 @@ describe OpenChain::Wto6ChangeResetter do
     end
     it "should get all products if run_all option exists" do
       cr = 12.days.ago
-      p = FactoryBot(:product, updated_at:6.days.ago, created_at:cr)
-      p2 = FactoryBot(:product, updated_at:4.days.ago, created_at:cr)
+      p = create(:product, updated_at:6.days.ago, created_at:cr)
+      p2 = create(:product, updated_at:4.days.ago, created_at:cr)
       d = 5.days.ago
 
       # this is the expectation

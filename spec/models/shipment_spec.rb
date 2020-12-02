@@ -37,95 +37,95 @@ describe Shipment do
 
     it 'tries again if reference is taken' do
       expect(SecureRandom).to receive(:hex).and_return('01234567', '87654321')
-      FactoryBot(:shipment, reference: '01234567')
+      create(:shipment, reference: '01234567')
       expect(described_class.generate_reference).to eq '87654321'
     end
   end
 
   describe "can_view?" do
     it "does not allow view if user not master and not linked to importer (even if the company is one of the other parties)" do
-      imp = FactoryBot(:company, importer: true)
-      c = FactoryBot(:company, vendor: true)
-      s = FactoryBot(:shipment, vendor: c, importer: imp)
-      u = FactoryBot(:user, shipment_view: true, company: c)
+      imp = create(:company, importer: true)
+      c = create(:company, vendor: true)
+      s = create(:shipment, vendor: c, importer: imp)
+      u = create(:user, shipment_view: true, company: c)
       expect(s.can_view?(u)).to be_falsey
     end
 
     it "allows view if user from importer company" do
-      imp = FactoryBot(:company, importer: true)
-      u = FactoryBot(:user, shipment_view: true, company: imp)
-      s = FactoryBot(:shipment, importer: imp)
+      imp = create(:company, importer: true)
+      u = create(:user, shipment_view: true, company: imp)
+      s = create(:shipment, importer: imp)
       expect(s.can_view?(u)).to be_truthy
     end
 
     it "allows view if user from forwarder company" do
-      fwd = FactoryBot(:company, forwarder: true)
-      imp = FactoryBot(:company, importer: true)
+      fwd = create(:company, forwarder: true)
+      imp = create(:company, importer: true)
       imp.linked_companies << fwd
-      u = FactoryBot(:user, shipment_view: true, company: fwd)
-      s = FactoryBot(:shipment, importer: imp, forwarder: fwd)
+      u = create(:user, shipment_view: true, company: fwd)
+      s = create(:shipment, importer: imp, forwarder: fwd)
       expect(s.can_view?(u)).to be_truthy
     end
   end
 
   describe "search_secure" do
-    let!(:master_only) { FactoryBot(:shipment) }
+    let!(:master_only) { create(:shipment) }
 
     it "allows vendor who is linked to shipment" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment, vendor: u.company)
+      u = create(:user)
+      s = create(:shipment, vendor: u.company)
       expect(described_class.search_secure(u, described_class).to_a).to eq [s]
     end
 
     it "allows importer who is linked to shipment" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment, importer: u.company)
+      u = create(:user)
+      s = create(:shipment, importer: u.company)
       expect(described_class.search_secure(u, described_class).to_a).to eq [s]
     end
 
     it "allows agent who is linked to vendor on shipment" do
-      u = FactoryBot(:user)
-      v = FactoryBot(:company)
+      u = create(:user)
+      v = create(:company)
       v.linked_companies << u.company
-      s = FactoryBot(:shipment, vendor: v)
+      s = create(:shipment, vendor: v)
       expect(described_class.search_secure(u, described_class).to_a).to eq [s]
     end
 
     it "allows master user" do
-      u = FactoryBot(:master_user)
+      u = create(:master_user)
       expect(described_class.search_secure(u, described_class).to_a).to eq [master_only]
     end
 
     it "allows carrier who is linked to shipment" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment, carrier: u.company)
+      u = create(:user)
+      s = create(:shipment, carrier: u.company)
       expect(described_class.search_secure(u, described_class).to_a).to eq [s]
     end
 
     it "allows forwarder who is linked to shipment" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment, forwarder: u.company)
+      u = create(:user)
+      s = create(:shipment, forwarder: u.company)
       expect(described_class.search_secure(u, described_class).to_a).to eq [s]
     end
 
     it "does not allow non linked user" do
-      u = FactoryBot(:user)
+      u = create(:user)
       expect(described_class.search_secure(u, described_class).to_a).to be_empty
     end
   end
 
   describe "can_cancel?" do
     it "calls registry method" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment)
+      u = create(:user)
+      s = create(:shipment)
       expect(OpenChain::Registries::ShipmentRegistry).to receive(:can_cancel?).with(s, u).and_return true
       s.can_cancel? u
     end
   end
 
   describe "cancel_shipment!" do
-    let (:user) { FactoryBot(:user) }
-    let (:shipment) { FactoryBot(:shipment) }
+    let (:user) { create(:user) }
+    let (:shipment) { create(:shipment) }
 
     it "sets cancel fields" do
       expect(shipment).to receive(:create_snapshot_with_async_option).with false, user, nil, nil
@@ -143,8 +143,8 @@ describe Shipment do
       expect(shipment).to receive(:create_snapshot_with_async_option)
       expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel, shipment)
       expect(OpenChain::Registries::ShipmentRegistry).to receive(:cancel_shipment_hook).with(shipment, user)
-      p = FactoryBot(:product)
-      ol = FactoryBot(:order_line, product: p, quantity: 100)
+      p = create(:product)
+      ol = create(:order_line, product: p, quantity: 100)
       sl1 = shipment.shipment_lines.build(quantity: 5)
       sl2 = shipment.shipment_lines.build(quantity: 10)
       [sl1, sl2].each do |sl|
@@ -173,8 +173,8 @@ describe Shipment do
 
   describe "can_uncancel?" do
     it "calls registry method" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment)
+      u = create(:user)
+      s = create(:shipment)
       expect(OpenChain::Registries::ShipmentRegistry).to receive(:can_uncancel?).with(s, u).and_return true
       s.can_uncancel? u
     end
@@ -182,8 +182,8 @@ describe Shipment do
 
   describe "uncancel_shipment!" do
     it "removes cancellation" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment, canceled_by: u, canceled_date: Time.zone.now, cancel_requested_at: Time.zone.now, cancel_requested_by: u)
+      u = create(:user)
+      s = create(:shipment, canceled_by: u, canceled_date: Time.zone.now, cancel_requested_at: Time.zone.now, cancel_requested_by: u)
       expect(s).to receive(:create_snapshot_with_async_option).with false, u
       s.uncancel_shipment! u
       s.reload
@@ -194,11 +194,11 @@ describe Shipment do
     end
 
     it "restores cancelled order line links" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment)
+      u = create(:user)
+      s = create(:shipment)
       expect(s).to receive(:create_snapshot_with_async_option).with false, u
-      p = FactoryBot(:product)
-      ol = FactoryBot(:order_line, product: p, quantity: 100)
+      p = create(:product)
+      ol = create(:order_line, product: p, quantity: 100)
       sl1 = s.shipment_lines.build(quantity: 5)
       sl2 = s.shipment_lines.build(quantity: 10)
       [sl1, sl2].each do |sl|
@@ -217,8 +217,8 @@ describe Shipment do
   end
 
   describe '#request_cancel' do
-    let (:shipment) { FactoryBot(:shipment) }
-    let (:user) { FactoryBot(:user) }
+    let (:shipment) { create(:shipment) }
+    let (:user) { create(:user) }
 
     it "calls hook" do
       expect(OpenChain::Registries::OrderBookingRegistry).to receive(:post_request_cancel_hook).with(shipment, user)
@@ -257,7 +257,7 @@ describe Shipment do
 
   describe "can_approve_booking?" do
     it "allows approval for importer user who can edit shipment" do
-      u = FactoryBot(:user, shipment_edit: true, company: FactoryBot(:company, importer: true))
+      u = create(:user, shipment_edit: true, company: create(:company, importer: true))
       s = described_class.new(booking_received_date: Time.zone.now)
       s.importer = u.company
       allow(s).to receive(:can_edit?).and_return true
@@ -265,21 +265,21 @@ describe Shipment do
     end
 
     it "allows approval for master user who can edit shipment" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: Time.zone.now)
       expect(s).to receive(:can_edit?).with(u).and_return true
       expect(s.can_approve_booking?(u)).to be_truthy
     end
 
     it "does not allow approval for user who cannot edit shipment" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: Time.zone.now)
       expect(s).to receive(:can_edit?).with(u).and_return false
       expect(s.can_approve_booking?(u)).to be_falsey
     end
 
     it "does not allow approval for user from a different associated company" do
-      u = FactoryBot(:user, shipment_edit: true, company: FactoryBot(:company, importer: true))
+      u = create(:user, shipment_edit: true, company: create(:company, importer: true))
       s = described_class.new(booking_received_date: Time.zone.now)
       s.vendor = u.company
       allow(s).to receive(:can_edit?).and_return true
@@ -287,14 +287,14 @@ describe Shipment do
     end
 
     it "does not allow approval when booking not received" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: nil)
       allow(s).to receive(:can_edit?).and_return true
       expect(s.can_approve_booking?(u)).to be_falsey
     end
 
     it "does not allow if booking has been confirmed" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: Time.zone.now, booking_confirmed_date: Time.zone.now)
       allow(s).to receive(:can_edit?).and_return true # make sure we're not testing the wrong thing
       expect(s.can_approve_booking?(u)).to be_falsey
@@ -303,8 +303,8 @@ describe Shipment do
 
   describe "approve_booking!" do
     it "sets booking_approved_date and booking_approved_by" do
-      u = FactoryBot(:user)
-      s = FactoryBot(:shipment)
+      u = create(:user)
+      s = create(:shipment)
       expect(s).to receive(:create_snapshot_with_async_option).with false, u
       expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_booking_approve, s)
       s.approve_booking! u
@@ -316,7 +316,7 @@ describe Shipment do
 
   describe "can_confirm_booking?" do
     it "allows confirmation for carrier user who can edit shipment" do
-      u = FactoryBot(:user, shipment_edit: true, company: FactoryBot(:company, carrier: true))
+      u = create(:user, shipment_edit: true, company: create(:company, carrier: true))
       s = described_class.new(booking_received_date: Time.zone.now)
       allow(s).to receive(:can_edit?).and_return true
       s.carrier = u.company
@@ -324,21 +324,21 @@ describe Shipment do
     end
 
     it "allows confirmation for master user who can edit shipment" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: Time.zone.now)
       expect(s).to receive(:can_edit?).with(u).and_return true
       expect(s.can_confirm_booking?(u)).to be_truthy
     end
 
     it "does not allow confirmation for user who cannot edit shipment" do
-      u = FactoryBot(:master_user, shipment_edit: false)
+      u = create(:master_user, shipment_edit: false)
       s = described_class.new(booking_received_date: Time.zone.now)
       expect(s).to receive(:can_edit?).with(u).and_return false
       expect(s.can_confirm_booking?(u)).to be_falsey
     end
 
     it "does not allow confirmation for user who can edit shipment but isn't carrier or master" do
-      u = FactoryBot(:user, shipment_edit: true, company: FactoryBot(:company, vendor: true))
+      u = create(:user, shipment_edit: true, company: create(:company, vendor: true))
       s = described_class.new(booking_received_date: Time.zone.now)
       allow(s).to receive(:can_edit?).and_return true
       s.vendor = u.company
@@ -346,14 +346,14 @@ describe Shipment do
     end
 
     it "does not allow confirmation when booking has not been received" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: nil)
       allow(s).to receive(:can_edit?).and_return true
       expect(s.can_confirm_booking?(u)).to be_falsey
     end
 
     it "does not allow if booking already confiremd" do
-      u = FactoryBot(:master_user, shipment_edit: true)
+      u = create(:master_user, shipment_edit: true)
       s = described_class.new(booking_received_date: Time.zone.now, booking_confirmed_date: Time.zone.now)
       allow(s).to receive(:can_edit?).and_return true # make sure we're not accidentally testing the wrong thing
       expect(s.can_confirm_booking?(u)).to be_falsey
@@ -361,11 +361,11 @@ describe Shipment do
   end
 
   describe "confirm booking" do
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:shipment) do
-      s = FactoryBot(:shipment)
-      FactoryBot(:shipment_line, shipment: s, quantity: 50)
-      FactoryBot(:shipment_line, shipment: s, quantity: 100)
+      s = create(:shipment)
+      create(:shipment_line, shipment: s, quantity: 50)
+      create(:shipment_line, shipment: s, quantity: 100)
 
       s
     end
@@ -400,9 +400,9 @@ describe Shipment do
 
   describe "revise booking" do
     it "removes received, requested, approved and confirmed date and 'by' fields" do
-      u = FactoryBot(:user)
+      u = create(:user)
       original_receive = Time.zone.now
-      s = FactoryBot(:shipment, booking_approved_by: u, booking_requested_by: u, booking_confirmed_by: u,
+      s = create(:shipment, booking_approved_by: u, booking_requested_by: u, booking_confirmed_by: u,
                              booking_received_date: original_receive, booking_approved_date: Time.zone.now,
                              booking_confirmed_date: Time.zone.now, booking_request_count: 1)
       expect(s).to receive(:create_snapshot_with_async_option).with(false, u)
@@ -469,8 +469,8 @@ describe Shipment do
 
     describe '#send_shipment_instructions!' do
       it "sets shipment instructions fields, publish event, and create snapshot" do
-        s = FactoryBot(:shipment)
-        u = FactoryBot(:user)
+        s = create(:shipment)
+        u = create(:user)
         expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_instructions_send, s)
         expect(s).to receive(:create_snapshot_with_async_option).with(false, u)
 
@@ -547,44 +547,44 @@ describe Shipment do
     end
 
     context "with_data" do
-      let(:imp) { FactoryBot(:company, importer: true) }
-      let(:vendor_1) { FactoryBot(:company, vendor: true) }
-      let(:vendor_2) { FactoryBot(:company, vendor: true) }
-      let!(:order_1) { FactoryBot(:order, importer: imp, vendor: vendor_1, approval_status: 'Accepted') }
-      let!(:order_2) { FactoryBot(:order, importer: imp, vendor: vendor_2, approval_status: 'Accepted') }
+      let(:imp) { create(:company, importer: true) }
+      let(:vendor_1) { create(:company, vendor: true) }
+      let(:vendor_2) { create(:company, vendor: true) }
+      let!(:order_1) { create(:order, importer: imp, vendor: vendor_1, approval_status: 'Accepted') }
+      let!(:order_2) { create(:order, importer: imp, vendor: vendor_2, approval_status: 'Accepted') }
       let(:s) { described_class.new(importer_id: imp.id) }
 
       before do
-        FactoryBot(:order, importer: FactoryBot(:company, importer: true), vendor: vendor_1, approval_status: 'Accepted')
+        create(:order, importer: create(:company, importer: true), vendor: vendor_1, approval_status: 'Accepted')
       end
 
       it "finds all orders with approval_status == Accepted where user is importer if vendor isn't set" do
         # don't find because not accepted
-        FactoryBot(:order, importer: imp, vendor: vendor_1)
-        u = FactoryBot(:user, company: imp, order_view: true)
+        create(:order, importer: imp, vendor: vendor_1)
+        u = create(:user, company: imp, order_view: true)
         expect(s.available_orders(u).to_a).to eq [order_1, order_2]
       end
 
       it "finds all orders for vendor with approval_status == Accepted user is importer" do
-        u = FactoryBot(:user, company: vendor_1, order_view: true)
+        u = create(:user, company: vendor_1, order_view: true)
         expect(s.available_orders(u).to_a).to eq [order_1]
       end
 
       it "finds all orders where shipment.vendor == order.vendor and approval_status == Accepted if vendor is set" do
-        u = FactoryBot(:user, company: imp, order_view: true)
+        u = create(:user, company: imp, order_view: true)
         s.vendor_id = vendor_1.id
         expect(s.available_orders(u).to_a).to eq [order_1]
       end
 
       it "does not show orders that the user cannot see" do
-        u = FactoryBot(:user, company: vendor_1, order_view: true)
+        u = create(:user, company: vendor_1, order_view: true)
         s.vendor_id = vendor_2.id
         expect(s.available_orders(u).to_a).to be_empty
       end
 
       it "does not find closed orders" do
         order_2.update(closed_at: Time.zone.now)
-        u = FactoryBot(:user, company: imp, order_view: true)
+        u = create(:user, company: imp, order_view: true)
         expect(s.available_orders(u).to_a).to eq [order_1]
       end
     end
@@ -593,12 +593,12 @@ describe Shipment do
 
   describe "commercial_invoices" do
     it "finds linked invoices" do
-      sl_1 = FactoryBot(:shipment_line, quantity: 10)
-      ol_1 = FactoryBot(:order_line, product: sl_1.product, order: FactoryBot(:order, vendor: sl_1.shipment.vendor), quantity: 10, price_per_unit: 3)
-      cl_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, invoice_number: "IN1"), quantity: 10)
-      sl_2 = FactoryBot(:shipment_line, quantity: 11, shipment: sl_1.shipment, product: sl_1.product)
-      ol_2 = FactoryBot(:order_line, product: sl_2.product, order: FactoryBot(:order, vendor: sl_2.shipment.vendor), quantity: 11, price_per_unit: 2)
-      cl_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, invoice_number: "IN2"), quantity: 11)
+      sl_1 = create(:shipment_line, quantity: 10)
+      ol_1 = create(:order_line, product: sl_1.product, order: create(:order, vendor: sl_1.shipment.vendor), quantity: 10, price_per_unit: 3)
+      cl_1 = create(:commercial_invoice_line, commercial_invoice: create(:commercial_invoice, invoice_number: "IN1"), quantity: 10)
+      sl_2 = create(:shipment_line, quantity: 11, shipment: sl_1.shipment, product: sl_1.product)
+      ol_2 = create(:order_line, product: sl_2.product, order: create(:order, vendor: sl_2.shipment.vendor), quantity: 11, price_per_unit: 2)
+      cl_2 = create(:commercial_invoice_line, commercial_invoice: create(:commercial_invoice, invoice_number: "IN2"), quantity: 11)
       PieceSet.create!(shipment_line_id: sl_1.id, order_line_id: ol_1.id, commercial_invoice_line_id: cl_1.id, quantity: 10)
       PieceSet.create!(shipment_line_id: sl_2.id, order_line_id: ol_2.id, commercial_invoice_line_id: cl_2.id, quantity: 11)
 
@@ -608,12 +608,12 @@ describe Shipment do
     end
 
     it "only returns unique invoices" do
-      sl_1 = FactoryBot(:shipment_line, quantity: 10)
-      ol_1 = FactoryBot(:order_line, product: sl_1.product, order: FactoryBot(:order, vendor: sl_1.shipment.vendor), quantity: 10, price_per_unit: 3)
-      cl_1 = FactoryBot(:commercial_invoice_line, commercial_invoice: FactoryBot(:commercial_invoice, invoice_number: "IN1"), quantity: 10)
-      sl_2 = FactoryBot(:shipment_line, quantity: 11, shipment: sl_1.shipment, product: sl_1.product)
-      ol_2 = FactoryBot(:order_line, product: sl_2.product, order: FactoryBot(:order, vendor: sl_2.shipment.vendor), quantity: 11, price_per_unit: 2)
-      cl_2 = FactoryBot(:commercial_invoice_line, commercial_invoice: cl_1.commercial_invoice, quantity: 11)
+      sl_1 = create(:shipment_line, quantity: 10)
+      ol_1 = create(:order_line, product: sl_1.product, order: create(:order, vendor: sl_1.shipment.vendor), quantity: 10, price_per_unit: 3)
+      cl_1 = create(:commercial_invoice_line, commercial_invoice: create(:commercial_invoice, invoice_number: "IN1"), quantity: 10)
+      sl_2 = create(:shipment_line, quantity: 11, shipment: sl_1.shipment, product: sl_1.product)
+      ol_2 = create(:order_line, product: sl_2.product, order: create(:order, vendor: sl_2.shipment.vendor), quantity: 11, price_per_unit: 2)
+      cl_2 = create(:commercial_invoice_line, commercial_invoice: cl_1.commercial_invoice, quantity: 11)
       PieceSet.create!(shipment_line_id: sl_1.id, order_line_id: ol_1.id, commercial_invoice_line_id: cl_1.id, quantity: 10)
       PieceSet.create!(shipment_line_id: sl_2.id, order_line_id: ol_2.id, commercial_invoice_line_id: cl_2.id, quantity: 11)
 
@@ -627,8 +627,8 @@ describe Shipment do
 
   describe 'linkable attachments' do
     it 'has linkable attachments' do
-      s = FactoryBot(:shipment, reference: 'ordn')
-      linkable = FactoryBot(:linkable_attachment, model_field_uid: 'shp_ref', value: 'ordn')
+      s = create(:shipment, reference: 'ordn')
+      linkable = create(:linkable_attachment, model_field_uid: 'shp_ref', value: 'ordn')
       LinkedAttachment.create(linkable_attachment_id: linkable.id, attachable: s)
       s.reload
       expect(s.linkable_attachments.first).to eq(linkable)
@@ -636,22 +636,22 @@ describe Shipment do
   end
 
   describe "available_products" do
-    let(:imp) { FactoryBot(:importer) }
-    let(:shipment) { FactoryBot(:shipment, importer: imp) }
+    let(:imp) { create(:importer) }
+    let(:shipment) { create(:shipment, importer: imp) }
 
     before do
-      FactoryBot(:product, importer: imp)
-      FactoryBot(:product)
+      create(:product, importer: imp)
+      create(:product)
     end
 
     it "limits available products to those sharing importers with the shipment and user's importer company" do
-      user = FactoryBot(:user, company: imp)
+      user = create(:user, company: imp)
       products = shipment.available_products(user).all
       expect(products.size).to eq 1
     end
 
     it "limits available products to those sharing importers with the shipment and user's linked companies" do
-      user = FactoryBot(:user, company: FactoryBot(:importer))
+      user = create(:user, company: create(:importer))
       user.company.linked_companies << imp
       products = shipment.available_products(user).all
       expect(products.size).to eq 1
@@ -706,7 +706,7 @@ describe Shipment do
   end
 
   describe "normalized_booking_mode" do
-    let(:s) { FactoryBot(:shipment, booking_mode: "Ocean - FCL")}
+    let(:s) { create(:shipment, booking_mode: "Ocean - FCL")}
 
     it "strips everything after the first whitespace" do
       expect(s.normalized_booking_mode).to eq "OCEAN"

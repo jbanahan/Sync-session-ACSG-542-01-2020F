@@ -1,5 +1,5 @@
 describe OpenChain::Validations::Password::UsernameNotPasswordValidator do
-  let!(:user) { FactoryBot.build(:user) }
+  let!(:user) { build(:user) }
 
   it 'returns true if the password is not the username' do
     user.password = password = 'notausername'

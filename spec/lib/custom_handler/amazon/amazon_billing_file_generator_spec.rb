@@ -8,18 +8,18 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
      expect(xml).to have_xpath_value("LoadLevel/Reference[ReferenceNumberType = '#{number_type}']/ReferenceNumber", "#{number_value}")
   end
 
-  let! (:lading_port) { FactoryBot(:port, schedule_k_code: "12345", name: "LADING PORT") }
-  let! (:entry_port) { FactoryBot(:port, schedule_d_code: "9999", name: "ENTRY PORT") }
+  let! (:lading_port) { create(:port, schedule_k_code: "12345", name: "LADING PORT") }
+  let! (:entry_port) { create(:port, schedule_d_code: "9999", name: "ENTRY PORT") }
 
-  let! (:us) { FactoryBot(:country, iso_code: "US") }
+  let! (:us) { create(:country, iso_code: "US") }
   let! (:mid) {
     ManufacturerId.create! mid: "MID1234", name: "MID", address_1: "123 Fake St", address_2: "STE 123", city: "Fakesville", postal_code: "12345", country: "XX"
   }
 
-  let! (:master_company) { FactoryBot(:master_company) }
+  let! (:master_company) { create(:master_company) }
 
   let (:entry) {
-   FactoryBot(
+   create(
             :entry, customer_number: "AMZN-98765", entry_number: "ENTRYNUM", broker_reference: "12345", transport_mode_code: "10", mfids: "#{mid.mid}\n MID4567", release_date: Time.zone.parse("2019-07-31 00:00"),
             ult_consignee_name: "Consignee", consignee_address_1: "742 Evergreen Terrace", consignee_address_2: "Attn: Homer Simpson", consignee_city: "Springfield", consignee_state: "XX", consignee_postal_code: "XXXXX", consignee_country_code: "US",
             carrier_code: "SCAC", master_bills_of_lading: "MASTERBILL", house_bills_of_lading: "HOUSEBILL", total_packages: 100, entry_filed_date: Time.zone.parse("2019-07-30 12:00"), customer_references: "REF\n AMZD12345\n REF2",
@@ -258,7 +258,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
     end
 
     it "uses existing AR address" do
-      address = FactoryBot(:address, company: master_company, system_code: "Accounts Receivable", name: "Alternate Address", line_1: "123 ADDR", line_2: "456 ADDR", city: "Altown", state: "AL", postal_code: "ALT", country: us)
+      address = create(:address, company: master_company, system_code: "Accounts Receivable", name: "Alternate Address", line_1: "123 ADDR", line_2: "456 ADDR", city: "Altown", state: "AL", postal_code: "ALT", country: us)
 
       subject.generate_and_send_invoice_xml(snapshot(entry), snapshot(broker_invoice), broker_invoice, :brokerage)
 

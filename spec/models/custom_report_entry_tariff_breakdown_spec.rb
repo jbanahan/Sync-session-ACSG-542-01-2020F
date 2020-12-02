@@ -1,6 +1,6 @@
 describe CustomReportEntryTariffBreakdown do
 
-  let(:user) { FactoryBot(:master_user) }
+  let(:user) { create(:master_user) }
 
   describe "column_fields_available" do
     subject { described_class }
@@ -31,7 +31,7 @@ describe CustomReportEntryTariffBreakdown do
   end
 
   describe "run" do
-    let! (:country_us) { FactoryBot(:country, iso_code:'US') }
+    let! (:country_us) { create(:country, iso_code:'US') }
 
     it "should make a row for each invoice line" do
       OfficialTariff.create!(country_id:country_us.id, hts_code:"1234567890", general_rate:"10%")
@@ -39,27 +39,27 @@ describe CustomReportEntryTariffBreakdown do
       OfficialTariff.create!(country_id:country_us.id, hts_code:"9902123456", general_rate:"1%") # MTB is generally free, but lets make it 1% to make sure the calculation is correct
       OfficialTariff.create!(country_id:country_us.id, hts_code:"9903123456", general_rate:"25% or 24%") # should pick up 25
 
-      ent_a = FactoryBot(:entry, broker_reference:"ABC")
-      invoice_1 = FactoryBot(:commercial_invoice, entry:ent_a, invoice_number:"DEF")
-      line_1_1 = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 1, part_number:"X")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9903123456", entered_value:100, duty_amount:25)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9902123456", duty_amount:1)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"1234567890", duty_amount: 0)
+      ent_a = create(:entry, broker_reference:"ABC")
+      invoice_1 = create(:commercial_invoice, entry:ent_a, invoice_number:"DEF")
+      line_1_1 = create(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 1, part_number:"X")
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9903123456", entered_value:100, duty_amount:25)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9902123456", duty_amount:1)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"1234567890", duty_amount: 0)
 
-      line_1_2 = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 2, part_number:"Y")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"9903123456", entered_value:100, duty_amount:25)
+      line_1_2 = create(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 2, part_number:"Y")
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"9903123456", entered_value:100, duty_amount:25)
       # Non-special tariff lines won't have duty amounts...special ones will
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567890", duty_amount: 0)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567891", duty_amount: 0)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567890", duty_amount: 0)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567891", duty_amount: 0)
 
-      invoice_2 = FactoryBot(:commercial_invoice, entry:ent_a, invoice_number:"GHI")
-      line_2 = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 1, part_number:"Z")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:200, duty_amount:20)
+      invoice_2 = create(:commercial_invoice, entry:ent_a, invoice_number:"GHI")
+      line_2 = create(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 1, part_number:"Z")
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:200, duty_amount:20)
 
-      ent_b = FactoryBot(:entry, broker_reference:"CBA")
-      invoice_b = FactoryBot(:commercial_invoice, entry:ent_b, invoice_number:"JKL")
-      line_b = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice_b, line_number: 1, part_number:"A")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_b, hts_code:"1234567891", entered_value:300, duty_amount:45)
+      ent_b = create(:entry, broker_reference:"CBA")
+      invoice_b = create(:commercial_invoice, entry:ent_b, invoice_number:"JKL")
+      line_b = create(:commercial_invoice_line, commercial_invoice:invoice_b, line_number: 1, part_number:"A")
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_b, hts_code:"1234567891", entered_value:300, duty_amount:45)
 
       subject.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       subject.search_columns.build(:rank=>1, :model_field_uid=>:ci_invoice_number)
@@ -87,19 +87,19 @@ describe CustomReportEntryTariffBreakdown do
       OfficialTariff.create!(country_id:country_us.id, hts_code:"1234567890", general_rate:"10%")
       OfficialTariff.create!(country_id:country_us.id, hts_code:"9902123456", general_rate:"1%") # MTB is generally free, but lets make it 1% to make sure the calculation is correct
 
-      ent = FactoryBot(:entry, broker_reference:"ABC")
-      invoice = FactoryBot(:commercial_invoice, entry:ent, invoice_number:"DEF")
-      line_1 = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice, line_number: 1, part_number:"X")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1, hts_code:"9902123456", entered_value:100, duty_amount:1)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_1, hts_code:"1234567890", duty_amount: 0)
+      ent = create(:entry, broker_reference:"ABC")
+      invoice = create(:commercial_invoice, entry:ent, invoice_number:"DEF")
+      line_1 = create(:commercial_invoice_line, commercial_invoice:invoice, line_number: 1, part_number:"X")
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1, hts_code:"9902123456", entered_value:100, duty_amount:1)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_1, hts_code:"1234567890", duty_amount: 0)
 
       # This one should appear on the report, but doesn't because of the row limitation...it needs to be on
       # another invoice because we don't want to cut off mid entry..so we allow the full entry to appear on the report
       # before the limit is reached and cut off
-      ent_2 = FactoryBot(:entry, broker_reference:"DEF")
-      invoice_2 = FactoryBot(:commercial_invoice, entry:ent_2, invoice_number:"DEF")
-      line_2 = FactoryBot(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 2)
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:30, duty_amount:57.68)
+      ent_2 = create(:entry, broker_reference:"DEF")
+      invoice_2 = create(:commercial_invoice, entry:ent_2, invoice_number:"DEF")
+      line_2 = create(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 2)
+      create(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:30, duty_amount:57.68)
 
       subject.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       rows = subject.to_arrays user, row_limit: 1

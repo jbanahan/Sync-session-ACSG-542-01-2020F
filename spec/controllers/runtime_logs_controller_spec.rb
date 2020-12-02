@@ -1,6 +1,6 @@
 describe RuntimeLogsController do
-  let(:user) { FactoryBot(:admin_user, company: FactoryBot(:company, master: true)) }
-  let(:runtime_log) { FactoryBot(:runtime_log, runtime_logable_type: "SchedulableJob") }
+  let(:user) { create(:admin_user, company: create(:company, master: true)) }
+  let(:runtime_log) { create(:runtime_log, runtime_logable_type: "SchedulableJob") }
 
   before do
     sign_in_as user

@@ -3,27 +3,27 @@ describe AnnouncementsController do
   let(:create_date) { now - 5.days }
   let(:start_date) { now - 2.days }
   let(:end_date) { now + 1.day }
-  let(:user) { FactoryBot :user, time_zone: "Eastern Time (US & Canada)" }
+  let(:user) { create :user, time_zone: "Eastern Time (US & Canada)" }
   let(:anc1) do
-    a = FactoryBot :announcement, title: "anc1", category: "all", start_at: start_date, end_at: end_date, created_at: create_date
-    FactoryBot(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
+    a = create :announcement, title: "anc1", category: "all", start_at: start_date, end_at: end_date, created_at: create_date
+    create(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
     a
   end
-  let(:anc2) { FactoryBot :announcement, title: "anc2", category: "all", start_at: now - 100.days, end_at: now - 95.days, created_at: create_date + 1.day }
+  let(:anc2) { create :announcement, title: "anc2", category: "all", start_at: now - 100.days, end_at: now - 95.days, created_at: create_date + 1.day }
   let(:anc3) do
-    a = FactoryBot :announcement, title: "anc3", category: "all", start_at: start_date, end_at: end_date, created_at: create_date + 2.days
-    FactoryBot(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
+    a = create :announcement, title: "anc3", category: "all", start_at: start_date, end_at: end_date, created_at: create_date + 2.days
+    create(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
     a
   end
   let(:anc4) do
-    a = FactoryBot :announcement, title: "anc4", category: "user", start_at: start_date, end_at: end_date, created_at: create_date + 3.days
+    a = create :announcement, title: "anc4", category: "user", start_at: start_date, end_at: end_date, created_at: create_date + 3.days
     a.selected_users << user
-    FactoryBot(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
+    create(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
     a
   end
   let(:anc5) do
-    a = FactoryBot :announcement, title: "anc5", category: "user", start_at: start_date, end_at: end_date, created_at: create_date + 4.days
-    a.selected_users << FactoryBot(:user)
+    a = create :announcement, title: "anc5", category: "user", start_at: start_date, end_at: end_date, created_at: create_date + 4.days
+    a.selected_users << create(:user)
     a
   end
 

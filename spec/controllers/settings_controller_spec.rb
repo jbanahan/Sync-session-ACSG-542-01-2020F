@@ -1,6 +1,6 @@
 describe SettingsController do
   describe "summary" do
-    let!(:user) { FactoryBot(:admin_user) }
+    let!(:user) { create(:admin_user) }
     before { sign_in_as user }
 
     it "renders and assigns data" do
@@ -10,14 +10,14 @@ describe SettingsController do
       allow(CoreModule).to receive(:all).and_return([shp_cm])
       expect(shp_cm).to receive(:model_fields).and_return({shp_ref: mf})
 
-      stb = FactoryBot(:state_toggle_button, module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date")
-      stc = FactoryBot(:search_table_config)
-      group = FactoryBot(:group)
-      non_import_country = FactoryBot(:country, import_location: false)
-      import_country = FactoryBot(:country, import_location: true)
-      bvt = FactoryBot(:business_validation_template)
+      stb = create(:state_toggle_button, module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date")
+      stc = create(:search_table_config)
+      group = create(:group)
+      non_import_country = create(:country, import_location: false)
+      import_country = create(:country, import_location: true)
+      bvt = create(:business_validation_template)
       att_type = AttachmentType.create!
-      sched_job = FactoryBot(:schedulable_job, run_class: "OpenChain::SomeReport")
+      sched_job = create(:schedulable_job, run_class: "OpenChain::SomeReport")
 
       get :system_summary
       expect(response).to be_success

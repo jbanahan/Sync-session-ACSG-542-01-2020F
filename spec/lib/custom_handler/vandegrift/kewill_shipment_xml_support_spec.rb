@@ -311,8 +311,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       }
 
       let (:buyer) {
-        c = with_customs_management_id(FactoryBot(:importer), "BUY")
-        c.addresses.create! system_code: "1", name: "Buyer", line_1: "Addr1", line_2: "Addr2", city: "City", state: "ST", country: FactoryBot(:country, iso_code: "US"), postal_code: "00000"
+        c = with_customs_management_id(create(:importer), "BUY")
+        c.addresses.create! system_code: "1", name: "Buyer", line_1: "Addr1", line_2: "Addr2", city: "City", state: "ST", country: create(:country, iso_code: "US"), postal_code: "00000"
 
         c
       }

@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
 
   describe '#process' do
     it 'should collect_rows and pass to update_data_hash and then process_data_hash' do
-      u = FactoryBot(:user)
+      u = create(:user)
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return true
       expect(parser).to receive(:collect_rows).and_yield 'cr'
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       expect(u.messages.first.subject).to eq "Style/Color/Region Parser Complete"
     end
     it 'should fail if user cannot view' do
-      u = FactoryBot(:user)
+      u = create(:user)
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return false
       expect {parser.process(u)}.to raise_error(/permission/)
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       @h = Hash.new
     end
     let :row do
-      FactoryBot(:country, iso_code:'MX')
+      create(:country, iso_code:'MX')
       ['1234567', 'Style Name', '1234567-001', 'Style-CLR', 'Apparel', 'FW17', '123456', 'Factname', 'factname2', 'MX', 'Mexico']
     end
     it 'should skip rows that do not have 11 elements' do
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     let :user do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(Variant).to receive(:can_edit?).and_return true
-      FactoryBot(:master_user)
+      create(:master_user)
     end
     let :custom_defs do
       described_class.prep_custom_definitions [
@@ -182,9 +182,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     end
     it 'should update existing style' do
       cdefs = custom_defs
-      p = FactoryBot(:product, name:'somename', unique_identifier:'1234567')
+      p = create(:product, name:'somename', unique_identifier:'1234567')
       p.update_custom_value!(cdefs[:prod_seasons], "FW17\nSS17")
-      v = FactoryBot(:variant, product:p, variant_identifier:'001')
+      v = create(:variant, product:p, variant_identifier:'001')
       expect {new_parser.update_product(hash, user)}.to_not change(Product, :count)
       p = Product.first
       expect(p.name).to eq 'My Name'

@@ -40,7 +40,7 @@ String.class_eval do
   # Returns true for any value considered true by ActiveRecord when coercing user data to the database
   # False for everything else
   def to_boolean
-    ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(self.upcase)
+    ActiveModel::Type::Boolean.new.cast(self.upcase)
   end
 
   # Like String#strip but removes a wider variety of characters, including non-breaking space

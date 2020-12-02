@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
     allow(subject).to receive(:ftp_file)
   end
 
-  let (:order) { FactoryBot(:order, order_number: "PONUM") }
+  let (:order) { create(:order, order_number: "PONUM") }
 
   describe "send_order" do
     it "should generate and FTP" do
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
   end
 
   describe "delayed_send_order" do
-    let (:order) { FactoryBot(:order) }
+    let (:order) { create(:order) }
 
     it "finds order and sends it" do
       expect(subject).to receive(:send_order).with(order, force_send: false)

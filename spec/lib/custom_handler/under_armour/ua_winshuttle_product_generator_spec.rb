@@ -26,18 +26,18 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       @plant_cd = described_class.prep_custom_definitions([:plant_codes])[:plant_codes]
       @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
       DataCrossReference.load_cross_references StringIO.new("0010,US\n0011,CA\n0012,CN"), DataCrossReference::UA_PLANT_TO_ISO
-      @ca = FactoryBot(:country, iso_code:'CA')
-      @us = FactoryBot(:country, iso_code:'US')
-      @cn = FactoryBot(:country, iso_code:'CN')
-      @mx = FactoryBot(:country, iso_code:'MX')
+      @ca = create(:country, iso_code:'CA')
+      @us = create(:country, iso_code:'US')
+      @cn = create(:country, iso_code:'CN')
+      @mx = create(:country, iso_code:'MX')
     end
     it "should elminiate items that don't need sync via query" do
       # prepping data
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      FactoryBot(:tariff_record, hts_1:"12345678", classification:FactoryBot(:classification, country_id:@us.id, product:p))
+      create(:tariff_record, hts_1:"12345678", classification:create(:classification, country_id:@us.id, product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
       expect(rows.size).to eq(2)
@@ -50,13 +50,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       expect(rows).to be_empty
     end
     it "should match plant to country" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
       [@ca, @us, @cn, @mx].each do |c|
         # create a classification with tariff for all countries
-        FactoryBot(:tariff_record, hts_1:"#{c.id}12345678", classification:FactoryBot(:classification, country_id:c.id, product:p))
+        create(:tariff_record, hts_1:"#{c.id}12345678", classification:create(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -69,14 +69,14 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       end
     end
     it "should write color codes that are in the xref" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, "001\n002"
       DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '001', '0010'
       DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '002', '0011'
       [@ca, @us].each do |c|
         # create a classification with tariff for relevant countries
-        FactoryBot(:tariff_record, hts_1:"#{c.id}12345678", classification:FactoryBot(:classification, country_id:c.id, product:p))
+        create(:tariff_record, hts_1:"#{c.id}12345678", classification:create(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -90,11 +90,11 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       end
     end
     it "should write headers" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      FactoryBot(:tariff_record, hts_1:"12345678", classification:FactoryBot(:classification, country_id:@us.id, product:p))
+      create(:tariff_record, hts_1:"12345678", classification:create(:classification, country_id:@us.id, product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
       r = rows.first
@@ -104,13 +104,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       expect(r[3]).to eq('HTS Code')
     end
     it "should only send changed tariff codes since the last send" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
       [@ca, @us].each do |c|
         # create a classification with tariff for all countries
-        FactoryBot(:tariff_record, hts_1:"#{c.id}12345678", classification:FactoryBot(:classification, country_id:c.id, product:p))
+        create(:tariff_record, hts_1:"#{c.id}12345678", classification:create(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -129,13 +129,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     end
 
     it "does not send specific material / color / plant code data that is unchanged" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
       [@ca, @us].each do |c|
         # create a classification with tariff for all countries
-        FactoryBot(:tariff_record, hts_1:"#{c.id}12345678", classification:FactoryBot(:classification, country_id:c.id, product:p))
+        create(:tariff_record, hts_1:"#{c.id}12345678", classification:create(:classification, country_id:c.id, product:p))
       end
 
       DataCrossReference.create_ua_winshuttle_fingerprint! p.unique_identifier, '001', '0010', Digest::MD5.hexdigest("~#{p.unique_identifier}-001~0010~#{p.classifications[1].tariff_records.first.hts_1.hts_format}")

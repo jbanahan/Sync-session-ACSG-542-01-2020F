@@ -9,14 +9,14 @@ describe UserSessionsController do
       expect(response).to redirect_to login_path
     end
     it "should redirect to root if user logged in" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :index
       expect(response).to redirect_to root_path
     end
   end
   describe 'new' do
     it "should redirect if user already logged in" do
-      sign_in_as FactoryBot(:user)
+      sign_in_as create(:user)
       get :new
       expect(response).to redirect_to root_path
     end
@@ -28,7 +28,7 @@ describe UserSessionsController do
 
   describe 'create' do
     before :each do
-      @user = FactoryBot(:user, :host_with_port=>"test")
+      @user = create(:user, :host_with_port=>"test")
       @user.update_user_password 'this is my password', 'this is my password'
     end
 
@@ -124,7 +124,7 @@ describe UserSessionsController do
 
   describe "create_from_omniauth" do
     before :each do
-      @user = FactoryBot(:user)
+      @user = create(:user)
     end
 
     it "should sign in when user is found successfully" do

@@ -1,24 +1,24 @@
 describe ProductsController do
   before :each do
 
-    @user = FactoryBot(:importer_user, :product_edit=>true, :product_view=>true, :classification_edit=>true)
-    @other_importer = FactoryBot(:company, :importer=>true)
-    @linked_importer = FactoryBot(:company, :importer=>true)
+    @user = create(:importer_user, :product_edit=>true, :product_view=>true, :classification_edit=>true)
+    @other_importer = create(:company, :importer=>true)
+    @linked_importer = create(:company, :importer=>true)
     @user.company.linked_companies << @linked_importer
     sign_in_as @user
   end
   describe "next" do
     it "should go to next item" do
-      p = FactoryBot(:product)
+      p = create(:product)
       expect_any_instance_of(ResultCache).to receive(:next).with(99).and_return(p.id)
-      ss = FactoryBot(:search_setup, :user=>@user, :module_type=>"Product")
+      ss = create(:search_setup, :user=>@user, :module_type=>"Product")
       ss.touch # makes underlying search run
       get :next_item, :id=>"99"
       expect(response).to redirect_to "/products/#{p.id}"
     end
     it "should redirect to referrer and show error if result cache return nil" do
       expect_any_instance_of(ResultCache).to receive(:next).with(99).and_return(nil)
-      ss = FactoryBot(:search_setup, :user=>@user, :module_type=>"Product")
+      ss = create(:search_setup, :user=>@user, :module_type=>"Product")
       ss.touch # makes underlying search run
       get :next_item, :id=>"99"
       expect(response).to redirect_to request.referrer
@@ -27,16 +27,16 @@ describe ProductsController do
   end
   describe "previous" do
     it "should go to the previous item" do
-      p = FactoryBot(:product)
+      p = create(:product)
       expect_any_instance_of(ResultCache).to receive(:previous).with(99).and_return(p.id)
-      ss = FactoryBot(:search_setup, :user=>@user, :module_type=>"Product")
+      ss = create(:search_setup, :user=>@user, :module_type=>"Product")
       ss.touch # makes underlying search run
       get :previous_item, :id=>"99"
       expect(response).to redirect_to "/products/#{p.id}"
     end
     it "should redirect to referrer and show error if result cache return nil" do
       expect_any_instance_of(ResultCache).to receive(:previous).with(99).and_return(nil)
-      ss = FactoryBot(:search_setup, :user=>@user, :module_type=>"Product")
+      ss = create(:search_setup, :user=>@user, :module_type=>"Product")
       ss.touch # makes underlying search run
       get :previous_item, :id=>"99"
       expect(response).to redirect_to request.referrer
@@ -63,7 +63,7 @@ describe ProductsController do
   end
   describe "update" do
     before :each do
-      @product = FactoryBot(:product, :importer=>@user.company)
+      @product = create(:product, :importer=>@user.company)
     end
     it "should fail if not master and importer_id is not current company or linked company" do
       put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@other_importer.id}
@@ -82,9 +82,9 @@ describe ProductsController do
       expect(p.importer).to eq @user.company
     end
     it "should clear custom value at classification level" do
-      cntry = FactoryBot(:country)
-      cls = FactoryBot(:classification, product:@product, country:cntry)
-      cd = FactoryBot(:custom_definition, module_type:'Classification', data_type:'string')
+      cntry = create(:country)
+      cls = create(:classification, product:@product, country:cntry)
+      cd = create(:custom_definition, module_type:'Classification', data_type:'string')
       cls.update_custom_value!(cd, 'abc')
       put :update, id:@product.id, 'product'=>{'prod_uid'=>'1234', 'classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s, 'class_cntry_id' => cntry.id.to_s, cd.model_field_uid.to_s => ''}}}
       p = Product.find @product.id
@@ -239,11 +239,11 @@ describe ProductsController do
   end
 
   describe "show_region_modal" do
-    let!(:c1) { FactoryBot(:country, iso_code: "US", name: "United States") }
-    let!(:c2) { FactoryBot(:country, iso_code: "CA", name: "Canada") }
-    let!(:c3) { FactoryBot(:country, iso_code: "CN", name: "China") }
-    let!(:region) { FactoryBot(:region, name: "N. America", countries: [c1, c2]) }
-    let!(:region_2) { FactoryBot(:region, name: "Asia", countries: [c3])}
+    let!(:c1) { create(:country, iso_code: "US", name: "United States") }
+    let!(:c2) { create(:country, iso_code: "CA", name: "Canada") }
+    let!(:c3) { create(:country, iso_code: "CN", name: "China") }
+    let!(:region) { create(:region, name: "N. America", countries: [c1, c2]) }
+    let!(:region_2) { create(:region, name: "Asia", countries: [c3])}
 
     it "renders for user who can edit classifications" do
       get :show_region_modal, country_ids: "#{c2.id}, #{c1.id}"

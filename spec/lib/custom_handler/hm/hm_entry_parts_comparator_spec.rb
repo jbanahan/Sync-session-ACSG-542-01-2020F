@@ -28,21 +28,21 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
 
 
   describe "compare" do
-    let (:importer) { FactoryBot(:importer, system_code: "HENNE")}
+    let (:importer) { create(:importer, system_code: "HENNE")}
     let (:entry) {
-      e = FactoryBot(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00"))
+      e = create(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00"))
       e.broker_invoices.create! invoice_number: "BROK", invoice_total: BigDecimal("10")
       e
     }
     let (:snapshot_json) { JSON.parse(CoreModule::ENTRY.entity_json entry) }
     let (:snapshot) { entry.create_snapshot user }
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:cdefs) { subject.cdefs }
     let (:us) { Country.where(iso_code: "US").first_or_create! }
     let (:official_tariff) { OfficialTariff.create! country_id: us.id, hts_code: "1234567890"}
-    let (:invoice) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "12345") }
-    let (:invoice_line) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5) }
-    let (:invoice_tariff) { FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description") }
+    let (:invoice) { create(:commercial_invoice, entry: entry, invoice_number: "12345") }
+    let (:invoice_line) { create(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5) }
+    let (:invoice_tariff) { create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description") }
 
     before :each do
       us
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
       end
 
       it "updates existing products with classification, does not update value" do
-        product = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+        product = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART")).product
         # Higher last digit value is used (note trimmming of the A)
         product.update_custom_value! cdefs[:prod_value_order_number], "12346A"
 
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
       end
 
       it "does not update existing product if information is the same" do
-        classification = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART"))
+        classification = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART"))
         classification.update_custom_value! cdefs[:class_customs_description], "Description"
         classification.tariff_records.create! hts_1: "1234567890"
 
@@ -112,7 +112,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
       end
 
       it "adds US classifications to existing products that don't have one" do
-        prod = FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")
+        prod = create(:product, importer: importer, unique_identifier: "HENNE-PART")
         subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
 
         prod.reload
@@ -123,8 +123,8 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
       end
 
       it "does not replace classifications if product was updated by a newer entry" do
-        new_entry = FactoryBot(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-23 00:00"))
-        prod = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+        new_entry = create(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-23 00:00"))
+        prod = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART")).product
         prod.classifications.first.tariff_records.create! hts_1: "9876543210"
         prod.update_custom_value! cdefs[:prod_classified_from_entry], "NEWER REF"
 
@@ -135,8 +135,8 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
       end
 
       it "replaces the classification if entry is newer than existing entry link" do
-        new_entry = FactoryBot(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-21 00:00"))
-        prod = FactoryBot(:classification, country: us, product: FactoryBot(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+        new_entry = create(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-21 00:00"))
+        prod = create(:classification, country: us, product: create(:product, importer: importer, unique_identifier: "HENNE-PART")).product
         prod.classifications.first.tariff_records.create! hts_1: "9876543210"
         prod.update_custom_value! cdefs[:prod_classified_from_entry], "NEWER REF"
 

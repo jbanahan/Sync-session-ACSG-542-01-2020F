@@ -5,8 +5,8 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
   before(:each) do
     @air_path = 'spec/support/bin/hm_air.txt'
     @ocean_path = 'spec/support/bin/hm_ocean.txt'
-    @u = FactoryBot(:user)
-    @hm = FactoryBot(:company, importer:true, system_code:'HENNE')
+    @u = create(:user)
+    @hm = create(:company, importer:true, system_code:'HENNE')
     @cdefs = described_class.prep_custom_definitions described_class.cdef_keys
   end
   it "should attach file to shipment" do
@@ -110,14 +110,14 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           expect(ci.importer).to eq @hm
         end
         it "should add container to existing shipment by importer_reference and voyage" do
-          s = FactoryBot(:shipment, importer:@hm, reference:'HENNE-38317-23-SEP-2014', voyage:'051E', importer_reference:'38317')
+          s = create(:shipment, importer:@hm, reference:'HENNE-38317-23-SEP-2014', voyage:'051E', importer_reference:'38317')
           expect {described_class.parse(IO.read(@ocean_path), @u)}.to_not change(Shipment, :count)
           s.reload
           expect(s.shipment_lines.size).to eq 2
         end
         it "should link to existing commercial invoice lines by PO importer and quantity" do
-          cil = FactoryBot(:commercial_invoice_line,
-            commercial_invoice:FactoryBot(:commercial_invoice, importer:@hm, invoice_number:'100309'),
+          cil = create(:commercial_invoice_line,
+            commercial_invoice:create(:commercial_invoice, importer:@hm, invoice_number:'100309'),
             quantity:234
           )
           described_class.parse(IO.read(@ocean_path), @u)

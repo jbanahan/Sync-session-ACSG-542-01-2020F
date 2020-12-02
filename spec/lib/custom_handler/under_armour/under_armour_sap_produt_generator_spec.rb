@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
 
   describe "sync_csv" do
     before :each do
-      @t = FactoryBot(:tariff_record, hts_1: "1234567890")
+      @t = create(:tariff_record, hts_1: "1234567890")
     end
 
     after :each do
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
 
   describe "run_schedulable" do
     before :each do
-      @t = FactoryBot(:tariff_record, hts_1: "1234567890")
+      @t = create(:tariff_record, hts_1: "1234567890")
     end
 
     it "ftps sync'ed file" do

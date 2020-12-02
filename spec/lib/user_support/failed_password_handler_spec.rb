@@ -1,5 +1,5 @@
 describe OpenChain::UserSupport::FailedPasswordHandler do
-  let!(:user) { FactoryBot.create(:user) }
+  let!(:user) { create(:user) }
   subject { OpenChain::UserSupport::FailedPasswordHandler }
 
   describe '#call' do

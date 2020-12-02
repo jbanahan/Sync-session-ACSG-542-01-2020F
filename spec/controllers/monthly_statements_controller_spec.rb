@@ -1,5 +1,5 @@
 describe MonthlyStatementsController do
-  let (:user) { FactoryBot(:master_user) }
+  let (:user) { create(:master_user) }
 
   before :each do
     sign_in_as user

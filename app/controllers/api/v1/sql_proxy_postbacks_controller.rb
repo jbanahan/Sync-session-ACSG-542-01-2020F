@@ -2,7 +2,7 @@ require 'api/v1/admin/admin_api_controller'
 
 module Api; module V1; class SqlProxyPostbacksController < Api::V1::Admin::AdminApiController
 
-  before_filter :require_admin
+  before_action :require_admin
 
   def extract_results params, options = {}
     options = {null_response: {"OK" => ""}, yield_nil_results: false}.merge options

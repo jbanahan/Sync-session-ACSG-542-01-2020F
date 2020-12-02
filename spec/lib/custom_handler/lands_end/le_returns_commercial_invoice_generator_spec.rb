@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       cf
     }
 
-    let (:user) { FactoryBot(:user, email: "me@there.com") }
+    let (:user) { create(:user, email: "me@there.com") }
 
     let (:body_row) {
       ["2", "Match", "1", "LANDS-EBO", "LANDS-EBO", "21571", nil, "ONDNX007922291", "LBO-191010-1 ", "64394301", "Hampton Inn & S", "Janet Pratt", "FREDERICTON", nil, "E3C 0B4", "4211928", "450650", "3625", "WR CS STR FIT STR CHN PNT", "WMS/GIRLS PANTS", "6204.62.00.19", "6204.62.40.21", "BD", 1, 28.11, 28.11, Date.new(2019, 12, 1), "15818-028267659", Date.new(2019, 12, 2), "453", 6.37, 2.19, 0, 0, "124", Date.new(2019, 12, 3), Date.new(2019, 12, 4), "BD", "BDMID", "6204624021", nil]
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
 
   describe "can_view?" do
 
-    let (:master_user) { FactoryBot(:master_user) }
+    let (:master_user) { create(:master_user) }
     let! (:master_setup) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return custom_feature_enabled
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       end
 
       it "does not allow standard users" do
-        expect(subject.can_view?(FactoryBot(:user))).to eq false
+        expect(subject.can_view?(create(:user))).to eq false
       end
     end
 

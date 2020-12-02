@@ -1,6 +1,6 @@
 describe RandomAuditsController do
-  let(:u) { FactoryBot(:user) }
-  let!(:ra) { FactoryBot(:random_audit, user: u) }
+  let(:u) { create(:user) }
+  let!(:ra) { create(:random_audit, user: u) }
   before { sign_in_as u }
 
   describe "download" do

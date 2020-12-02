@@ -3,7 +3,7 @@ require 'digest/md5'
 describe Api::V1::ModelFieldsController do
 
   before :each do
-    @user = FactoryBot(:user, product_view: true, username: 'joeuser')
+    @user = create(:user, product_view: true, username: 'joeuser')
     allow_api_access(@user)
   end
 
@@ -121,7 +121,7 @@ describe Api::V1::ModelFieldsController do
       expect(fld['select_options']).to eq [['PT', 'PT']]
     end
     it "should get cdef_uid" do
-      cd = FactoryBot(:custom_definition, module_type:'Product', cdef_uid:'xyz')
+      cd = create(:custom_definition, module_type:'Product', cdef_uid:'xyz')
       ModelField.reload
       expect(get :index).to be_success
 

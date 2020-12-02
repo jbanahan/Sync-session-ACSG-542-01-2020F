@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
 
-  let! (:talbots) { FactoryBot(:importer, system_code: "TALBO") }
+  let! (:talbots) { create(:importer, system_code: "TALBO") }
   let (:data) { IO.read 'spec/fixtures/files/talbots_856.edi'}
   let (:cdefs) { described_class.new.cdefs }
 
@@ -14,21 +14,21 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
 
   describe "parse", :disable_delayed_jobs do
     let (:product) {
-      prod = FactoryBot(:product, importer: talbots, unique_identifier: "TALBO-PART")
+      prod = create(:product, importer: talbots, unique_identifier: "TALBO-PART")
       prod.update_custom_value! cdefs[:prod_part_number], "15D2020DT"
 
       prod
     }
 
     let! (:order) {
-      order = FactoryBot(:order, importer: talbots, order_number: "TALBO-833754", customer_order_number: "833754")
+      order = create(:order, importer: talbots, order_number: "TALBO-833754", customer_order_number: "833754")
       order.order_lines.create! product: product, variant: product.variants.first, sku: '15D2020DT'
       order
     }
 
-    let! (:txg) { FactoryBot(:port, name: "Lading", unlocode: "CNTXG")}
-    let! (:nyc) { FactoryBot(:port, name: "Entry", unlocode: "USNYC")}
-    let! (:chi) { FactoryBot(:port, name: "Final Dest", unlocode: "USCHI")}
+    let! (:txg) { create(:port, name: "Lading", unlocode: "CNTXG")}
+    let! (:nyc) { create(:port, name: "Entry", unlocode: "USNYC")}
+    let! (:chi) { create(:port, name: "Final Dest", unlocode: "USCHI")}
 
     subject { described_class }
 

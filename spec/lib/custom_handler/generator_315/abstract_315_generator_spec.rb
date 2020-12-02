@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Generator315::Abstract315Generator do
   # generate_and_send_315s should be tested by including class
 
   describe "determine_port_code_type" do
-    let(:port) { FactoryBot(:port, schedule_k_code: "12345", schedule_d_code: "4321", unlocode: "UNLOC", iata_code: "ABC", cbsa_port: "2468") }
+    let(:port) { create(:port, schedule_k_code: "12345", schedule_d_code: "4321", unlocode: "UNLOC", iata_code: "ABC", cbsa_port: "2468") }
 
     it "returns a port's code type given a code" do
       expect(subject.determine_port_code_type("12345", port)).to eq "Schedule K"

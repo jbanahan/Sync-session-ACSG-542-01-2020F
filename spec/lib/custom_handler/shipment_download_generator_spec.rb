@@ -1,21 +1,21 @@
 describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
 
   def create_lines shipment, order, line_count = 1, container = nil
-    product = FactoryBot(:product, importer: FactoryBot(:importer))
+    product = create(:product, importer: create(:importer))
     @cdefs ||= subject.class.prep_custom_definitions([:prod_part_number])
     product.update_custom_value!(@cdefs[:prod_part_number], "Part")
 
     line_count.times do
-      line = FactoryBot(:shipment_line, shipment:shipment, product:product, container:container, carton_qty:20, quantity:100, cbms:5, gross_kgs: 20)
-      order_line = FactoryBot(:order_line, order:order, quantity:line.quantity, product:product, country_of_origin:'GN')
+      line = create(:shipment_line, shipment:shipment, product:product, container:container, carton_qty:20, quantity:100, cbms:5, gross_kgs: 20)
+      order_line = create(:order_line, order:order, quantity:line.quantity, product:product, country_of_origin:'GN')
       PieceSet.create(order_line:order_line, quantity:line.quantity, shipment_line:line)
     end
     shipment.reload
   end
 
-  let (:user) { FactoryBot(:master_user) }
+  let (:user) { create(:master_user) }
   let (:shipment) {
-    s = FactoryBot(:shipment, receipt_location: 'Prague, CZK', destination_port: FactoryBot(:port), final_dest_port: FactoryBot(:port),
+    s = create(:shipment, receipt_location: 'Prague, CZK', destination_port: create(:port), final_dest_port: create(:port),
       master_bill_of_lading: 'MASTER', house_bill_of_lading: 'HOUSE', vessel: 'La Fromage Du Mer',
       voyage: '20000 Leagues', booking_received_date: 1.week.ago, cargo_on_hand_date: 3.days.ago,
       docs_received_date: 2.days.ago, confirmed_on_board_origin_date: 1.day.ago, departure_date: 10.days.ago,
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
 
       it "includes line details for air shipments" do
         shipment.update_attributes! mode: "AIR"
-        order = FactoryBot(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
+        order = create(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, order, 1, nil
 
         subject.generate(builder, shipment, user)
@@ -77,9 +77,9 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
     end
 
     context "with containers" do
-      let! (:container1) { FactoryBot :container, shipment: shipment, container_number: '99000', seal_number: 'SEAL1212', container_size: 'GINORMOUS' }
-      let! (:container2) { FactoryBot :container, shipment: shipment, container_number: 'CONT2'}
-      let! (:order) { FactoryBot(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago.to_date, first_expected_delivery_date: 1.month.from_now.to_date) }
+      let! (:container1) { create :container, shipment: shipment, container_number: '99000', seal_number: 'SEAL1212', container_size: 'GINORMOUS' }
+      let! (:container2) { create :container, shipment: shipment, container_number: 'CONT2'}
+      let! (:order) { create(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago.to_date, first_expected_delivery_date: 1.month.from_now.to_date) }
 
       before :each do
         create_lines shipment, order, 3, container1

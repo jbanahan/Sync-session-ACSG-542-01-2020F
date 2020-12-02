@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator do
 
   describe "create_document_packets" do
 
-    let (:entry) { FactoryBot(:entry, master_bills_of_lading: "MBOL12345") }
+    let (:entry) { create(:entry, master_bills_of_lading: "MBOL12345") }
     let! (:attachment_7501) do
       a = entry.attachments.create! attachment_type: "Entry Summary - F7501", attached_file_name: "summary.txt"
       allow(a).to receive(:download_to_tempfile).and_yield(tempfile_7501)

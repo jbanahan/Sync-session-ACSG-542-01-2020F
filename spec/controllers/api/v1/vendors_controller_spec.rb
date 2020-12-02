@@ -6,13 +6,13 @@ describe Api::V1::VendorsController do
       ms
     }
     before :each do
-      @u = FactoryBot(:master_user, vendor_view:true, vendor_edit:true)
+      @u = create(:master_user, vendor_view:true, vendor_edit:true)
       allow_api_access @u
     end
     describe '#index' do
       it 'should return vendors' do
-        FactoryBot(:company, vendor:true, name:'V1')
-        FactoryBot(:company, vendor:true, name:'V2')
+        create(:company, vendor:true, name:'V1')
+        create(:company, vendor:true, name:'V2')
         get :index
         h = JSON.parse(response.body)['results']
         expect(h.collect {|v| v['cmp_name']}).to eq ['V1', 'V2']
@@ -30,7 +30,7 @@ describe Api::V1::VendorsController do
     end
     describe '#update' do
       it 'should update vendor' do
-        v = FactoryBot(:company, vendor:true, name:'V1')
+        v = create(:company, vendor:true, name:'V1')
         h = {'id'=>v.id, 'cmp_name'=>'compname'}
         put :update, id: v.id.to_s, company: h
         expect(response).to be_success
@@ -41,7 +41,7 @@ describe Api::V1::VendorsController do
     end
     describe '#show' do
       it 'should get vendor' do
-        v = FactoryBot(:company, vendor:true, name:'V1')
+        v = create(:company, vendor:true, name:'V1')
         get :show, id: v.id.to_s
         expect(response).to be_success
         h = JSON.parse(response.body)['company']

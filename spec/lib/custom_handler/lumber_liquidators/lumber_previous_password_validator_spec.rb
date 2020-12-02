@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberPreviousPasswordValidator do
-  let!(:user) { FactoryBot.create(:user) }
+  let!(:user) { create(:user) }
 
   before do
     multiples_of_five = (1..35).select { |i| i % 5 == 0 }

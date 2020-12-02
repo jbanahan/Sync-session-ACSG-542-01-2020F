@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
   end
   describe "process" do
     before :each do
-      @u = FactoryBot(:user)
+      @u = create(:user)
       @tmp = double('tmp')
       allow(@tmp).to receive(:path).and_return('mypath')
       allow(OpenChain::S3).to receive(:download_to_tempfile).and_return(@tmp)
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
   describe "process_rows" do
     before :each do
       @p = described_class.new(@cf)
-      @u = FactoryBot(:user)
+      @u = create(:user)
     end
     it "should aggregate color and plant codes for new rows" do
       @p.process_rows [
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       p.name == "desc1" # use the first one
     end
     it "should not clear existing values when aggregating color and plant codes" do
-      p = FactoryBot(:product, unique_identifier:'1234567')
+      p = create(:product, unique_identifier:'1234567')
       cdefs = described_class.prep_custom_definitions [:colors, :plant_codes]
       p.update_custom_value! cdefs[:colors], '001'
       p.update_custom_value! cdefs[:plant_codes], '0066'
@@ -198,7 +198,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       expect(p.entity_snapshots.first.user).to eq(@u)
     end
     it "should set import countries based on plant codes" do
-      c = FactoryBot(:country, iso_code:'US')
+      c = create(:country, iso_code:'US')
       DataCrossReference.add_xref! DataCrossReference::UA_PLANT_TO_ISO, '0023', 'US'
       DataCrossReference.add_xref! DataCrossReference::UA_PLANT_TO_ISO, '0020', 'CA'
       @p.process_rows [

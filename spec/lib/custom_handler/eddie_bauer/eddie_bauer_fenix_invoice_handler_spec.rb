@@ -11,10 +11,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
   describe "prep_line_row" do
 
     before :each do
-      @p = FactoryBot(:tariff_record, hts_1: "1234.56.7890",
-        classification: FactoryBot(:classification,
-          country: FactoryBot(:country, :iso_code => "CA"),
-          product: FactoryBot(:product, unique_identifier: "EDDIE-12345")
+      @p = create(:tariff_record, hts_1: "1234.56.7890",
+        classification: create(:classification,
+          country: create(:country, :iso_code => "CA"),
+          product: create(:product, unique_identifier: "EDDIE-12345")
         )
       ).product
 
@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
 
       cf
     }
-    let (:importer) { with_fenix_id(FactoryBot(:importer), "855157855RM0001") }
+    let (:importer) { with_fenix_id(create(:importer), "855157855RM0001") }
     let (:tempfile) {
       tempfile = Tempfile.new ['temp', '.txt']
       tempfile.binmode

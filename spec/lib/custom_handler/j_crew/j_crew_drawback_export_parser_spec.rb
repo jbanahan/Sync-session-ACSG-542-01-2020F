@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
       r
     end
     before :each do
-      @imp = FactoryBot(:company)
+      @imp = create(:company)
     end
     it 'should check for 167 columns' do
       r = make_row

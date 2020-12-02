@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   end
 
   before :each do
-    @sap_brand_cd = FactoryBot(:custom_definition, :label=>'SAP Brand', :module_type=>'Product', :data_type=>'boolean')
+    @sap_brand_cd = create(:custom_definition, :label=>'SAP Brand', :module_type=>'Product', :data_type=>'boolean')
   end
 
   after :each do
@@ -22,17 +22,17 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   describe "run_schedulable" do
 
     before :each do
-      us = FactoryBot(:country, :iso_code=>'US')
-      ca = FactoryBot(:country, :iso_code=>'CA')
-      italy = FactoryBot(:country, :iso_code=>'IT')
-      nz = FactoryBot(:country, :iso_code=>'NZ')
-      @p = FactoryBot(:product)
+      us = create(:country, :iso_code=>'US')
+      ca = create(:country, :iso_code=>'CA')
+      italy = create(:country, :iso_code=>'IT')
+      nz = create(:country, :iso_code=>'NZ')
+      @p = create(:product)
       @p.update_custom_value! @sap_brand_cd, true
-      @p2 = FactoryBot(:product)
+      @p2 = create(:product)
       @p2.update_custom_value! @sap_brand_cd, true
       [us, ca, italy, nz].each do |country|
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>country.id, :product=>@p))
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>country.id, :product=>@p2))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>country.id, :product=>@p))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>country.id, :product=>@p2))
       end
       @p.update_column :updated_at, (1.year.ago)
       @files = []
@@ -67,15 +67,15 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   describe "sync_xml" do
 
     before :each do
-      @us = FactoryBot(:country, :iso_code=>'US')
+      @us = create(:country, :iso_code=>'US')
     end
 
     it "it generates an xml file" do
-      ca = FactoryBot(:country, :iso_code=>'CA')
-      p = FactoryBot(:product)
+      ca = create(:country, :iso_code=>'CA')
+      p = create(:product)
       p.update_custom_value! @sap_brand_cd, true
       [@us, ca].each do |country|
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>country.id, :product=>p))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>country.id, :product=>p))
       end
 
       @cdefs.each do |key, cdef|
@@ -150,9 +150,9 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "maps 'woven' value to 'WVN'" do
-      p = FactoryBot(:product)
+      p = create(:product)
       p.update_custom_value! @sap_brand_cd, true
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country=>@us, :product=>p))
+      create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country=>@us, :product=>p))
       p.update_custom_value! @cdefs[:knit_woven], "Woven"
        @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -166,17 +166,17 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should not send countries except US, CA, IT, KR, JP, HK, NO with custom where" do
-      ca = FactoryBot(:country, :iso_code=>'CA')
-      italy = FactoryBot(:country, :iso_code=>'IT')
-      nz = FactoryBot(:country, :iso_code=>'NZ')
-      no = FactoryBot(:country, :iso_code => "NO")
-      jp = FactoryBot(:country, :iso_code => "JP")
-      kr = FactoryBot(:country, :iso_code => "KR")
-      hk = FactoryBot(:country, :iso_code => "HK")
-      p = FactoryBot(:product)
+      ca = create(:country, :iso_code=>'CA')
+      italy = create(:country, :iso_code=>'IT')
+      nz = create(:country, :iso_code=>'NZ')
+      no = create(:country, :iso_code => "NO")
+      jp = create(:country, :iso_code => "JP")
+      kr = create(:country, :iso_code => "KR")
+      hk = create(:country, :iso_code => "HK")
+      p = create(:product)
       p.update_custom_value! @sap_brand_cd, true
       [@us, ca, italy, nz, no, jp, kr, hk].each do |country|
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>country.id, :product=>p))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>country.id, :product=>p))
       end
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
@@ -186,12 +186,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should allow custom list of valid countries" do
-      italy = FactoryBot(:country, :iso_code=>'IT')
-      nz = FactoryBot(:country, :iso_code=>'NZ')
-      p = FactoryBot(:product)
+      italy = create(:country, :iso_code=>'IT')
+      nz = create(:country, :iso_code=>'NZ')
+      p = create(:product)
       p.update_custom_value! @sap_brand_cd, true
       [@us, italy, nz].each do |country|
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>country.id, :product=>p))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>country.id, :product=>p))
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1", :custom_countries=>['NZ', 'IT']).sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -199,11 +199,11 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should not send records with blank tariff numbers" do
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product)
+      p1 = create(:product)
+      p2 = create(:product)
       [p1, p2].each {|p| p.update_custom_value! @sap_brand_cd, true}
-      FactoryBot(:tariff_record, :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p1))
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p2))
+      create(:tariff_record, :classification=>create(:classification, :country_id=>@us.id, :product=>p1))
+      create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p2))
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -211,8 +211,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "sends clean_fiber_content if clean_fiber_content is set" do
-      p = FactoryBot(:product)
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p))
+      p = create(:product)
+      create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p))
 
       p.update_custom_value! @cdefs[:clean_fiber_content], "cleanfibercontent"
       p.update_custom_value! @sap_brand_cd, true
@@ -223,12 +223,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should not send products that aren't SAP Brand" do
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
       p1.update_custom_value! @sap_brand_cd, true
-      p2 = FactoryBot(:product) # no custom value at all
-      p3 = FactoryBot(:product) # false custom value
+      p2 = create(:product) # no custom value at all
+      p3 = create(:product) # false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1, p2, p3].each {|p| FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p))}
+      [p1, p2, p3].each {|p| create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p))}
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -236,12 +236,12 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should not limit if :no_brand_restriction = true" do
-      p1 = FactoryBot(:product)
+      p1 = create(:product)
       p1.update_custom_value! @sap_brand_cd, true
-      p2 = FactoryBot(:product) # no custom value at all
-      p3 = FactoryBot(:product) # false custom value
+      p2 = create(:product) # no custom value at all
+      p3 = create(:product) # false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1, p2, p3].each {|p| FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p))}
+      [p1, p2, p3].each {|p| create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p))}
 
       @tmp = described_class.new(:no_brand_restriction=>true, :custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -249,11 +249,11 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should sync and skip product with invalid UTF-8 data" do
-      p1 = FactoryBot(:product)
-      p2 = FactoryBot(:product, :unique_identifier => "Ænema")
+      p1 = create(:product)
+      p2 = create(:product, :unique_identifier => "Ænema")
       [p1, p2].each do |p|
         p.update_custom_value! @sap_brand_cd, true
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p))
+        create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p))
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -261,9 +261,9 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "removes newlines" do
-      p = FactoryBot(:product, :unique_identifier => "Test\r\nTest")
+      p = create(:product, :unique_identifier => "Test\r\nTest")
       p.update_custom_value! @sap_brand_cd, true
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', :classification=>FactoryBot(:classification, :country_id=>@us.id, :product=>p))
+      create(:tariff_record, :hts_1=>'1234567890', :classification=>create(:classification, :country_id=>@us.id, :product=>p))
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -271,22 +271,22 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "does not send multiple classifications for the same style/country combo" do
-      eu = FactoryBot(:country, :iso_code=>'IT')
+      eu = create(:country, :iso_code=>'IT')
       # Create multiple products to ensure the checks against the previous style/iso are done correctly
-      p = FactoryBot(:product, unique_identifier: "ZZZ")
+      p = create(:product, unique_identifier: "ZZZ")
       p.update_custom_value! @sap_brand_cd, true
       # Set the line numbers different from the natural id order to ensure we're sorting on line number
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: FactoryBot(:classification, :country_id=>@us.id, :product=>p))
-      FactoryBot(:tariff_record, :hts_1=>'9876543210', line_number: "1", classification: p.classifications.first)
+      create(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: create(:classification, :country_id=>@us.id, :product=>p))
+      create(:tariff_record, :hts_1=>'9876543210', line_number: "1", classification: p.classifications.first)
       # Create an IT classification to ensure we're ording correctly on country iso and that we're taking the country code into account when
       # checking for multiple tariff lines
-      FactoryBot(:tariff_record, :hts_1=>'1234567890', line_number: "1", classification: FactoryBot(:classification, :country_id=>eu.id, :product=>p))
+      create(:tariff_record, :hts_1=>'1234567890', line_number: "1", classification: create(:classification, :country_id=>eu.id, :product=>p))
 
       p2 = nil
       Timecop.freeze(Time.zone.now - 7.days) do
-        p2 = FactoryBot(:product, unique_identifier: "AAA")
+        p2 = create(:product, unique_identifier: "AAA")
         p2.update_custom_value! @sap_brand_cd, true
-        FactoryBot(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: FactoryBot(:classification, :country_id=>@us.id, :product=>p2))
+        create(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: create(:classification, :country_id=>@us.id, :product=>p2))
       end
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml

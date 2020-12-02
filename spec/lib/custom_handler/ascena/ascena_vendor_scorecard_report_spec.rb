@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
   subject { described_class }
-    let! (:ascena) { with_customs_management_id(FactoryBot(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+    let! (:ascena) { with_customs_management_id(create(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
 
   describe "permission?" do
     # check that Ann is NOT included among the available customers
-    let! (:ann) { with_customs_management_id(FactoryBot(:importer, name: "Ann"), "ATAYLOR") }
-    let! (:maurices) { with_customs_management_id(FactoryBot(:importer, name: "Maurices"), "MAUR") }
-    let! (:ascena_master) { with_customs_management_id(FactoryBot(:importer, name: "Ascena Master"), "ASCENAMASTER") }
-    let! (:user) { FactoryBot(:master_user) }
+    let! (:ann) { with_customs_management_id(create(:importer, name: "Ann"), "ATAYLOR") }
+    let! (:maurices) { with_customs_management_id(create(:importer, name: "Maurices"), "MAUR") }
+    let! (:ascena_master) { with_customs_management_id(create(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+    let! (:user) { create(:master_user) }
 
     let!(:ms) do
       m = stub_master_setup
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
     it "returns info for Ascena, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
       user.company.update master: false
-      g = FactoryBot(:group, system_code: "ASCE_TRADE_ASSOC")
+      g = create(:group, system_code: "ASCE_TRADE_ASSOC")
       user.groups << g
       expect(subject.permissions user).to eq(cust_descriptions)
     end
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
   end
 
   def create_data
-    e = FactoryBot(:entry, importer: ascena, entry_number: "entry_no", customer_number: "ASCE", fiscal_date: Date.new(2017, 3, 1), first_release_date: DateTime.new(2017, 3, 1, 5, 0))
+    e = create(:entry, importer: ascena, entry_number: "entry_no", customer_number: "ASCE", fiscal_date: Date.new(2017, 3, 1), first_release_date: DateTime.new(2017, 3, 1, 5, 0))
 
     inv = e.commercial_invoices.create! invoice_number: "INV"
 
@@ -80,15 +80,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid12345-vendorId2", value: "2016-12-31")
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid23456-vendorId1", value: "2017-02-22")
 
-    @vendor = FactoryBot(:company, name: "Ascena Vendor", system_code:"vendorId1")
-    @vendor2 = FactoryBot(:company, name: "Ascena Vendor 2", system_code:"vendorId2")
-    @factory = FactoryBot(:company, name: "Crapco Industries")
-    @factory2 = FactoryBot(:company, name: "Carpco Deluxe Knock-offs")
+    @vendor = create(:company, name: "Ascena Vendor", system_code:"vendorId1")
+    @vendor2 = create(:company, name: "Ascena Vendor 2", system_code:"vendorId2")
+    @factory = create(:company, name: "Crapco Industries")
+    @factory2 = create(:company, name: "Carpco Deluxe Knock-offs")
 
-    @order1A = FactoryBot(:order, order_number: "ASCENA-prodlineA-PO", vendor: @vendor, factory: @factory)
-    @order1B = FactoryBot(:order, order_number: "ASCENA-prodlineA2-PO", vendor: @vendor, factory: @factory)
-    @order2 = FactoryBot(:order, order_number: "ASCENA-prodlineB-PO2", vendor: @vendor, factory: @factory2)
-    @order3 = FactoryBot(:order, order_number: "ASCENA-prodlineC-PO3", vendor: @vendor2, factory: @factory)
+    @order1A = create(:order, order_number: "ASCENA-prodlineA-PO", vendor: @vendor, factory: @factory)
+    @order1B = create(:order, order_number: "ASCENA-prodlineA2-PO", vendor: @vendor, factory: @factory)
+    @order2 = create(:order, order_number: "ASCENA-prodlineB-PO2", vendor: @vendor, factory: @factory2)
+    @order3 = create(:order, order_number: "ASCENA-prodlineC-PO3", vendor: @vendor2, factory: @factory)
 
     e
   end
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet.row(4)).to eq [2, "Ascena Vendor 2", 1.67, 1.67, 0.14, 1]
       expect(sheet.row(5)).to eq [nil, "TOTAL", 9.87, 8.66, 0.4, 0.88]
 
-      expect(sheet = wb.worksheet("Vendor FactoryBot Pair")).not_to be_nil
+      expect(sheet = wb.worksheet("Vendor create Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Summary by vendor / factory pair>", nil, nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "REMARKS"]
@@ -187,7 +187,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet = wb.worksheet("Vendor")).not_to be_nil
       expect(sheet.rows.count).to eq 6
 
-      expect(sheet = wb.worksheet("Vendor FactoryBot Pair")).not_to be_nil
+      expect(sheet = wb.worksheet("Vendor create Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil
@@ -198,9 +198,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       inv2 = entry.commercial_invoices.create! invoice_number: "INV2"
       line_bad = inv2.commercial_invoice_lines.create! po_number: "PO_bad", contract_amount: 5.43, mid: "mid_bogus", value: 2.43, product_line: "prodlineA", part_number: "part_X"
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
-      vendor_bad = FactoryBot(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
-      factory_bad = FactoryBot(:company, name: "Chemco Industries")
-      order_bad = FactoryBot(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      vendor_bad = create(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
+      factory_bad = create(:company, name: "Chemco Industries")
+      order_bad = create(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       tf = subject.run_report nil, {"range_field" => "first_release_date", "start_release_date" => "2017-02-25", "end_release_date" => "2017-03-25", "cust_numbers" => ["ASCE", "MAUR"]}
       expect(tf).not_to be_nil
@@ -216,9 +216,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       inv2 = entry.commercial_invoices.create! invoice_number: "INV2"
       line_bad = inv2.commercial_invoice_lines.create! po_number: "PO_bad", contract_amount: 5.43, mid: "mid_bogus", value: 2.43, product_line: "prodlineA", part_number: "part_X"
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
-      vendor_bad = FactoryBot(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
-      factory_bad = FactoryBot(:company, name: "Chemco Industries")
-      order_bad = FactoryBot(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      vendor_bad = create(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
+      factory_bad = create(:company, name: "Chemco Industries")
+      order_bad = create(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_bogus-vendorId3", value: "invalid")
 
@@ -236,9 +236,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       inv2 = entry.commercial_invoices.create! invoice_number: "INV2"
       line_bad = inv2.commercial_invoice_lines.create! po_number: "PO_bad", contract_amount: 5.43, mid: "mid_bogus", value: 2.43, product_line: "prodlineA", part_number: "part_X"
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
-      vendor_bad = FactoryBot(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
-      factory_bad = FactoryBot(:company, name: "Chemco Industries")
-      order_bad = FactoryBot(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      vendor_bad = create(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
+      factory_bad = create(:company, name: "Chemco Industries")
+      order_bad = create(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_mismatch-vendorId3", value: "2017-02-22")
 
@@ -256,9 +256,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       inv2 = entry.commercial_invoices.create! invoice_number: "INV2"
       line_bad = inv2.commercial_invoice_lines.create! po_number: "PO_bad", contract_amount: 5.43, mid: "mid_bogus", value: 2.43, product_line: "prodlineA", part_number: "part_X"
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
-      vendor_bad = FactoryBot(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
-      factory_bad = FactoryBot(:company, name: "Chemco Industries")
-      order_bad = FactoryBot(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      vendor_bad = create(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
+      factory_bad = create(:company, name: "Chemco Industries")
+      order_bad = create(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_bogus-vendor_system_code_mismatch", value: "2017-02-22")
 

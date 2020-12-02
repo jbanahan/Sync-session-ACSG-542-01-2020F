@@ -1,8 +1,8 @@
 describe CustomValue do
   describe "batch_write!" do
     before :each do
-      @cd = FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"string")
-      @p = FactoryBot(:product)
+      @cd = create(:custom_definition, :module_type=>"Product", :data_type=>"string")
+      @p = create(:product)
     end
     it "should insert a new custom value" do
       cv = CustomValue.new(:custom_definition=>@cd, :customizable=>@p)
@@ -37,7 +37,7 @@ describe CustomValue do
       expect(CustomValue.first.value).to eq('xyz')
     end
     it "should insert and update values" do
-      cd2 = FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"integer")
+      cd2 = create(:custom_definition, :module_type=>"Product", :data_type=>"integer")
       @p.update_custom_value! @cd, "xyz"
       cv = CustomValue.find_by(custom_definition: @cd)
       cv.value = 'abc'
@@ -195,13 +195,13 @@ describe CustomValue do
   end
 
   describe "value=" do
-    let (:object) { FactoryBot(:product) }
+    let (:object) { create(:product) }
 
     subject {
       CustomValue.new customizable: object, custom_definition: cd
     }
     context "with boolean value" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"boolean") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"boolean") }
 
       [true, "true", "1", 1].each do |val|
         it "handles #{val} value as true" do
@@ -245,7 +245,7 @@ describe CustomValue do
     end
 
     context "with text values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"text") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"text") }
 
       it "saves text value" do
         subject.value = "Test"
@@ -257,7 +257,7 @@ describe CustomValue do
     end
 
     context "with string values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"string") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"string") }
 
       it "saves string value" do
         subject.value = "Test"
@@ -269,7 +269,7 @@ describe CustomValue do
     end
 
     context "with date values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"date") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"date") }
 
       it "saves date value" do
         d = Date.new(2019, 1, 1)
@@ -309,7 +309,7 @@ describe CustomValue do
     end
 
     context "with datetime values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"datetime") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"datetime") }
 
       it "saves datetime value" do
         d = Time.zone.parse("2019-01-12T12:00:00 -0500")
@@ -339,7 +339,7 @@ describe CustomValue do
     end
 
     context "with integer values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"integer") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"integer") }
 
       it "handles integer value" do
         subject.value = 1
@@ -375,7 +375,7 @@ describe CustomValue do
     end
 
     context "with decimal values" do
-      let (:cd) { FactoryBot(:custom_definition, :module_type=>"Product", :data_type=>"decimal") }
+      let (:cd) { create(:custom_definition, :module_type=>"Product", :data_type=>"decimal") }
 
       it "handles decimal value" do
         # See how value is rounded too by passing a value that should be rounded
@@ -404,8 +404,8 @@ describe CustomValue do
     end
 
     context "with user values" do
-      let (:cd) { FactoryBot(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true) }
-      let (:user) { FactoryBot(:user) }
+      let (:cd) { create(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true) }
+      let (:user) { create(:user) }
 
       it "handles user objects" do
         subject.value = user
@@ -422,8 +422,8 @@ describe CustomValue do
     end
 
     context "with address values" do
-      let (:cd) { FactoryBot(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true) }
-      let (:address) { FactoryBot(:address) }
+      let (:cd) { create(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true) }
+      let (:address) { create(:address) }
 
       it "handles user objects" do
         subject.value = address

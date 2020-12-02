@@ -7,7 +7,7 @@ class CompaniesController < ApplicationController
   end
   include OpenChain::BusinessRuleValidationResultsSupport
 
-  before_filter :translate_booking_types, only: [:create, :update]
+  before_action :translate_booking_types, only: [:create, :update]
 
   SEARCH_PARAMS = {
     'c_name' => {:field => 'name', :label=> 'Name'},

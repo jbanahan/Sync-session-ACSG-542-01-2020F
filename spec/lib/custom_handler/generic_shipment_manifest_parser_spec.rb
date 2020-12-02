@@ -16,8 +16,8 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
   end
 
   describe "process_rows" do
-    let (:importer) { FactoryBot(:importer) }
-    let (:user) { FactoryBot(:user, company: importer) }
+    let (:importer) { create(:importer) }
+    let (:user) { create(:user, company: importer) }
     let (:shipment) { Shipment.new reference: "Reference", importer: importer}
     let (:rows) {
       rows = []
@@ -34,13 +34,13 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
     let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
 
     let (:product) {
-      p = FactoryBot(:product, importer: importer)
+      p = create(:product, importer: importer)
       p.update_custom_value! cdefs[:prod_part_number], "Style"
       p
     }
 
     let! (:order) {
-      o = FactoryBot(:order, importer: importer, order_number: "OrdNum", customer_order_number: "CustOrdNum", approval_status: "Accepted")
+      o = create(:order, importer: importer, order_number: "OrdNum", customer_order_number: "CustOrdNum", approval_status: "Accepted")
       o.order_lines.create! product_id: product.id, sku: "Sku"
 
       o
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       order
       add_details_row rows, 35, 2, ["CustOrdNum", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
 
-      address = FactoryBot(:full_address)
+      address = create(:full_address)
       described_class.new(manufacturer_address_id: address.id).process_rows shipment, rows, user
       expect(shipment).to be_persisted
 
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "raises error when order/manifest check fails if enable_warnings provided in constructor options" do
       ol = order.order_lines.first
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF2"), product: product)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
       expect {described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'The following purchase orders are assigned to other shipments: CustOrdNum (REF2)'
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "assigns warning_overridden attribs when enable_warnings is absent" do
       ol = order.order_lines.first
-      sl = FactoryBot(:shipment_line, shipment: FactoryBot(:shipment, reference: "REF2"), product: product)
+      sl = create(:shipment_line, shipment: create(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
       Timecop.freeze(DateTime.new(2018, 1, 1)) { described_class.new(enable_warnings: false).process_rows shipment, rows, user }

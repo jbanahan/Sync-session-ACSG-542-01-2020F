@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
     cf
   }
-  let(:user) { FactoryBot(:master_user) }
+  let(:user) { create(:master_user) }
   subject { described_class.new custom_file }
 
   describe 'process' do
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
   end
 
   describe 'parse' do
-    let(:importer) { with_fenix_id(FactoryBot(:importer), "CUST1") }
+    let(:importer) { with_fenix_id(create(:importer), "CUST1") }
 
 
     it "should parse a file" do
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should error if importer is blank" do
-      importer = FactoryBot(:importer)
+      importer = create(:importer)
       file_contents = [["Column", "Heading"], ["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
@@ -170,7 +170,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should update existing invoices" do
-      line = FactoryBot(:commercial_invoice_line)
+      line = create(:commercial_invoice_line)
       inv = line.commercial_invoice
       inv.update_attributes importer_id: importer.id
       id = inv.id
@@ -188,7 +188,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should not update existing invoices with a blank invoice number" do
-      line = FactoryBot(:commercial_invoice_line)
+      line = create(:commercial_invoice_line)
       inv = line.commercial_invoice
       inv.update_attributes importer_id: importer.id, invoice_number: ""
       id = inv.id

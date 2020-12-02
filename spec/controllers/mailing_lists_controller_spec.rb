@@ -1,13 +1,13 @@
 describe MailingListsController do
-  let (:company) { FactoryBot(:company) }
-  let (:user) { FactoryBot(:user, company: company) }
+  let (:company) { create(:company) }
+  let (:user) { create(:user, company: company) }
 
   before do
     sign_in_as user
   end
 
   describe "update" do
-    let(:mailing_list) { FactoryBot(:mailing_list, name: 'Mailing List', system_code: 'SYSTEM', user: user, company: user.company, email_addresses: 'test@domain.com') }
+    let(:mailing_list) { create(:mailing_list, name: 'Mailing List', system_code: 'SYSTEM', user: user, company: user.company, email_addresses: 'test@domain.com') }
 
     it "updates a mailing list given all valid inputs" do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)

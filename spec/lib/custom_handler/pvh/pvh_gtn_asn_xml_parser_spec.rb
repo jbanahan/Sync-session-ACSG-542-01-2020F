@@ -3,21 +3,21 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:xml_data) { IO.read 'spec/fixtures/files/gtn_pvh_asn.xml' }
   let (:xml) { REXML::Document.new(xml_data) }
   let (:asn_xml) { REXML::XPath.first(xml, "/ASNMessage/ASN") }
-  let (:india) { FactoryBot(:country, iso_code: "IN") }
-  let (:ca) { FactoryBot(:country, iso_code: "CA") }
-  let (:pvh) { FactoryBot(:importer, system_code: "PVH") }
-  let (:user) { FactoryBot(:user) }
-  let (:order) { FactoryBot(:order, order_number: "PVH-RTTC216384", customer_order_number: "RTTC216384", importer: pvh)}
+  let (:india) { create(:country, iso_code: "IN") }
+  let (:ca) { create(:country, iso_code: "CA") }
+  let (:pvh) { create(:importer, system_code: "PVH") }
+  let (:user) { create(:user) }
+  let (:order) { create(:order, order_number: "PVH-RTTC216384", customer_order_number: "RTTC216384", importer: pvh)}
   let (:product) do
-    p = FactoryBot(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164")
+    p = create(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164")
     p.update_custom_value! cdefs[:prod_part_number], "7696164"
     p
   end
-  let (:order_line_1) { FactoryBot(:order_line, order: order, line_number: 1, product: product) }
-  let (:order_line_2) { FactoryBot(:order_line, order: order, line_number: 2, product: product) }
-  let (:lading_port) { FactoryBot(:port, name: "Chennai", iata_code: "MAA")}
-  let (:unlading_port) { FactoryBot(:port, name: "Montréal", iata_code: "YUL")}
-  let (:final_dest_port) { FactoryBot(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
+  let (:order_line_1) { create(:order_line, order: order, line_number: 1, product: product) }
+  let (:order_line_2) { create(:order_line, order: order, line_number: 2, product: product) }
+  let (:lading_port) { create(:port, name: "Chennai", iata_code: "MAA")}
+  let (:unlading_port) { create(:port, name: "Montréal", iata_code: "YUL")}
+  let (:final_dest_port) { create(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
   let (:inbound_file) { InboundFile.new }
   let (:cdefs) { subject.cdefs }
   let (:invoice) do
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
     i.invoice_lines.create! po_number: "RTTC216384", part_number: "7696164", mid: "MYKULRUB669TAI"
     i
   end
-  let (:existing_shipment) { FactoryBot(:shipment, importer: pvh, reference: "PVH-5093094M01")}
+  let (:existing_shipment) { create(:shipment, importer: pvh, reference: "PVH-5093094M01")}
 
   describe "process_asn_update" do
 
@@ -147,7 +147,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
 
       it "clears any existing containers not in the xml" do
         c = existing_shipment.containers.create! container_number: "CONTAINER"
-        l = FactoryBot(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+        l = create(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
 
         subject.process_asn_update asn_xml, user, "bucket", "key"
 
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       end
 
       it "clears shipment lines that were not originally in a container, but were moved to a container on a resend" do
-        l = FactoryBot(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+        l = create(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
 
         subject.process_asn_update asn_xml, user, "bucket", "key"
         expect(l).not_to exist_in_db
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       it "retains shipment lines that continue to not be in a container" do
         xml_data.gsub!("<ContainerNumber>SGIND25321</ContainerNumber>", "")
 
-        l = FactoryBot(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+        l = create(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
 
         subject.process_asn_update asn_xml, user, "bucket", "key"
 

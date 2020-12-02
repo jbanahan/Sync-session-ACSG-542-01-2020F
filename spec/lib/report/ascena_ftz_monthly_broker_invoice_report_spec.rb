@@ -1,16 +1,16 @@
 describe OpenChain::Report::AscenaFtzMonthlyBrokerInvoiceReport do
   subject { described_class.new("ASCE") }
 
-  let(:ascena) { with_customs_management_id(FactoryBot(:company), "ASCE") }
-  let(:ent) { FactoryBot(:entry, entry_type: "06", po_numbers: "INV NUM\n INV NUM2", importer: ascena, first_entry_sent_date: Date.new(2017, 3, 15)) }
-  let(:ci) { FactoryBot(:commercial_invoice, entry: ent) }
-  let(:cil) { FactoryBot(:commercial_invoice_line, commercial_invoice: ci, po_number: nil)}
+  let(:ascena) { with_customs_management_id(create(:company), "ASCE") }
+  let(:ent) { create(:entry, entry_type: "06", po_numbers: "INV NUM\n INV NUM2", importer: ascena, first_entry_sent_date: Date.new(2017, 3, 15)) }
+  let(:ci) { create(:commercial_invoice, entry: ent) }
+  let(:cil) { create(:commercial_invoice_line, commercial_invoice: ci, po_number: nil)}
 
-  let(:bi) { FactoryBot(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM", invoice_total: 100) }
-  let(:bil) { FactoryBot(:broker_invoice_line, broker_invoice: bi, charge_description: "Foo Debit", charge_amount: 90) }
-  let(:bil2) { FactoryBot(:broker_invoice_line, broker_invoice: bi, charge_description: "Customs Entry", charge_amount: 10) }
-  let(:bi2) { FactoryBot(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM2", invoice_total: -25) }
-  let(:bil3) { FactoryBot(:broker_invoice_line, broker_invoice: bi2, charge_description: "Bar Credit", charge_amount: -25) }
+  let(:bi) { create(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM", invoice_total: 100) }
+  let(:bil) { create(:broker_invoice_line, broker_invoice: bi, charge_description: "Foo Debit", charge_amount: 90) }
+  let(:bil2) { create(:broker_invoice_line, broker_invoice: bi, charge_description: "Customs Entry", charge_amount: 10) }
+  let(:bi2) { create(:broker_invoice, entry: ent, invoice_date: Date.new(2017, 3, 15), invoice_number: "INV NUM2", invoice_total: -25) }
+  let(:bil3) { create(:broker_invoice_line, broker_invoice: bi2, charge_description: "Bar Credit", charge_amount: -25) }
 
   let(:raw_row_1) do
       ["", "", "77519", Date.new(2017, 3, 15), "", "INV NUM", 100, "USD", "", "Foo Debit", Date.new(2017, 3, 15), "USD1", "", "INV NUM", "",
@@ -44,9 +44,9 @@ describe OpenChain::Report::AscenaFtzMonthlyBrokerInvoiceReport do
 
     it "returns expected type 06 data" do
       # data for another importer
-      ent2 = FactoryBot(:entry, importer: FactoryBot(:company), entry_type: "06", first_entry_sent_date: Date.new(2017, 3, 15))
-      inv3 = FactoryBot(:broker_invoice, entry: ent2, invoice_date: Date.new(2017, 3, 15), invoice_total: 50)
-      FactoryBot(:broker_invoice_line, broker_invoice: inv3, charge_description: "Customs Entry", charge_amount: 50)
+      ent2 = create(:entry, importer: create(:company), entry_type: "06", first_entry_sent_date: Date.new(2017, 3, 15))
+      inv3 = create(:broker_invoice, entry: ent2, invoice_date: Date.new(2017, 3, 15), invoice_total: 50)
+      create(:broker_invoice_line, broker_invoice: inv3, charge_description: "Customs Entry", charge_amount: 50)
 
       q = subject.query(ent.importer.id, '2017-03-01', '2017-03-31')
       res = ActiveRecord::Base.connection.execute q

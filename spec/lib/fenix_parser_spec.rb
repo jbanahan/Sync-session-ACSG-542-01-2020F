@@ -1,9 +1,9 @@
 describe OpenChain::FenixParser do
 
-  let! (:broker) { add_system_identifier(FactoryBot(:company, broker: true, name: "The Broker"), "Filer Code", "11981") }
+  let! (:broker) { add_system_identifier(create(:company, broker: true, name: "The Broker"), "Filer Code", "11981") }
 
   before :each do
-    FactoryBot(:country, :iso_code=>'CA')
+    create(:country, :iso_code=>'CA')
     @mdy = '%m/%d/%Y'
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @barcode = '11981000774460'
@@ -460,18 +460,18 @@ describe OpenChain::FenixParser do
   end
   it 'should find exit port in schedule d' do
     @exit_port_code = '1234'
-    port = FactoryBot(:port, :schedule_d_code=>@exit_port_code)
+    port = create(:port, :schedule_d_code=>@exit_port_code)
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.us_exit_port).to eq(port)
   end
   it 'should only update entries with Fenix as source code' do
-    FactoryBot(:entry, :broker_reference=>@file_number) # not source code
+    create(:entry, :broker_reference=>@file_number) # not source code
     OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.where(:broker_reference=>@file_number).entries.size).to eq(2)
   end
   it 'should update if fenix is source code' do
-    FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE) # not source code
+    create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE) # not source code
     OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.where(:broker_reference=>@file_number).entries.size).to eq(1)
   end
@@ -530,7 +530,7 @@ describe OpenChain::FenixParser do
   end
 
   it 'should fall back to using entry number and source system lookup to find imaging shell records' do
-    existing_entry = FactoryBot(:entry, :entry_number=>@barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    existing_entry = create(:entry, :entry_number=>@barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
 
     # extra commas added to pass the line length check
     entry_data = lambda {
@@ -552,7 +552,7 @@ describe OpenChain::FenixParser do
   it "should skip files with older system export times than current entry" do
     export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
 
-    FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
     # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
     @timestamp[2] = (@timestamp[2].to_i + 1).to_s
     OpenChain::FenixParser.parse @entry_lambda.call
@@ -566,7 +566,7 @@ describe OpenChain::FenixParser do
     # We want to make sure we do reprocess entries with the same export dates, this allows us to run larger
     # reprocess processes to get older data, but then only reprocess the most up to date file.
     export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
-    entry = FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    entry = create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
@@ -578,7 +578,7 @@ describe OpenChain::FenixParser do
   end
 
   it "should process files missing export date only if entry is missing export date" do
-    entry = FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    entry = create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
@@ -707,7 +707,7 @@ describe OpenChain::FenixParser do
   end
 
   it "does not blank out release date or cadex accept date if LVS file has been received" do
-    entry = FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+    entry = create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
     @release_date = ','
     @cadex_accept_date = ','
     @cadex_sent_date = ','
@@ -720,7 +720,7 @@ describe OpenChain::FenixParser do
   end
 
   it "allows updates (but not blanks) to release date / cadex accept if LVS file has been received" do
-    entry = FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+    entry = create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by(broker_reference: @file_number)
@@ -819,9 +819,9 @@ describe OpenChain::FenixParser do
   end
 
   it "assigns fiscal month to entry" do
-    imp = FactoryBot(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
+    imp = create(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
     imp.system_identifiers.create! system: "Fenix", code: "833764202RM0001"
-    fm = FactoryBot(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 9, 1), end_date: Date.new(2015, 9, 30))
+    fm = create(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 9, 1), end_date: Date.new(2015, 9, 30))
     OpenChain::FenixParser.parse @entry_lambda.call
     e = Entry.find_by(broker_reference: @file_number)
     expect(e.fiscal_date).to eq fm.start_date
@@ -843,11 +843,11 @@ describe OpenChain::FenixParser do
 
   context "with fenix admin group" do
     let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}
-    let (:user) {u = FactoryBot(:user); group.users << u; group.save!; u}
+    let (:user) {u = create(:user); group.users << u; group.save!; u}
 
     it "raises an error if Fenix ND entry attempts to update an old entry" do
       user
-      entry = FactoryBot(:entry, :entry_number=>@barcode, broker_reference: "REFERENCE", :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
+      entry = create(:entry, :entry_number=>@barcode, broker_reference: "REFERENCE", :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
       OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)
       # verify the entry wasn't updated
       entry.reload
@@ -860,7 +860,7 @@ describe OpenChain::FenixParser do
   end
 
   it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
-    FactoryBot(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
+    create(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
     expect {OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.not_to raise_error
   end
 
@@ -883,7 +883,7 @@ describe OpenChain::FenixParser do
     end
     it "should link to existing importer" do
       # Make sure we're not updating importer names that aren't tax ids
-      imp = FactoryBot(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>"Test")
+      imp = create(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>"Test")
       imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
@@ -891,7 +891,7 @@ describe OpenChain::FenixParser do
       expect(imp.name).to eq("Test")
     end
     it "should update an existing importer's name if the name is the tax id" do
-      imp = FactoryBot(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>@importer_tax_id)
+      imp = create(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>@importer_tax_id)
       imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
@@ -899,10 +899,10 @@ describe OpenChain::FenixParser do
       expect(ent.importer.name).to eq(@importer_name)
     end
     it "should change the entry's importer id on an update if the importer changed" do
-      imp = FactoryBot(:company, fenix_customer_number: "ABC", importer: true)
-      updated_imp = FactoryBot(:company, fenix_customer_number: @importer_tax_id, importer: true)
+      imp = create(:company, fenix_customer_number: "ABC", importer: true)
+      updated_imp = create(:company, fenix_customer_number: @importer_tax_id, importer: true)
       updated_imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
-      ent = FactoryBot(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
+      ent = create(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
 
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
@@ -1204,7 +1204,7 @@ describe OpenChain::FenixParser do
 
     it "should update lvs entries" do
       # We shouldn't be updating the country - on setting it on create
-      e = FactoryBot(:entry, :entry_number => @child_entries[0], :source_system=>"Fenix")
+      e = create(:entry, :entry_number => @child_entries[0], :source_system=>"Fenix")
 
       OpenChain::FenixParser.parse build_lvs_file
 
@@ -1222,8 +1222,8 @@ describe OpenChain::FenixParser do
 
   describe "parse_lvs_query_results" do
     before :each do
-      @child1 = FactoryBot(:entry, source_system: "Fenix", entry_number: "12345")
-      @summary = FactoryBot(:entry, source_system: "Fenix", entry_number: "SUMMARY", release_date: "2015-01-01 10:00", cadex_sent_date: "2015-01-01 08:00", cadex_accept_date: "2015-01-01 09:00", k84_receive_date: "2015-01-01 12:00")
+      @child1 = create(:entry, source_system: "Fenix", entry_number: "12345")
+      @summary = create(:entry, source_system: "Fenix", entry_number: "SUMMARY", release_date: "2015-01-01 10:00", cadex_sent_date: "2015-01-01 08:00", cadex_accept_date: "2015-01-01 09:00", k84_receive_date: "2015-01-01 12:00")
     end
 
     it "reads a result set and updates or creates child entries with summary entry dates" do
@@ -1289,7 +1289,7 @@ describe OpenChain::FenixParser do
 
   describe OpenChain::FenixParser::HoldReleaseSetter do
     let(:date) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017, 1, 12)}
-    let(:e) { FactoryBot(:entry) }
+    let(:e) { create(:entry) }
     let(:setter) { described_class.new e}
 
     describe "set_hold_date" do

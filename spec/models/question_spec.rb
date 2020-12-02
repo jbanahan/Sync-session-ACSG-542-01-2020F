@@ -1,11 +1,11 @@
 describe Question do
   it 'should default sort by rank' do
-    q2 = FactoryBot(:question, :rank=>2)
-    q1 = FactoryBot(:question, :rank=>1)
+    q2 = create(:question, :rank=>2)
+    q1 = create(:question, :rank=>1)
     expect(Question.by_rank.to_a).to eq([q1, q2])
   end
   it "should touch parent survey" do
-    q = FactoryBot(:question)
+    q = create(:question)
     s = q.survey
     s.update_attributes(:updated_at=>1.day.ago)
     expect(Survey.find(s.id).updated_at).to be < 23.hours.ago
@@ -13,8 +13,8 @@ describe Question do
     expect(Survey.find(s.id).updated_at).to be > 1.minute.ago
   end
   it "should not save if parent survey is locked" do
-    s = FactoryBot(:survey)
-    q = FactoryBot(:question, :survey=>s)
+    s = create(:survey)
+    q = create(:question, :survey=>s)
     allow_any_instance_of(Survey).to receive(:locked?).and_return(:true)
     q.content = 'some content length'
     expect(q.save).to be_falsey
@@ -25,12 +25,12 @@ describe Question do
     expect(q.save).to be_falsey
   end
   it "should require content" do
-    s = FactoryBot(:survey)
+    s = create(:survey)
     q = Question.new(:survey_id=>s.id)
     expect(q.save).to be_falsey
   end
   it "should default scope to sort by rank then id" do
-    s = FactoryBot(:survey)
+    s = create(:survey)
     q_10 = s.questions.create!(:content=>"1234567890", :rank=>10)
     q_1 = s.questions.create!(:content=>"12345647879", :rank=>1)
     q_1_2 = s.questions.create!(:content=>"12345678901", :rank=>1)
@@ -40,7 +40,7 @@ describe Question do
     expect(sorted[2]).to eq(q_10)
   end
   it 'should allow one or more attachments' do
-    s = FactoryBot(:survey)
+    s = create(:survey)
     q = Question.new(survey_id: s.id, content: "Sample content of a question.")
     q.save!
     q.attachments.create!(attached_file_name:"attachment1.jpg")
@@ -49,24 +49,24 @@ describe Question do
   end
   it 'should not allow downloads if user does not have permission' do
     u = User.new
-    s = FactoryBot(:survey)
+    s = create(:survey)
     q = Question.new(survey_id: s.id, content: "Sample content of a question.")
     q.save!
     expect(q.can_view?(u)).to be_falsey
   end
   it 'should allow downloads for creator of the survey' do
     ## In this case, the user in question is the survey creator
-    user = FactoryBot(:user, survey_edit: true)
-    survey = FactoryBot(:survey, created_by_id: user.id, company_id: user.company_id)
+    user = create(:user, survey_edit: true)
+    survey = create(:survey, created_by_id: user.id, company_id: user.company_id)
     question = Question.new(survey_id: survey.id, content: "Sample content of a question.")
     expect(question.can_view?(user)).to be_truthy
   end
   it 'should allow downloads for viewers of the response' do
     ## In this case, the user in question is a viewer of the survey response
-    user = FactoryBot(:user)
-    survey = FactoryBot(:survey, created_by_id: user.id)
+    user = create(:user)
+    survey = create(:survey, created_by_id: user.id)
     question = Question.new(survey_id: survey.id, content: "Sample content of a question.")
-    survey_response = FactoryBot(:survey_response, survey: survey, user_id: user.id)
+    survey_response = create(:survey_response, survey: survey, user_id: user.id)
     expect(question.can_view?(user)).to be_truthy
   end
 end

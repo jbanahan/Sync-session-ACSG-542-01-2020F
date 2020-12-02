@@ -2,8 +2,8 @@ describe VfiInvoice do
 
   describe "can_view?" do
     before :each do
-      @inv = FactoryBot(:vfi_invoice)
-      @u = FactoryBot(:user)
+      @inv = create(:vfi_invoice)
+      @u = create(:user)
     end
 
     context "user has permission to view invoices" do
@@ -38,14 +38,14 @@ describe VfiInvoice do
   end
 
   describe "search_secure" do
-    let!(:linked_cust) { FactoryBot(:company, importer: true) }
-    let(:cust) { FactoryBot(:company, importer: true, linked_companies: [linked_cust]) }
-    let!(:master_user) { FactoryBot(:master_user) }
-    let!(:customer_user) { FactoryBot(:user, company: cust) }
-    let!(:other_customer_user) { FactoryBot(:user, company: FactoryBot(:company, importer: true)) }
-    let!(:linked_invoice) { FactoryBot(:vfi_invoice, customer: linked_cust) }
-    let!(:customer_invoice) { FactoryBot(:vfi_invoice, customer: cust) }
-    let!(:unassociated_invoice) { FactoryBot(:vfi_invoice) }
+    let!(:linked_cust) { create(:company, importer: true) }
+    let(:cust) { create(:company, importer: true, linked_companies: [linked_cust]) }
+    let!(:master_user) { create(:master_user) }
+    let!(:customer_user) { create(:user, company: cust) }
+    let!(:other_customer_user) { create(:user, company: create(:company, importer: true)) }
+    let!(:linked_invoice) { create(:vfi_invoice, customer: linked_cust) }
+    let!(:customer_invoice) { create(:vfi_invoice, customer: cust) }
+    let!(:unassociated_invoice) { create(:vfi_invoice) }
 
     it "finds all for master" do
       expect(VfiInvoice.search_secure(master_user, VfiInvoice.where("1=1")).sort {|a, b| a.id<=>b.id}).to eq([linked_invoice, customer_invoice, unassociated_invoice].sort {|a, b| a.id<=>b.id})
@@ -60,8 +60,8 @@ describe VfiInvoice do
 
   describe "next_invoice_number" do
     it "yields a uid matching the id of the next record" do
-      FactoryBot(:vfi_invoice)
-      inv = VfiInvoice.next_invoice_number { |num| VfiInvoice.create!(invoice_number: num, customer_id: FactoryBot(:company).id) }
+      create(:vfi_invoice)
+      inv = VfiInvoice.next_invoice_number { |num| VfiInvoice.create!(invoice_number: num, customer_id: create(:company).id) }
       expect(inv.invoice_number).to eq "VFI-#{inv.id}"
     end
   end

@@ -6,18 +6,18 @@ describe ValidationRuleEntryProductInactive do
       subject.class.prep_custom_definitions [:prod_part_number]
     }
 
-    let(:imp) { FactoryBot(:company, system_code: "NOTACME") }
-    let(:entry) { FactoryBot(:entry, importer_id: imp.id) }
+    let(:imp) { create(:company, system_code: "NOTACME") }
+    let(:entry) { create(:entry, importer_id: imp.id) }
 
-    let(:invoice_1) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "123456") }
-    let(:line_1) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_1, line_number: 1) }
-    let(:invoice_2) { FactoryBot(:commercial_invoice, entry: entry, invoice_number: "654321") }
-    let(:line_2) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 2) }
-    let(:line_3) { FactoryBot(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 3) }
+    let(:invoice_1) { create(:commercial_invoice, entry: entry, invoice_number: "123456") }
+    let(:line_1) { create(:commercial_invoice_line, commercial_invoice: invoice_1, line_number: 1) }
+    let(:invoice_2) { create(:commercial_invoice, entry: entry, invoice_number: "654321") }
+    let(:line_2) { create(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 2) }
+    let(:line_3) { create(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 3) }
 
-    let(:product_1) { FactoryBot(:product, importer: imp, unique_identifier: "PartNUMBER", inactive: false) }
-    let(:product_2) { FactoryBot(:product, importer: imp, unique_identifier: "PartNUMBER2", inactive: false) }
-    let(:product_3) { FactoryBot(:product, importer: imp, unique_identifier: "PartNUMBER3", inactive: false) }
+    let(:product_1) { create(:product, importer: imp, unique_identifier: "PartNUMBER", inactive: false) }
+    let(:product_2) { create(:product, importer: imp, unique_identifier: "PartNUMBER2", inactive: false) }
+    let(:product_3) { create(:product, importer: imp, unique_identifier: "PartNUMBER3", inactive: false) }
 
     let!(:cdef_part_no) { custom_defintions[:prod_part_number] }
 
@@ -39,7 +39,7 @@ describe ValidationRuleEntryProductInactive do
       }
 
       it "uses different importer for products, if specified" do
-        imp1 = FactoryBot(:company, system_code: "ACME")
+        imp1 = create(:company, system_code: "ACME")
         product_1.update_attributes! importer_id: imp1.id, inactive: true
         product_2.update_attributes! inactive: true
 
@@ -83,7 +83,7 @@ describe ValidationRuleEntryProductInactive do
       end
 
       it "uses different importer for products, if specified" do
-        imp1 = FactoryBot(:company, system_code: "ACME")
+        imp1 = create(:company, system_code: "ACME")
         product_1.update_attributes! importer_id: imp1.id, inactive: true
         product_2.update_attributes! inactive: true
 

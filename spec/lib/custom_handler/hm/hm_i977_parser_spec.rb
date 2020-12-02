@@ -3,9 +3,9 @@ describe OpenChain::CustomHandler::Hm::HmI977Parser do
   let(:xml_data) { IO.read 'spec/fixtures/files/hm_i977.xml' }
 
   describe "process_article" do
-    let (:user) { FactoryBot(:user) }
+    let (:user) { create(:user) }
     let (:cdefs) { subject.cdefs }
-    let! (:hm) { FactoryBot(:importer, system_code: "HENNE") }
+    let! (:hm) { create(:importer, system_code: "HENNE") }
     let (:article_xml) {
       REXML::XPath.first(REXML::Document.new(xml_data), "/ns0:CustomsMasterDataTransaction/Payload/CustomsMasterData/Articles/Article")
     }

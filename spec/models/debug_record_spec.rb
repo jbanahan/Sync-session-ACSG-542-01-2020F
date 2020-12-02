@@ -5,7 +5,7 @@ describe DebugRecord do
 
     it "removes anything older than given date" do
       debug_record = nil
-      Timecop.freeze(Time.zone.now - 1.second) { debug_record = DebugRecord.create! user: FactoryBot(:user)}
+      Timecop.freeze(Time.zone.now - 1.second) { debug_record = DebugRecord.create! user: create(:user)}
 
       subject.purge Time.zone.now
 
@@ -15,7 +15,7 @@ describe DebugRecord do
     it "does not remove items newer than given date" do
       debug_record = nil
       now = Time.zone.now
-      Timecop.freeze(now + 1.second) { debug_record = DebugRecord.create! user: FactoryBot(:user) }
+      Timecop.freeze(now + 1.second) { debug_record = DebugRecord.create! user: create(:user) }
 
       subject.purge now
 

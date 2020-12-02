@@ -7,15 +7,15 @@ describe OpenChain::CustomHandler::Target::TargetPartsFileParser do
     f
   end
 
-  let(:user) { FactoryBot(:user) }
-  let!(:target) { with_customs_management_id(FactoryBot(:importer), "TARGEN") }
+  let(:user) { create(:user) }
+  let!(:target) { with_customs_management_id(create(:importer), "TARGEN") }
 
   describe "process_part_lines" do
     let(:file_data) { IO.read 'spec/fixtures/files/target_simple_part.csv' }
     let(:csv_data) { CSV.parse(file_data, { col_sep: "~", quote_char: "\007" }) }
-    let!(:us) { FactoryBot(:country, iso_code: "US") }
+    let!(:us) { create(:country, iso_code: "US") }
     let(:cdefs) { subject.send(:cdefs) }
-    let(:existing_product) { FactoryBot(:product, unique_identifier: "013022712-197312202", importer: target) }
+    let(:existing_product) { create(:product, unique_identifier: "013022712-197312202", importer: target) }
 
     def expect_simple_product_data p
       expect(p.entity_snapshots.length).to eq 1

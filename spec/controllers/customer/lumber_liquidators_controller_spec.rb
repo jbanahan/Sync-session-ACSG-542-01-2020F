@@ -1,6 +1,6 @@
 describe Customer::LumberLiquidatorsController do
   before :each do
-    @user = FactoryBot(:user)
+    @user = create(:user)
     sign_in_as @user
   end
   describe "sap_vendor_setup_form" do
@@ -12,7 +12,7 @@ describe Customer::LumberLiquidatorsController do
     }
 
     before :each do
-      @vendor = FactoryBot(:company, vendor:true)
+      @vendor = create(:company, vendor:true)
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return(true)
     end
     it "should 404 if no 'Lumber SAP' custom feature" do

@@ -5,7 +5,7 @@ require 'open_chain/custom_handler/intacct/intacct_client'
 describe Api::V1::IntacctDataController do
 
   let! (:user) do
-    user = FactoryBot(:admin_user, api_auth_token: "Token", time_zone: "Hawaii")
+    user = create(:admin_user, api_auth_token: "Token", time_zone: "Hawaii")
     allow_api_access user
     user
   end

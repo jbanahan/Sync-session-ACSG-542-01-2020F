@@ -1,15 +1,15 @@
 describe Api::V1::SetupDataController do
   before :each do
-    @u = FactoryBot(:user)
+    @u = create(:user)
     allow_api_access @u
   end
   describe "index" do
     context "countries & regions" do
       before :each do
-        @us = FactoryBot(:country, iso_code:'US', name:'United States', import_location:true, classification_rank: 1)
-        @ca = FactoryBot(:country, iso_code:'CA', name:'Canada', import_location:true)
-        @cn = FactoryBot(:country, iso_code:'CN', name:'China')
-        @mx = FactoryBot(:country, iso_code:'MX', name:'Mexico', classification_rank: 2)
+        @us = create(:country, iso_code:'US', name:'United States', import_location:true, classification_rank: 1)
+        @ca = create(:country, iso_code:'CA', name:'Canada', import_location:true)
+        @cn = create(:country, iso_code:'CN', name:'China')
+        @mx = create(:country, iso_code:'MX', name:'Mexico', classification_rank: 2)
       end
       it "should return all import countries" do
         expected = [
@@ -21,11 +21,11 @@ describe Api::V1::SetupDataController do
         expect(JSON.parse(response.body)['import_countries']).to eq expected
       end
       it "should provide all regions" do
-        nato = FactoryBot(:region, name:'NATO')
+        nato = create(:region, name:'NATO')
         nato.countries << @us
         nato.countries << @ca
 
-        north_america = FactoryBot(:region, name:'NorthAmerica')
+        north_america = create(:region, name:'NorthAmerica')
         north_america.countries << @us
         north_america.countries << @ca
         north_america.countries << @mx

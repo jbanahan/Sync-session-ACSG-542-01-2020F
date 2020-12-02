@@ -1,7 +1,7 @@
 describe LinesSupport do
   describe "default_line_number" do
     it "should create line numbers for in memory lines" do
-      p = FactoryBot(:product)
+      p = create(:product)
       s = Shipment.new(reference:'abc')
       sl1 = s.shipment_lines.build(quantity:1, product_id:p.id)
       sl2 = s.shipment_lines.build(quantity:2, product_id:p.id)
@@ -12,17 +12,17 @@ describe LinesSupport do
   end
   context 'piece sent linking' do
     it 'should link shipment to order' do
-      s_line = FactoryBot(:shipment_line)
-      o_line = FactoryBot(:order_line, :product=>s_line.product)
+      s_line = create(:shipment_line)
+      o_line = create(:order_line, :product=>s_line.product)
       s_line.linked_order_line_id = o_line.id
       expect(s_line.save).to be_truthy
       expect(PieceSet.count).to eq(1)
       expect(PieceSet.where(:shipment_line_id=>s_line.id).where(:order_line_id=>o_line.id).count).to eq(1)
     end
     it 'should link shipment to order and delivery' do # testing multiple links
-      s_line = FactoryBot(:shipment_line)
-      d_line = FactoryBot(:delivery_line, :product=>s_line.product)
-      o_line = FactoryBot(:order_line, :product=>s_line.product)
+      s_line = create(:shipment_line)
+      d_line = create(:delivery_line, :product=>s_line.product)
+      o_line = create(:order_line, :product=>s_line.product)
       s_line.linked_order_line_id = o_line.id
       s_line.linked_delivery_line_id = d_line.id
       expect(s_line.save).to be_truthy
@@ -33,8 +33,8 @@ describe LinesSupport do
       expect(PieceSet.where(:shipment_line_id=>s_line.id).where(:delivery_line_id=>d_line.id).count).to eq(1)
     end
     it 'should link commercial invoice line to drawback import line' do
-      c_line = FactoryBot(:commercial_invoice_line, :quantity=>1)
-      d_line = FactoryBot(:drawback_import_line)
+      c_line = create(:commercial_invoice_line, :quantity=>1)
+      d_line = create(:drawback_import_line)
       c_line.linked_drawback_import_line_id = d_line.id
       expect(c_line.save).to be_truthy
 
@@ -42,8 +42,8 @@ describe LinesSupport do
       expect(PieceSet.find_by(drawback_import_line_id: d_line.id, commercial_invoice_line_id: c_line.id)).not_to be_nil
     end
     it 'should link drawback import line to commercial invoice line' do
-      c_line = FactoryBot(:commercial_invoice_line)
-      d_line = FactoryBot(:drawback_import_line, :quantity=>1)
+      c_line = create(:commercial_invoice_line)
+      d_line = create(:drawback_import_line, :quantity=>1)
       d_line.linked_commercial_invoice_line_id = c_line.id
       expect(d_line.save).to be_truthy
 
@@ -54,9 +54,9 @@ describe LinesSupport do
 
   describe "merge_piece_sets" do
     it "merges two piece sets together that are associated with the same object being destroyed" do
-      order_line = FactoryBot(:order_line)
-      shipment_line_1 = FactoryBot(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
-      shipment_line_2 = FactoryBot(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
+      order_line = create(:order_line)
+      shipment_line_1 = create(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
+      shipment_line_2 = create(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
       order_line.reload
 
       expect(order_line.piece_sets.length).to eq 2
@@ -71,7 +71,7 @@ describe LinesSupport do
     end
 
     it "deletes piece sets that are no longer referenced to anything" do
-      order_line = FactoryBot(:order_line)
+      order_line = create(:order_line)
       order_line.linked_order_line_id = order_line.id
       order_line.save!
       expect(order_line.piece_sets.length).to eq 1

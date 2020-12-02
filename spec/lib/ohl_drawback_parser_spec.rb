@@ -2,7 +2,7 @@ describe OpenChain::OhlDrawbackParser do
   before :all do
     @companies = Company.all
     {'CN'=>'CHINA', 'TW'=>'TAIWAN', 'KH'=>'CAMBODIA', 'VN'=>'VIET NAM', 'US'=>'UNITED STATES'}.each do |k, v|
-      FactoryBot(:country, :name=>v, :iso_code=>k)
+      create(:country, :name=>v, :iso_code=>k)
     end
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @sample_path = 'spec/support/bin/ohl_drawback_sample.xls'

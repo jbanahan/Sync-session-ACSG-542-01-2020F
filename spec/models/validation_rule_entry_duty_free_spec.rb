@@ -1,9 +1,9 @@
 describe ValidationRuleEntryDutyFree do
   before :each do
     @rule = ValidationRuleEntryDutyFree.new(rule_attributes_json: {spi_primary: '8'}.to_json)
-    @ci_line = FactoryBot(:commercial_invoice_line)
-    @ci_tariff_1 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @ci_line, spi_primary: 8)
-    @ci_tariff_2 = FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: @ci_line, spi_primary: 8)
+    @ci_line = create(:commercial_invoice_line)
+    @ci_tariff_1 = create(:commercial_invoice_tariff, commercial_invoice_line: @ci_line, spi_primary: 8)
+    @ci_tariff_2 = create(:commercial_invoice_tariff, commercial_invoice_line: @ci_line, spi_primary: 8)
   end
 
   it "passes if tariffs have the specifed SPI and invoice line is duty-free" do

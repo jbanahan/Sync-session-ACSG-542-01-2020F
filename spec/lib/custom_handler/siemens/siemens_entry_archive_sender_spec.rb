@@ -1,19 +1,19 @@
 describe OpenChain::CustomHandler::Siemens::SiemensEntryArchiveSender do
 
   let(:co1) do
-    co = FactoryBot(:company)
+    co = create(:company)
     co.system_identifiers.create! system: "Fenix", code: "807150586RM0001"
     co
   end
 
   let(:co2) do
-    co = FactoryBot(:company)
+    co = create(:company)
     co.system_identifiers.create! system: "Fenix", code: "807150586RM0002"
     co
   end
 
   let(:co3) do
-    co = FactoryBot(:company)
+    co = create(:company)
     co.system_identifiers.create! system: "Fenix", code: "not siemens"
     co
   end
@@ -24,27 +24,27 @@ describe OpenChain::CustomHandler::Siemens::SiemensEntryArchiveSender do
   let(:now) { Time.zone.now }
 
   let(:ent1) do
-    ent = FactoryBot(:entry, broker_reference: "brok1", importer: co1, entry_number: "ent_num1", file_logged_date: Date.new(2020, 1, 6))
+    ent = create(:entry, broker_reference: "brok1", importer: co1, entry_number: "ent_num1", file_logged_date: Date.new(2020, 1, 6))
     ent.sync_records.create! trading_partner: described_class::XML_SYNC_TRADING_PARTNER, sent_at: yesterday, confirmed_at: yesterday + 1.minute
     ent
   end
 
   let(:ent2) do
-    ent = FactoryBot(:entry, broker_reference: "brok2", importer: co2, entry_number: "ent_num2", file_logged_date: Date.new(2020, 1, 6))
+    ent = create(:entry, broker_reference: "brok2", importer: co2, entry_number: "ent_num2", file_logged_date: Date.new(2020, 1, 6))
     ent.sync_records.create! trading_partner: described_class::XML_SYNC_TRADING_PARTNER, sent_at: yesterday, confirmed_at: yesterday + 1.minute
     ent
   end
 
   let(:ent3) do
-    ent = FactoryBot(:entry, broker_reference: "brok3", importer: co3, entry_number: "ent_num3", file_logged_date: Date.new(2020, 1, 6))
+    ent = create(:entry, broker_reference: "brok3", importer: co3, entry_number: "ent_num3", file_logged_date: Date.new(2020, 1, 6))
     # included to test importer -- non-Siemens entries would never have one of these
     ent.sync_records.create! trading_partner: described_class::XML_SYNC_TRADING_PARTNER, sent_at: yesterday, confirmed_at: yesterday + 1.minute
     ent
   end
 
-  let(:att1) { FactoryBot(:attachment, attachable: ent1, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
-  let(:att2) { FactoryBot(:attachment, attachable: ent2, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
-  let(:att3) { FactoryBot(:attachment, attachable: ent3, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
+  let(:att1) { create(:attachment, attachable: ent1, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
+  let(:att2) { create(:attachment, attachable: ent2, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
+  let(:att3) { create(:attachment, attachable: ent3, attachment_type: "Archive Packet", created_at: yesterday - 1.minute) }
   let(:ms) { stub_master_setup }
 
   before do
@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensEntryArchiveSender do
 
     att1; att2; att3
 
-    [ent1, ent2, ent3].each { |ent| FactoryBot(:broker_invoice, entry: ent, invoice_date: "2020-03-15") }
+    [ent1, ent2, ent3].each { |ent| create(:broker_invoice, entry: ent, invoice_date: "2020-03-15") }
 
     allow_any_instance_of(Attachment).to receive(:bucket) do |att|
       if att.id == att1.id

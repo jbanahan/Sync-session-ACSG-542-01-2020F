@@ -4,25 +4,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       @cdefs = described_class.prep_custom_definitions([:prodven_risk, :ordln_pc_approved_by, :ordln_pc_approved_date, :ordln_qa_approved_by, :ordln_qa_approved_date, :ord_assigned_agent, :ord_inspector_assigned])
     end
     it "should approve lines where risk level is Auto-Flow" do
-      u = FactoryBot(:master_user, username:'autoflow')
-      p = FactoryBot(:product)
-      v = FactoryBot(:company, name:'vendor')
+      u = create(:master_user, username:'autoflow')
+      p = create(:product)
+      v = create(:company, name:'vendor')
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
       pva.update_custom_value!(@cdefs[:prodven_risk], 'Auto-Flow')
-      ord = FactoryBot(:order, vendor:v)
-      ol = FactoryBot(:order_line, product:p, order:ord)
+      ord = create(:order, vendor:v)
+      ol = create(:order_line, product:p, order:ord)
 
       expect(ord).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
 
       # create another product with an empty risk assignment. Nothing should happen to this one
-      other_product = FactoryBot(:product)
+      other_product = create(:product)
       other_product.product_vendor_assignments.create!(vendor_id:v.id)
-      other_ol = FactoryBot(:order_line, product:other_product, order:ord)
+      other_ol = create(:order_line, product:other_product, order:ord)
 
       # create another product with low risk assignment and an order line with Auto-Flow approval which should be cmp_legal_approved_date
-      low_product = FactoryBot(:product)
+      low_product = create(:product)
       low_product.product_vendor_assignments.create!(vendor_id:v.id).update_custom_value!(@cdefs[:prodven_risk], 'Low')
-      low_ol = FactoryBot(:order_line, product:low_product, order:ord)
+      low_ol = create(:order_line, product:low_product, order:ord)
 
       described_class.process(ord)
 
@@ -39,25 +39,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "should approve lines where risk level is 'Domestic Low Auto-Flow'" do
-      u = FactoryBot(:master_user, username:'autoflow')
-      p = FactoryBot(:product)
-      v = FactoryBot(:company, name:'vendor')
+      u = create(:master_user, username:'autoflow')
+      p = create(:product)
+      v = create(:company, name:'vendor')
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
       pva.update_custom_value!(@cdefs[:prodven_risk], 'Domestic Low Auto-Flow')
-      ord = FactoryBot(:order, vendor:v)
-      ol = FactoryBot(:order_line, product:p, order:ord)
+      ord = create(:order, vendor:v)
+      ol = create(:order_line, product:p, order:ord)
 
       expect(ord).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
 
       # create another product with an empty risk assignment. Nothing should happen to this one
-      other_product = FactoryBot(:product)
+      other_product = create(:product)
       other_product.product_vendor_assignments.create!(vendor_id:v.id)
-      other_ol = FactoryBot(:order_line, product:other_product, order:ord)
+      other_ol = create(:order_line, product:other_product, order:ord)
 
       # create another product with low risk assignment and an order line with Auto-Flow approval which should be cmp_legal_approved_date
-      low_product = FactoryBot(:product)
+      low_product = create(:product)
       low_product.product_vendor_assignments.create!(vendor_id:v.id).update_custom_value!(@cdefs[:prodven_risk], 'Low')
-      low_ol = FactoryBot(:order_line, product:low_product, order:ord)
+      low_ol = create(:order_line, product:low_product, order:ord)
 
       described_class.process(ord)
 
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "should auto flow QA if no assigned agent" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       described_class.process(ol.order)
       expect(ol.custom_value(@cdefs[:ordln_qa_approved_by])).to_not be_blank
       expect(ol.custom_value(@cdefs[:ordln_qa_approved_date])).to_not be_blank
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
 
     it "should auto flow if assigned agent is global sourcing" do
       ['GS-EU', 'GS-US', 'GS-CA'].each do |agent|
-        ol = FactoryBot(:order_line)
+        ol = create(:order_line)
         ol.order.update_custom_value!(@cdefs[:ord_assigned_agent], agent)
 
         described_class.process(ol.order)
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "should not auto flow QA if assigned agent" do
-      ol = FactoryBot(:order_line)
+      ol = create(:order_line)
       ol.order.update_custom_value!(@cdefs[:ord_assigned_agent], 'RO')
 
       described_class.process(ol.order)
@@ -102,12 +102,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "should create Auto Flow user" do
-      p = FactoryBot(:product)
-      v = FactoryBot(:company, name:'vendor')
+      p = create(:product)
+      v = create(:company, name:'vendor')
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
       pva.update_custom_value!(@cdefs[:prodven_risk], 'Auto-Flow')
-      ord = FactoryBot(:order, vendor:v)
-      ol = FactoryBot(:order_line, product:p, order:ord)
+      ord = create(:order, vendor:v)
+      ol = create(:order_line, product:p, order:ord)
 
       described_class.process(ord)
 
@@ -115,13 +115,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "allows disabling the snapshot" do
-      FactoryBot(:master_user, username:'autoflow')
-      p = FactoryBot(:product)
-      v = FactoryBot(:company, name:'vendor')
+      create(:master_user, username:'autoflow')
+      p = create(:product)
+      v = create(:company, name:'vendor')
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
       pva.update_custom_value!(@cdefs[:prodven_risk], 'Auto-Flow')
-      ord = FactoryBot(:order, vendor:v)
-      FactoryBot(:order_line, product:p, order:ord)
+      ord = create(:order, vendor:v)
+      create(:order_line, product:p, order:ord)
 
       expect(ord).not_to receive(:create_snapshot)
 

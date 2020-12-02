@@ -26,8 +26,8 @@ gem 'will_paginate', '3.3.0'
 gem 'paperclip', '6.1.0'
 gem 'uuidtools', '2.1.4'
 gem 'spreadsheet', '1.2.6'
-gem 'caxlsx', '3.0.2'
-gem 'caxlsx_rails', '0.6.2'
+gem 'caxlsx', '3.0.1'
+gem 'axlsx_rails', '0.6'
 gem 'exception_notification', '4.4.3'
 gem 'rufus-scheduler', '3.6.0'
 # The fugit gem is what rufus now uses behind the scenes for all the date/time/cron parsing stuff
@@ -125,7 +125,7 @@ gem 'get_process_mem', '0.2.7'
 
 gem 'nonschema_migrations', '2.0.1'
 
-gem 'nokogiri', '1.10.10'
+gem 'nokogiri', '1.10.9'
 
 gem 'content_disposition', '1.0.0'
 
@@ -163,4 +163,5 @@ group :test do
   gem 'webmock'
   gem 'timecop', '~> 0.9.0'
   gem 'database_cleaner'
+  gem 'rails-controller-testing'
 end

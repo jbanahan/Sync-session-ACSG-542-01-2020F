@@ -59,8 +59,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
       instance_double(OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator)
     }
 
-    let (:ua) { FactoryBot(:importer, system_code: "UNDAR") }
-    let (:shipment) { FactoryBot(:shipment, importer: ua) }
+    let (:ua) { create(:importer, system_code: "UNDAR") }
+    let (:shipment) { create(:shipment, importer: ua) }
 
     it "sends fenix invoice file" do
       expect(subject).to receive(:invoice_generator).and_return generator

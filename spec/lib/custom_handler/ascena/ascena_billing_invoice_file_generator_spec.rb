@@ -2,41 +2,41 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
   describe "generate_and_send" do
     let (:broker_invoice) do
-      FactoryBot(:broker_invoice, invoice_number: "INVOICENUMBER", invoice_date: Time.zone.parse("2017-01-13").to_date)
+      create(:broker_invoice, invoice_number: "INVOICENUMBER", invoice_date: Time.zone.parse("2017-01-13").to_date)
     end
 
     let (:broker_invoice_line_duty) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0001", charge_description: "DUTY")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0001", charge_description: "DUTY")
     end
 
     let (:broker_invoice_line_duty_direct) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0099", charge_description: "Duty Paid Direct")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0099", charge_description: "Duty Paid Direct")
     end
 
     let (:broker_invoice_line_brokerage) do
-      FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage")
+      create(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage")
     end
 
     let (:entry) do
-      entry = FactoryBot(:entry, entry_number: "ENTRYNO", broker_reference: "REF", po_numbers: "PO 1\n PO 2\n PO 3", entry_filed_date: Date.new(2020, 3, 15))
-      commercial_invoice = FactoryBot(:commercial_invoice, entry: entry)
-      invoice_line1 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 1", prorated_mpf: BigDecimal(10), product_line: "CA")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line1, duty_amount: BigDecimal(20))
+      entry = create(:entry, entry_number: "ENTRYNO", broker_reference: "REF", po_numbers: "PO 1\n PO 2\n PO 3", entry_filed_date: Date.new(2020, 3, 15))
+      commercial_invoice = create(:commercial_invoice, entry: entry)
+      invoice_line1 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 1", prorated_mpf: BigDecimal(10), product_line: "CA")
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line1, duty_amount: BigDecimal(20))
 
-      invoice_line2 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 2", prorated_mpf: BigDecimal(20), product_line: "DB")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line2, duty_amount: BigDecimal(30))
+      invoice_line2 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 2", prorated_mpf: BigDecimal(20), product_line: "DB")
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line2, duty_amount: BigDecimal(30))
 
       # Make two lines for the same PO, so we make sure we're handling the sum'ing at po level correctly as well as the proration for brokerage lines
-      invoice_line3 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line3, duty_amount: BigDecimal(40))
+      invoice_line3 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line3, duty_amount: BigDecimal(40))
 
-      invoice_line4 = FactoryBot(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
-      FactoryBot(:commercial_invoice_tariff, commercial_invoice_line: invoice_line4, duty_amount: BigDecimal(40))
+      invoice_line4 = create(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
+      create(:commercial_invoice_tariff, commercial_invoice_line: invoice_line4, duty_amount: BigDecimal(40))
 
       entry
     end
 
-    let (:user) { FactoryBot(:master_user) }
+    let (:user) { create(:master_user) }
 
     let (:broker_invoice_with_duty_snapshot) do
       broker_invoice_line_duty
@@ -287,8 +287,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       let (:broker_invoice_duty_credit) do
         duty_line = broker_invoice_line_duty
         duty_invoice = duty_line.broker_invoice
-        invoice = FactoryBot(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: Time.zone.parse("2017-01-14").to_date)
-        FactoryBot(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
+        invoice = create(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: Time.zone.parse("2017-01-14").to_date)
+        create(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
 
         invoice
       end

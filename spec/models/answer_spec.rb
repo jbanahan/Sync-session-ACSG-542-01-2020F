@@ -1,8 +1,8 @@
 describe Answer do
   describe "log_update" do
     it "should create survey_response_update" do
-      answer = FactoryBot(:answer)
-      u = FactoryBot(:user)
+      answer = create(:answer)
+      u = create(:user)
       answer.log_update u
       expect(answer.survey_response.survey_response_updates.first.user).to eq(u)
     end
@@ -23,36 +23,36 @@ describe Answer do
   end
   describe "answered?" do
     it 'should not be answered as default' do
-      expect(FactoryBot(:answer)).not_to be_answered
+      expect(create(:answer)).not_to be_answered
     end
     it 'should be answered if choice is set' do
-      expect(FactoryBot(:answer, :choice=>'x')).to be_answered
+      expect(create(:answer, :choice=>'x')).to be_answered
     end
     it 'should be answered if comment assigned to survey response user is set' do
-      a = FactoryBot(:answer)
+      a = create(:answer)
       a.answer_comments.create!(:user_id=>a.survey_response.user_id, :content=>'1234567890')
       expect(a).to be_answered
     end
     it 'should be answered if attachment assigned to survey response user is set' do
-      a = FactoryBot(:answer)
+      a = create(:answer)
       a.attachments.create!(:uploaded_by_id=>a.survey_response.user_id)
       expect(a).to be_answered
     end
     it 'should not be answered if only comment is from a different user' do
-      a = FactoryBot(:answer)
-      a.answer_comments.create!(:user_id=>FactoryBot(:user).id, :content=>'1234567890')
+      a = create(:answer)
+      a.answer_comments.create!(:user_id=>create(:user).id, :content=>'1234567890')
       expect(a).not_to be_answered
     end
     it 'should not be answered if only attachment is from a different user' do
-      a = FactoryBot(:answer)
-      a.attachments.create!(:uploaded_by_id=>FactoryBot(:user).id)
+      a = create(:answer)
+      a.attachments.create!(:uploaded_by_id=>create(:user).id)
       expect(a).not_to be_answered
     end
   end
   describe "can view" do
     before :each do
-      @answer = FactoryBot(:answer)
-      @u = FactoryBot(:user)
+      @answer = create(:answer)
+      @u = create(:user)
     end
     it "should pass if user can view survey response" do
       expect(@answer.survey_response).to receive(:can_view?).with(@u).and_return(true)
@@ -64,32 +64,32 @@ describe Answer do
     end
   end
   it "should require survey_response" do
-    a = Answer.new(:question=>FactoryBot(:question))
+    a = Answer.new(:question=>create(:question))
     expect(a.save).to be_falsey
   end
   it "should require question" do
-    a = Answer.new(:survey_response=>FactoryBot(:survey_response))
+    a = Answer.new(:survey_response=>create(:survey_response))
     expect(a.save).to be_falsey
   end
   it "should accept nested attributes for comments" do
-    a = FactoryBot(:answer)
-    u = FactoryBot(:user)
+    a = create(:answer)
+    u = create(:user)
     a.update(:answer_comments_attributes=>[{:user_id=>u.id, :content=>'abcdef'}])
     expect(AnswerComment.find_by_answer_id_and_user_id(a.id, u.id).content).to eq("abcdef")
   end
   it "should not accepted updates for comments via nested attributes" do
-    a = FactoryBot(:answer)
-    u = FactoryBot(:user)
+    a = create(:answer)
+    u = create(:user)
     ac = a.answer_comments.create!(:user=>u, :content=>'abcdefg')
     a.update(:answer_comments_attributes=>[{:id=>ac.id, :content=>'xxx'}])
     expect(AnswerComment.find_by(answer: a, user: u).content).to eq("abcdefg")
   end
   it "should allow attachments" do
-    a = FactoryBot(:answer)
+    a = create(:answer)
     a.attachments.create!(:attached_file_name=>"x.png")
   end
   it "should update parent response when answer is updated" do
-    a = FactoryBot(:answer)
+    a = create(:answer)
     a.survey_response.update(:updated_at=>1.week.ago)
     a.choice = "X"
     now = Time.zone.now
@@ -102,7 +102,7 @@ describe Answer do
 
   describe "attachment_added" do
     it "updates updated_at when an attachment is added" do
-      a = FactoryBot(:answer, updated_at: 5.days.ago)
+      a = create(:answer, updated_at: 5.days.ago)
       now = Time.zone.now
       Timecop.freeze(now) do
         a.attachment_added nil

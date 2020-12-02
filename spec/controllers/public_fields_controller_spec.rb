@@ -1,5 +1,5 @@
 describe PublicFieldsController do
-  let(:user) { FactoryBot(:user, admin: true) }
+  let(:user) { create(:user, admin: true) }
 
   before do
     sign_in_as user

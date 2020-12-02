@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
   context "ocean file" do
     describe "parse_file" do
       before :each do
-        @nexeo = with_customs_management_id(FactoryBot(:importer, name: "Nexeo", system_code: "NEXEO"), "NEXEO")
+        @nexeo = with_customs_management_id(create(:importer, name: "Nexeo", system_code: "NEXEO"), "NEXEO")
       end
 
       it "parses an escape delimited file into a shipment" do
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
 
       it "reuses existing comments w/ same subjects" do
         s = Shipment.create! reference: "EXPORT-1402240"
-        user = FactoryBot(:user)
+        user = create(:user)
 
         final_dest = s.comments.create! subject: "Final Destination", body: "", user: user
         dis_port = s.comments.create! subject: "Discharge Port", body: "", user: user
@@ -123,9 +123,9 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
 
   context "ocean job" do
     before :each do
-      @nexeo = FactoryBot(:importer, name: "Nexeo", alliance_customer_number: "NEXEO")
-      @lading_port = FactoryBot(:port, schedule_d_code: "2704")
-      @unlading_port = FactoryBot(:port, schedule_k_code: "58309")
+      @nexeo = create(:importer, name: "Nexeo", alliance_customer_number: "NEXEO")
+      @lading_port = create(:port, schedule_d_code: "2704")
+      @unlading_port = create(:port, schedule_k_code: "58309")
     end
 
     it "parses an escape delimited file into a shipment" do

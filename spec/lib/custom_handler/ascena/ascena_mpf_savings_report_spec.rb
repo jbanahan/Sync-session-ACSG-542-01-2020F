@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   subject { described_class }
-  let! (:ascena) { with_customs_management_id(FactoryBot(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
-  let! (:ann) { with_customs_management_id(FactoryBot(:importer, name: "Ann"), "ATAYLOR") }
-  let! (:maurices) { with_customs_management_id(FactoryBot(:importer, name: "Maurices"), "MAUR") }
-  let! (:ascena_master) { with_customs_management_id(FactoryBot(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+  let! (:ascena) { with_customs_management_id(create(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+  let! (:ann) { with_customs_management_id(create(:importer, name: "Ann"), "ATAYLOR") }
+  let! (:maurices) { with_customs_management_id(create(:importer, name: "Maurices"), "MAUR") }
+  let! (:ascena_master) { with_customs_management_id(create(:importer, name: "Ascena Master"), "ASCENAMASTER") }
 
   describe "permissions" do
 
-    let! (:user) { FactoryBot(:master_user) }
+    let! (:user) { create(:master_user) }
     let!(:ms) do
       m = stub_master_setup
       allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
     it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
       user.company.update master: false
-      g = FactoryBot(:group, system_code: "ASCE_TRADE_ASSOC")
+      g = create(:group, system_code: "ASCE_TRADE_ASSOC")
       user.groups << g
       expect(subject.permissions user).to eq(cust_descriptions)
     end
@@ -59,8 +59,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
   end
 
   describe "run_schedulable" do
-    let!(:current_fm) { FactoryBot(:fiscal_month, company: ascena, start_date: Date.new(2018, 3, 15), end_date: Date.new(2018, 4, 15), year: 2018, month_number: 2) }
-    let!(:previous_fm) { FactoryBot(:fiscal_month, company: ascena, start_date: Date.new(2018, 2, 15), end_date: Date.new(2018, 3, 14), year: 2018, month_number: 1) }
+    let!(:current_fm) { create(:fiscal_month, company: ascena, start_date: Date.new(2018, 3, 15), end_date: Date.new(2018, 4, 15), year: 2018, month_number: 2) }
+    let!(:previous_fm) { create(:fiscal_month, company: ascena, start_date: Date.new(2018, 2, 15), end_date: Date.new(2018, 3, 14), year: 2018, month_number: 1) }
 
     it "runs report for previous fiscal month on fourth day of fiscal month" do
       Tempfile.open(["hi", ".xls"]) do |t|
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   describe '.max_mpf_amount' do
     before do
-      @entry = FactoryBot(:entry)
+      @entry = create(:entry)
       @klass = described_class.new(['123456'])
     end
 
@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   describe '.min_mpf_amount' do
     before do
-      @entry = FactoryBot(:entry)
+      @entry = create(:entry)
       @klass = described_class.new(['123456'])
     end
 
@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   describe '.mpf_calculation_date' do
     before do
-      @entry = FactoryBot(:entry)
+      @entry = create(:entry)
       @klass = described_class.new(['123456'])
     end
 
@@ -188,8 +188,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   describe '#generate_initial_hash' do
     before do
-      @entry = FactoryBot(:entry)
-      @port = FactoryBot(:port, name: 'Entry Port')
+      @entry = create(:entry)
+      @port = create(:port, name: 'Entry Port')
       @entry.transport_mode_code = "1"
       @entry.us_entry_port = @port
       @entry.broker_reference = 'abcdef'

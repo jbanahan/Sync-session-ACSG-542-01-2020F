@@ -1,8 +1,8 @@
 describe Variant do
   describe '#can_view?' do
     before :each do
-      @v = FactoryBot(:variant)
-      @u = FactoryBot(:user)
+      @v = create(:variant)
+      @u = create(:user)
     end
     it 'should be visible if user can view product' do
       expect(@v.product).to receive(:can_view?).with(@u).and_return true

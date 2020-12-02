@@ -1,8 +1,8 @@
 describe Api::V1::Admin::CustomViewTemplatesController do
-  let(:user) { FactoryBot(:sys_admin_user) }
+  let(:user) { create(:sys_admin_user) }
 
   before do
-    FactoryBot(:custom_view_template, module_type: "Product")
+    create(:custom_view_template, module_type: "Product")
     allow_api_user user
     use_json
   end
@@ -12,18 +12,18 @@ describe Api::V1::Admin::CustomViewTemplatesController do
       mf_collection = [{mfid: :prod_attachment_count, label: "Attachment Count", datatype: :integer},
                        {mfid: :prod_attachment_types, label: "Attachment Types", datatype: :string}]
       cvt = CustomViewTemplate.first
-      cvt.search_criterions << FactoryBot(:search_criterion)
+      cvt.search_criterions << create(:search_criterion)
       expect_any_instance_of(described_class).to receive(:get_mf_digest).with(cvt).and_return mf_collection
       get :edit, id: cvt.id
       expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map { |sc| sc.json(user) }, model_fields: mf_collection}.to_json)
     end
 
     it "prevents access by non-sys-admins" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
       get :edit, id: 1
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
 
-      allow_api_access FactoryBot(:admin_user)
+      allow_api_access create(:admin_user)
       get :edit, id: 1
       expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
@@ -37,7 +37,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     let!(:custom_view_template) do
       cvt = CustomViewTemplate.first
       cvt.update(module_type: "original module_type", template_identifier: "original template identifier", template_path: "/original/template/path")
-      cvt.search_criterions << FactoryBot(:search_criterion, model_field_uid: "ent_brok_ref", "operator" => "eq", "value" => "w", "include_empty" => true)
+      cvt.search_criterions << create(:search_criterion, model_field_uid: "ent_brok_ref", "operator" => "eq", "value" => "w", "include_empty" => true)
       cvt
     end
 
@@ -60,7 +60,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
 
     context "with non-sys-admins" do
       it "prevents access by regular admins" do
-        allow_api_access FactoryBot(:admin_user)
+        allow_api_access create(:admin_user)
         put :update, id: custom_view_template.id, criteria: custom_view_template_criteria
         custom_view_template.reload
         criteria = custom_view_template.search_criterions
@@ -72,7 +72,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
       end
 
       it "prevents access by everyone else" do
-        allow_api_access FactoryBot(:user)
+        allow_api_access create(:user)
         put :update, id: custom_view_template.id, criteria: custom_view_template_criteria
         custom_view_template.reload
         criteria = custom_view_template.search_criterions
@@ -87,7 +87,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
 
   describe "get_mf_digest" do
     it "takes the model fields associated with a template's module returns only the mfid, label, and datatype fields" do
-      cvt = FactoryBot(:custom_view_template, module_type: "Product")
+      cvt = create(:custom_view_template, module_type: "Product")
       mfs = described_class.new.get_mf_digest cvt
       expect(mfs.find {|mf| mf[:mfid] == :prod_uid}).to eq({mfid: :prod_uid, label: "Unique Identifier", datatype: :string })
     end

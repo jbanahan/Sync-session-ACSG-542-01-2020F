@@ -9,7 +9,7 @@ describe SearchColumn do
   end
 
   describe "model_field" do
-    let(:sc) { FactoryBot(:search_column, search_setup: FactoryBot(:search_setup, module_type: "Product"),
+    let(:sc) { create(:search_column, search_setup: create(:search_setup, module_type: "Product"),
                                        model_field_uid: 'prod_uid', constant_field_name: nil, constant_field_value: nil)  }
 
     it "returns MF based on constant field if model_field_uid begins with '_const'" do

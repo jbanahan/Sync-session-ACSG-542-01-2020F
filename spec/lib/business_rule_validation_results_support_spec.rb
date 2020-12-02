@@ -11,8 +11,8 @@ describe FakeController, :type => :controller do
   end
 
   before(:each) do
-    @obj = FactoryBot(:entry)
-    @u = FactoryBot(:user)
+    @obj = create(:entry)
+    @u = create(:user)
     sign_in_as @u
   end
 
@@ -42,21 +42,21 @@ describe FakeController, :type => :controller do
     end
 
     def create_validation_data user
-      @obj = FactoryBot(:entry, broker_reference: "123456")
-      @bvt = FactoryBot(:business_validation_template, module_type: 'Entry', name: "Entry rules")
-      @bvr_1 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
-      @bvr_2 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
-      @bvru_1 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
-      @bvru_2 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
-      @bvru_3 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
+      @obj = create(:entry, broker_reference: "123456")
+      @bvt = create(:business_validation_template, module_type: 'Entry', name: "Entry rules")
+      @bvr_1 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
+      @bvr_2 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
+      @bvru_1 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
+      @bvru_2 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
+      @bvru_3 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
 
-      @bvrr_1 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
+      @bvrr_1 = create(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
       @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
 
-      @bvrr_2 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
+      @bvrr_2 = create(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
       @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
 
-      @bvrr_3 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
+      @bvrr_3 = create(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
       @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
     end
 
@@ -105,21 +105,21 @@ describe FakeJsonController, :type => :controller do
   describe "run_validations" do
 
     def create_validation_data user
-      @obj = FactoryBot(:entry, broker_reference: "123456")
-      @bvt = FactoryBot(:business_validation_template, module_type: 'Entry', name: "Entry rules")
-      @bvr_1 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
-      @bvr_2 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
-      @bvru_1 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
-      @bvru_2 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
-      @bvru_3 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
+      @obj = create(:entry, broker_reference: "123456")
+      @bvt = create(:business_validation_template, module_type: 'Entry', name: "Entry rules")
+      @bvr_1 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
+      @bvr_2 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
+      @bvru_1 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
+      @bvru_2 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
+      @bvru_3 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
 
-      @bvrr_1 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
+      @bvrr_1 = create(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
       @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
 
-      @bvrr_2 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
+      @bvrr_2 = create(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
       @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
 
-      @bvrr_3 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
+      @bvrr_3 = create(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
       @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
     end
 
@@ -130,7 +130,7 @@ describe FakeJsonController, :type => :controller do
     }
 
     before :each do
-      @u = FactoryBot(:master_user, entry_view:true)
+      @u = create(:master_user, entry_view:true)
       allow_api_access @u
     end
 
@@ -138,7 +138,7 @@ describe FakeJsonController, :type => :controller do
       BusinessValidationTemplate.destroy_all
       bvt = BusinessValidationTemplate.create!(module_type:'Entry')
       bvt.search_criterions.create! model_field_uid: "ent_entry_num", operator: "nq", value: "XXXXXXXXXX"
-      ent = FactoryBot(:entry, :importer=>FactoryBot(:importer))
+      ent = create(:entry, :importer=>create(:importer))
       post :show, id: ent.id, format: "json"
 
       expect(bvt.business_validation_results.first.validatable).to eq ent
@@ -146,14 +146,14 @@ describe FakeJsonController, :type => :controller do
 
     it "returns results hash" do
       @u.company.update_attributes(show_business_rules:true)
-      obj = FactoryBot(:entry, :importer=>FactoryBot(:importer))
+      obj = create(:entry, :importer=>create(:importer))
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       post :show, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Entry"
     end
 
     it "renders error if user doesn't have permission to view object" do
-      obj = FactoryBot(:entry)
+      obj = create(:entry)
       allow_any_instance_of(Entry).to receive(:can_view?).and_return false
       post :show, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["errors"]).to eq ["You do not have permission to update validation results for this object."]
@@ -161,7 +161,7 @@ describe FakeJsonController, :type => :controller do
 
     it "renders error if there are any rule results user doesn't have permission to edit" do
       create_validation_data @u
-      @bvru_1.group = FactoryBot(:group); @bvru_1.save!
+      @bvru_1.group = create(:group); @bvru_1.save!
       post :show, id: @obj.id, :format => 'json'
       expect(JSON.parse(response.body)["errors"]).to eq ["You do not have permission to update validation results for this object."]
     end
@@ -177,26 +177,26 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
   }
 
   before :each do
-    @u = FactoryBot(:user, first_name: "Nigel", last_name: "Tufnel")
+    @u = create(:user, first_name: "Nigel", last_name: "Tufnel")
     allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
   end
 
   def create_validation_data user
-    @obj = FactoryBot(:entry, broker_reference: "123456")
-    @bvt = FactoryBot(:business_validation_template, module_type: 'Entry', name: "Entry rules")
-    @bvr_1 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
-    @bvr_2 = FactoryBot(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
-    @bvru_1 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
-    @bvru_2 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
-    @bvru_3 = FactoryBot(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
+    @obj = create(:entry, broker_reference: "123456")
+    @bvt = create(:business_validation_template, module_type: 'Entry', name: "Entry rules")
+    @bvr_1 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Fail")
+    @bvr_2 = create(:business_validation_result, business_validation_template: @bvt, validatable: @obj, state: "Pass")
+    @bvru_1 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 1", description: "desc of rule 1")
+    @bvru_2 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 2", description: "desc of rule 2")
+    @bvru_3 = create(:business_validation_rule, business_validation_template: @bvt, name: "Rule no. 3", description: "desc of rule 3")
 
-    @bvrr_1 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
+    @bvrr_1 = create(:business_validation_rule_result, business_validation_rule: @bvru_1, state: "Pass")
     @bvrr_1.business_validation_result = @bvr_1; @bvrr_1.save!
 
-    @bvrr_2 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
+    @bvrr_2 = create(:business_validation_rule_result, business_validation_rule: @bvru_2, state: "Fail", note: "Why is this failing?", message: "This entry's no good!")
     @bvrr_2.business_validation_result = @bvr_1; @bvrr_2.save!
 
-    @bvrr_3 = FactoryBot(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
+    @bvrr_3 = create(:business_validation_rule_result, business_validation_rule: @bvru_3, state: "Pass", overridden_at: DateTime.now, overridden_by: user)
     @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
   end
 

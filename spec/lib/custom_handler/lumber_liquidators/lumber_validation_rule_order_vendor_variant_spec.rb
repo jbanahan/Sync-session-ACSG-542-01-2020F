@@ -1,19 +1,19 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:pva_pc_approved_date]
-    @vendor = FactoryBot(:vendor, name:'MYVEND')
-    @plant = FactoryBot(:plant, company:@vendor)
-    @plant2 = FactoryBot(:plant, company:@vendor)
+    @vendor = create(:vendor, name:'MYVEND')
+    @plant = create(:plant, company:@vendor)
+    @plant2 = create(:plant, company:@vendor)
 
-    @product1 = FactoryBot(:product)
-    @variant1 = FactoryBot(:variant, product:@product1)
+    @product1 = create(:product)
+    @variant1 = create(:variant, product:@product1)
 
-    @product2 = FactoryBot(:product, unique_identifier:'PRODNUM2')
-    @variant2 = FactoryBot(:variant, product:@product2)
+    @product2 = create(:product, unique_identifier:'PRODNUM2')
+    @variant2 = create(:variant, product:@product2)
 
-    @order = FactoryBot(:order, vendor:@vendor)
-    @order_line_1 = FactoryBot(:order_line, product:@product1, order:@order)
-    @order_line_2 = FactoryBot(:order_line, product:@product2, order:@order)
+    @order = create(:order, vendor:@vendor)
+    @order_line_1 = create(:order_line, product:@product1, order:@order)
+    @order_line_2 = create(:order_line, product:@product2, order:@order)
   end
   it "should pass if all order lines have an product with an approved plant variant assignment for one of the vendor's plants" do
     pva1 = @variant1.plant_variant_assignments.create!(plant_id:@plant.id)

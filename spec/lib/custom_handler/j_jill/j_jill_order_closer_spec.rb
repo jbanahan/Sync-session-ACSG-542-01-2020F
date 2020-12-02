@@ -5,15 +5,15 @@ describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
       expect(described_class.new.close?(o)).to be_truthy
     end
     it "should close an order 95%+ shipped" do
-      ol = FactoryBot(:order_line, quantity:100)
-      sl = FactoryBot(:shipment_line, quantity:95, product:ol.product)
+      ol = create(:order_line, quantity:100)
+      sl = create(:shipment_line, quantity:95, product:ol.product)
       sl.linked_order_line_id = ol.id
       sl.save!
       expect(described_class.new.close?(ol.order)).to be_truthy
     end
     it "should not close an order < 95% shipped and < 60 days after ship window close" do
-      ol = FactoryBot(:order_line, quantity:10000)
-      sl = FactoryBot(:shipment_line, quantity:95, product:ol.product)
+      ol = create(:order_line, quantity:10000)
+      sl = create(:shipment_line, quantity:95, product:ol.product)
       sl.linked_order_line_id = ol.id
       sl.save!
       ol.order.update_attributes(ship_window_end:1.day.ago)
@@ -39,8 +39,8 @@ describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
   end
 
   describe "run_schedulable" do
-    let! (:jjill) { FactoryBot(:importer, system_code: "JJILL") }
-    let! (:order) { FactoryBot(:order, importer: jjill, ship_window_end: 61.days.ago) }
+    let! (:jjill) { create(:importer, system_code: "JJILL") }
+    let! (:order) { create(:order, importer: jjill, ship_window_end: 61.days.ago) }
 
     subject { described_class }
 

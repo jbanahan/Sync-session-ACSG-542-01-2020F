@@ -1,9 +1,9 @@
 describe OpenChain::DailyStatementAttachmentZipper do
 
-  let!(:user) { FactoryBot(:user, email: "st-hubbins@hellhole.co.uk") }
-  let!(:statement) { FactoryBot(:daily_statement, statement_number: "123456") }
+  let!(:user) { create(:user, email: "st-hubbins@hellhole.co.uk") }
+  let!(:statement) { create(:daily_statement, statement_number: "123456") }
 
-  let(:ent_1) { FactoryBot(:entry, entry_number: "ent_num_1")}
+  let(:ent_1) { create(:entry, entry_number: "ent_num_1")}
 
   let(:file_1) { File.open("spec/fixtures/files/blank_report_1.csv") }
   let(:file_2) { File.open("spec/fixtures/files/blank_report_1.xls") }
@@ -11,15 +11,15 @@ describe OpenChain::DailyStatementAttachmentZipper do
   let(:file_4) { File.open("spec/fixtures/files/blank_report_2.xls") }
   let(:file_5) { File.open("spec/fixtures/files/burlington_850_prepack.edi") }
 
-  let!(:att_1_1) { FactoryBot(:attachment, attachable: ent_1, attachment_type: "ENTRY PACKET", attached: file_1) }
-  let!(:att_1_2) { FactoryBot(:attachment, attachable: ent_1, attachment_type: "ENTRY SUMMARY PACK", attached: file_2) }
-  let!(:att_1_3) { FactoryBot(:attachment, attachable: ent_1, attachment_type: "7501 - ORIGINAL", attached: file_3) }
-  let!(:statement_line_1) { FactoryBot(:daily_statement_entry, daily_statement: statement, entry: ent_1) }
+  let!(:att_1_1) { create(:attachment, attachable: ent_1, attachment_type: "ENTRY PACKET", attached: file_1) }
+  let!(:att_1_2) { create(:attachment, attachable: ent_1, attachment_type: "ENTRY SUMMARY PACK", attached: file_2) }
+  let!(:att_1_3) { create(:attachment, attachable: ent_1, attachment_type: "7501 - ORIGINAL", attached: file_3) }
+  let!(:statement_line_1) { create(:daily_statement_entry, daily_statement: statement, entry: ent_1) }
 
-  let(:ent_2) { FactoryBot(:entry, entry_number: "ent_num_2")}
-  let!(:att_2_1) { FactoryBot(:attachment, attachable: ent_2, attachment_type: "ENTRY PACKET", attached: file_4) }
-  let!(:att_2_2) { FactoryBot(:attachment, attachable: ent_2, attachment_type: "ENTRY PACKET", attached: file_5) }
-  let!(:statement_line_2) {FactoryBot(:daily_statement_entry, daily_statement: statement, entry: ent_2)}
+  let(:ent_2) { create(:entry, entry_number: "ent_num_2")}
+  let!(:att_2_1) { create(:attachment, attachable: ent_2, attachment_type: "ENTRY PACKET", attached: file_4) }
+  let!(:att_2_2) { create(:attachment, attachable: ent_2, attachment_type: "ENTRY PACKET", attached: file_5) }
+  let!(:statement_line_2) {create(:daily_statement_entry, daily_statement: statement, entry: ent_2)}
 
   before { stub_paperclip; stub_master_setup }
   after { [file_1, file_2, file_3, file_4, file_5].each { |f| f.close }  }

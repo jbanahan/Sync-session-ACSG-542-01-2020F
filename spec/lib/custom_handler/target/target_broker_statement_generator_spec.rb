@@ -1,27 +1,27 @@
 describe OpenChain::CustomHandler::Target::TargetDailyBrokerStatementGenerator do
   describe "generate_and_send" do
     it "generates and sends a file" do
-      target = with_customs_management_id(FactoryBot(:importer), "TARGEN")
+      target = with_customs_management_id(create(:importer), "TARGEN")
 
-      stmt_1 = FactoryBot(:daily_statement, statement_number: "ST_1", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
-      stmt_1.daily_statement_entries.create(entry: FactoryBot(:entry, entry_number: "1234567890123"), total_amount: BigDecimal("123.45"))
-      stmt_1.daily_statement_entries.create(entry: FactoryBot(:entry, entry_number: "2345678901234"), total_amount: BigDecimal("12.34"))
+      stmt_1 = create(:daily_statement, statement_number: "ST_1", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
+      stmt_1.daily_statement_entries.create(entry: create(:entry, entry_number: "1234567890123"), total_amount: BigDecimal("123.45"))
+      stmt_1.daily_statement_entries.create(entry: create(:entry, entry_number: "2345678901234"), total_amount: BigDecimal("12.34"))
 
       # This one has a sync record, but it has no sent at date.  It should be included on the report.
-      stmt_2 = FactoryBot(:daily_statement, statement_number: "ST_2", status: "F", final_received_date: Date.new(2020, 3, 20), importer_id: target.id)
-      stmt_2.daily_statement_entries.create(entry: FactoryBot(:entry, entry_number: "3456789012345"), total_amount: BigDecimal("6789.01"))
+      stmt_2 = create(:daily_statement, statement_number: "ST_2", status: "F", final_received_date: Date.new(2020, 3, 20), importer_id: target.id)
+      stmt_2.daily_statement_entries.create(entry: create(:entry, entry_number: "3456789012345"), total_amount: BigDecimal("6789.01"))
       sync_exist = stmt_2.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: nil)
 
       # Should not be included because its status is not F
-      stmt_not_final = FactoryBot(:daily_statement, statement_number: "ST_3", status: "G", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
+      stmt_not_final = create(:daily_statement, statement_number: "ST_3", status: "G", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
       stmt_not_final.daily_statement_entries.create
 
       # Should not be included because its final received date occurs on the date provided by Timecop (representing today).
-      stmt_today = FactoryBot(:daily_statement, statement_number: "ST_4", status: "F", final_received_date: Date.new(2020, 3, 24), importer_id: target.id)
+      stmt_today = create(:daily_statement, statement_number: "ST_4", status: "F", final_received_date: Date.new(2020, 3, 24), importer_id: target.id)
       stmt_today.daily_statement_entries.create
 
       # Should not be included because it has been previously sent (existing sync record).
-      stmt_prev_sent = FactoryBot(:daily_statement, statement_number: "ST_5", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
+      stmt_prev_sent = create(:daily_statement, statement_number: "ST_5", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
       stmt_prev_sent.daily_statement_entries.create
       stmt_prev_sent.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 3, 11))
 
@@ -60,15 +60,15 @@ describe OpenChain::CustomHandler::Target::TargetDailyBrokerStatementGenerator d
     end
 
     it "generates and sends a file with system date limit set" do
-      target = with_customs_management_id(FactoryBot(:importer), "TARGEN")
+      target = with_customs_management_id(create(:importer), "TARGEN")
       SystemDate.create!(date_type: described_class::SYNC_TRADING_PARTNER, start_date: Date.new(2020, 3, 21))
 
-      stmt_1 = FactoryBot(:daily_statement, statement_number: "ST_1", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
-      stmt_1.daily_statement_entries.create(entry: FactoryBot(:entry, entry_number: "1234567890123"), total_amount: BigDecimal("123.45"))
+      stmt_1 = create(:daily_statement, statement_number: "ST_1", status: "F", final_received_date: Date.new(2020, 3, 23), importer_id: target.id)
+      stmt_1.daily_statement_entries.create(entry: create(:entry, entry_number: "1234567890123"), total_amount: BigDecimal("123.45"))
 
       # Should not be included because its final received date occurs prior to the system date.
-      stmt_2 = FactoryBot(:daily_statement, statement_number: "ST_2", status: "F", final_received_date: Date.new(2020, 3, 20), importer_id: target.id)
-      stmt_2.daily_statement_entries.create(entry: FactoryBot(:entry, entry_number: "3456789012345"), total_amount: BigDecimal("6789.01"))
+      stmt_2 = create(:daily_statement, statement_number: "ST_2", status: "F", final_received_date: Date.new(2020, 3, 20), importer_id: target.id)
+      stmt_2.daily_statement_entries.create(entry: create(:entry, entry_number: "3456789012345"), total_amount: BigDecimal("6789.01"))
 
       data = nil
       expect(subject).to receive(:ftp_sync_file) do |file, _sync_records|

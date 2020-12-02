@@ -346,7 +346,7 @@ describe Lock do
 
   context "lock_with_retry" do
     it "should lock an object and yield" do
-      e = FactoryBot(:entry)
+      e = create(:entry)
       v = Lock.with_lock_retry(e) do
         e.update_attributes :entry_number => "123"
         "return val"

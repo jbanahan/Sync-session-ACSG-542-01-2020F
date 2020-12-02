@@ -1,6 +1,6 @@
 describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
-  let (:user) { FactoryBot(:admin_user) }
+  let (:user) { create(:admin_user) }
 
   before :each do
     allow_api_access user
@@ -96,7 +96,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
 
     it "rejects non-admin users" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
 
       get :show, id: 1
       expect(response.status).to eq 403
@@ -177,7 +177,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
 
     it "rejects non-admin users" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
 
       post :create, config
       expect(response.status).to eq 403
@@ -213,7 +213,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
 
     it "rejects non-admin users" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
 
       get :copy, id: 1
       expect(response.status).to eq 403
@@ -269,7 +269,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     end
 
     it "rejects non-admin users" do
-      allow_api_access FactoryBot(:user)
+      allow_api_access create(:user)
 
       put :update, updated_config
       expect(response.status).to eq 403

@@ -1,20 +1,20 @@
 describe StateToggleButton do
 
-  let (:shipment) { FactoryBot(:shipment, importer_reference: "12345") }
-  let! (:state_toggle_button) { FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
-  let (:user) { FactoryBot(:user) }
+  let (:shipment) { create(:shipment, importer_reference: "12345") }
+  let! (:state_toggle_button) { create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
+  let (:user) { create(:user) }
 
   describe "for_core_object_user" do
     subject { described_class }
 
     it "finds from same core_module" do
-      FactoryBot(:state_toggle_button, module_type: 'Order', date_attribute: 'ord_accepted_at', user_attribute: 'ord_accepted_by') # don't find
+      create(:state_toggle_button, module_type: 'Order', date_attribute: 'ord_accepted_at', user_attribute: 'ord_accepted_by') # don't find
       expect(subject.for_core_object_user(shipment, user)).to eq [state_toggle_button]
     end
 
     it "filters by search_criterion" do
       state_toggle_button.search_criterions.create!(model_field_uid: 'shp_importer_reference', operator: 'eq', value: '12345')
-      btn2 = FactoryBot(:state_toggle_button,  module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
+      btn2 = create(:state_toggle_button,  module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
       btn2.search_criterions.create!(model_field_uid: 'shp_importer_reference', operator: 'eq', value: 'DEF')
 
       expect(subject.for_core_object_user(shipment, user)).to eq [state_toggle_button]
@@ -53,7 +53,7 @@ describe StateToggleButton do
     end
 
     it "clears the date and user_id fields" do
-      FactoryBot(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
+      create(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
 
       shipment.update! canceled_date: 1.day.ago, canceled_by: user
 
@@ -77,8 +77,8 @@ describe StateToggleButton do
     end
 
     it "sets custom value fields" do
-      cd_date = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'datetime')
-      cd_user_id = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'integer', is_user: true)
+      cd_date = create(:custom_definition, module_type: 'Shipment', data_type: 'datetime')
+      cd_user_id = create(:custom_definition, module_type: 'Shipment', data_type: 'integer', is_user: true)
       state_toggle_button.update! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       expect(shipment).to receive(:create_snapshot_with_async_option).with(false, user)
@@ -91,8 +91,8 @@ describe StateToggleButton do
     end
 
     it "clears custom value fields" do
-      cd_date = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'date')
-      cd_user_id = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'integer')
+      cd_date = create(:custom_definition, module_type: 'Shipment', data_type: 'date')
+      cd_user_id = create(:custom_definition, module_type: 'Shipment', data_type: 'integer')
       state_toggle_button.update! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       shipment.get_custom_value(cd_date).value = Time.zone.now
@@ -114,11 +114,11 @@ describe StateToggleButton do
 
     it "updates last_updated_by if present" do
       # Product has a last updated by field.
-      prod = FactoryBot(:product, unique_identifier: "12345")
-      cd_date = FactoryBot(:custom_definition, module_type: 'Product', data_type: 'datetime')
-      cd_user_id = FactoryBot(:custom_definition, module_type: 'Product', data_type: 'integer', is_user: true)
+      prod = create(:product, unique_identifier: "12345")
+      cd_date = create(:custom_definition, module_type: 'Product', data_type: 'datetime')
+      cd_user_id = create(:custom_definition, module_type: 'Product', data_type: 'integer', is_user: true)
 
-      state_toggle_button_prod = FactoryBot(:state_toggle_button, module_type: 'Product',
+      state_toggle_button_prod = create(:state_toggle_button, module_type: 'Product',
                                                                date_custom_definition_id: cd_date.id,
                                                                user_custom_definition_id: cd_user_id.id,
                                                                date_attribute: nil,
@@ -148,17 +148,17 @@ describe StateToggleButton do
     end
 
     it "shows activate if date_custom_definition and custom value returns blank" do
-      cd_date = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'date')
-      cd_user_id = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'integer')
+      cd_date = create(:custom_definition, module_type: 'Shipment', data_type: 'date')
+      cd_user_id = create(:custom_definition, module_type: 'Shipment', data_type: 'integer')
       state_toggle_button.update! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
-      s = FactoryBot(:shipment)
+      s = create(:shipment)
       expect(state_toggle_button.to_be_activated?(s)).to eq true
     end
 
     it "does not show activate if date_custom_definition and custom value returns !blank" do
-      cd_date = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'date')
-      cd_user_id = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'integer')
+      cd_date = create(:custom_definition, module_type: 'Shipment', data_type: 'date')
+      cd_user_id = create(:custom_definition, module_type: 'Shipment', data_type: 'integer')
       state_toggle_button.update! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       shipment.get_custom_value(cd_date).value = Time.zone.now
@@ -169,22 +169,22 @@ describe StateToggleButton do
 
   context "validations" do
     it "does not allow with both date and custom date attributes" do
-      cd_date = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'date')
+      cd_date = create(:custom_definition, module_type: 'Shipment', data_type: 'date')
       btn = described_class.new(module_type: 'Shipment', date_attribute: 'canceled_date', date_custom_definition_id: cd_date.id)
       expect {btn.save!}.to raise_error(/both date and custom date/)
     end
 
     it "does not allow with both user and custom user attributes" do
-      cd_user = FactoryBot(:custom_definition, module_type: 'Shipment', data_type: 'integer')
+      cd_user = create(:custom_definition, module_type: 'Shipment', data_type: 'integer')
       btn = described_class.new(module_type: 'Shipment', user_attribute: 'canceled_by', user_custom_definition_id: cd_user.id)
       expect {btn.save!}.to raise_error(/both user and custom user/)
     end
   end
 
   context "field getters" do
-    let!(:user_cdef) { FactoryBot(:custom_definition, module_type: "Order", data_type: "integer", label: "Custom User", is_user: true)}
-    let!(:date_cdef) { FactoryBot(:custom_definition, module_type: "Order", data_type: "datetime", label: "Custom Date")}
-    let(:stb) { FactoryBot(:state_toggle_button, module_type: "Order", user_custom_definition_id: user_cdef.id, date_custom_definition_id: date_cdef.id) }
+    let!(:user_cdef) { create(:custom_definition, module_type: "Order", data_type: "integer", label: "Custom User", is_user: true)}
+    let!(:date_cdef) { create(:custom_definition, module_type: "Order", data_type: "datetime", label: "Custom Date")}
+    let(:stb) { create(:state_toggle_button, module_type: "Order", user_custom_definition_id: user_cdef.id, date_custom_definition_id: date_cdef.id) }
 
     describe "user_field" do
 

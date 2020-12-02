@@ -75,7 +75,7 @@ class CustomDefinition < ActiveRecord::Base
   def self.cached_find_by_module_type module_type
     o = CACHE.get "CustomDefinition:module_type:#{module_type}"
     if o.nil?
-      o = CustomDefinition.where(module_type: module_type).order("rank ASC, label ASC").all
+      o = CustomDefinition.where(module_type: module_type.name).order("rank ASC, label ASC").all
       CACHE.set "CustomDefinition:module_type:#{module_type}", o
     end
     o.clone

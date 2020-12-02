@@ -10,12 +10,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       @integration_user = double(:user)
       allow(User).to receive(:integration).and_return @integration_user
       Company.where(master: true).delete_all
-      @master = FactoryBot(:master_company)
+      @master = create(:master_company)
       allow_any_instance_of(Company).to receive(:create_snapshot)
     end
 
     it "should create vendor" do
-      importer = FactoryBot(:importer, system_code:'LUMBER')
+      importer = create(:importer, system_code:'LUMBER')
 
       dom = REXML::Document.new(@test_data)
       expect_any_instance_of(Company).to receive(:create_snapshot).with(@integration_user, nil, "System Job: SAP Vendor XML Parser")
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
     end
     it "should update vendor by SAP # in system code" do
       dom = REXML::Document.new(@test_data)
-      c = FactoryBot(:company, system_code:'0000100003', vendor:false, name:'something else')
+      c = create(:company, system_code:'0000100003', vendor:false, name:'something else')
       expect {described_class.new.parse_dom(dom, log)}.to_not change(Company, :count)
       c.reload
       expect(c.system_code).to eq '0000100003'
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
     end
     it "should not clear PO locked on existing vendor" do
       dom = REXML::Document.new(@test_data)
-      c = FactoryBot(:company, system_code:'0000100003', vendor:false, name:'something else')
+      c = create(:company, system_code:'0000100003', vendor:false, name:'something else')
       c.update_custom_value!(@cdefs[:cmp_po_blocked], true)
       expect {described_class.new.parse_dom(dom, log)}.to_not change(Company, :count)
       c = Company.find_by(system_code: '0000100003')
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
 
     context "with change detection" do
       let! (:vendor) {
-        v = FactoryBot(:vendor, name: "KIDRON INTERNATIONAL", show_business_rules: true, system_code: "0000100003")
+        v = create(:vendor, name: "KIDRON INTERNATIONAL", show_business_rules: true, system_code: "0000100003")
         v.addresses.create! system_code: "0000100003-CORP", name: "Corporate", line_1: 'RUTA VII KM 31.5', city: 'ALTO PARANA', state: 'QC', postal_code: "12345", country_id: @country.id
         v.update_custom_value! @cdefs[:cmp_sap_company], "0000100003"
         v.update_custom_value! @cdefs[:cmp_sap_blocked_status], false
@@ -155,7 +155,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
         end
 
         it "snapshots if country changes" do
-          vendor.addresses.first.update_attributes! country: FactoryBot(:country)
+          vendor.addresses.first.update_attributes! country: create(:country)
         end
 
         it "snapshots if address added" do

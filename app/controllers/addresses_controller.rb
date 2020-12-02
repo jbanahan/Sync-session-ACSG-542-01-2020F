@@ -1,6 +1,6 @@
 class AddressesController < ApplicationController
   include ActiveSupport
-  before_filter :require_user
+  before_action :require_user
 
 	def root_class
 		Address

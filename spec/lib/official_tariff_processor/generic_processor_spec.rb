@@ -1,7 +1,7 @@
 describe OpenChain::OfficialTariffProcessor::GenericProcessor do
 
   describe "process" do
-    let(:country) { country = FactoryBot(:country, iso_code:"US", european_union:false) }
+    let(:country) { country = create(:country, iso_code:"US", european_union:false) }
 
     it "creates SPI rate records from a tariff" do
       tar = OfficialTariff.create!(country:country, special_rate_key:"abc", special_rates:"10% (A,B)", hts_code:"X")
@@ -72,7 +72,7 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
     end
 
     describe "US" do
-      let(:country) { country = FactoryBot(:country, iso_code:"US", european_union:false) }
+      let(:country) { country = create(:country, iso_code:"US", european_union:false) }
       let(:parse_data) { described_class.parse_data_for country }
 
       # None of these should raise exceptions.
@@ -106,18 +106,18 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
 
   describe "parse_data_for" do
     it "should return parse info for handled countries" do
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"US", european_union:false)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"CA", european_union:false)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"FR", european_union:true)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"DE", european_union:true)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"CL", european_union:false)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"CN", european_union:false)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"MX", european_union:false)).to_not be_nil
-      expect(described_class.parse_data_for FactoryBot(:country, iso_code:"SG", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"US", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"CA", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"FR", european_union:true)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"DE", european_union:true)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"CL", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"CN", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"MX", european_union:false)).to_not be_nil
+      expect(described_class.parse_data_for create(:country, iso_code:"SG", european_union:false)).to_not be_nil
     end
 
     it "should rase an error for an unexpected country" do
-      expect { described_class.parse_data_for FactoryBot(:country, iso_code:"A+", european_union:false) }.to raise_error("No Special Program parser configured for A+")
+      expect { described_class.parse_data_for create(:country, iso_code:"A+", european_union:false) }.to raise_error("No Special Program parser configured for A+")
     end
   end
 

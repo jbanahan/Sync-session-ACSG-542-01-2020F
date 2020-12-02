@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
-  let (:ua) { with_fenix_id(FactoryBot(:importer), "874548506RM0001") }
+  let (:ua) { with_fenix_id(create(:importer), "874548506RM0001") }
   let! (:entry) do
-    e = FactoryBot(:entry, importer: ua, release_date: Date.new(2019, 10, 1))
+    e = create(:entry, importer: ua, release_date: Date.new(2019, 10, 1))
     invoice = e.commercial_invoices.create! invoice_number: "ASNNUMBER", exchange_rate: 1.2
     line = invoice.commercial_invoice_lines.create! part_number: "ARTICLE", po_number: "PONUMBER"
     line.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 100
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     let (:cdefs) { subject.send(:cdefs) }
     let! (:product) do
-      p = FactoryBot(:product, unique_identifier: "UAPARTS-ARTICLE")
+      p = create(:product, unique_identifier: "UAPARTS-ARTICLE")
       p.update_custom_value! cdefs[:prod_prepack], false
       p.update_custom_value! cdefs[:prod_part_number], "PROD-1"
       p

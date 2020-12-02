@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Generator315::Tradelens::EntryFieldHandler do
      cargo_control_numbers: ["ccn_num1", "ccn_num2"]}
   end
   let(:milestone) { described_class::MilestoneUpdate.new "one_usg_date", date, sr }
-  let(:ent) { FactoryBot(:entry, entry_port_code: "ABCD") }
+  let(:ent) { create(:entry, entry_port_code: "ABCD") }
 
   describe "endpoint_labels" do
     it "converts subclass data into labels" do

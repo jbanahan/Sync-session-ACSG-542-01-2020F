@@ -22,7 +22,7 @@ describe SnapshotWriter do
 
   describe "entity_json" do
     let (:entry) {
-      FactoryBot(:entry, broker_reference: "ABC", arrival_date: ActiveSupport::TimeZone["UTC"].now, total_fees: BigDecimal.new("1.50"), export_date: Time.zone.now.to_date, paperless_release: true, import_country: FactoryBot(:country))
+      create(:entry, broker_reference: "ABC", arrival_date: ActiveSupport::TimeZone["UTC"].now, total_fees: BigDecimal.new("1.50"), export_date: Time.zone.now.to_date, paperless_release: true, import_country: create(:country))
     }
 
     it "uses given descriptor and generates snapshot" do
@@ -77,15 +77,15 @@ describe SnapshotWriter do
 
     context "with children" do
       let (:invoice) {
-        FactoryBot(:commercial_invoice, entry: entry, invoice_number: "INV")
+        create(:commercial_invoice, entry: entry, invoice_number: "INV")
       }
 
       let (:invoice_2) {
-        FactoryBot(:commercial_invoice, entry: entry, invoice_number: "INV2")
+        create(:commercial_invoice, entry: entry, invoice_number: "INV2")
       }
 
       let (:broker_invoice) {
-        FactoryBot(:broker_invoice, entry: entry, invoice_number: "BROK")
+        create(:broker_invoice, entry: entry, invoice_number: "BROK")
       }
 
       before :each do
@@ -130,11 +130,11 @@ describe SnapshotWriter do
 
       context "with grandchildren" do
         let (:invoice_line) {
-          FactoryBot(:commercial_invoice_line, commercial_invoice: invoice, po_number: "PO")
+          create(:commercial_invoice_line, commercial_invoice: invoice, po_number: "PO")
         }
 
         let (:broker_invoice_line) {
-          FactoryBot(:broker_invoice_line, broker_invoice: broker_invoice)
+          create(:broker_invoice_line, broker_invoice: broker_invoice)
         }
 
         before :each do
@@ -172,11 +172,11 @@ describe SnapshotWriter do
       }
 
       let (:user) {
-        FactoryBot(:user)
+        create(:user)
       }
 
       let (:entry) {
-        e = FactoryBot(:entry, broker_reference: "ABC")
+        e = create(:entry, broker_reference: "ABC")
         folder = e.folders.create! name: "Folder", created_by: user
         folder.comments.create! subject: "Comment", user: user
         folder.attachments.create! attached_file_name: "Filename.txt"

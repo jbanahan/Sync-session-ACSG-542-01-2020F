@@ -5,8 +5,8 @@ describe CoreObjectSupport do
 
   describe "find_by_custom_value" do
     it "shuould find by value" do
-      cd = FactoryBot(:custom_definition, module_type:'Product')
-      p = FactoryBot(:product)
+      cd = create(:custom_definition, module_type:'Product')
+      p = create(:product)
       p.update_custom_value!(cd, 'myuid')
       expect(Product.find_by_custom_value(cd, 'myuid')).to eq p
       expect(Product.find_by_custom_value(cd, 'def')).to be_nil
@@ -22,7 +22,7 @@ describe CoreObjectSupport do
         inst = i
       end
 
-      order = Order.create!(:order_number=>'onum', :vendor_id=>FactoryBot(:company, :vendor=>true).id)
+      order = Order.create!(:order_number=>'onum', :vendor_id=>create(:company, :vendor=>true).id)
 
       expect(inst).to eq order
     end
@@ -52,7 +52,7 @@ describe CoreObjectSupport do
   describe "need_sync" do
     before :each do
       @tp = "tradingpartner"
-      @p = FactoryBot(:product)
+      @p = create(:product)
     end
     it "should find products with no sync records" do
       ns = Product.need_sync @tp
@@ -100,14 +100,14 @@ describe CoreObjectSupport do
       expect(ns).to be_empty
     end
     it "should not find products based on additional where clauses" do
-      dont_find = FactoryBot(:product, :unique_identifier=>"DONTFINDME")
+      dont_find = create(:product, :unique_identifier=>"DONTFINDME")
       sc = SearchCriterion.new(:model_field_uid=>'prod_uid', :operator=>'nq', :value=>dont_find.unique_identifier)
       ns = sc.apply Product.need_sync @tp
       expect(ns.size).to eq(1)
       expect(ns.first).to eq(@p)
     end
     it "should not find products updated before ignore_updates_before" do
-      dont_find = FactoryBot(:product, unique_identifier:'DONTFINDME', updated_at:1.day.ago)
+      dont_find = create(:product, unique_identifier:'DONTFINDME', updated_at:1.day.ago)
       dont_find.sync_records.create!(trading_partner:@tp, sent_at:2.days.ago, ignore_updates_before:1.hour.ago)
       expect(Product.need_sync(@tp).to_a).to eq [@p]
     end
@@ -115,7 +115,7 @@ describe CoreObjectSupport do
   describe "view_url" do
     it "should make url based on request_host" do
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "x.y.z"
-      p = FactoryBot(:product)
+      p = create(:product)
       expect(p.view_url).to eq XlsMaker.excel_url("/products/#{p.id}")
     end
     it "should raise exception if id not set" do
@@ -130,7 +130,7 @@ describe CoreObjectSupport do
   end
   describe "relative_url" do
     it "should make url without host" do
-      p = FactoryBot(:product)
+      p = create(:product)
       expect(p.relative_url).to eq("/products/#{p.id}")
     end
 
@@ -140,7 +140,7 @@ describe CoreObjectSupport do
   end
   describe "all_attachments" do
     it "should sort by attachment type then attached file name then id" do
-      p = FactoryBot(:product)
+      p = create(:product)
       third = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A")
       second = p.attachments.create!(:attachment_type=>"A", :attached_file_name=>"R")
       first = p.attachments.create!(:attachment_type=>"A", :attached_file_name=>"Q")
@@ -154,8 +154,8 @@ describe CoreObjectSupport do
   end
   describe "clear_attributes" do
     it "it sets every attribute to nil except those specified, timestamps, primary key, foreign keys" do
-      e = FactoryBot(:entry)
-      ci = FactoryBot(:commercial_invoice, entry: e, invoice_number: "123456", currency: "USD", created_at: DateTime.new(2018, 1, 1))
+      e = create(:entry)
+      ci = create(:commercial_invoice, entry: e, invoice_number: "123456", currency: "USD", created_at: DateTime.new(2018, 1, 1))
       ci.clear_attributes([:currency])
       ci.save!
       expect(ci.invoice_number).to be_nil
@@ -167,21 +167,21 @@ describe CoreObjectSupport do
 
   describe "options_for_attachments_select" do
     it "Returns an array of items used to create a select dropdown list starting with nil valued option" do
-      p = FactoryBot(:order)
+      p = create(:order)
       att1 = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A", :attached_content_type=>"application/pdf")
       att2 = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"B", :attached_content_type=>"image/png")
       expect(p.options_for_attachments_select "application/pdf").to eq [["Select an option", "nil"], [att1.attachment_type + " - " + att1.attached_file_name, att1.id]]
     end
 
     it "Does not return an array of items if none are appropriate" do
-      p = FactoryBot(:order)
+      p = create(:order)
       att1 = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A", :attached_content_type=>"image/jpeg")
       att2 = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"B", :attached_content_type=>"image/png")
       expect(p.options_for_attachments_select "application/pdf").to eq [["No appopriate attachments exist.", "nil"]]
     end
 
     it "handles missing attachment_types" do
-      p = FactoryBot(:order)
+      p = create(:order)
       att1 = p.attachments.create!(:attached_file_name=>"A", :attached_content_type=>"image/jpeg")
       expect(p.options_for_attachments_select "image/jpeg").to eq [["Select an option", "nil"], [att1.attached_file_name, att1.id]]
     end
@@ -253,20 +253,20 @@ describe CoreObjectSupport do
 
     describe "has_never_been_synced_where_clause" do
       it "finds objects that have never been synced" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
         expect(found).to eq entry
       end
 
       it "finds objects that have been synced but have a blank sent_at" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         entry.sync_records.create! trading_partner: 'partner'
         found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
         expect(found).to eq entry
       end
 
       it "does not find objects that have a sync record with a sent_at value" do
-        entry = FactoryBot(:entry)
+        entry = create(:entry)
         entry.sync_records.create! trading_partner: 'partner', sent_at: Time.zone.now
         found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
         expect(found).to be_nil
@@ -276,7 +276,7 @@ describe CoreObjectSupport do
 
   describe "attachment_types" do
     it "lists all attachments associated with a core object in alphabetical order" do
-      p = FactoryBot(:product)
+      p = create(:product)
       first = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A")
       second = p.attachments.create!(:attachment_type=>"A", :attached_file_name=>"R")
       # Skip blank/null ones
@@ -289,14 +289,14 @@ describe CoreObjectSupport do
     end
 
     it "returns blank array if no attachment types" do
-      p = FactoryBot(:product)
+      p = create(:product)
       expect(p.attachment_types).to eq []
     end
   end
 
   describe "attachment_filenames" do
     it "lists all attachments associated with a core object in alphabetical order" do
-      p = FactoryBot(:product)
+      p = create(:product)
       first = p.attachments.create!(:attachment_type=>"B", :attached_file_name=>"A")
       second = p.attachments.create!(:attachment_type=>"A", :attached_file_name=>"R")
       third = p.attachments.create!(:attachment_type=>"A", :attached_file_name=>"R")
@@ -306,27 +306,27 @@ describe CoreObjectSupport do
     end
 
     it "returns blank array if no attachment types" do
-      p = FactoryBot(:product)
+      p = create(:product)
       expect(p.attachment_filenames).to eq []
     end
   end
 
   context "business rules" do
-    let(:template) { FactoryBot(:business_validation_template, private: false) }
-    let(:priv_template) { FactoryBot(:business_validation_template, private: true) }
-    let(:entry) { FactoryBot(:entry) }
+    let(:template) { create(:business_validation_template, private: false) }
+    let(:priv_template) { create(:business_validation_template, private: true) }
+    let(:entry) { create(:entry) }
 
     describe "business_rules_state" do
       before do
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Fail", business_validation_template: priv_template)
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Review", business_validation_template: template)
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Pass", business_validation_template: template)
+        entry.business_validation_results << create(:business_validation_result, state: "Fail", business_validation_template: priv_template)
+        entry.business_validation_results << create(:business_validation_result, state: "Review", business_validation_template: template)
+        entry.business_validation_results << create(:business_validation_result, state: "Pass", business_validation_template: template)
       end
 
       it "should set worst state from business_validation_results" do
-        ent = FactoryBot(:entry)
-        bv1 = FactoryBot(:business_validation_result, state:'Pass')
-        bv2 = FactoryBot(:business_validation_result, state:'Fail')
+        ent = create(:entry)
+        bv1 = create(:business_validation_result, state:'Pass')
+        bv2 = create(:business_validation_result, state:'Fail')
         [bv1, bv2].each do |b|
           b.validatable = ent
           b.save!
@@ -344,12 +344,12 @@ describe CoreObjectSupport do
     end
 
     describe "business_rules_state_for_user" do
-      let(:u) { FactoryBot(:user, company: FactoryBot(:company, show_business_rules: true)) }
+      let(:u) { create(:user, company: create(:company, show_business_rules: true)) }
 
       before do
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Fail", business_validation_template: priv_template)
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Review", business_validation_template: template)
-        entry.business_validation_results << FactoryBot(:business_validation_result, state: "Pass", business_validation_template: template)
+        entry.business_validation_results << create(:business_validation_result, state: "Fail", business_validation_template: priv_template)
+        entry.business_validation_results << create(:business_validation_result, state: "Review", business_validation_template: template)
+        entry.business_validation_results << create(:business_validation_result, state: "Pass", business_validation_template: template)
       end
 
       it "returns 'worst' state of all rule results for user with full privileges" do
@@ -365,10 +365,10 @@ describe CoreObjectSupport do
 
     describe "business_rules" do
       def prep_results state
-        entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: state, business_validation_rule: FactoryBot(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
-        entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: state, business_validation_rule: FactoryBot(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
-        entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: state, business_validation_rule: FactoryBot(:business_validation_rule, name: "A Test", business_validation_template: template)).business_validation_result
-        entry.business_validation_results << FactoryBot(:business_validation_rule_result, state: "Pass", business_validation_rule: FactoryBot(:business_validation_rule, name: "Another Test", business_validation_template: template)).business_validation_result
+        entry.business_validation_results << create(:business_validation_rule_result, state: state, business_validation_rule: create(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
+        entry.business_validation_results << create(:business_validation_rule_result, state: state, business_validation_rule: create(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
+        entry.business_validation_results << create(:business_validation_rule_result, state: state, business_validation_rule: create(:business_validation_rule, name: "A Test", business_validation_template: template)).business_validation_result
+        entry.business_validation_results << create(:business_validation_rule_result, state: "Pass", business_validation_rule: create(:business_validation_rule, name: "Another Test", business_validation_template: template)).business_validation_result
       end
 
       context "failed" do
@@ -398,9 +398,9 @@ describe CoreObjectSupport do
 
     describe "business_rule_templates" do
       def prep_results state
-        FactoryBot(:business_validation_result, validatable: entry, business_validation_template: FactoryBot(:business_validation_template, module_type: "Entry", name: "bvt 2", private: false), state: state)
-        FactoryBot(:business_validation_result, validatable: entry, business_validation_template: FactoryBot(:business_validation_template, module_type: "Entry", name: "bvt 3", private: false,), state: "Pass")
-        FactoryBot(:business_validation_result, validatable: entry, business_validation_template: FactoryBot(:business_validation_template, module_type: "Entry", name: "bvt 1", private: true), state: state)
+        create(:business_validation_result, validatable: entry, business_validation_template: create(:business_validation_template, module_type: "Entry", name: "bvt 2", private: false), state: state)
+        create(:business_validation_result, validatable: entry, business_validation_template: create(:business_validation_template, module_type: "Entry", name: "bvt 3", private: false,), state: "Pass")
+        create(:business_validation_result, validatable: entry, business_validation_template: create(:business_validation_template, module_type: "Entry", name: "bvt 1", private: true), state: state)
       end
 
       context "failed" do
@@ -430,15 +430,15 @@ describe CoreObjectSupport do
 
     describe "can_run_validations?" do
       before :each do
-        @u = FactoryBot(:user)
+        @u = create(:user)
         allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
-        @ent = FactoryBot(:entry)
+        @ent = create(:entry)
 
-        @bvrr_1 = FactoryBot(:business_validation_rule_result)
+        @bvrr_1 = create(:business_validation_rule_result)
         bvr_1 = @bvrr_1.business_validation_result
         bvr_1.validatable = @ent; bvr_1.save!
 
-        @bvrr_2 = FactoryBot(:business_validation_rule_result)
+        @bvrr_2 = create(:business_validation_rule_result)
         bvr_2 = @bvrr_2.business_validation_result
         bvr_2.validatable = @ent; bvr_2.save!
       end
@@ -449,7 +449,7 @@ describe CoreObjectSupport do
 
       it "returns false if there are any rule results user doesn't have permission to edit" do
         bvru_1 = @bvrr_1.business_validation_rule
-        bvru_1.group = FactoryBot(:group); bvru_1.save!
+        bvru_1.group = create(:group); bvru_1.save!
         expect(@ent.can_run_validations? @u).to eq false
       end
     end
@@ -487,7 +487,7 @@ describe CoreObjectSupport do
   end
 
   describe "find_or_initialize_sync_record" do
-    subject { FactoryBot(:entry) }
+    subject { create(:entry) }
 
     it "initializes a new sync record if one isn't find for the specified trading partner" do
       sr = subject.find_or_initialize_sync_record("TRADING")
