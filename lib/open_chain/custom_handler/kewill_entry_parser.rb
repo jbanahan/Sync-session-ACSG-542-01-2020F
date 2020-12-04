@@ -193,10 +193,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # So we parse it after we've parsed dates.
       process_liquidation e, entry
       process_notes e, entry
-      process_bill_numbers e, entry
-      # Process containers before commercial invoices since invoice lines can link to containers
+      # Process containers before bills and commercial invoices since invoice lines and bills can link to containers
       process_containers e, entry
       process_commercial_invoices e, entry
+      process_bill_numbers e, entry
       process_post_summary_corrections e, entry
       process_broker_invoices e, entry
       process_fda_dates e, entry
@@ -893,12 +893,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       subhouse_bills = Set.new
       house_scacs = Set.new
 
+      entry.bill_of_ladings.destroy_all
       Array.wrap(e[:ids]).each do |id|
         it_numbers << id[:it_no]
         master_bills << id[:scac].to_s.strip + id[:master_bill].to_s
         house_bills << id[:scac_house].to_s.strip + id[:house_bill].to_s
         subhouse_bills << id[:sub_bill].to_s
         house_scacs << id[:scac_house].to_s.strip unless id[:scac_house].to_s.blank?
+        set_bill_data(id, entry) if id[:master_bill].present?
       end
       blank = lambda {|d| d.blank?}
       entry.it_numbers = it_numbers.reject(&blank).sort.join(multi_value_separator)
@@ -908,6 +910,25 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Technically, based on the DB structure in Kewill, there can be more than 1 house carrier code
       # In practice, according to Mark, that won't happen.  So we're only pulling the first non-blank value encountered.
       entry.house_carrier_code = house_scacs.first
+      nil
+    end
+
+    def set_bill_data shp_id, entry
+      mbol_number = "#{shp_id[:scac].to_s.strip}#{shp_id[:master_bill]}"
+      mbol = entry.bill_of_ladings.find { |bol| bol.bill_type == "master" && bol.bill_number == mbol_number } ||
+        entry.bill_of_ladings.build(bill_type: "master", bill_number: mbol_number)
+      if shp_id[:house_bill].present?
+        hbol = entry.bill_of_ladings.build(bill_type: "house", bill_number: "#{shp_id[:scac_house].to_s.strip}#{shp_id[:house_bill]}")
+        hbol.bill_of_lading = mbol
+      end
+      (shp_id[:container_numbers] || []).each do |cnum|
+        container = entry.containers.find { |cont| cont.container_number == cnum  }
+        if container
+          mbol.containers << container
+          hbol.containers << container if hbol
+        end
+      end
+
       nil
     end
 

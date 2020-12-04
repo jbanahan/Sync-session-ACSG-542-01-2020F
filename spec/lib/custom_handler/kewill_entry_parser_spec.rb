@@ -181,10 +181,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'note' => "Customs Did something", 'modified_by'=>"CUSTOMS", 'date_updated'=>201601191230}
         ],
         'ids' => [
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>'    '},
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>"SCAC"}, # Skip the second line, it's duplicate
-          {'scac'=>"XXXX", 'master_bill'=>"MASTER2", 'house_bill'=>"HOUSE2", 'sub_bill'=>'SUB2', 'it_no'=>'ITNO2', 'scac_house'=>"SCAC2"},
-          {'scac'=>"", 'master_bill'=>"", 'house_bill'=>"", 'sub_bill'=>'', 'it_no'=>''} # Skip blanks
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>'    ', 'container_numbers' => []},
+          # Skip the second line, it's duplicate
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER", 'house_bill'=>"HOUSE", 'sub_bill'=>'SUB', 'it_no'=>'ITNO', 'scac_house'=>"SCAC", 'container_numbers' => []},
+          {'scac'=>"XXXX", 'master_bill'=>"MASTER2", 'house_bill'=>"HOUSE2", 'sub_bill'=>'SUB2', 'it_no'=>'ITNO2', 'scac_house'=>"SCAC2", 'container_numbers' => ['CONT1', 'CONT2']},
+          {'scac'=>"", 'master_bill'=>"", 'house_bill'=>"", 'sub_bill'=>'', 'it_no'=>'', 'container_numbers' => []} # Skip blanks
         ],
         'cust_refs' => [
           {'cust_ref' => "ref1"},
@@ -775,34 +776,55 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.customer_references).to eq "ref1\n ref2\n broker_inv_ref"
 
       expect(entry.containers.size).to eq 2
-      c = entry.containers.find {|co| co.container_number == "CONT1"}
-      expect(c.container_number).to eq "CONT1"
-      expect(c.goods_description).to eq "DESC 1"
-      expect(c.container_size).to eq "20"
-      expect(c.weight).to eq 123
-      expect(c.quantity).to eq 234
-      expect(c.uom).to eq "CTNS"
-      expect(c.seal_number).to eq "ARF"
-      expect(c.fcl_lcl).to eq "L"
-      expect(c.size_description).to eq "DRY VAN"
-      expect(c.teus).to eq 2
+      cont_1 = entry.containers.find {|co| co.container_number == "CONT1"}
+      expect(cont_1.container_number).to eq "CONT1"
+      expect(cont_1.goods_description).to eq "DESC 1"
+      expect(cont_1.container_size).to eq "20"
+      expect(cont_1.weight).to eq 123
+      expect(cont_1.quantity).to eq 234
+      expect(cont_1.uom).to eq "CTNS"
+      expect(cont_1.seal_number).to eq "ARF"
+      expect(cont_1.fcl_lcl).to eq "L"
+      expect(cont_1.size_description).to eq "DRY VAN"
+      expect(cont_1.teus).to eq 2
 
-      c = entry.containers.find {|co| co.container_number == "CONT2"}
-      expect(c.container_number).to eq "CONT2"
-      expect(c.goods_description).to eq "DESC 3\n DESC 4"
-      expect(c.container_size).to eq "40"
-      expect(c.weight).to eq 123
-      expect(c.quantity).to eq 234
-      expect(c.uom).to eq "CTNS"
-      expect(c.seal_number).to eq "ARF"
-      expect(c.fcl_lcl).to eq "L"
-      expect(c.size_description).to eq "WET VAN"
-      expect(c.teus).to eq 3
+      cont_2 = entry.containers.find {|co| co.container_number == "CONT2"}
+      expect(cont_2.container_number).to eq "CONT2"
+      expect(cont_2.goods_description).to eq "DESC 3\n DESC 4"
+      expect(cont_2.container_size).to eq "40"
+      expect(cont_2.weight).to eq 123
+      expect(cont_2.quantity).to eq 234
+      expect(cont_2.uom).to eq "CTNS"
+      expect(cont_2.seal_number).to eq "ARF"
+      expect(cont_2.fcl_lcl).to eq "L"
+      expect(cont_2.size_description).to eq "WET VAN"
+      expect(cont_2.teus).to eq 3
 
       expect(entry.container_numbers).to eq "CONT1\n CONT2"
       expect(entry.fcl_lcl).to eq "LCL"
       expect(entry.container_sizes).to eq "20-DRY VAN\n 40-WET VAN"
 
+      # bills of lading
+      expect(entry.bill_of_ladings.size).to eq 5
+      master_bill_1 = entry.bill_of_ladings.find_by(bill_type: "master", bill_number: "XXXXMASTER")
+      expect(master_bill_1.containers).to be_empty
+
+      house_bill_1_1 = entry.bill_of_ladings.find_by(bill_type: "house", bill_number: "HOUSE")
+      expect(house_bill_1_1.bill_of_lading).to eq master_bill_1
+      expect(house_bill_1_1.containers).to be_empty
+
+      house_bill_1_2 = entry.bill_of_ladings.find_by(bill_type: "house", bill_number: "SCACHOUSE")
+      expect(house_bill_1_2.bill_of_lading).to eq master_bill_1
+      expect(house_bill_1_2.containers).to be_empty
+
+      master_bill_2 = entry.bill_of_ladings.find_by(bill_type: "master", bill_number: "XXXXMASTER2")
+      expect(master_bill_2.containers).to contain_exactly(cont_1, cont_2)
+
+      house_bill_2_1 = entry.bill_of_ladings.find_by(bill_type: "house", bill_number: "SCAC2HOUSE2")
+      expect(house_bill_2_1.bill_of_lading).to eq master_bill_2
+      expect(house_bill_2_1.containers).to contain_exactly(cont_1, cont_2)
+
+      # broker invoices
       expect(entry.broker_invoices.size).to eq 1
       bi = entry.broker_invoices.first
 

@@ -448,6 +448,18 @@ Factory.define :container do |f|
   f.container_number {Factory.next :alpha_numeric}
   f.association :entry
 end
+
+Factory.define :bill_of_lading do |f|
+end
+
+Factory.define :master_bill_of_lading, parent: :bill_of_lading do |f|
+  f.bill_type "master"
+end
+
+Factory.define :house_bill_of_lading, parent: :bill_of_lading do |f|
+  f.bill_type "house"
+end
+
 Factory.define :event_subscription do |f|
   f.association :user
   f.event_type 'ORDER_COMMENT_CREATE'

@@ -37,7 +37,8 @@ class Container < ActiveRecord::Base
   belongs_to :shipment, inverse_of: :containers, touch: true
   has_many :shipment_lines, dependent: :destroy, inverse_of: :container
   has_many :commercial_invoice_lines, inverse_of: :container
-
+  has_many :bill_of_lading_containers, dependent: :destroy
+  has_many :bill_of_ladings, through: :bill_of_lading_containers
   belongs_to :port_of_loading, :class_name=>"Port"
   belongs_to :port_of_delivery, :class_name=>"Port"
 
