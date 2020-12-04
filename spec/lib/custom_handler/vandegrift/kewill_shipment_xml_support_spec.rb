@@ -71,6 +71,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       }
 
       it "builds entry xml" do
+        entry.containers << described_class::CiLoadContainer.new("CONT_NO_2")
+
         now = Time.zone.now
         doc = nil
         Timecop.freeze(now) { doc = subject.generate_entry_xml entry }
@@ -122,7 +124,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiShipmentHeaderAux/subSubBill").to eq "5432109876"
         expect(s.text "EdiShipmentHeaderAux/locationOfGoods").to eq "GOODS LOCATION"
 
-
         expect(s.text "EdiShipmentIdList/EdiShipmentId/seqNo").to eq "1"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/masterBill").to eq "1234567890"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/houseBill").to eq "9876543210"
@@ -139,23 +140,48 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiShipmentIdList/EdiShipmentId/qty").to eq "10"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/uom").to eq "BUOM"
 
+        elem_ship_id_containers_list = REXML::XPath.first(s, "EdiShipmentIdList/EdiShipmentId/EdiShipmentIdContainersList")
+        expect(elem_ship_id_containers_list).not_to be_nil
+        expect(elem_ship_id_containers_list.elements.to_a("EdiShipmentIdContainers").length).to eq 2
+        elem_ship_id_container_1 = elem_ship_id_containers_list.elements.to_a("EdiShipmentIdContainers")[0]
+        expect(elem_ship_id_container_1.text "seqNo").to eq "1"
+        expect(elem_ship_id_container_1.text "masterBill").to eq "1234567890"
+        expect(elem_ship_id_container_1.text "houseBill").to eq "9876543210"
+        expect(elem_ship_id_container_1.text "subBill").to eq "5678901234"
+        expect(elem_ship_id_container_1.text "subSubBill").to eq "5432109876"
+        expect(elem_ship_id_container_1.text "scac").to eq "SCAC"
+        expect(elem_ship_id_container_1.text "noContainer").to eq "CONT_NO"
+
+        elem_ship_id_container_2 = elem_ship_id_containers_list.elements.to_a("EdiShipmentIdContainers")[1]
+        expect(elem_ship_id_container_2.text "seqNo").to eq "1"
+        expect(elem_ship_id_container_2.text "masterBill").to eq "1234567890"
+        expect(elem_ship_id_container_2.text "scac").to eq "SCAC"
+        expect(elem_ship_id_container_2.text "noContainer").to eq "CONT_NO_2"
+
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/masterBill").to eq "1234567890"
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/houseBill").to eq "9876543210"
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/tracingDateNo").to eq "1"
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/dateTracingShipment").to eq "20180201"
 
-        expect(s.text "EdiContainersList/EdiContainers/masterBill").to eq "1234567890"
-        expect(s.text "EdiContainersList/EdiContainers/houseBill").to eq "9876543210"
-        expect(s.text "EdiContainersList/EdiContainers/noContainer").to eq "CONT_NO"
-        expect(s.text "EdiContainersList/EdiContainers/sealNo").to eq "SEAL_NO"
-        expect(s.text "EdiContainersList/EdiContainers/custNo").to eq "CUST"
-        expect(s.text "EdiContainersList/EdiContainers/contSize").to eq "20FT"
-        expect(s.text "EdiContainersList/EdiContainers/descContent1").to eq "DESC"
-        expect(s.text "EdiContainersList/EdiContainers/pieces").to eq "30"
-        expect(s.text "EdiContainersList/EdiContainers/uom").to eq "CUOM"
-        expect(s.text "EdiContainersList/EdiContainers/weight").to eq "30"
-        expect(s.text "EdiContainersList/EdiContainers/uomWeight").to eq "KG"
-        expect(s.text "EdiContainersList/EdiContainers/containerType").to eq "CTYPE"
+        elem_containers = s.elements.to_a("EdiContainersList")[0]
+        expect(elem_containers.elements.to_a("EdiContainers").length).to eq 2
+        elem_cont_1 = elem_containers.elements.to_a("EdiContainers")[0]
+        expect(elem_cont_1.text "masterBill").to eq "1234567890"
+        expect(elem_cont_1.text "houseBill").to eq "9876543210"
+        expect(elem_cont_1.text "noContainer").to eq "CONT_NO"
+        expect(elem_cont_1.text "sealNo").to eq "SEAL_NO"
+        expect(elem_cont_1.text "custNo").to eq "CUST"
+        expect(elem_cont_1.text "contSize").to eq "20FT"
+        expect(elem_cont_1.text "descContent1").to eq "DESC"
+        expect(elem_cont_1.text "pieces").to eq "30"
+        expect(elem_cont_1.text "uom").to eq "CUOM"
+        expect(elem_cont_1.text "weight").to eq "30"
+        expect(elem_cont_1.text "uomWeight").to eq "KG"
+        expect(elem_cont_1.text "containerType").to eq "CTYPE"
+
+        elem_cont_2 = elem_containers.elements.to_a("EdiContainers")[1]
+        expect(elem_cont_2.text "masterBill").to eq "1234567890"
+        expect(elem_cont_2.text "noContainer").to eq "CONT_NO_2"
       end
 
       it "allows bills over 12 digits, truncating to 12" do

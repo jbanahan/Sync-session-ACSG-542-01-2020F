@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
       expect(shipments.length).to eq 1
 
       s = shipments.first
-      expect(s.customer).to eq "TARGEN"
+      expect(s.customer).to eq "TEST"
       expect(s.customs_ship_mode).to eq 11
       expect(s.vessel).to eq "YM UNISON"
       expect(s.voyage).to eq "084E"
@@ -110,6 +110,18 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
 
       expect(inbound_file).to have_identifier(:master_bill, "YMLUW490360331")
       expect(inbound_file).to have_identifier(:po_number, "2663814")
+    end
+
+    it "uses proper customer number in production" do
+      ms = stub_master_setup
+      expect(ms).to receive(:production?).and_return true
+
+      shipments = subject.process_file file_data
+
+      expect(shipments.length).to eq 1
+
+      s = shipments.first
+      expect(s.customer).to eq "TARGEN"
     end
 
     it "handles assortments by sending PKG uom" do
@@ -230,5 +242,348 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
     it "returns false" do
       expect(subject.add_special_tariffs?(nil, nil, nil)).to eq false
     end
+  end
+
+  describe "parse (class-level)" do
+    it "calls instance method" do
+      file_data = instance_double("file_data")
+      opts = instance_double("opts")
+
+      expect(described_class).to receive(:new).and_return(subject)
+      expect(subject).to receive(:parse).with(file_data, opts)
+
+      described_class.parse file_data, opts
+    end
+  end
+
+  describe "parse" do
+    let(:file_data) { IO.read('spec/fixtures/files/target_entry_initiation.txt') }
+    let(:cdefs) { subject.send(:cdefs) }
+    let!(:target) { with_customs_management_id(Factory(:importer), "TARGEN") }
+    let!(:country_us) { Factory(:country, iso_code: "US") }
+
+    it "processes file data, makes and saves shipment and generates/sends XML" do
+      port_lading = Factory(:port, schedule_k_code: "86420", name: "Lading Port")
+      port_unlading = Factory(:port, schedule_d_code: "7531", name: "Unlading Port")
+      country_export = Factory(:country, iso_code: "VN", name: "Vietnam")
+
+      prod_1 = make_product("032-518", country_origin_iso: "CN")
+      prod_2 = make_product("032-519", country_origin_iso: "IN")
+
+      shp_obj = new_shipment
+      shp_obj.vessel = "SS Minnow"
+      shp_obj.voyage = "VOY9876"
+      shp_obj.customs_ship_mode = 11
+      shp_obj.unlading_port = "7531"
+      shp_obj.lading_port = "86420"
+      shp_obj.country_of_export = "VN"
+      shp_obj.carrier = "CARR"
+      shp_obj.recon_value_flag = true
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039", house_bill: "HBHB10291029")
+      shp_obj.dates << new_date(:export_date, Date.new(2020, 2, 20))
+      shp_obj.dates << new_date(:est_arrival_date, Date.new(2021, 2, 21))
+      shp_obj.containers << new_container("CONT12345")
+      shp_obj.containers << new_container("CONT67890")
+
+      inv_1 = new_invoice
+      inv_1.invoice_lines << new_invoice_line(part_number: "032-518", po_number: "PO-X", unit_price: BigDecimal("3.25"), pieces: 5, cartons: 3)
+      inv_1.invoice_lines << new_invoice_line(part_number: "032-518", po_number: "PO-X", unit_price: BigDecimal("3.25"), pieces: 6, cartons: 4)
+      inv_1.invoice_lines << new_invoice_line(part_number: "032-519", po_number: "PO-X", unit_price: BigDecimal("5.47"), pieces: 7, cartons: 5)
+      shp_obj.invoices << inv_1
+
+      inv_2 = new_invoice
+      inv_2.invoice_lines << new_invoice_line(part_number: "032-518", po_number: "PO-Y", unit_price: BigDecimal("6.58"), pieces: 8, cartons: 6)
+      shp_obj.invoices << inv_2
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj], sync_records: [kind_of(SyncRecord)])
+      subject.parse file_data
+
+      shp = Shipment.where(reference: "MBMB20392039", importer_id: target.id).first
+      expect(shp).not_to be_nil
+      expect(shp.vessel).to eq "SS Minnow"
+      expect(shp.voyage).to eq "VOY9876"
+      expect(shp.mode).to eq "Ocean"
+      expect(shp.unlading_port).to eq port_unlading
+      expect(shp.lading_port).to eq port_lading
+      expect(shp.country_export).to eq country_export
+      expect(shp.master_bill_of_lading).to eq "MBMB20392039"
+      expect(shp.house_bill_of_lading).to eq "HBHB10291029"
+      expect(shp.departure_date).to eq Date.new(2020, 2, 20)
+      expect(shp.est_arrival_port_date).to eq Date.new(2021, 2, 21)
+      expect(shp.vessel_carrier_scac).to eq "CARR"
+      expect(shp.custom_value(cdefs[:shp_first_sale])).to eq true
+
+      expect(shp.containers.length).to eq 2
+      expect(shp.containers[0].container_number).to eq "CONT12345"
+      expect(shp.containers[1].container_number).to eq "CONT67890"
+
+      expect(shp.shipment_lines.length).to eq 3
+
+      sl_1 = shp.shipment_lines[0]
+      expect(sl_1.line_number).to eq 1
+      expect(sl_1.quantity).to eq 11
+      expect(sl_1.carton_qty).to eq 7
+      expect(sl_1.product).to eq prod_1
+      expect(sl_1.order_line.line_number).to eq 1
+      expect(sl_1.order_line.country_of_origin).to eq "CN"
+      expect(sl_1.order_line.price_per_unit).to eq BigDecimal("3.25")
+      expect(sl_1.order_line.order.order_number).to eq "PO-X"
+      expect(sl_1.order_line.order.importer_id).to eq target.id
+
+      sl_2 = shp.shipment_lines[1]
+      expect(sl_2.line_number).to eq 2
+      expect(sl_2.quantity).to eq 7
+      expect(sl_2.carton_qty).to eq 5
+      expect(sl_2.product).to eq prod_2
+      expect(sl_2.order_line.line_number).to eq 2
+      expect(sl_2.order_line.country_of_origin).to eq "IN"
+      expect(sl_2.order_line.price_per_unit).to eq BigDecimal("5.47")
+      expect(sl_2.order_line.order.order_number).to eq "PO-X"
+      expect(sl_2.order_line.order.importer_id).to eq target.id
+      expect(sl_1.order_line.order).to eq sl_2.order_line.order
+
+      sl_3 = shp.shipment_lines[2]
+      expect(sl_3.line_number).to eq 3
+      expect(sl_3.quantity).to eq 8
+      expect(sl_3.carton_qty).to eq 6
+      expect(sl_3.product).to eq prod_1
+      expect(sl_3.order_line.line_number).to eq 1
+      expect(sl_3.order_line.country_of_origin).to eq "CN"
+      expect(sl_3.order_line.price_per_unit).to eq BigDecimal("6.58")
+      expect(sl_3.order_line.order.order_number).to eq "PO-Y"
+      expect(sl_3.order_line.order.importer_id).to eq target.id
+      expect(sl_1.order_line.order).not_to eq sl_3.order_line.order
+
+      sync_records = shp.sync_records.find_all { |sync| OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER == sync.trading_partner }
+      expect(sync_records.length).to eq 1
+      expect(sync_records[0].sent_at).not_to be_nil
+      expect(sync_records[0].confirmed_at).not_to be_nil
+
+      expect(inbound_file).to have_identifier(:shipment_number, "MBMB20392039", Shipment, shp.id)
+      expect(inbound_file).to have_info_message("Shipment 'MBMB20392039' created.")
+      expect(inbound_file).to have_no_warning_messages
+    end
+
+    def new_shipment
+      s = described_class::CiLoadEntry.new
+      s.invoices = []
+      s.containers = []
+      s.dates = []
+      s.bills_of_lading = []
+      s
+    end
+
+    def new_bol master_bill: nil, house_bill: nil
+      b = described_class::CiLoadBillsOfLading.new
+      b.master_bill = master_bill
+      b.house_bill = house_bill
+      b
+    end
+
+    def new_container container_number
+      described_class::CiLoadContainer.new(container_number)
+    end
+
+    def new_date date_code, date
+      described_class::CiLoadEntryDate.new(date_code, date)
+    end
+
+    def new_invoice
+      i = described_class::CiLoadInvoice.new
+      i.invoice_lines = []
+      i
+    end
+
+    def new_invoice_line part_number: nil, po_number: nil, unit_price: nil, pieces: nil, cartons: nil
+      il = described_class::CiLoadInvoiceLine.new
+      il.part_number = part_number
+      il.po_number = po_number
+      il.unit_price = unit_price
+      il.pieces = pieces
+      il.cartons = cartons
+      il
+    end
+
+    def make_product unique_identifier, country_origin_iso: nil
+      prod = Factory(:product, unique_identifier: unique_identifier)
+      if country_origin_iso
+        us_class = prod.classifications.create! country: country_us
+        tar = us_class.tariff_records.create!
+        tar.find_and_set_custom_value(cdefs[:tar_country_of_origin], country_origin_iso)
+        tar.save!
+      end
+      prod
+    end
+
+    it "raises an error when Target company cannot be found" do
+      target.destroy!
+
+      shp_obj = new_shipment
+      shp_obj.bills_of_lading << new_bol(master_bill: "X")
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).not_to receive(:generate_and_send_shipment_xml)
+
+      expect { subject.parse file_data }.to raise_error "Target customer not found."
+      expect(inbound_file).to have_error_message "Target customer not found."
+    end
+
+    it "handles multiple shipments" do
+      shp_obj_1 = instance_double("ci_load_shipment_1")
+      shp_obj_2 = instance_double("ci_load_shipment_2")
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj_1, shp_obj_2]
+      shp_1 = instance_double("shipment_1")
+      shp_2 = instance_double("shipment_2")
+      expect(subject).to receive(:make_shipment).with(shp_obj_1).and_return shp_1
+      expect(subject).to receive(:make_shipment).with(shp_obj_2).and_return shp_2
+      sync_1 = SyncRecord.new(trading_partner: "X")
+      sync_2 = SyncRecord.new(trading_partner: "X")
+      expect(SyncRecord).to receive(:find_or_build_sync_record)
+        .with(shp_1, OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER)
+        .and_return sync_1
+      expect(SyncRecord).to receive(:find_or_build_sync_record)
+        .with(shp_2, OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER)
+        .and_return sync_2
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj_1, shp_obj_2], sync_records: [sync_1, sync_2])
+
+      subject.parse file_data
+
+      expect(sync_1.sent_at).not_to be_nil
+      expect(sync_2.confirmed_at).not_to be_nil
+    end
+
+    it "warns about missing product" do
+      prod = make_product("032-519")
+
+      shp_obj = new_shipment
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039")
+
+      inv = new_invoice
+      inv.invoice_lines << new_invoice_line(part_number: "032-518", po_number: "PO-X", unit_price: BigDecimal("3.25"), pieces: 5, cartons: 3)
+      inv.invoice_lines << new_invoice_line(part_number: "032-519", po_number: "PO-X", unit_price: BigDecimal("5.47"), pieces: 7, cartons: 5)
+      shp_obj.invoices << inv
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj], sync_records: [kind_of(SyncRecord)])
+      subject.parse file_data
+
+      shp = Shipment.where(reference: "MBMB20392039", importer_id: target.id).first
+      # Only one line is added, the line with matching product, despite there being two lines in the source file.
+      expect(shp.shipment_lines.length).to eq 1
+
+      sl = shp.shipment_lines[0]
+      expect(sl.line_number).to eq 1
+      expect(sl.product).to eq prod
+      expect(sl.quantity).to eq 7
+
+      expect(inbound_file).to have_identifier(:shipment_number, "MBMB20392039", Shipment, shp.id)
+      expect(inbound_file).to have_info_message("Shipment 'MBMB20392039' created.")
+      expect(inbound_file).to have_warning_message("Product not found: Line-level information was not added to shipment 'MBMB20392039' for product '032-518'.")
+    end
+
+    it "raises error when US country not found" do
+      country_us.destroy!
+
+      make_product("032-519")
+
+      shp_obj = new_shipment
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039")
+
+      inv = new_invoice
+      inv.invoice_lines << new_invoice_line(part_number: "032-519", po_number: "PO-X", unit_price: BigDecimal("5.47"), pieces: 7, cartons: 5)
+      shp_obj.invoices << inv
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).not_to receive(:generate_and_send_shipment_xml)
+
+      expect { subject.parse file_data }.to raise_error "No US country found."
+      expect(inbound_file).to have_error_message "No US country found."
+    end
+
+    it "shows 'Air' as transport mode for air shipment" do
+      shp_obj = new_shipment
+      shp_obj.customs_ship_mode = 41
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039")
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj], sync_records: [kind_of(SyncRecord)])
+      subject.parse file_data
+
+      shp = Shipment.where(reference: "MBMB20392039", importer_id: target.id).first
+      expect(shp.mode).to eq "Air"
+    end
+
+    it "shows nil as transport mode for non-air/sea shipment" do
+      shp_obj = new_shipment
+      shp_obj.customs_ship_mode = 31
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039")
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj], sync_records: [kind_of(SyncRecord)])
+      subject.parse file_data
+
+      shp = Shipment.where(reference: "MBMB20392039", importer_id: target.id).first
+      expect(shp.mode).to be_nil
+    end
+
+    it "updates existing shipment" do
+      prod_1 = make_product("032-518")
+      prod_2 = make_product("032-519")
+
+      ord_exist = Factory(:order, order_number: "PO-X", importer_id: target.id)
+      ol_1 = ord_exist.order_lines.create! line_number: 2, product: prod_1
+      ol_2 = ord_exist.order_lines.create! line_number: 3, product: prod_2
+
+      # Existing lines and containers should be replaced.
+      shp_exist = Factory(:shipment, reference: "MBMB20392039", importer_id: target.id)
+      shp_exist.shipment_lines.create! line_number: 5, linked_order_line_id: ol_1.id, product: prod_1
+      shp_exist.shipment_lines.create! line_number: 6, linked_order_line_id: ol_2.id, product: prod_2
+      shp_exist.containers.create! container_number: "EXISTING"
+
+      shp_obj = new_shipment
+      shp_obj.bills_of_lading << new_bol(master_bill: "MBMB20392039", house_bill: "HBHB10291029")
+      shp_obj.containers << new_container("CONT12345")
+      shp_obj.containers << new_container("CONT67890")
+
+      inv_1 = new_invoice
+      inv_1.invoice_lines << new_invoice_line(part_number: "032-518", po_number: "PO-X", unit_price: BigDecimal("3.25"), pieces: 5, cartons: 3)
+      shp_obj.invoices << inv_1
+
+      expect(subject).to receive(:process_file).with(file_data).and_return [shp_obj]
+
+      expect(subject).to receive(:generate_and_send_shipment_xml).with([shp_obj], sync_records: [kind_of(SyncRecord)])
+      subject.parse file_data
+
+      shp = Shipment.where(reference: "MBMB20392039", importer_id: target.id).first
+      expect(shp.id).to eq shp_exist.id
+
+      expect(shp.containers.length).to eq 2
+      expect(shp.containers[0].container_number).to eq "CONT12345"
+      expect(shp.containers[1].container_number).to eq "CONT67890"
+
+      expect(shp.shipment_lines.length).to eq 1
+
+      sl_1 = shp.shipment_lines[0]
+      expect(sl_1.line_number).to eq 1
+      expect(sl_1.quantity).to eq 5
+      expect(sl_1.carton_qty).to eq 3
+      expect(sl_1.product).to eq prod_1
+      expect(sl_1.order_line.line_number).to eq 2
+      expect(sl_1.order_line).to eq ol_1
+      # Existing order lines shouldn't have been purged despite them no longer being tied to shipment line.
+      expect(sl_1.order_line.order.order_lines.length).to eq 2
+
+      expect(inbound_file).to have_identifier(:shipment_number, "MBMB20392039", Shipment, shp.id)
+      expect(inbound_file).to have_info_message("Shipment 'MBMB20392039' updated.")
+      expect(inbound_file).to have_no_warning_messages
+    end
+
   end
 end

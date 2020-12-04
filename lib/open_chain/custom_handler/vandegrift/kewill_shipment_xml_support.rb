@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     # You don't have to use scac in general when sending an EDI Identifier, just put the full master bill in the
     # master_bill field.  The internals of this class will end up splitting the master bill into the scac / numeric components
     # to send to Customs Management
-    CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :scac)
+    CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :scac, :container_numbers)
     # code is the symbol matching to the key above in the CI_LOAD_DATE_CODES constant
     # In other words, to send an export date use a code of "1"...to send an Arrival Date, use a code of 'arrival_date'
     CiLoadEntryDate ||= Struct.new(:code, :date)
@@ -218,8 +218,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       bills = Array.wrap(entry.bills_of_lading)
       raise MissingCiLoadDataError, "At least one Bill of Lading record must be present for all entry data sent to Kewill." if bills.length == 0
 
-      # Use the first bill of lading and generate an identifier from it..
-      identifier = generate_entry_identifier_from_bol bills.first
+      # Use the first bill of lading and generate an identifier from it.  All containers will be included.
+      # They are not mandatory here, however.
+      identifier = generate_entry_identifier_from_bol_and_containers bills.first, entry.containers
     else
       raise MissingCiLoadDataError, "At least one Edi Identifier value must be present." if identifier.master_bill.blank? && identifier.house_bill.blank? && identifier.sub_bill.blank? && identifier.sub_sub_bill.blank?
     end
@@ -227,7 +228,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     identifier
   end
 
-  def generate_entry_identifier_from_bol bill_of_lading
+  def generate_entry_identifier_from_bol_and_containers bill_of_lading, containers
     identifier = CiLoadEdiIdentifier.new
     if !bill_of_lading.master_bill.blank?
       scac, bol = chop_bill(bill_of_lading.master_bill.to_s.strip)
@@ -238,6 +239,11 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     identifier.house_bill = chop_bill(bill_of_lading.house_bill.to_s.strip)[1] if !bill_of_lading.house_bill.blank?
     identifier.sub_bill = chop_bill(bill_of_lading.sub_bill.to_s.strip)[1] if !bill_of_lading.sub_bill.blank?
     identifier.sub_sub_bill = chop_bill(bill_of_lading.sub_sub_bill.to_s.strip)[1] if !bill_of_lading.sub_sub_bill.blank?
+
+    # This will ultimately force an association between the containers and the bill number in CMUS.
+    if containers.length > 0
+      identifier.container_numbers = containers.map(&:container_number).to_a
+    end
 
     identifier
   end
@@ -298,8 +304,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     scac, bill = chop_bill(bol.master_bill)
     add_element(id, "scac", g.string(scac, 4, pad_string: false)) unless scac.blank?
     add_element(id, "masterBillAddl", g.string(bill, 12, pad_string: false)) unless bill.blank?
-    scac, bill = chop_bill(bol.house_bill)
-    add_element(id, "scacHouse", g.string(scac, 4, pad_string: false)) unless scac.blank?
+    house_scac, bill = chop_bill(bol.house_bill)
+    add_element(id, "scacHouse", g.string(house_scac, 4, pad_string: false)) unless scac.blank?
     add_element(id, "houseBillAddl", g.string(bill, 12, pad_string: false)) unless bill.blank?
 
     *, sub_bill = chop_bill(bol.sub_bill)
@@ -309,6 +315,23 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
     add_element(id, "qty", g.number(bol.pieces, 12, decimal_places: 0, pad_string: false)) if nonzero?(bol.pieces)
     add_element(id, "uom", g.string(bol.pieces_uom, 6, pad_string: false)) unless bol.pieces_uom.blank?
+
+    # Kind of a hack to force an association between the containers and the bill number in CMUS,
+    # necessary for reporting purposes.
+    #
+    # The seqNo and scac value in in EdiShipmentIdContainers are, intentionally, the same value as the
+    # seqNo / scac in EdiShipmentId.  The only value that should differ between each EdiShipmentIdContainers
+    # should be the noContainer, which is the container number.
+    if edi_identifier.container_numbers&.length.to_i > 0
+      elem_edi_shipment_id_containers_list = add_element(id, "EdiShipmentIdContainersList")
+      edi_identifier.container_numbers.each do |cont|
+        elem_edi_shipment_id_containers = add_element(elem_edi_shipment_id_containers_list, "EdiShipmentIdContainers")
+        add_element(elem_edi_shipment_id_containers, "seqNo", sequence)
+        generate_identifier_data(elem_edi_shipment_id_containers, edi_identifier)
+        add_element(elem_edi_shipment_id_containers, "scac", g.string(scac, 4, pad_string: false)) unless scac.blank?
+        add_element(elem_edi_shipment_id_containers, "noContainer", g.string(cont, 15, pad_string: false))
+      end
+    end
 
     id
   end

@@ -158,7 +158,8 @@ module OpenChain; module CustomHandler; module Target; module TargetCustomDefini
     var_quantity: { label: "Quantity", data_type: :decimal, module_type: "Variant", cdef_uid: "var_quantity" },
     var_hts_line: { label: "HTS Line Number", data_type: :integer, module_type: "Variant", cdef_uid: "var_hts_line" },
     var_lacey_species: { label: "Lacey Species", data_type: :string, module_type: "Variant", cdef_uid: "var_lacey_species" },
-    var_lacey_country_harvest: { label: "Lacey Country of Harvest", data_type: :string, module_type: "Variant", cdef_uid: "var_lacey_country_harvest" }
+    var_lacey_country_harvest: { label: "Lacey Country of Harvest", data_type: :string, module_type: "Variant", cdef_uid: "var_lacey_country_harvest" },
+    shp_first_sale: { label: "First Sale?", data_type: :boolean, module_type: "Shipment", cdef_uid: "shp_first_sale" }
   }.freeze
 
   included do

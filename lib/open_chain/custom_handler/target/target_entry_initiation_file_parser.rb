@@ -1,5 +1,6 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_sender_support'
+require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_comparator'
 require 'open_chain/custom_handler/fixed_position_parser_support'
 require 'open_chain/custom_handler/target/target_support'
 require 'open_chain/custom_handler/target/target_custom_definition_support'
@@ -11,12 +12,28 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
   include OpenChain::CustomHandler::Target::TargetSupport
   include OpenChain::CustomHandler::Target::TargetCustomDefinitionSupport
 
+  CiLoadInvoiceLineWithOrderProduct ||= Struct.new(:invoice_line, :order_line_id, :product)
+
   def self.parse data, opts = {}
     self.new.parse(data, opts)
   end
 
   def parse data, _opts = {}
-    generate_and_send_shipment_xml(process_file(data))
+    shipments_arr = process_file(data)
+    sync_records = []
+    shipments_arr.each do |shp_obj|
+      shp = make_shipment(shp_obj)
+      sync_records << SyncRecord.find_or_build_sync_record(shp, OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER)
+    end
+
+    generate_and_send_shipment_xml(shipments_arr, sync_records: sync_records)
+
+    sync_records.each do |sync|
+      sync.sent_at = 1.second.ago
+      sync.confirmed_at = 0.seconds.ago
+      sync.save!
+    end
+
     nil
   end
 
@@ -136,7 +153,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
 
     lines = []
     if xvv_set_part?(part)
-      tariffs = part.classifications.where(country_id: us.id).first&.tariff_records
+      tariffs = tariff_records part
       tariffs.each do |tariff|
         xvv = tariff.custom_value(cdefs[:tar_xvv]).to_s.upcase
         next unless ["X", "V"].include?(xvv)
@@ -264,7 +281,8 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
     end
 
     def customer_number
-      "TARGEN"
+      # Temporary fix before we move to Azure.
+      MasterSetup.get.production? ? "TARGEN" : "TEST"
     end
 
     def find_target_part part_number
@@ -282,13 +300,135 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
     end
 
     def cdefs
-      @cdefs ||= self.class.prep_custom_definitions [:prod_type, :tar_xvv]
+      @cdefs ||= self.class.prep_custom_definitions [:prod_type, :tar_xvv, :shp_first_sale, :tar_country_of_origin]
     end
 
     def us
-      @us ||= Country.where(iso_code: "US").first
-      raise "No US country found." if @us.nil?
+      @us ||= find_country("US")
+      inbound_file.error_and_raise "No US country found." if @us.nil?
       @us
+    end
+
+    def target
+      @target ||= Company.with_customs_management_number("TARGEN").first
+      inbound_file.error_and_raise "Target customer not found." if @target.nil?
+      @target
+    end
+
+    # Generates a Shipment record (with underlying Orders) based on the structs created from the parsed
+    # entry initiation data.  Assumes that Product/Part data will already exist: there is a separate feed
+    # for this.
+    def make_shipment shp_obj
+      # Code assumes there will always be one BOL for these Target entry initiations.
+      bol = shp_obj.bills_of_lading[0]
+
+      # Bill of lading should be unique to an entry initiation.  We can use it as our shipment reference.
+      ref_num = bol.master_bill.presence || bol.house_bill
+      shp = Shipment.where(reference: ref_num, importer_id: target.id).first_or_initialize
+      shp.vessel = shp_obj.vessel
+      shp.voyage = shp_obj.voyage
+      shp.mode = convert_ship_mode(shp_obj.customs_ship_mode)
+      shp.unlading_port = find_port(shp_obj.unlading_port, :schedule_d_code)
+      shp.lading_port = find_port(shp_obj.lading_port, :schedule_k_code)
+      shp.country_export = find_country(shp_obj.country_of_export)
+      shp.master_bill_of_lading = bol.master_bill
+      shp.house_bill_of_lading = bol.house_bill
+      shp.departure_date = find_ci_load_entry_date(shp_obj.dates, :export_date)
+      shp.est_arrival_port_date = find_ci_load_entry_date(shp_obj.dates, :est_arrival_date)
+      shp.vessel_carrier_scac = shp_obj.carrier
+      shp.find_and_set_custom_value(cdefs[:shp_first_sale], shp_obj.recon_value_flag)
+
+      # Any existing shipment lines and containers should be destroyed/replaced.
+      if shp.persisted?
+        shp.containers.destroy_all
+        shp.shipment_lines.destroy_all
+      end
+
+      shp_obj.containers.each do |cont|
+        shp.containers.build(container_number: cont.container_number)
+      end
+
+      # Load up the order/product information needed for creating shipment lines.
+      shipment_line_bases = []
+      shp_obj.invoices.each do |inv|
+        inv.invoice_lines.each do |inv_line|
+          inv_line_enhanced = add_order_product_info inv_line, ref_num
+          shipment_line_bases << inv_line_enhanced unless inv_line_enhanced.nil?
+        end
+      end
+
+      # Now make the shipment lines.
+      shipment_line_bases.each do |basis|
+        shp_line = shp.shipment_lines.find { |sl| sl.linked_order_line_id == basis.order_line_id }
+        if shp_line.nil?
+          shp_line = shp.shipment_lines.build(linked_order_line_id: basis.order_line_id)
+        end
+
+        shp_line.line_number = shp.shipment_lines.length if shp_line.line_number.blank?
+        shp_line.quantity = (shp_line.quantity || 0) + basis.invoice_line.pieces
+        shp_line.carton_qty = (shp_line.carton_qty || 0) + basis.invoice_line.cartons
+        shp_line.product = basis.product
+      end
+
+      created = shp.new_record?
+      shp.save!
+      inbound_file.add_identifier :shipment_number, ref_num, object: shp
+      inbound_file.add_info_message "Shipment '#{ref_num}' #{created ? "created" : "updated"}."
+
+      shp
+    end
+
+    def convert_ship_mode customs_ship_mode
+      if Entry.get_transport_mode_codes_us_ca("SEA").include? customs_ship_mode
+        "Ocean"
+      elsif Entry.get_transport_mode_codes_us_ca("AIR").include? customs_ship_mode
+        "Air"
+      end
+    end
+
+    def find_port port_code, code_type
+      Port.where(code_type => port_code).first
+    end
+
+    def find_country iso_code
+      Country.where(iso_code: iso_code).first
+    end
+
+    def find_ci_load_entry_date dates, date_code
+      dates.find { |d| d.code == date_code }&.date
+    end
+
+    def tariff_records product
+      product.classifications.where(country_id: us.id).first&.tariff_records || []
+    end
+
+    def product_country_origin product
+      tariff_records(product).first&.custom_value(cdefs[:tar_country_of_origin])
+    end
+
+    def add_order_product_info inv_line, ref_num
+      inv_line_enhanced = nil
+      product = find_target_part(inv_line.part_number)
+      if product
+        inv_line_enhanced = CiLoadInvoiceLineWithOrderProduct.new(inv_line, order_line_id(inv_line, product), product)
+      else
+        inbound_file.add_warning_message "Product not found: Line-level information was not added to shipment '#{ref_num}' for product '#{inv_line.part_number}'."
+      end
+      inv_line_enhanced
+    end
+
+    def order_line_id inv_line, product
+      id = nil
+      Lock.acquire("Order-#{inv_line.po_number}") do
+        ord = Order.where(order_number: inv_line.po_number, importer_id: target.id).first_or_create!
+        ord_line = ord.order_lines.find_or_initialize_by(product: product)
+        ord_line.line_number = ord.order_lines.length if ord_line.line_number.blank?
+        ord_line.country_of_origin = product_country_origin product
+        ord_line.price_per_unit = inv_line.unit_price
+        ord_line.save!
+        id = ord_line.id
+      end
+      id
     end
 
 end; end; end; end
