@@ -11,9 +11,8 @@ describe ShipmentsController do
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true
       expect_any_instance_of(OpenChain::CustomHandler::ShipmentDownloadGenerator).to receive(:generate).with(instance_of(XlsxBuilder), shipment, u)
       expect_any_instance_of(described_class).to receive(:send_builder_data).with(instance_of(XlsxBuilder), "REFNUM")
-      expect_any_instance_of(described_class).to receive(:render)
 
-      get :download, id: shipment.id
+      get :download, params: { id: shipment.id }, as: :json
       expect(response).to be_success
     end
 
@@ -32,9 +31,8 @@ describe ShipmentsController do
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true
       expect_any_instance_of(OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator).to receive(:generate).with(instance_of(XlsxBuilder), shipment, u)
       expect_any_instance_of(described_class).to receive(:send_builder_data).with(instance_of(XlsxBuilder), "REFNUM")
-      expect_any_instance_of(described_class).to receive(:render)
 
-      get :download, id: shipment.id
+      get :download, params: { id: shipment.id }, as: :json
       expect(response).to be_success
     end
   end

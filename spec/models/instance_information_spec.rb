@@ -69,7 +69,7 @@ describe InstanceInformation do
 
   describe "check_in" do
     subject { described_class }
-    let (:now) { Time.zone.now }
+    let (:now) { time_now }
 
     before :each do
       allow(subject).to receive(:server_name).and_return "Name"

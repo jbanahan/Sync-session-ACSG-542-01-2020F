@@ -86,7 +86,7 @@ describe ProductsController do
       cls = create(:classification, product:@product, country:cntry)
       cd = create(:custom_definition, module_type:'Classification', data_type:'string')
       cls.update_custom_value!(cd, 'abc')
-      put :update, id:@product.id, 'product'=>{'prod_uid'=>'1234', 'classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s, 'class_cntry_id' => cntry.id.to_s, cd.model_field_uid.to_s => ''}}}
+      put :update, params: { id:@product.id, 'product'=>{'prod_uid'=>'1234', 'classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s, 'class_cntry_id' => cntry.id.to_s, cd.model_field_uid.to_s => ''}}} }
       p = Product.find @product.id
       expect(p.classifications.first.get_custom_value(cd).value).to be_blank
     end
@@ -217,7 +217,7 @@ describe ProductsController do
       end
 
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val"
-      post :bulk_update_classifications, p
+      post :bulk_update_classifications, params: p
       expect(flash[:notices]).to eq ["These products will be updated in the background.  You will receive a system message when they're ready."]
       expect(response).to redirect_to Product
     end
@@ -233,7 +233,7 @@ describe ProductsController do
     it "should redirect to 'back_to' parameter if set" do
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x"
       expect(OpenChain::BulkUpdateClassification).to receive(:delayed_quick_classify)
-      post :bulk_update_classifications, {'back_to'=>'/somewhere?force_search=true&key=val', :sr_id=>"1"}
+      post :bulk_update_classifications, params: {'back_to'=>'/somewhere?force_search=true&key=val', :sr_id=>"1"}
       expect(response).to redirect_to("http://test.host/somewhere?key=val")
     end
   end

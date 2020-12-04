@@ -111,7 +111,7 @@ describe OneTimeAlertsController do
 
       get :new, display_all: true
       expect(assigns(:alert)).to be_instance_of(OneTimeAlert)
-      expect(assigns(:display_all)).to eq true
+      expect(assigns(:display_all)).to eq "true"
       expect(assigns(:cm_list)).to eq [["BrokerInvoice", "Broker Invoice"],
                                        ["Entry", "Entry"], ["Order", "Order"],
                                        ["Product", "Product"], ["Shipment", "Shipment"]]
@@ -129,7 +129,7 @@ describe OneTimeAlertsController do
 
     it "renders for alert's creator" do
       get :edit, id: ota.id, display_all: true
-      expect(assigns(:display_all)).to eq true
+      expect(assigns(:display_all)).to eq "true"
       expect(response).to be_success
     end
 
@@ -397,7 +397,7 @@ describe OneTimeAlertsController do
       get :reference_fields_index, display_all: true
 
       expect(response).to be_success
-      expect(assigns(:display_all)).to eq true
+      expect(assigns(:display_all)).to eq "true"
       expect(JSON.parse(assigns(:available))).to eq("BrokerInvoice" => [{ "mfid" => "bi_invoice_number", "label" => "Invoice Number"}],
                                                     "Entry" => [{"mfid" => "ent_entry_num", "label" => "Entry Number"}],
                                                     "Product" => [{"mfid" => "prod_uid", "label" => "Unique Identifier"}],
@@ -421,16 +421,16 @@ describe OneTimeAlertsController do
     it "renders for user with permission" do
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return true
 
-      get :log_index, id: alert.id, display_all: true
+      get :log_index, params: { id: alert.id, display_all: true }
       expect(response).to be_success
       expect(assigns(:alert)).to eq alert
-      expect(assigns(:display_all)).to eq true
+      expect(assigns(:display_all)).to eq "true"
     end
 
     it "rejects other users" do
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return false
 
-      get :log_index, id: alert.id
+      get :log_index, params: { id: alert.id }
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view One Time Alerts."
     end

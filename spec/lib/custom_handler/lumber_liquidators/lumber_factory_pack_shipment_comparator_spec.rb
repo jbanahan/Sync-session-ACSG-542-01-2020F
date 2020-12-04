@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       snapshot_new = shipment.create_snapshot create(:user)
 
       csv = "A,B,C"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
       csv_output_file = nil
       synced = nil
       ftp_info_hash = nil
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synced)
-      expect(sr.trading_partner).to eq 'create Pack Declaration'
+      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
 
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       snapshot_new = shipment.create_snapshot create(:user)
 
       csv = "A,B,C"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return(csv)
       csv_output_file = nil
       synced = nil
       ftp_info_hash = nil
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synced)
-      expect(sr.trading_partner).to eq 'create Pack Declaration'
+      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
 
@@ -119,7 +119,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
 
       snapshot_new = shipment.create_snapshot create(:user)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).not_to receive(:generate_csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).not_to receive(:generate_csv)
       expect(subject).not_to receive(:ftp_sync_file)
 
       subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
@@ -137,9 +137,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot create(:user)
 
-      synco = shipment.sync_records.create! trading_partner:'create Pack Declaration', sent_at:Date.new(2018, 1, 29)
+      synco = shipment.sync_records.create! trading_partner:'Factory Pack Declaration', sent_at:Date.new(2018, 1, 29)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
       expect(subject).to receive(:ftp_sync_file).with(instance_of(Tempfile), synco, instance_of(Hash))
 
       now = Time.zone.now
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
       expect(sr).to eq(synco)
-      expect(sr.trading_partner).to eq 'create Pack Declaration'
+      expect(sr.trading_partner).to eq 'Factory Pack Declaration'
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
     end
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
 
       shipment.delete
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).not_to receive(:generate_csv)
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).not_to receive(:generate_csv)
       expect(subject).not_to receive(:ftp_sync_file)
 
       subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
@@ -185,7 +185,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot create(:user)
 
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumbercreatePackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
       ftp_info_hash = nil
       expect(subject).to receive(:ftp_sync_file) { |file_arg, sync_arg, opt_arg|
         ftp_info_hash = opt_arg

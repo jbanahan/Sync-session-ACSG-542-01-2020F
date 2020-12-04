@@ -223,7 +223,7 @@ describe Shipment do
     it "calls hook" do
       expect(OpenChain::Registries::OrderBookingRegistry).to receive(:post_request_cancel_hook).with(shipment, user)
       expect(shipment).to receive(:create_snapshot_with_async_option).with(false, user)
-      now = Time.zone.now
+      now = time_now
       Timecop.freeze(now) { shipment.request_cancel! user }
 
       expect(shipment.cancel_requested_by).to eq user

@@ -346,7 +346,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
     end
 
     it "generates revised csv" do
-      sync = SyncRecord.new(trading_partner: 'create Pack Declaration')
+      sync = SyncRecord.new(trading_partner: 'Factory Pack Declaration')
       shipment.sync_records << sync
 
       csv = CSV.parse(described_class.generate_csv(shipment))

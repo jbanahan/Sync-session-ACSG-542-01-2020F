@@ -127,11 +127,11 @@ describe ISFSupport do
 
         it "is invalid" do
           @shipment.validate_isf
-          expect(@shipment.errors.full_messages).to include("Seller address is missing required fields: Name, Address 1, City, State, Postal Code, Country")
-          expect(@shipment.errors.full_messages).to include("Buyer address is missing required fields: Name, Address 1, City, State, Postal Code, Country")
-          expect(@shipment.errors.full_messages).to include("Ship to address is missing required fields: Name, Address 1, City, State, Postal Code, Country")
-          expect(@shipment.errors.full_messages).to include("Container stuffing address is missing required fields: Name, Address 1, City, State, Postal Code, Country")
-          expect(@shipment.errors.full_messages).to include("Consolidator address is missing required fields: Name, Address 1, City, State, Postal Code, Country")
+          expect(@shipment.errors.full_messages).to include("Seller address is missing required fields: Address 1, City, State, Postal Code")
+          expect(@shipment.errors.full_messages).to include("Buyer address is missing required fields: Address 1, City, State, Postal Code")
+          expect(@shipment.errors.full_messages).to include("Ship to address is missing required fields: Address 1, City, State, Postal Code")
+          expect(@shipment.errors.full_messages).to include("Container stuffing address is missing required fields: Address 1, City, State, Postal Code")
+          expect(@shipment.errors.full_messages).to include("Consolidator address is missing required fields: Address 1, City, State, Postal Code")
         end
       end
     end

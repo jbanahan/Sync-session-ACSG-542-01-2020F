@@ -116,8 +116,8 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
       put :update, params: {id: @ss.id, search_setup: {search_columns: [{mfid: 'prod_uid', label: "UID", rank: 2},
                                                                          {mfid: 'prod_name', rank: 1, label: 'm'},
-                                                                         {mfid: '_constsomeotherjunk', label: 'Broker', "constant_field_value" => 'Vandegrift', rank: 3}]
-      }}
+                                                                         {mfid: '_constsomeotherjunk', label: 'Broker', constant_field_value: 'Vandegrift', rank: 3}]
+      }}, as: :json
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_columns.size).to eq(3)
@@ -146,12 +146,12 @@ describe AdvancedSearchController do
 
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
       @ss.search_schedules.create!(:email_addresses=>"a@example.com")
-      put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
+      put :update, params: { :id=>@ss.id, :search_setup=>{:search_schedules=>[
         {:email_addresses=>'b@example.com', :run_hour=>6, :day_of_month=>1, :download_format=>'xls',
           :run_monday=>true, :run_tuesday=>false, :run_wednesday=>false, :run_thursday=>false, :run_friday=>false, :run_saturday=>false, :run_sunday=>false,
           :exclude_file_timestamp=>true, :disabled=>true, :report_failure_count=>2, date_format: "YYYY-DD-MM" },
         {:ftp_server=>'ftp.example.com', :ftp_username=>'user', :ftp_password=>'pass', :ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
-      ], :search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}]}
+      ], :search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}]} }, as: :json
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_schedules.size).to eq(2)

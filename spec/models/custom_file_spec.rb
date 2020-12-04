@@ -212,7 +212,7 @@ describe CustomFile do
     end
 
     let (:error) { StandardError.new "Error" }
-    let (:now) { Time.zone.now }
+    let (:now) { time_now }
     let (:user) { User.new }
 
     it "sets the error at and error messge by default" do

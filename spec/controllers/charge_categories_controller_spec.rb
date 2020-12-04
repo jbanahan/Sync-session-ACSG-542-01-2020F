@@ -31,7 +31,7 @@ describe ChargeCategoriesController do
     end
     it "should create category" do
       sign_in_as create(:admin_user)
-      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x', 'category'=>'y'}
+      post :create, params: { :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x', 'category'=>'y'} }
       expect(response).to redirect_to company_charge_categories_path(@c)
       expect(flash[:notices].first).to eq("Charge Category created successfully.")
       @c.reload

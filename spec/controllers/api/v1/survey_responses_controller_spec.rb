@@ -447,7 +447,7 @@ describe Api::V1::SurveyResponsesController do
       survey_response.archived = true
       survey_response.save!
 
-      post :checkin, {id: survey_response.id, 'survey_response' => req}
+      post :checkin, params: {id: survey_response.id, survey_response: req}
 
       expect(response.status).to eq 403
       expect(JSON.parse(response.body)).to eq({'errors' => ['Survey is archived.']})
@@ -486,7 +486,7 @@ describe Api::V1::SurveyResponsesController do
       end
 
       it "updates corrective action plan data" do
-        post :checkin, {id: survey_response.id, 'survey_response' => req}
+        post :checkin, params: {id: survey_response.id, 'survey_response' => req}
         expect(response).to be_success
 
         cap.reload
@@ -538,7 +538,7 @@ describe Api::V1::SurveyResponsesController do
         cap.status = CorrectiveActionPlan::STATUSES[:new]
         cap.save!
 
-        post :checkin, {id: survey_response.id, 'survey_response' => req}
+        post :checkin, params: {id: survey_response.id, 'survey_response' => req}
         expect(response).to be_success
 
         cap.reload
@@ -550,7 +550,7 @@ describe Api::V1::SurveyResponsesController do
         cap.status = CorrectiveActionPlan::STATUSES[:resolved]
         cap.save!
 
-        post :checkin, {id: survey_response.id, 'survey_response' => req}
+        post :checkin, params: {id: survey_response.id, 'survey_response' => req}
         expect(response).to be_success
 
         cap.reload

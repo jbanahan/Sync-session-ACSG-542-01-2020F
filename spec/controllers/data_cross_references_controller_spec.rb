@@ -245,11 +245,11 @@ describe DataCrossReferencesController do
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
       cf = instance_double "custom file"
       allow(cf).to receive(:id).and_return 1
-      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::DataCrossReferenceUploader', uploaded_by: user, attached: file).and_return cf
+      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::DataCrossReferenceUploader', uploaded_by: user, attached: instance_of(ActionDispatch::Http::UploadedFile)).and_return cf
       expect(CustomFile).to receive(:process).with(1, user.id, cross_reference_type: 'cross_ref_type', company_id: nil)
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', user).and_return true
 
-      post :upload, cross_reference_type: 'cross_ref_type', attached: file
+      post :upload, params: { cross_reference_type: 'cross_ref_type', attached: file }
       expect(response).to redirect_to request.referer
       expect(flash[:notices]).to eq ["Your file is being processed.  You'll receive a " + MasterSetup.application_name + " message when it completes."]
     end

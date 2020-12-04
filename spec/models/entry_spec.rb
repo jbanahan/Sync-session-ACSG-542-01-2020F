@@ -529,8 +529,8 @@ describe Entry do
 
       describe "populated_holds" do
         it "returns list of hashes containing hold/release-date pairs where the hold date is populated" do
-          now = DateTime.now
-          yesterday = DateTime.now - 1.day
+          now = time_now
+          yesterday = now - 1.day
           e = create(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
           expect(e.populated_holds).to eq [{hold: { mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: yesterday},
                                             release: { mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: yesterday}},
@@ -541,8 +541,8 @@ describe Entry do
 
       describe "active_holds" do
         it "returns list of hashes containing hold-release_date pairs where the hold date is populated but the hold release is not" do
-          now = DateTime.now
-          yesterday = DateTime.now - 1.day
+          now = time_now
+          yesterday = now - 1.day
           e = create(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
           expect(e.active_holds).to eq [{hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: now},
                                          release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: nil}}]

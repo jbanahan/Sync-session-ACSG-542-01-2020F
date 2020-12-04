@@ -67,14 +67,14 @@ describe ChargeCodesController do
     it "only allows admins" do
       user.admin = false
       user.save!
-      put :update, { :id => charge_code.id, 'charge_code' => {'code' => 'b', 'description' => 'xyz'} }
+      put :update, params: { :id => charge_code.id, 'charge_code' => {'code' => 'b', 'description' => 'xyz'} }
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
       expect(ChargeCode.find(charge_code.id).code).to eq("a")
     end
 
     it "updates charge code" do
-      put :update, { :id => charge_code.id, 'charge_code' => {'code' => 'b', 'description' => 'xyz'} }
+      put :update, params: { :id => charge_code.id, 'charge_code' => {'code' => 'b', 'description' => 'xyz'} }
       expect(response).to be_redirect
       expect(flash[:notices].size).to eq(1)
       expect(ChargeCode.find(charge_code.id).code).to eq("b")

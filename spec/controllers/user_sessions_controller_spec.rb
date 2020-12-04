@@ -33,8 +33,8 @@ describe UserSessionsController do
     end
 
     it 'should allow a user to log in' do
-      expect_any_instance_of(User).to receive(:on_successful_login).with request
-      post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
+      expect_any_instance_of(User).to receive(:on_successful_login).with instance_of(ActionController::TestRequest)
+      post :create, params: { :user_session => {'username'=>@user.username, 'password'=>'this is my password'} }
 
       expect(response).to be_redirect
       expect(response).to redirect_to root_path
@@ -106,15 +106,15 @@ describe UserSessionsController do
     end
 
     it "should allow a user to log in with via json" do
-      expect_any_instance_of(User).to receive(:on_successful_login).with request
-      post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :format => "json"
+      expect_any_instance_of(User).to receive(:on_successful_login).with instance_of(ActionController::TestRequest)
+      post :create, params: { :user_session => {'username'=>@user.username, 'password'=>'this is my password'} }, as: :json
 
       expect(response).to be_success
       expect(response.body).to be_blank
     end
 
     it "should return json with errors if login failed" do
-      expect_any_instance_of(User).not_to receive(:on_successful_login).with request
+      expect_any_instance_of(User).not_to receive(:on_successful_login).with instance_of(ActionController::TestRequest)
       post :create, :user_session => {'username'=>@user.username, 'password'=>'password'}, :format => "json"
 
       expect(response).to be_success

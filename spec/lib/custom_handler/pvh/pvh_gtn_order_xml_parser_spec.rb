@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
 
       f = o.factory
       expect(f).not_to be_nil
-      expect(f).to have_system_identifier("PVH-GTN create", "21410002")
+      expect(f).to have_system_identifier("PVH-GTN Factory", "21410002")
       expect(f.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(f.factory?).to eq true
       expect(o.importer.linked_companies).to include f
@@ -117,7 +117,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
 
       a = f.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "PVH-GTN create-21410002"
+      expect(a.system_code).to eq "PVH-GTN Factory-21410002"
       expect(a.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(a.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
       expect(a.city).to eq "FARIDABAD"

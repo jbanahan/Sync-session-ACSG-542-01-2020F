@@ -51,7 +51,7 @@ describe Api::V1::Admin::GroupsController do
     end
 
     it "clears users" do
-      put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc", :include=>"users", "users"=>nil
+      put :update, params: { id: group.id, grp_name: "Update", grp_description: "Upd. Desc", include: "users", users: "" }
 
       expect(response).to be_success
       json = JSON.parse response.body

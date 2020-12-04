@@ -50,8 +50,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
   let (:factory) {
     f = create(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, mid: "INGUP103XXXX")
-    f.system_identifiers.create! system: "SYSTEM_CODE-GTN create", code: "28537"
-    create(:address, company: f, system_code: "SYSTEM_CODE-GTN create-28537", address_type: "create", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
+    f.system_identifiers.create! system: "SYSTEM_CODE-GTN Factory", code: "28537"
+    create(:address, company: f, system_code: "SYSTEM_CODE-GTN Factory-28537", address_type: "Factory", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
     f
   }
 
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       f = o.factory
       expect(f).not_to be_nil
-      expect(f).to have_system_identifier("SYSTEM_CODE-GTN create", "28537")
+      expect(f).to have_system_identifier("SYSTEM_CODE-GTN Factory", "28537")
       expect(f.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(f.factory?).to eq true
       expect(f.mid).to eq "INGUP103XXXX"
@@ -136,8 +136,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       a = f.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "SYSTEM_CODE-GTN create-28537"
-      expect(a.address_type).to eq "create"
+      expect(a.system_code).to eq "SYSTEM_CODE-GTN Factory-28537"
+      expect(a.address_type).to eq "Factory"
       expect(a.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(a.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
       expect(a.city).to eq "FARIDABAD"
@@ -276,7 +276,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
       context "detecting changes " do
         it "detects changes to basic party information on an existing order and saves / snapshots them" do
-          factory.update! name: "create"
+          factory.update! name: "Factory"
           vendor.update! name: "Vendor"
 
           o = subject.process_order xml, integration, "bucket", "key"

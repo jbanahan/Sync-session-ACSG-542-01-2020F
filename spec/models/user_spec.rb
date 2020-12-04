@@ -1019,7 +1019,7 @@ describe User do
     end
 
     it "sets password_changed_at" do
-      now = Time.zone.now
+      now = time_now
       Timecop.freeze(now) do
         user.update_user_password 'newpassword', 'newpassword'
         expect(described_class.authenticate(user.username, 'newpassword')).to eq user

@@ -194,7 +194,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotGenerator do
       expect(OpenChain::Ec2).to receive(:find_snapshot).with("snapshot-id", region: "aws-region").and_return(snapshot, snapshot_completed)
       expect(subject).to receive(:sleep).with(5).exactly(1).times
 
-      now = Time.zone.now
+      now = time_now
       Timecop.freeze(now) do
         subject.wait_for_snapshots_to_complete [{session: session, snapshots: [snapshot]}]
       end

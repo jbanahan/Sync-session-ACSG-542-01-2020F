@@ -370,7 +370,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
 
     it "makes no change if order has lines but no cancel date, returns 'false'" do
-      closed = DateTime.now - 10
+      closed = time_now - 10
       order.update_attributes(closed_at: closed)
       create(:order_line, order: order)
       expect(described_class.reset_po_cancellation order).to eq false

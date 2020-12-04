@@ -32,7 +32,7 @@ describe Api::V1::CommentsController do
   describe "create" do
     let(:comment_hash) do
       {comment: {commentable_id: shipment.id.to_s,
-                 commentable_type: Shipment,
+                 commentable_type: "Shipment",
                  subject: 'sub',
                  body: 'bod'}}
     end
@@ -42,20 +42,26 @@ describe Api::V1::CommentsController do
     end
 
     it "creates comment" do
-      expect {post :create, comment_hash}.to change(Comment, :count).from(0).to(1)
+      expect(Comment.count).to eq(0)
+      post :create, params: comment_hash
+      expect(Comment.count).to eq(1)
       expect(response).to be_success
       expect(shipment.comments.first.subject).to eq 'sub'
     end
 
     it "404S for bad commentable_type" do
       comment_hash[:comment][:commentable_type] = 'OTHER'
-      expect {post :create, comment_hash}.not_to change(Comment, :count)
+      count = Comment.count
+      post :create, params: comment_hash
+      expect(Comment.count).to eq(count)
       expect(response.status).to eq 404
     end
 
     it "404S for bad commentable_id" do
-      comment_hash[:comment][:commentable_id] = -1
-      expect {post :create, comment_hash}.not_to change(Comment, :count)
+      comment_hash[:comment][:commentable_id] = 0
+      count = Comment.count
+      post :create, params: comment_hash
+      expect(Comment.count).to eq(count)
       expect(response.status).to eq 404
     end
 

@@ -40,7 +40,7 @@ describe PasswordResetsController do
       u = create(:user, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
-      expect_any_instance_of(User).to receive(:on_successful_login).with(request)
+      expect_any_instance_of(User).to receive(:on_successful_login).with(instance_of(ActionController::TestRequest))
 
       put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'old_pass', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices].first).to eq "Password successfully updated"
@@ -118,9 +118,9 @@ describe PasswordResetsController do
       u = create(:user, forgot_password:true, password_reset:true, email:"this_is_a_test@email.com", confirmation_token:"555666")
 
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
-      expect_any_instance_of(User).to receive(:on_successful_login).with(request)
+      expect_any_instance_of(User).to receive(:on_successful_login).with(instance_of(ActionController::TestRequest))
 
-      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, params: { "user"=>{'password'=>'pw12345', 'current_password'=>'', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices].first).to eq "Password successfully updated"
       expect(response).to redirect_to root_url
 

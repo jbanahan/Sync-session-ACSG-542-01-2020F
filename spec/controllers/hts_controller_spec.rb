@@ -24,7 +24,7 @@ describe HtsController do
     end
 
     it 'should return some stuff for the us' do
-      get :chapter, "iso"=> "US", chapter: 12
+      get :chapter, params: { "iso"=> "US", chapter: 12 }
       expect(response).to be_success
       headings = JSON.parse(response.body)["headings"].first
       expect(headings).not_to be_nil
@@ -41,7 +41,7 @@ describe HtsController do
     end
 
     it 'should return some stuff for the us' do
-      get :heading, "iso"=> "US", heading: 34
+      get :heading, params: { "iso"=> "US", heading: 34 }
       expect(response).to be_success
       subheadings = JSON.parse(response.body)["sub_headings"]
       expect(subheadings).to eq([])

@@ -26,7 +26,7 @@ describe FileImportResultsController do
       expect(FileImportResult).to receive(:download_results).with(true, @u.id, @fir).and_yield(Tempfile.new("file name"))
       allow(controller).to receive(:render)
       expect(controller).to receive(:send_file)
-      get :download_all, id: @fir.id
+      get :download_all, params: { id: @fir.id }, as: :json
 
       expect(flash[:notices]).to eq(nil)
     end
@@ -54,7 +54,7 @@ describe FileImportResultsController do
       expect(FileImportResult).to receive(:download_results).with(false, @u.id, @fir).and_yield(Tempfile.new("file name"))
       allow(controller).to receive(:render)
       expect(controller).to receive(:send_file)
-      get :download_failed, id: @fir.id
+      get :download_failed, params: { id: @fir.id}, as: :json
 
       expect(flash[:notices]).to eq(nil)
     end

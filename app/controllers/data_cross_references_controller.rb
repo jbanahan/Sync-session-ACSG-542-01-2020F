@@ -119,7 +119,7 @@ class DataCrossReferencesController < ApplicationController
 
   def run_uploader user, file, xref_type
     uploader = OpenChain::DataCrossReferenceUploader
-    if file.nil?
+    if file.blank?
       add_flash :errors, "You must select a file to upload."
     else
       error = uploader.check_extension(file.original_filename)

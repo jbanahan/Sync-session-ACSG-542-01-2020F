@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Generator315::Tradelens::Entry315TradelensGen
 
       expect(subject).to receive(:generate_and_send_document).with("setup_customer", data_315s, false).and_yield(data)
       expect(data.sync_record).to receive(:save!)
-      now = Time.zone.now
+      now = time_now
       Timecop.freeze(now) { subject.generate_and_send_315s config, obj, milestones }
 
       expect(data.sync_record.confirmed_at).to eq now

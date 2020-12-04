@@ -106,13 +106,13 @@ describe SurveysController do
     end
 
     it "enables showing archived responses" do
-      get :show, {:id => survey.id, "show_archived_responses" => "true"}
+      get :show, params: {:id => survey.id, "show_archived_responses" => "true"}
       expect(assigns(:show_archived)).to be_truthy
     end
 
     it "does not enable showing archived responses for users with no edit privs" do
       user.update survey_edit: false
-      get :show, {:id => survey.id, "show_archived_responses" => "true"}
+      get :show, params: {:id => survey.id, "show_archived_responses" => "true"}
       expect(assigns(:show_archived)).to be_falsey
     end
 

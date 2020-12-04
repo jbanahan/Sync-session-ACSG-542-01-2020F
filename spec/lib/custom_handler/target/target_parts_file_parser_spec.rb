@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::Target::TargetPartsFileParser do
     end
 
     it "creates a simple product" do
-      now = Time.zone.now
+      now = time_now
       p = subject.process_part_lines csv_data, now, user
 
       expect(p.unique_identifier).to eq "013022712-197312202"

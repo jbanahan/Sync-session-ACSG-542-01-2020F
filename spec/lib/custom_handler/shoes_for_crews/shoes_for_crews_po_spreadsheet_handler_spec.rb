@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     row[9] = data[:order_date]
     row = sht.row 6
     row[1] = "Vendor:"
-    row[5] = "create"
+    row[5] = "Factory"
     row = sht.row 7
     row[1] = data[:vendor_address]
     row[5] = data[:factory_address]
@@ -174,7 +174,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(s[:vendor][:name]).to eq d[:vendor_address].split("\r\n")[0]
       expect(s[:vendor][:address]).to eq d[:vendor_address].split("\r\n")[1..-1].join("\n")
 
-      expect(s[:factory][:type]).to eq "create"
+      expect(s[:factory][:type]).to eq "Factory"
       expect(s[:factory][:name]).to eq d[:factory_address].split("\r\n")[0]
       expect(s[:factory][:address]).to eq d[:factory_address].split("\r\n")[1..-1].join("\n")
 

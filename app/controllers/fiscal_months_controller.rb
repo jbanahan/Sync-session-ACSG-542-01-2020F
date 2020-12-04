@@ -65,7 +65,7 @@ class FiscalMonthsController < ApplicationController
     sys_admin_secure do
       co_id = params[:company_id].to_i
       file = params[:attached]
-      if file.nil?
+      if file.blank?
         add_flash :errors, "You must select a file to upload."
       else
         ext = File.extname(file.original_filename)

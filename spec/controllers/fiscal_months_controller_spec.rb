@@ -173,9 +173,9 @@ describe FiscalMonthsController do
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
       cf = instance_double "custom file"
       allow(cf).to receive(:id).and_return 1
-      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::FiscalMonthUploader', uploaded_by: user, attached: file).and_return cf
+      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::FiscalMonthUploader', uploaded_by: user, attached: instance_of(ActionDispatch::Http::UploadedFile)).and_return cf
       expect(CustomFile).to receive(:process).with(1, user.id, company_id: co.id)
-      post :upload, company_id: co.id, attached: file
+      post :upload, params: { company_id: co.id, attached: file }
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       expect(flash[:notices]).to eq ["Fiscal months uploaded."]
     end

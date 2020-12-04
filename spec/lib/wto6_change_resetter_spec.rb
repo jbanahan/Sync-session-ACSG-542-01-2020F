@@ -1,7 +1,7 @@
 describe OpenChain::Wto6ChangeResetter do
   describe "reset_fields_if_changed" do
     before(:each) do
-      @cr = 50.days.ago
+      @cr = time_now - 50.days
       @p = create(:product, name:'myname', created_at:@cr)
       @flds = ['prod_name']
     end

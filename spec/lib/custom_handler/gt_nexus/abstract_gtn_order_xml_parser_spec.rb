@@ -58,8 +58,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
 
   let (:factory) {
     f = create(:company, name: "GUPTA EXIM (INDIA) PVT. LTD.", factory: true, mid: "INGUPEXI103FAR")
-    f.system_identifiers.create! system: "SYSTEM_CODE-GTN create", code: "factory-code"
-    create(:address, company: f, system_code: "SYSTEM_CODE-GTN create-factory-code", address_type: "create", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
+    f.system_identifiers.create! system: "SYSTEM_CODE-GTN Factory", code: "factory-code"
+    create(:address, company: f, system_code: "SYSTEM_CODE-GTN Factory-factory-code", address_type: "Factory", name: "GUPTA EXIM (INDIA) PVT. LTD.", country: india, line_1: "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1", city: "FARIDABAD")
     f
   }
 
@@ -135,15 +135,15 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
 
       f = o.factory
       expect(f).not_to be_nil
-      expect(f).to have_system_identifier("SYSTEM_CODE-GTN create", "factory-code")
+      expect(f).to have_system_identifier("SYSTEM_CODE-GTN Factory", "factory-code")
       expect(f.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(f.factory?).to eq true
       expect(o.importer.linked_companies).to include f
 
       a = f.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "SYSTEM_CODE-GTN create-factory-code"
-      expect(a.address_type).to eq "create"
+      expect(a.system_code).to eq "SYSTEM_CODE-GTN Factory-factory-code"
+      expect(a.address_type).to eq "Factory"
       expect(a.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
       expect(a.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
       expect(a.city).to eq "FARIDABAD"

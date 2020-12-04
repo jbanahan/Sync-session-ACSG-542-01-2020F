@@ -211,21 +211,21 @@ describe ImportedFilesController do
     it 'should send file' do
       expect(@file).to receive(:delay).and_return(@file)
       expect(@file).to receive(:email_updated_file).with(@u, @to_address, '', @subject, @body, {})
-      post :email_file, @params
+      post :email_file, params: @params
       expect(response).to redirect_to imported_file_path(@file)
       expect(flash[:notices]).to include "The file will be processed and sent shortly."
     end
     it 'should require to address' do
       expect(@file).not_to receive(:email_updated_file)
       @params[:to] = ""
-      post :email_file, @params
+      post :email_file, params: @params
       expect(response).to be_redirect
       expect(flash[:errors]).to eq([ "You must include a \"To\" address." ])
     end
     it 'should not allow if you cannot view the file' do
       expect(@file).not_to receive(:email_updated_file)
       expect(@file).to receive(:can_view?).with(@u).and_return(false)
-      post :email_file, @params
+      post :email_file, params: @params
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
     end

@@ -309,7 +309,7 @@ describe BusinessValidationRulesController do
     end
 
     it "errors if no file submitted" do
-      put :upload, attached: nil, business_validation_template_id: 2
+      put :upload, params: { attached: "", business_validation_template_id: 2 }
       expect(CustomFile).not_to receive(:create!)
       expect(flash[:errors]).to include "You must select a file to upload."
     end

@@ -196,7 +196,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
         sheet_1 = wb.worksheet(0)
         expect(sheet_1.row(1)).to eq ["First Sale Eligible Vendors Claiming First Sale at Entry"]
-        expect(sheet_1.row(2)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
+        expect(sheet_1.row(2)).to eq ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
         expect(sheet_1.row(3)).to eq ['vend1', 'agent', 'fact1', 1.20, 2.40, 3.60]
         expect(sheet_1.row(4)).to eq ['vend1', 'agent', 'fact2', 1.50, 3.00, 4.50]
         expect(sheet_1.row(5)).to eq [nil, nil, nil, 2.70, 5.40, 8.10, 'vend1 Subtotal']
@@ -210,7 +210,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(13)).to eq [nil, '29.63%', 'Fiscal Season Average Vendor Margin']
         expect(sheet_1.row(14)).to eq [nil, '29.63%', 'Fiscal YTD Average Vendor Margin']
 
-        expect(sheet_1.row(16)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Missed Duty Savings', 'Fiscal Season to Date Missed Savings', 'Fiscal YTD Missed Savings']
+        expect(sheet_1.row(16)).to eq ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Missed Duty Savings', 'Fiscal Season to Date Missed Savings', 'Fiscal YTD Missed Savings']
         expect(sheet_1.row(17)).to eq ['vend1', 'agent', 'fact1', 4.74, 9.48, 14.22]
         expect(sheet_1.row(18)).to eq ['vend1', 'agent', 'fact2', 5.33, 10.67, 16.00]
         expect(sheet_1.row(19)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend1 Subtotal']
@@ -224,7 +224,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(27)).to eq [nil, '29.63%', 'Fiscal Season Average Vendor Margin']
         expect(sheet_1.row(28)).to eq [nil, '29.63%', 'Fiscal YTD Average Vendor Margin']
 
-        expect(sheet_1.row(30)).to eq ['Vendor', 'Seller', 'create', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
+        expect(sheet_1.row(30)).to eq ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
         expect(sheet_1.row(31)).to eq ['vend3', 'agent', 'fact1', 4.74, 9.48, 14.22]
         expect(sheet_1.row(32)).to eq ['vend3', 'agent', 'fact2', 5.33, 10.67, 16.00]
         expect(sheet_1.row(33)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend3 Subtotal']

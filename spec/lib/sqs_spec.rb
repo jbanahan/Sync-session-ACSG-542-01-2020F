@@ -219,7 +219,7 @@ describe OpenChain::SQS do
     end
 
     it "handles error raised by non-existent queue" do
-      expect(sqs_client).to receive(:get_queue_url).and_raise Aws::SQS::Errors::NonExistentQueue.new(404, true)
+      expect(sqs_client).to receive(:get_queue_url).and_raise Aws::SQS::Errors::NonExistentQueue.new(404, "true")
       expect(subject.get_queue_url "queue_name").to be_nil
     end
   end

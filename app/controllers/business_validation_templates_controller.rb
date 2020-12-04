@@ -94,7 +94,7 @@ class BusinessValidationTemplatesController < ApplicationController
   def upload
     admin_secure do
       file = params[:attached]
-      if file.nil?
+      if file.blank?
         error_redirect "You must select a file to upload."
       else
         uploader = OpenChain::BusinessRulesCopier::TemplateUploader

@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
 
       factory = o.factory
       expect(factory.name).to eq "FR APPAREL TRADING DMCC"
-      expect(factory.system_code).to eq "LOLLYT-create-FRA001"
+      expect(factory.system_code).to eq "LOLLYT-Factory-FRA001"
       expect(factory.mid).to eq "FRA001"
       addr = factory.addresses.first
       expect(addr.line_1).to eq "UNIT 302-10, MSLI SERVICED OFF 2"

@@ -113,7 +113,7 @@ class BusinessValidationRulesController < ApplicationController
     admin_secure do
       bvt_id = params[:business_validation_template_id]
       file = params[:attached]
-      if file.nil?
+      if file.blank?
         error_redirect "You must select a file to upload."
       else
         uploader = OpenChain::BusinessRulesCopier::RuleUploader

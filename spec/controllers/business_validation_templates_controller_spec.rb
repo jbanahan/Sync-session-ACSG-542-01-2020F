@@ -130,11 +130,11 @@ describe BusinessValidationTemplatesController do
       u = create(:admin_user)
       sign_in_as u
       post :update,
-           id: business_validation_template.id,
+           params: {id: business_validation_template.id,
            search_criterions_only: true,
            business_validation_template: {module_type: "Entry", search_criterions: [{"mfid" => "ent_cust_name",
                                                                                      "datatype" => "string", "label" => "Customer Name",
-                                                                                     "operator" => "eq", "value" => "Nigel Tufnel"}]}
+                                                                                     "operator" => "eq", "value" => "Nigel Tufnel"}]}}, as: :json
       expect(business_validation_template.reload.search_criterions.length).to eq(1)
       expect(business_validation_template.search_criterions.first.value).to eq("Nigel Tufnel")
       expect(business_validation_template.module_type).to eq "Product"
@@ -234,7 +234,7 @@ describe BusinessValidationTemplatesController do
     end
 
     it "errors if no file submitted" do
-      put :upload, attached: nil
+      put :upload, params: { attached: '' }
       expect(CustomFile).not_to receive(:create!)
       expect(flash[:errors]).to include "You must select a file to upload."
     end

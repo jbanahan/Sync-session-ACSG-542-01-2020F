@@ -740,7 +740,7 @@ describe ModelField do
           expect(@mf.process_export(@p, User.new, true)).to eq 1
           x = @sc.apply(Product.where("1"))
           x = x.uniq
-          expect(x.product.size).to eq(1)
+          expect(x.size).to eq(1)
           expect(x.first).to eq @p
         end
         it "should return products without classification for eq 0" do
@@ -759,7 +759,7 @@ describe ModelField do
         it "should not double count multiple tariff records for country" do
           @p.classifications.find_by(country: @c1).tariff_records.create!(:hts_1=>'987654321')
           x = @sc.apply(Product.where("1")).uniq
-          expect(x.product.size).to eq(1)
+          expect(x).to_not be_empty
           expect(x.first).to eq @p
         end
       end
