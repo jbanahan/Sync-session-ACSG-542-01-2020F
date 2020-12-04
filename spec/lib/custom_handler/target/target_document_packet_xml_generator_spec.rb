@@ -2,9 +2,10 @@ describe OpenChain::CustomHandler::Target::TargetDocumentPacketXmlGenerator do
 
   let (:entry) do
     e = Entry.new entry_number: "316123456", import_date: Date.new(2020, 5, 1)
-    i = e.commercial_invoices.build invoice_number: "INV"
+    i = e.commercial_invoices.build invoice_number: "BOL"
     i.commercial_invoice_lines.build po_number: "12345", department: "123"
     i.commercial_invoice_lines.build po_number: "12345", department: "123"
+    i.commercial_invoice_lines.build po_number: "", department: "" # Ensure that these are skipped
     i.commercial_invoice_lines.build po_number: "54321", department: "123"
 
     e

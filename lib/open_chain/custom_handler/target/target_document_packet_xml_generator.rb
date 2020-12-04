@@ -13,8 +13,9 @@ module OpenChain; module CustomHandler; module Target; class TargetDocumentPacke
     add_element(root, "entry_id", Entry.format_entry_number(entry.entry_number))
     add_element(root, "eta", entry.import_date)
 
+    ci = entry.commercial_invoices.find { |inv| inv.invoice_number == bill_of_lading }
     pos = add_element(root, "purchase_orders")
-    po_numbers(entry).each do |po_number|
+    po_numbers(ci).each do |po_number|
       add_element(pos, "po", nil, {allow_blank: true, attrs: {"id" => po_number}})
     end
 
@@ -29,23 +30,18 @@ module OpenChain; module CustomHandler; module Target; class TargetDocumentPacke
 
   private
 
-    def date_value date
-      return nil if date.nil?
+  def date_value date
+    return nil if date.nil?
 
-      date.strftime("%Y-%h-%m")
-    end
+    date.strftime("%Y-%h-%m")
+  end
 
-    def po_numbers entry
-      pos = Set.new
-      entry.commercial_invoices.each do |inv|
-        inv.commercial_invoice_lines.each do |line|
-          po = order_number(line)
-          next if po.blank?
-          pos << po
-        end
-      end
-
-      pos.to_a
-    end
+  def po_numbers invoice
+    return [] unless invoice
+    invoice.commercial_invoice_lines
+           .map { |line| order_number(line).presence }
+           .compact
+           .uniq
+  end
 
 end; end; end; end
