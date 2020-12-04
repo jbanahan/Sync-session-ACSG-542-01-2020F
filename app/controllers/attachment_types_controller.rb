@@ -17,7 +17,7 @@ class AttachmentTypesController < ApplicationController
   # POST /attachment_types.xml
   def create
     admin_secure {
-      @attachment_type = AttachmentType.new(params[:attachment_type])
+      @attachment_type = AttachmentType.new(permitted_params(params))
       if @attachment_type.save
         add_flash :notices, "Attachment Type \"#{@attachment_type.name}\" added successfully."
       else
@@ -43,5 +43,11 @@ class AttachmentTypesController < ApplicationController
         format.html { redirect_to AttachmentType }
       end
     }
+  end
+
+  private
+
+  def permitted_params(params)
+    params.require(:attachment_type).permit(:name)
   end
 end
