@@ -300,7 +300,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctCargowiseFr
         break if reference_number.present?
       end
 
-      reference_number
+      reference_number&.strip
     end
 
     def determine_invoice_type xml

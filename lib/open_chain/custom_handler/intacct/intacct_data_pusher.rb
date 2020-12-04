@@ -62,12 +62,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   def push_payables companies
     # If a payable has errors, it's likely because of some sort of setup needing to be done or other out of band work that
     # can't be automated.  We're reporting on these so we'll skip them until they've been cleared.
+    current_id = nil
     IntacctPayable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
+      current_id = id
       payable = IntacctPayable.find id
       push_payable payable
     end
   rescue StandardError => e
-    e.log_me ["Failed to upload Intacct Payable id #{id}."]
+    e.log_me ["Failed to upload Intacct Payable id #{current_id}."]
   end
 
   def push_payable payable
@@ -91,12 +93,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   def push_receivables companies
     # If a receivable has errors, it's likely because of some sort of setup needing to be done or other out of band work that
     # can't be automated.  We're reporting on these so we'll skip them until they've been cleared.
+    current_id = nil
     IntacctReceivable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
+      current_id = id
       receivable = IntacctReceivable.find id
       push_receivable receivable
     end
   rescue StandardError => e
-    e.log_me ["Failed to upload Intacct Receivable id #{id}."]
+    e.log_me ["Failed to upload Intacct Receivable id #{current_id}."]
   end
 
   def push_receivable receivable
@@ -107,12 +111,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   end
 
   def push_checks companies
+    current_id = nil
     IntacctCheck.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
+      current_id = id
       check = IntacctCheck.find id
       push_check(check)
     end
   rescue StandardError => e
-    e.log_me ["Failed to upload Intacct Check id #{id}."]
+    e.log_me ["Failed to upload Intacct Check id #{current_id}."]
   end
 
   def push_check check

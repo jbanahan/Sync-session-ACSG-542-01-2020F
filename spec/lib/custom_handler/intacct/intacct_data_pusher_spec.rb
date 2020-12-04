@@ -76,6 +76,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
       subject.push_payables ["C"]
     end
+
+    it "handles an error in payable upload" do
+      p = IntacctPayable.create! company: "C"
+      error = StandardError.new "Error"
+      expect(subject).to receive(:push_payable).with(p).and_raise error
+      expect(error).to receive(:log_me).with ["Failed to upload Intacct Payable id #{p.id}."]
+
+      subject.push_payables ["C"]
+    end
   end
 
   describe "push_receivable" do
@@ -120,6 +129,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
       subject.push_receivables ["C"]
     end
+
+    it "handles error in receivable upload" do
+      r = IntacctReceivable.create! company: "C"
+      error = StandardError.new "Error"
+      expect(subject).to receive(:push_receivable).with(r).and_raise error
+      expect(error).to receive(:log_me).with ["Failed to upload Intacct Receivable id #{r.id}."]
+
+      subject.push_receivables ["C"]
+    end
   end
 
   describe "push_check" do
@@ -158,6 +176,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       IntacctCheck.create! vendor_number: "Vendor", company: "A"
 
       expect(subject).to receive(:push_check).with c1
+
+      subject.push_checks ["C"]
+    end
+
+    it "handles errors in push_check" do
+      c1 = IntacctCheck.create! vendor_number: "Vendor", company: "C"
+      error = StandardError.new
+      expect(error).to receive(:log_me).with(["Failed to upload Intacct Check id #{c1.id}."])
+      expect(subject).to receive(:push_check).with(c1).and_raise error
 
       subject.push_checks ["C"]
     end
