@@ -301,8 +301,9 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       expect(elem_inv_2.elements.to_a("bolRecord")[0].text("relatedParty")).to eq "N"
 
       elem_bol_2 = elem_inv_2.elements.to_a("bolRecord")[0]
-      expect(elem_bol_2.text("masterBillOfLadingNumber")).to eq "EGLV142050488076Z"
-      expect(elem_bol_2.text("houseBillNumber")).to eq "EEEK142050488078,EEEK142050488079"
+      expect(elem_bol_2.text("masterBillOfLadingNumber")).to eq "E1I0954294"
+      expect(elem_bol_2.text("houseBillNumber")).to be_nil
+      expect(elem_bol_2.text("issuerCodeOfHouseBillNumber")).to be_nil
 
       invoice_line_elements_2 = elem_inv_2.elements.to_a("itemRecord")
       expect(invoice_line_elements_2.size).to eq 1
@@ -483,9 +484,6 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
 
       elem_root = doc.root
       expect(elem_root.text("consolidatedEntry")).to eq "Y"
-
-      elem_bol = elem_root.elements.to_a("invoiceRecord")[0].elements.to_a("bolRecord")[0]
-      expect(elem_bol.text("masterBillOfLadingNumber")).to eq "A,B"
     end
 
     it "defaults broker address to Baltimore if no division match" do
@@ -720,11 +718,37 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
 
       elem_tariff_2 = elem_item.elements.to_a("itemTariffRecord")[1]
       expect(elem_tariff_2.text("tariffId")).to eq "9506.91.0030"
-      expect(elem_tariff_2.elements.to_a("itemTariffDutyRecord").size).to eq 0
+      item_tariff_duty_elements_2 = elem_tariff_2.elements.to_a("itemTariffDutyRecord")
+      expect(item_tariff_duty_elements_2.size).to eq 3
+
+      elem_item_tariff_duty_1 = item_tariff_duty_elements_2[0]
+      expect(elem_item_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_item_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_item_tariff_duty_2 = item_tariff_duty_elements_2[1]
+      expect(elem_item_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_item_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_item_tariff_duty_3 = item_tariff_duty_elements_2[2]
+      expect(elem_item_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_item_tariff_duty_3.text("rateAmount")).to eq "75.86"
 
       elem_tariff_3 = elem_item.elements.to_a("itemTariffRecord")[2]
       expect(elem_tariff_3.text("tariffId")).to eq "3506.91.0033"
-      expect(elem_tariff_3.elements.to_a("itemTariffDutyRecord").size).to eq 0
+      item_tariff_duty_elements_3 = elem_tariff_3.elements.to_a("itemTariffDutyRecord")
+      expect(item_tariff_duty_elements_3.size).to eq 3
+
+      elem_item_tariff_duty_1 = item_tariff_duty_elements_3[0]
+      expect(elem_item_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_item_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_item_tariff_duty_2 = item_tariff_duty_elements_3[1]
+      expect(elem_item_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_item_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_item_tariff_duty_3 = item_tariff_duty_elements_3[2]
+      expect(elem_item_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_item_tariff_duty_3.text("rateAmount")).to eq "75.86"
 
       tariff_header_elements = elem_inv.elements.to_a("tariffHeaderRecord")
       expect(tariff_header_elements.length).to eq 2
@@ -836,7 +860,20 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
 
       elem_tariff_2 = elem_item.elements.to_a("itemTariffRecord")[1]
       expect(elem_tariff_2.text("tariffId")).to eq "9903.88.35"
-      expect(elem_tariff_2.elements.to_a("itemTariffDutyRecord").size).to eq 0
+      item_tariff_duty_elements_2 = elem_tariff_2.elements.to_a("itemTariffDutyRecord")
+      expect(item_tariff_duty_elements_2.size).to eq 3
+      # Includes the 3 constant duty records.
+      elem_item_tariff_duty_1 = item_tariff_duty_elements_2[0]
+      expect(elem_item_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_item_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_item_tariff_duty_2 = item_tariff_duty_elements_2[1]
+      expect(elem_item_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_item_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_item_tariff_duty_3 = item_tariff_duty_elements_2[2]
+      expect(elem_item_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_item_tariff_duty_3.text("rateAmount")).to eq "75.86"
 
       tariff_header_elements = elem_inv.elements.to_a("tariffHeaderRecord")
       expect(tariff_header_elements.length).to eq 2
@@ -880,7 +917,173 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
 
       elem_tariff_2 = tariff_header_elements[1]
       expect(elem_tariff_2.text("tariffId")).to eq "9903.88.35"
-      expect(elem_tariff_2.elements.to_a("tariffDutyRecord").size).to eq 0
+      tariff_duty_elements = elem_tariff_2.elements.to_a("tariffDutyRecord")
+      # Includes the 3 constant duty records.
+      expect(tariff_duty_elements.size).to eq 3
+
+      elem_tariff_duty_1 = tariff_duty_elements[0]
+      expect(elem_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_tariff_duty_2 = tariff_duty_elements[1]
+      expect(elem_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_tariff_duty_3 = tariff_duty_elements[2]
+      expect(elem_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_tariff_duty_3.text("rateAmount")).to eq "75.86"
+    end
+
+    # The "squeezing" process can combine items with like tariff numbers onto the same US customs line (i.e.
+    # customs line number is shared between two invoice lines).  This test ensures that we're totalling up
+    # invoice line-level fields correctly in the tariff header.
+    it "handles squeezed tariffs" do
+      entry = Factory(:entry, entry_number: "31679758714")
+      inv = entry.commercial_invoices.create!(invoice_number: "E1I0954293")
+      inv_line_1 = inv.commercial_invoice_lines.create!(customs_line_number: 1, prorated_mpf: BigDecimal("100"),
+                                                        hmf: BigDecimal("53.33"), cotton_fee: BigDecimal("75.31"),
+                                                        add_duty_amount: BigDecimal("22.33"), add_case_percent: BigDecimal("8.39"),
+                                                        cvd_duty_amount: BigDecimal("33.22"), cvd_case_percent: BigDecimal("9.40"),
+                                                        hmf_rate: BigDecimal("10.6"), mpf_rate: BigDecimal("11.7"),
+                                                        cotton_fee_rate: BigDecimal("12.8"))
+      inv_line_1.commercial_invoice_tariffs.create!(hts_code: "9506910030", specific_rate: BigDecimal("13.9"),
+                                                    duty_specific: BigDecimal("73.84"), advalorem_rate: BigDecimal("14.10"),
+                                                    duty_advalorem: BigDecimal("74.85"), additional_rate: BigDecimal("15.11"),
+                                                    duty_additional: BigDecimal("75.86"))
+      # The 99 tariff line should be handled independently of the other two tariff records.
+      inv_line_1.commercial_invoice_tariffs.create!(hts_code: "99038835", specific_rate: BigDecimal("13.9"),
+                                                    duty_specific: BigDecimal("73.84"), advalorem_rate: BigDecimal("14.10"),
+                                                    duty_advalorem: BigDecimal("74.85"), additional_rate: BigDecimal("15.11"),
+                                                    duty_additional: BigDecimal("75.86"))
+
+      inv_line_2 = inv.commercial_invoice_lines.create!(customs_line_number: 1, prorated_mpf: BigDecimal("10"),
+                                                        hmf: BigDecimal("5.33"), cotton_fee: BigDecimal("7.53"),
+                                                        add_duty_amount: BigDecimal("2.23"), add_case_percent: BigDecimal("8.39"),
+                                                        cvd_duty_amount: BigDecimal("3.32"), cvd_case_percent: BigDecimal("9.40"),
+                                                        hmf_rate: BigDecimal("10.6"), mpf_rate: BigDecimal("11.7"),
+                                                        cotton_fee_rate: BigDecimal("12.8"))
+      inv_line_2.commercial_invoice_tariffs.create!(hts_code: "9506910030", specific_rate: BigDecimal("13.9"),
+                                                    duty_specific: BigDecimal("7.38"), advalorem_rate: BigDecimal("14.10"),
+                                                    duty_advalorem: BigDecimal("7.48"), additional_rate: BigDecimal("15.11"),
+                                                    duty_additional: BigDecimal("7.58"))
+
+      doc = subject.generate_xml entry
+
+      elem_root = doc.root
+      elem_inv = elem_root.elements.to_a("invoiceRecord")[0]
+      elem_item = elem_inv.elements.to_a("itemRecord")[0]
+
+      elem_tariff_1 = elem_item.elements.to_a("itemTariffRecord")[0]
+      expect(elem_tariff_1.text("tariffId")).to eq "9506.91.0030"
+      item_tariff_duty_elements_1 = elem_tariff_1.elements.to_a("itemTariffDutyRecord")
+      expect(item_tariff_duty_elements_1.size).to eq 8
+
+      elem_item_tariff_duty_1 = item_tariff_duty_elements_1[0]
+      expect(elem_item_tariff_duty_1.text("dutyTypeCode")).to eq "ADD"
+      expect(elem_item_tariff_duty_1.text("rateAmount")).to eq "22.33"
+
+      elem_item_tariff_duty_2 = item_tariff_duty_elements_1[1]
+      expect(elem_item_tariff_duty_2.text("dutyTypeCode")).to eq "CVD"
+      expect(elem_item_tariff_duty_2.text("rateAmount")).to eq "33.22"
+
+      elem_item_tariff_duty_3 = item_tariff_duty_elements_1[2]
+      expect(elem_item_tariff_duty_3.text("dutyTypeCode")).to eq "HMF"
+      expect(elem_item_tariff_duty_3.text("rateAmount")).to eq "53.33"
+
+      elem_item_tariff_duty_4 = item_tariff_duty_elements_1[3]
+      expect(elem_item_tariff_duty_4.text("dutyTypeCode")).to eq "MPF"
+      expect(elem_item_tariff_duty_4.text("rateAmount")).to eq "100.00"
+
+      elem_item_tariff_duty_5 = item_tariff_duty_elements_1[4]
+      expect(elem_item_tariff_duty_5.text("dutyTypeCode")).to eq "COF"
+      expect(elem_item_tariff_duty_5.text("rateAmount")).to eq "75.31"
+
+      elem_item_tariff_duty_6 = item_tariff_duty_elements_1[5]
+      expect(elem_item_tariff_duty_6.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_item_tariff_duty_6.text("rateAmount")).to eq "73.84"
+
+      elem_item_tariff_duty_7 = item_tariff_duty_elements_1[6]
+      expect(elem_item_tariff_duty_7.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_item_tariff_duty_7.text("rateAmount")).to eq "74.85"
+
+      elem_item_tariff_duty_8 = item_tariff_duty_elements_1[7]
+      expect(elem_item_tariff_duty_8.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_item_tariff_duty_8.text("rateAmount")).to eq "75.86"
+
+      elem_tariff_2 = elem_item.elements.to_a("itemTariffRecord")[1]
+      expect(elem_tariff_2.text("tariffId")).to eq "9903.88.35"
+      item_tariff_duty_elements_2 = elem_tariff_2.elements.to_a("itemTariffDutyRecord")
+      expect(item_tariff_duty_elements_2.size).to eq 3
+      # Includes the 3 constant duty records.
+      elem_item_tariff_duty_1 = item_tariff_duty_elements_2[0]
+      expect(elem_item_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_item_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_item_tariff_duty_2 = item_tariff_duty_elements_2[1]
+      expect(elem_item_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_item_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_item_tariff_duty_3 = item_tariff_duty_elements_2[2]
+      expect(elem_item_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_item_tariff_duty_3.text("rateAmount")).to eq "75.86"
+
+      tariff_header_elements = elem_inv.elements.to_a("tariffHeaderRecord")
+      expect(tariff_header_elements.length).to eq 2
+
+      elem_tariff_1 = tariff_header_elements[0]
+      expect(elem_tariff_1.text("tariffId")).to eq "9506.91.0030"
+      tariff_duty_elements = elem_tariff_1.elements.to_a("tariffDutyRecord")
+      expect(tariff_duty_elements.size).to eq 8
+
+      elem_tariff_duty_1 = tariff_duty_elements[0]
+      expect(elem_tariff_duty_1.text("dutyTypeCode")).to eq "ADD"
+      expect(elem_tariff_duty_1.text("rateAmount")).to eq "24.56"
+
+      elem_tariff_duty_2 = tariff_duty_elements[1]
+      expect(elem_tariff_duty_2.text("dutyTypeCode")).to eq "CVD"
+      expect(elem_tariff_duty_2.text("rateAmount")).to eq "36.54"
+
+      elem_tariff_duty_3 = tariff_duty_elements[2]
+      expect(elem_tariff_duty_3.text("dutyTypeCode")).to eq "HMF"
+      expect(elem_tariff_duty_3.text("rateAmount")).to eq "58.66"
+
+      elem_tariff_duty_4 = tariff_duty_elements[3]
+      expect(elem_tariff_duty_4.text("dutyTypeCode")).to eq "MPF"
+      expect(elem_tariff_duty_4.text("rateAmount")).to eq "110.00"
+
+      elem_tariff_duty_5 = tariff_duty_elements[4]
+      expect(elem_tariff_duty_5.text("dutyTypeCode")).to eq "COF"
+      expect(elem_tariff_duty_5.text("rateAmount")).to eq "82.84"
+
+      elem_tariff_duty_6 = tariff_duty_elements[5]
+      expect(elem_tariff_duty_6.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_tariff_duty_6.text("rateAmount")).to eq "81.22"
+
+      elem_tariff_duty_7 = tariff_duty_elements[6]
+      expect(elem_tariff_duty_7.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_tariff_duty_7.text("rateAmount")).to eq "82.33"
+
+      elem_tariff_duty_8 = tariff_duty_elements[7]
+      expect(elem_tariff_duty_8.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_tariff_duty_8.text("rateAmount")).to eq "83.44"
+
+      elem_tariff_2 = tariff_header_elements[1]
+      expect(elem_tariff_2.text("tariffId")).to eq "9903.88.35"
+      tariff_duty_elements = elem_tariff_2.elements.to_a("tariffDutyRecord")
+      # Includes the 3 constant duty records.
+      expect(tariff_duty_elements.size).to eq 3
+
+      elem_tariff_duty_1 = tariff_duty_elements[0]
+      expect(elem_tariff_duty_1.text("dutyTypeCode")).to eq "SPECFC"
+      expect(elem_tariff_duty_1.text("rateAmount")).to eq "73.84"
+
+      elem_tariff_duty_2 = tariff_duty_elements[1]
+      expect(elem_tariff_duty_2.text("dutyTypeCode")).to eq "ADVAL"
+      expect(elem_tariff_duty_2.text("rateAmount")).to eq "74.85"
+
+      elem_tariff_duty_3 = tariff_duty_elements[2]
+      expect(elem_tariff_duty_3.text("dutyTypeCode")).to eq "OTHER"
+      expect(elem_tariff_duty_3.text("rateAmount")).to eq "75.86"
     end
 
     describe "recon variants" do

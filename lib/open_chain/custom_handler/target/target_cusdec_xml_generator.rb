@@ -316,12 +316,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
     # Target invoices should contain only a single bill of lading and a single PO.  Nice n' easy.
     def make_bol_element elem_invoice, entry, invoice
       elem_bol = add_element(elem_invoice, "bolRecord")
-      add_element elem_bol, "masterBillOfLadingNumber", eat_newlines(invoice.master_bills_of_lading.presence || entry.master_bills_of_lading)
+      # Although the field is only supposed to contain one BOL, safe coding dictates that we eat any newlines.
+      add_element elem_bol, "masterBillOfLadingNumber", eat_newlines(invoice.master_bills_of_lading.presence || invoice.invoice_number)
       add_element elem_bol, "totalCartonsQuantity", format_decimal(invoice.total_quantity)
       add_element elem_bol, "unitOfMeasure", invoice.total_quantity_uom
       # Although the field is only supposed to contain one BOL, safe coding dictates that we eat any newlines.
-      add_element elem_bol, "houseBillNumber", eat_newlines(invoice.house_bills_of_lading.presence || entry.house_bills_of_lading)
-      add_element elem_bol, "issuerCodeOfHouseBillNumber", entry.carrier_code
+      add_element elem_bol, "houseBillNumber", eat_newlines(invoice.house_bills_of_lading)
+      add_element elem_bol, "issuerCodeOfHouseBillNumber", (invoice.house_bills_of_lading.present? ? entry.carrier_code : nil)
       first_line = invoice.commercial_invoice_lines.first
       add_element elem_bol, "sourcePurchaseOrderId", [first_line&.department&.rjust(4, '0'), first_line&.po_number].compact.join("-")
       # It's safe to assume this will be the same for all ines.
@@ -410,10 +411,11 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
         make_item_tariff_duty_element elem_tariff, "HMF", inv_line.hmf_rate, inv_line.hmf
         make_item_tariff_duty_element elem_tariff, "MPF", inv_line.mpf_rate, inv_line.prorated_mpf
         make_item_tariff_duty_element elem_tariff, "COF", inv_line.cotton_fee_rate, inv_line.cotton_fee
-        make_item_tariff_duty_element elem_tariff, "SPECFC", tariff.specific_rate, tariff.duty_specific
-        make_item_tariff_duty_element elem_tariff, "ADVAL", tariff.advalorem_rate, tariff.duty_advalorem
-        make_item_tariff_duty_element elem_tariff, "OTHER", tariff.additional_rate, tariff.duty_additional
       end
+      # These duty types need to be included regardless of the inclue_duty_elements flag value.
+      make_item_tariff_duty_element elem_tariff, "SPECFC", tariff.specific_rate, tariff.duty_specific
+      make_item_tariff_duty_element elem_tariff, "ADVAL", tariff.advalorem_rate, tariff.duty_advalorem
+      make_item_tariff_duty_element elem_tariff, "OTHER", tariff.additional_rate, tariff.duty_additional
 
       make_pga_element elem_tariff, tariff, counter
 
@@ -482,17 +484,29 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       add_element elem_tariff, "tariffDescription", tariff_prime.tariff_description
 
       if include_duty_elements
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADD", inv_line.add_case_percent, inv_line.add_duty_amount
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "CVD", inv_line.cvd_case_percent, inv_line.cvd_duty_amount
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "HMF", inv_line.hmf_rate, inv_line.hmf
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "MPF", inv_line.mpf_rate, inv_line.prorated_mpf
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "COF", inv_line.cotton_fee_rate, inv_line.cotton_fee
-        legit_tariffs = tariffs.reject { |t| t.spi_secondary == "V" }
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "SPECFC", tariff_prime.specific_rate, sum_value(legit_tariffs, :duty_specific)
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADVAL", tariff_prime.advalorem_rate, sum_value(legit_tariffs, :duty_advalorem)
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "OTHER", tariff_prime.additional_rate, sum_value(legit_tariffs, :duty_additional)
+        lines = tariff_invoice_lines(tariffs)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADD", inv_line.add_case_percent, sum_value(lines, :add_duty_amount)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "CVD", inv_line.cvd_case_percent, sum_value(lines, :cvd_duty_amount)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "HMF", inv_line.hmf_rate, sum_value(lines, :hmf)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "MPF", inv_line.mpf_rate, sum_value(lines, :prorated_mpf)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "COF", inv_line.cotton_fee_rate, sum_value(lines, :cotton_fee)
       end
+      # These duty types need to be included regardless of the inclue_duty_elements flag value.
+      legit_tariffs = tariffs.reject { |t| t.spi_secondary == "V" }
+      make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "SPECFC", tariff_prime.specific_rate, sum_value(legit_tariffs, :duty_specific)
+      make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADVAL", tariff_prime.advalorem_rate, sum_value(legit_tariffs, :duty_advalorem)
+      make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "OTHER", tariff_prime.additional_rate, sum_value(legit_tariffs, :duty_additional)
       elem_tariff
+    end
+
+    def tariff_invoice_lines tariffs
+      line_hash = {}
+      tariffs.each do |tar|
+        if !line_hash.include? tar.commercial_invoice_line.id
+          line_hash[tar.commercial_invoice_line.id] = tar.commercial_invoice_line
+        end
+      end
+      line_hash.values
     end
 
     def make_tariff_duty_element elem_tariff, hts_code, code, percentage, amount
