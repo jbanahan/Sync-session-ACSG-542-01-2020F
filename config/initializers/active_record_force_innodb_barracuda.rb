@@ -8,7 +8,7 @@
 require 'open_chain/database_utils'
 
 if OpenChain::DatabaseUtils.primary_database_configuration["encoding"].to_s =~ /utf8/
-  if ActiveRecord::VERSION::MAJOR < 5
+  if ActiveRecord::VERSION::MAJOR < 6
     ActiveSupport.on_load :active_record do
       module ActiveRecord::ConnectionAdapters
         class AbstractMysqlAdapter
