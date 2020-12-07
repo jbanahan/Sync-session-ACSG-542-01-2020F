@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
   describe "run_schedulable" do
 
     it "monitors given bucket and sends docs to kewill" do
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("testing").and_yield "key", "version"
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("testing", list_versions: true).and_yield "key", "version"
       expect(subject).to receive(:delay).and_return subject
       expect(subject).to receive(:send_s3_document_to_kewill).with("testing", "key", "version")
 
@@ -245,8 +245,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     end
 
     it "monitors multiple buckets if supplied" do
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test").and_yield "key", "version"
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test2").and_yield "key2", "version2"
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test", list_versions: true).and_yield "key", "version"
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test2", list_versions: true).and_yield "key2", "version2"
       expect(subject).to receive(:delay).at_least(:once).and_return subject
       expect(subject).to receive(:send_s3_document_to_kewill).with("test", "key", "version")
       expect(subject).to receive(:send_s3_document_to_kewill).with("test2", "key2", "version2")

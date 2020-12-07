@@ -28,7 +28,9 @@ if [ -z "$5" ]; then
 fi
 
 git checkout $1
-script/setup_deployment.sh
+mkdir -p log
+mkdir -p tmp
+touch tmp/restart.txt
 bundle install --frozen --without=development test
 rake db:migrate
 script/init_base_setup.rb "$2" "$3" "$4" "$5"

@@ -149,7 +149,7 @@ module Helpers
       raise "Method must be mocked!"
     end
 
-    def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil)
+    def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil, list_versions: true)
       raise "Method must be mocked!"
     end
 

@@ -50,7 +50,7 @@ describe OpenChain::PurgeEntry do
   describe "delete_s3_imaging_files" do
     it "removes files associated with an entry" do
       e = Factory.create(:entry, source_system: "Alliance", broker_reference: "1234asdf")
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf")
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf", list_versions: true)
                                                             .and_yield "KewillImaging/1234asdf/1234zxcv.pdf", "ver"
 
       expect(OpenChain::S3).to receive(:delete).with("bucket", "KewillImaging/1234asdf/1234zxcv.pdf", "ver")
@@ -61,8 +61,6 @@ describe OpenChain::PurgeEntry do
     it "does not remove anything if the prefix is empty" do
       e = Factory.create(:entry, source_system: nil, broker_reference: "1234asdf")
       expect(OpenChain::S3).not_to receive(:each_file_in_bucket)
-        .with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf")
-        .and_yield "KewillImaging/1234asdf/1234zxcv.pdf", "ver"
 
       expect(OpenChain::S3).not_to receive(:delete).with("bucket", "KewillImaging/1234asdf/1234zxcv.pdf", "ver")
 
@@ -85,7 +83,7 @@ describe OpenChain::PurgeEntry do
     end
 
     it "removes entries given their IDs" do
-      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf")
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("bucket", max_files: nil, prefix: "KewillImaging/1234asdf", list_versions: true)
                                                             .and_yield("KewillImaging/1234asdf/1234zxcv.pdf", "ver").twice
 
       expect(OpenChain::S3).to receive(:delete).with("bucket", "KewillImaging/1234asdf/1234zxcv.pdf", "ver").twice

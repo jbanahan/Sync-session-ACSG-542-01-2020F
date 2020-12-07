@@ -50,14 +50,6 @@ class MasterSetup < ActiveRecord::Base
   after_update :update_cache
   after_find :update_cache
 
-  # Returns true if run from `rails c[onsole]` or a `rake` task
-  def self.running_from_console?
-    # At the moment, any time rake is invoked it means we're running from the command line
-    # We're not starting a server via rake
-    # This may need to change if we upgrade to newer versions of rails that unify rails/rake commands
-    (Rails.const_defined?("Console") || File.basename($PROGRAM_NAME) == "rake")
-  end
-
   # Returns true if Rails.env indicates production
   def self.production_env?
     rails_env.production?
@@ -81,6 +73,11 @@ class MasterSetup < ActiveRecord::Base
   # Simple mockable means for accessing rails config
   def self.rails_config
     Rails.application.config
+  end
+
+  # Simple mockable means for accessing ENV variables
+  def self.env key
+    ENV[key]
   end
 
   # Simple mockable means for accessing specific rails config keys
@@ -193,7 +190,7 @@ class MasterSetup < ActiveRecord::Base
 
   def self.init_base_setup company_name: "My Company", sys_admin_email: "support@vandegriftinc.com", init_script: false, host_name: nil, system_code: nil
     return nil unless ActiveRecord::Base.connection.table_exists?("master_setups")
-    return nil if ENV["INIT_BASE_SETUP_LOAD"].to_s == "true"
+    return nil if MasterSetup.env("INIT_BASE_SETUP_LOAD").to_s == "true"
 
     m = MasterSetup.first
     return m unless m.nil?
@@ -385,5 +382,9 @@ class MasterSetup < ActiveRecord::Base
     protocol = Rails.application.routes.default_url_options[:protocol]
     raise "You must configure a default_url_options protocol value in config/environment/#{Rails.env}.rb" if protocol.blank?
     protocol
+  end
+
+  def self.internal_product_name
+    "open_chain"
   end
 end

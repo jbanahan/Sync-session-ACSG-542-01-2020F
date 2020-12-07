@@ -1,30 +1,33 @@
 require 'base64'
 require 'digest'
 require 'dalli-elasticache'
-require 'open_chain/test_extensions'
-require 'open_chain/cache_wrapper'
-require 'open_chain/database_utils'
-require 'open_chain/git'
 
 class CacheWrapper
+  include Singleton
 
   @@last_error_logged = nil
   @@error_mutex = Mutex.new
 
-  def initialize(cache)
-    @cache = cache
+  # Because this is a singleton, initialize is only ever called the very first time
+  # CacheWrapper.instance is called.  Therefore we can put the lib requires in the initializer here
+  # so they aren't referenced until actually needed
+  def initialize
+    require_relative 'database_utils'
+    require_relative 'git'
+    require_relative 'test_extensions' if Rails.env.test?
+    @cache = Rails.env.test? ? TestExtensions::MockCache.new : CacheWrapper.get_production_client
   end
 
   def set key, val
-    error_wrap {@cache.set key, val}
+    error_wrap { @cache.set key, val }
   end
 
   def get key
-    error_wrap {@cache.get key}
+    error_wrap { @cache.get key }
   end
 
   def delete key
-    error_wrap {@cache.delete key}
+    error_wrap { @cache.delete key }
   end
 
   def reset
@@ -102,7 +105,7 @@ class CacheWrapper
       settings = memcache_settings
       raise "Memcache does not appear to be running.  Please ensure it is installed and running at #{settings[0]}."
     end
-    self.new(client)
+    self.instance
   end
 
   private
@@ -144,3 +147,7 @@ class CacheWrapper
       end
     end
 end
+
+# We should really remove this constant and go through the codebase and change all instances of CACHE to CacheWrapper.instance
+# but we can keep this for now
+CACHE = CacheWrapper.instance

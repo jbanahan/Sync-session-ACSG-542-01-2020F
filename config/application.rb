@@ -9,8 +9,21 @@ Bundler.require(*Rails.groups)
 require 'csv'
 require 'json'
 
+# A plain require doesn't work here because the 'lib' dir hasn't been added to the lib load path yet..so
+# the easiest thing to do is just directly require the file (since we know the exact path to it and
+# the path for this application.rb file is always static - thus the following should always work)
+require_relative '../lib/open_chain/load_environment'
+OpenChain::LoadEnvironment.load
+
 module OpenChain
   class Application < Rails::Application
+
+    OpenChain::LoadEnvironment.application_load
+
+    # This flag will tell us if we're running from the consle (or rake)
+    # If that's the case, there's several things we don't really want to verify were loaded
+    # so as to allow for command line utils to be able to run to fix things and such.
+    run_from_console = OpenChain::LoadEnvironment.running_from_console?
 
     # Set the newrelic license key up directly.  There appears to be a manual way to load the license key
     # but it works just as well to just set it as an environment variable.
@@ -67,29 +80,28 @@ module OpenChain
     # be on or controlled system-wide by the MasterSetup custom features
     config.vfitrack = {}
     if File.exist?("config/vfitrack_settings.yml")
-      settings = YAML::load_file("config/vfitrack_settings.yml")
-      if settings.is_a?(Hash)
-        config.vfitrack = settings.with_indifferent_access
-      end
+      config.vfitrack = Rails.application.config_for(:vfitrack_settings)
     end
 
-    if !Rails.env.test?
+    if !Rails.env.test? && !run_from_console
       raise "Postmark email settings must be configured under the 'postmark' key in config/secrets.yml." if Rails.application.secrets["postmark"].blank? || Rails.application.secrets["postmark"].try(:[], "postmark_api_key").blank?
       config.action_mailer.postmark_settings = { api_token: Rails.application.secrets["postmark"]["postmark_api_key"] }
     end
 
     aws = Rails.application.secrets["aws"]&.with_indifferent_access
-    raise "AWS credentials must be configured under the 'aws' key in config/secrets.yml." if aws.blank?
-
-    config.paperclip_defaults = {
-      storage: :s3,
-      s3_credentials: aws,
-      s3_permissions: :private,
-      s3_region: aws['region'],
-      bucket: 'chain-io',
-      # Anything matching this regular expression is turned into an underscore
-      restricted_characters: /[\x00-\x1F\/\\:\*\?\"<>\|]/u
-    }
+    if aws.blank?
+      raise "AWS credentials must be configured under the 'aws' key in config/secrets.yml." unless run_from_console
+    else
+      config.paperclip_defaults = {
+        storage: :s3,
+        s3_credentials: aws,
+        s3_permissions: :private,
+        s3_region: aws['region'],
+        bucket: 'chain-io',
+        # Anything matching this regular expression is turned into an underscore
+        restricted_characters: /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+      }
+    end
 
     # Add an interpolation so that you can use :master_setup_uuid in the Paperclip has_attached_file 'path'
     # config variable.

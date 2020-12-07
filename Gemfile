@@ -132,6 +132,8 @@ gem 'content_disposition', '1.0.0'
 # Allows CSS stylesheets with emails.
 gem 'premailer-rails'
 
+gem 'dotenv-rails', '2.7.6'
+
 group :development, :test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.

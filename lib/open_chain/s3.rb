@@ -130,8 +130,16 @@ module OpenChain; class S3
     end
   end
 
-  def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil)
-    objects = Client.list_objects(bucket, max_files: max_files, prefix: prefix)
+  # Returns all the files listed in the given bucket.
+  #
+  # * prefix - the given prefix to search for files under
+  # * list_versions - If true, all object versions will be returned.  If false (the default), only the current version is returned.
+  #   In practice, the difference here is that if you use list_versions you'll only see the most
+  #   recent version of a file that does not have a delete marker.  This is essentially just list the
+  #   how the S3 web console works without the "List Versions" option selected.
+  # * max_files - the maximum number of results to return
+  def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil, list_versions: false)
+    objects = Client.list_objects(bucket, max_files: max_files, prefix: prefix, list_versions: list_versions)
     objects.each {|o| yield o[:key], o[:version] }
     nil
   end
@@ -400,25 +408,35 @@ module OpenChain; class S3
       obj.delete
     end
 
-    def self.list_objects bucket, prefix: nil, max_files: nil
+    def self.list_objects bucket, prefix: nil, max_files: nil, list_versions: true
       # Just set some arbitrarily high value here if max_objects isn't sent
       max_files = 100000 if max_files.nil?
 
       objects = []
       continue_listing = true
-      version_id_marker = nil
-      key_marker = nil
-
+      resp = nil
       begin
         max_keys = [(max_files - objects.length), 1000].min
-        resp = s3_client.list_object_versions(bucket: bucket, max_keys: max_keys, prefix: prefix, key_marker: key_marker, version_id_marker: version_id_marker)
-        key_marker = resp.next_key_marker
-        version_id_marker = resp.next_version_id_marker
-        resp.versions.each do |v|
-          objects << {last_modified: v.last_modified, key: v.key, version: v.version_id}
+        if resp.nil?
+          # We need to use 2 distinct API calls based on the type of response we're expecting.
+          # NOTE - each of these returns PageableResponse objects, so we can use the simple built-in
+          # paging (.ie the next_page method call in the else body)
+          if list_versions
+            resp = s3_client.list_object_versions(bucket: bucket, max_keys: max_keys, prefix: prefix)
+          else
+            resp = s3_client.list_objects_v2(bucket: bucket, max_keys: max_keys, prefix: prefix)
+          end
+        else
+          resp = resp.next_page
+        end
+
+        (list_versions ? resp.versions : resp.contents).each do |v|
+          o = {last_modified: v.last_modified, key: v.key}
+          o[:version_id] if o.respond_to?(:version)
+          objects << o
           break if objects.length == max_files
         end
-        continue_listing = objects.length < max_files && resp.is_truncated
+        continue_listing = objects.length < max_files && resp.next_page?
       end while continue_listing
 
       # Now sort all the objects by last_modified_date

@@ -4,7 +4,6 @@ require 'open_chain/s3'
 module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocumentsSender
   extend OpenChain::FtpFileSupport
 
-
   def self.run_schedulable opts = {}
     buckets = opts['bucket']
     raise "A 'bucket' option value must be set." if buckets.blank?
@@ -13,7 +12,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
 
   def self.monitor_buckets buckets
     buckets.each do |bucket|
-      OpenChain::S3.each_file_in_bucket(bucket) do |key, version|
+      OpenChain::S3.each_file_in_bucket(bucket, list_versions: true) do |key, version|
         self.delay.send_s3_document_to_kewill(bucket, key, version)
       end
     end

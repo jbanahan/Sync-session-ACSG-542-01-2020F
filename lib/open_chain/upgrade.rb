@@ -1,6 +1,7 @@
 require 'open3'
 require 'fileutils'
 require 'open_chain/slack_client'
+require 'open_chain/load_environment'
 
 module OpenChain
   class Upgrade
@@ -166,7 +167,7 @@ module OpenChain
       log_me "Reset complete, checking out #{@target}"
       capture_and_log "git checkout #{@target}"
       log_me "Source checked out"
-      update_configurations
+      update_configuration_files
       log_me "Running bundle install"
       # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile
       # update get checked in sans Gemfile.lock update)
@@ -199,6 +200,31 @@ module OpenChain
       SchedulableJob.create_default_jobs!
     end
 
+    def update_configuration_files
+      # Prefix the RAILS_ENV to this command because it doesn't fully load the rails environment but we do want
+      # the RAILS_ENV var set for it.
+
+      # The swallow errors below is here primarily because when flipping back and forth in test the branches may not have these rake tasks
+      # This should probably be removed once all test branches can reliably be assumed to have these tasks
+      swallow_errors = !MasterSetup.get.production?
+      capture_and_log(prefix_env_variables("rake environment:build", {"RAILS_ENV" => MasterSetup.rails_env, "SSM_PARAMETER_STORE_NAMESPACE" => OpenChain::LoadEnvironment.configuration_namespace}), swallow_errors: swallow_errors)
+      capture_and_log("rake environment:download_configs", swallow_errors: swallow_errors)
+    end
+
+    def add_rails_env command
+      prefix_env_variables(command, {"RAILS_ENV" => MasterSetup.rails_env})
+    end
+
+    def prefix_env_variables command, variables
+      command_line = []
+      variables.each_pair do |key, value|
+        command_line << "#{key}=#{value}"
+      end
+      command_line << command
+
+      command_line.join(" ")
+    end
+
     def migrate
       c = 0
       begin
@@ -212,30 +238,25 @@ module OpenChain
         end
         raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
         capture_and_log "rake db:migrate"
-        # Run data migrations (nonschema_migrations) now as well
-        begin
-          capture_and_log "rake data:migrate"
-        rescue UpgradeFailure => e
-          e.log_me
-        end
+        capture_and_log "rake data:migrate"
       ensure
         MasterSetup.release_migration_lock
       end
       log_me "Migration complete"
     end
 
-    def capture_and_log command, command_dir = ""
-      stdout, stderr, status = command_dir.blank? ? Open3.capture3(command) : Open3.capture3(command, chdir: command_dir)
+    def capture_and_log command, swallow_errors: false
+      stdout, stderr, status = Open3.capture3(command)
       log_me stdout unless stdout.blank?
       log_me stderr unless stderr.blank?
-      raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
+      raise UpgradeFailure.new("#{command} failed: #{stderr}") unless swallow_errors || status.success?
     end
 
     def precompile
       log_me "Precompiling assets"
       command = "rake assets:precompile"
       if !MasterSetup.production_env?
-        command = "RAILS_ENV=#{MasterSetup.rails_env} #{command}"
+        command = add_rails_env command
       end
       capture_and_log command
       log_me "Precompile complete"
@@ -244,32 +265,6 @@ module OpenChain
     def update_master_setup_cache
       MasterSetup.clear_cache
       log_me "Cleared Master Setup Cache"
-    end
-
-    def update_configurations
-      root = MasterSetup.instance_directory
-      instance_name = root.basename.to_s
-      log_me "Updating configuration files for #{instance_name}"
-      config_path = root.join("..", "vfitrack-configurations")
-      configs_updated = false
-
-      if config_path.exist?
-        # Using git pull instead of git fetch for two reasons..
-        # 1) Want the actual output message "Already up-to-date" in the logs if it's already up to date.
-        # 2) We do want the current branch updated, not just the refs, otherwise the actualy directory won't
-        #    have the data that's been updated (unless we check out, but why do two commands when one suffices)
-        capture_and_log "git pull", config_path.to_s
-        instance_config = config_path.join(instance_name)
-        if instance_config.exist?
-          log_me "Copying all configuration files for #{instance_name}"
-          FileUtils.cp_r instance_config.to_s, root.join("..")
-          configs_updated = true
-        end
-      else
-        log_me "No configuration repository found for #{instance_name}. Skipping config updates."
-      end
-
-      configs_updated
     end
 
     def send_slack_failure master_setup, error=nil

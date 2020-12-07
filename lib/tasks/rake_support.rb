@@ -2,8 +2,8 @@ module OpenChain; module RakeSupport
   extend ActiveSupport::Concern
 
   def get_user_response message, default_value: nil, input_test: nil
-    message += "[Default = #{default_value}]" unless default_value.nil?
-    message += ": "
+    message += " [Default = #{default_value}]" unless default_value.nil?
+    message += " : "
 
     valid = false
     value = nil

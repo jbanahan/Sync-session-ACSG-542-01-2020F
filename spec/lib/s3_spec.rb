@@ -41,7 +41,7 @@ describe OpenChain::S3, s3: true do
 
   after :all do
     # Make sure to clear out the test bucket (just in case)
-    OpenChain::S3.each_file_in_bucket(test_bucket) {|key, version| OpenChain::S3.delete(test_bucket, key, version) }
+    OpenChain::S3.each_file_in_bucket(test_bucket, list_versions: true) {|key, version| OpenChain::S3.delete(test_bucket, key, version) }
   end
 
   describe 'bucket name' do
@@ -186,44 +186,90 @@ describe OpenChain::S3, s3: true do
   end
 
   describe "each_file_in_bucket" do
-    it "yields key, version for all objects in the bucket" do
-      f = upload_tempfile
-      f2 = upload_tempfile
+    context "with list_versions enabled" do
+      it "yields key, version for all objects in the bucket" do
+        f = upload_tempfile
+        f2 = upload_tempfile
 
-      objects = []
-      OpenChain::S3.each_file_in_bucket(bucket) do |key, version|
-        objects << [key, version]
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, list_versions: true) do |key, version|
+          objects << [key, version]
+        end
+
+        expect(objects.length).to eq 2
+        keys = objects.map {|o| o[0]}
+        expect(keys).to include f.key
+        expect(keys).to include f2.key
       end
 
-      expect(objects.length).to eq 2
-      keys = objects.map {|o| o[0]}
-      expect(keys).to include f.key
-      expect(keys).to include f2.key
+      it "does not list more files than asked for" do
+        f = upload_tempfile
+        f2 = upload_tempfile
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, max_files: 1, list_versions: true) do |key, version|
+          objects << [key, version]
+        end
+
+        expect(objects.length).to eq 1
+        expect(objects[0][0]).to eq f.key
+      end
+
+      it "only returns keys with prefix" do
+        f = upload_tempfile
+        f2 = upload_tempfile(key: "prefix-key.txt")
+
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, prefix: "prefix", list_versions: true) do |key, version|
+          objects << [key, version]
+        end
+
+        expect(objects.length).to eq 1
+        expect(objects[0][0]).to eq f2.key
+      end
     end
 
-    it "does not list more files than asked for" do
-      f = upload_tempfile
-      f2 = upload_tempfile
-      objects = []
-      OpenChain::S3.each_file_in_bucket(bucket, max_files: 1) do |key, version|
-        objects << [key, version]
+    context "with list versions disabled" do
+      it "yields key, version for all objects in the bucket" do
+        f = upload_tempfile
+        f2 = upload_tempfile
+
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, list_versions: false) do |key, version|
+          objects << [key, version]
+        end
+
+        expect(objects.length).to eq 2
+        keys = objects.map {|o| o[0]}
+        expect(keys).to include f.key
+        expect(keys).to include f2.key
+        # The versions should be nil (since we didn't request them)
+        expect(objects.map {|o| o[1]}).to eq [nil, nil]
       end
 
-      expect(objects.length).to eq 1
-      expect(objects[0][0]).to eq f.key
-    end
+      it "does not list more files than asked for" do
+        f = upload_tempfile
+        f2 = upload_tempfile
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, max_files: 1) do |key|
+          objects << key
+        end
 
-    it "only returns keys with prefix" do
-      f = upload_tempfile
-      f2 = upload_tempfile(key: "prefix-key.txt")
-
-      objects = []
-      OpenChain::S3.each_file_in_bucket(bucket, prefix: "prefix") do |key, version|
-        objects << [key, version]
+        expect(objects.length).to eq 1
+        expect(objects[0]).to eq f.key
       end
 
-      expect(objects.length).to eq 1
-      expect(objects[0][0]).to eq f2.key
+      it "only returns keys with prefix" do
+        f = upload_tempfile
+        f2 = upload_tempfile(key: "prefix-key.txt")
+
+        objects = []
+        OpenChain::S3.each_file_in_bucket(bucket, prefix: "prefix") do |key|
+          objects << key
+        end
+
+        expect(objects.length).to eq 1
+        expect(objects[0]).to eq f2.key
+      end
     end
   end
 

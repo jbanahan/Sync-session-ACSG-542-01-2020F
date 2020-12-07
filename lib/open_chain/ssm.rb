@@ -33,6 +33,30 @@ module OpenChain; class Ssm
     true
   end
 
+  # Uploads hash of parameters to SSM Parameter Store.
+  # * parameters - The key of the parameters will be used as the SSM parameter "name" value. Each key will
+  #   be prefixed using the given product_name and namespace.  Such that the parameter prefix will be composed like: "/#{product_name}/#{namespace}".
+  # * product_name - Defaults to "open_chain", you shouldn't need to change this
+  # * namespace - In general, this should be the deployment host (.ie www, target, polo, etc, MasterSetup.secrets.host).
+  def self.upload_parameters parameters, namespace:, product_name: MasterSetup.internal_product_name, encrypt: true
+    parameters.each_pair do |key, value|
+      name = "/#{product_name}/#{namespace}/#{(key[0] == "/") ? key[1..-1] : key}"
+      description = nil
+      param_type = encrypt ? "SecureString" : "String"
+      overwrite = true
+      param_value = value
+      if value.is_a?(Hash)
+        param_value = value[:value]
+        param_type = "String" if value[:encrypt] == false
+        overwrite = value[:overwrite] if value[:overwrite] == false
+        description = value[:description]
+      end
+      ssm_client.put_parameter(name: name, value: param_value, description: description, type: param_type, overwrite: overwrite)
+    end
+
+    true
+  end
+
   class << self
     private
 

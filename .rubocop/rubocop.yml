@@ -159,6 +159,11 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Naming/FileName:
+  Enabled: true
+  Exclude:
+    - config/initializers/*
+
 # We have a lot of well-understood 2-letter abbreviations (mf, cm, wb, and so on)
 Naming/MethodParameterName:
   Enabled: false

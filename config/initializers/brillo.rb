@@ -3,9 +3,11 @@ require 'faker'
 Brillo.configure do |config|
   @customer_hash = nil
 
-  config.transfer_config.secret_access_key = MasterSetup.secrets.aws["secret_access_key"]
-  config.transfer_config.access_key_id = MasterSetup.secrets.aws["access_key_id"]
-  config.transfer_config.bucket = MasterSetup.secrets.brillo_bucket
+  if MasterSetup.secrets.aws
+    config.transfer_config.secret_access_key = MasterSetup.secrets.aws["secret_access_key"]
+    config.transfer_config.access_key_id = MasterSetup.secrets.aws["access_key_id"]
+    config.transfer_config.bucket = MasterSetup.secrets.brillo_bucket
+  end
 
   # Tactics define what data is pulled in, and how it is pulled in.
   config.add_tactic :isf_module, -> (klass) { klass.where(broker_customer_number: ["EDDIE", "PVH"]).where(["file_logged_date > ? AND file_logged_date < ?", Date.parse("01/05/2019"), Date.parse("01/07/2019")]) }

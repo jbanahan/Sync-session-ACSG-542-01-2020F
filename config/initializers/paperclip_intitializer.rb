@@ -61,8 +61,8 @@ end; end; end
 # generally relies on not needing the user to do anything.
 module Paperclip; module Validators; class AttachmentExtensionBlacklistValidator < ActiveModel::EachValidator
 
-  # This blacklist is pretty much just Outlooks standard blacklist.
-  EXTENSION_BLACKLIST = Set.new(['.﻿bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf',
+  # This blacklist is pretty much just Outlook's standard blacklist.
+  EXTENSION_BLACKLIST = Set.new(['.bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf',
     '.ins', '.isp', '.jse', '.lnk', '.mdb', '.ms', '.pcd', '.pif', '.reg', '.scr', '.sct', '.shs', '.vb', '.ws']).freeze
 
   def validate_each(record, attribute, value)

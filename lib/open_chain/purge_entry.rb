@@ -44,10 +44,10 @@ module OpenChain; class PurgeEntry
       prefix = "KewillImaging/#{entry.broker_reference}"
     end
 
-    # We don't want to whipe out the entire bucket if the prefix is blank
+    # We don't want to wipe out the entire bucket if the prefix is blank
     return if prefix.nil?
 
-    OpenChain::S3.each_file_in_bucket(bucket, max_files: nil, prefix: prefix) do |key, version|
+    OpenChain::S3.each_file_in_bucket(bucket, max_files: nil, prefix: prefix, list_versions: true) do |key, version|
       OpenChain::S3.delete(bucket, key, version)
     end
   end

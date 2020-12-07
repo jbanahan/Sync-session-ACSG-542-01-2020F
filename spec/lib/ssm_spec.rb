@@ -147,4 +147,71 @@ describe OpenChain::Ssm do
       expect(subject.install_required_gems_command).to eq true
     end
   end
+
+  describe "upload_parameters" do
+    it "sends parameter values to SSM Parameter Store" do
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/open_chain/namespace/prefix/key",
+                                                           value: "value",
+                                                           description: nil,
+                                                           type: "SecureString",
+                                                           overwrite: true })
+
+      subject.upload_parameters({"/prefix/key" => "value"}, namespace: "namespace")
+    end
+
+    it "handles keys that are not prefixed with /" do
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/open_chain/namespace/prefix/key",
+                                                           value: "value",
+                                                           description: nil,
+                                                           type: "SecureString",
+                                                           overwrite: true })
+
+      subject.upload_parameters({"prefix/key" => "value"}, namespace: "namespace")
+    end
+
+    it "uses alternate product_name" do
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/test/namespace/prefix/key",
+                                                           value: "value",
+                                                           description: nil,
+                                                           type: "SecureString",
+                                                           overwrite: true })
+
+      subject.upload_parameters({"prefix/key" => "value"}, namespace: "namespace", product_name: "test")
+    end
+
+    it "allows per parameter overrides" do
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/open_chain/namespace/prefix/key",
+                                                           value: "value",
+                                                           description: "Description",
+                                                           type: "String",
+                                                           overwrite: false })
+
+      subject.upload_parameters({"prefix/key" => {value: "value", encrypt: false, overwrite: false, description: "Description"}}, namespace: "namespace")
+    end
+
+    it "uploads multiple keys" do
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/open_chain/namespace/key",
+                                                           value: "value",
+                                                           description: nil,
+                                                           type: "SecureString",
+                                                           overwrite: true })
+      expect(ssm_client).to receive(:put_parameter).with({ name: "/open_chain/namespace/key2",
+                                                           value: "value2",
+                                                           description: "Value 2",
+                                                           type: "String",
+                                                           overwrite: false })
+
+      parameters = {
+        "key" => "value",
+        "key2" => {
+          value: "value2",
+          description: "Value 2",
+          encrypt: false,
+          overwrite: false
+        }
+      }
+
+      subject.upload_parameters(parameters, namespace: "namespace")
+    end
+  end
 end
