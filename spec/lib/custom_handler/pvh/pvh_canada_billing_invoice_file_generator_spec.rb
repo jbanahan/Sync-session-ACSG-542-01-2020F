@@ -434,4 +434,43 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(subject.duty_invoice_number(entry_snapshot, suffix_invoice_snapshot)).to eq "11981000001B"
     end
   end
+
+  describe "has_duty_charges?" do
+
+    let (:invoice_snapshot) {
+      invoice = BrokerInvoice.new suffix: ""
+      invoice.broker_invoice_lines.build charge_code: "22", charge_amount: 100, charge_description: "Brokerage"
+      JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+    }
+
+    let (:suffix_invoice_snapshot) {
+      invoice = BrokerInvoice.new suffix: "2"
+      invoice.broker_invoice_lines.build charge_code: "22", charge_amount: 100, charge_description: "Brokerage"
+      JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+    }
+
+    it "returns true if brokerage charge is present" do
+      invoice = BrokerInvoice.new suffix: ""
+      invoice.broker_invoice_lines.build charge_code: "22", charge_amount: 100, charge_description: "Brokerage"
+      invoice_snapshot = JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+
+      expect(subject.has_duty_charges?(invoice_snapshot)).to eq true
+    end
+
+    it "returns true if brokerage charge is present on suffix'ed invoices" do
+      invoice = BrokerInvoice.new suffix: "2"
+      invoice.broker_invoice_lines.build charge_code: "22", charge_amount: 100, charge_description: "Brokerage"
+      invoice_snapshot = JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+
+      expect(subject.has_duty_charges?(invoice_snapshot)).to eq true
+    end
+
+    it "returns false if brokerage charge is not present" do
+      invoice = BrokerInvoice.new suffix: ""
+      invoice.broker_invoice_lines.build charge_code: "88", charge_amount: 100, charge_description: "Not Brokerage"
+      invoice_snapshot = JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+
+      expect(subject.has_duty_charges?(invoice_snapshot)).to eq false
+    end
+  end
 end

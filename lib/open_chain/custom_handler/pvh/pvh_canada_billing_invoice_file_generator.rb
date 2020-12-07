@@ -78,14 +78,36 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     }
   end
 
+  # This method determines if the current invoice has any duty that needs to be sent for it...
   def has_duty_charges? invoice_snapshot
-    # Canada doesn't actually put duty on the brokerage invoices...so what we're going to do is just assume the first invoice covers duty
-    # We can determine if this is the first invoice by seeing if the suffix is blank or not.
-    invoice_number = mf(invoice_snapshot, :bi_invoice_number)
+    # We're going to assume that every invoice for Canada which includes brokerage should also include duty.
+    # This is because the ONLY thing Canada bills PVH for routinely is brokerage (and the service tax (GST) on the brokerage).
+    # Therefore duty never actually appears on the the brokerage invoice (as it does in the US - as an informal invoice line (.ie it has no value)).
+    # There are some other changes that are occasionally added, so if they're on an invoice by themselves, don't send duty.
 
-    # Fenix invoice numbers look like this XXX-XXXX-XX when they are follow up invoices..so basically...if there's only 2 hyphens
-    # the invoice, then we can assume it's the primary invoice
-    !invoice_number.match?(/^[^\-]+-[^\-]+-[^\-]+$/)
+    # To accomodate this issue for cases where we may have to back out and resend duty (like when the initial entry information is incorrect
+    # the first time the file was sent), we're just going to assume then that every invoice issued (whether postive or negative) should
+    # include duty.
+
+    # The implecations of this for Canada are that every single invoice that has brokerage billed, will send duty amounts.
+    # This means that if duty needs to be resent for any reason to GTN, the invoice that contained brokerage amount should be reversed
+    # (which will send a reversal of the brokerage amounts AND the duty amounts) and then re-issued (which will resend a newly
+    # calulated set of duty values).
+
+    # Reverse and rebill is generally how you should resolve cases where PVH calls out that not all the lines on the Order
+    # were billed.  This happens because the entry data (as keyed or sent in the commercial invoices), did not fully match the
+    # ASN.  Generally, the ASN has more lines than the invoice when this occurs.  The person keying the entry must correct the
+    # entry lines to macth the ASN.  Then accounting should reverse the brokerage invoice and rebill it.
+    json_child_entities(invoice_snapshot, "BrokerInvoiceLine") do |invoice_line_snapshot|
+      charge_code = mf(invoice_line_snapshot, :bi_line_charge_code)
+      return true if charge_code.to_s.strip == brokerage_charge_code
+    end
+
+    false
+  end
+
+  def brokerage_charge_code
+    "22"
   end
 
   def duty_level_codes
@@ -103,7 +125,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
       "14" => "C080",
       "33" => "0545",
       "255" => "0027",
-      "22" => "G740",
+      brokerage_charge_code => "G740",
       "13" => "974"
     }
   end
