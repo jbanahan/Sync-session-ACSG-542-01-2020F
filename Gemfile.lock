@@ -546,9 +546,9 @@ DEPENDENCIES
   redlock (= 1.2.0)
   rspec-rails (= 3.8.2)
   rspec_junit_formatter (~> 0.2.3)
-  rubocop
-  rubocop-rails
-  rubocop-rspec
+  rubocop (= 0.81.0)
+  rubocop-rails (= 2.5.1)
+  rubocop-rspec (= 1.38.1)
   rubyXL (= 3.4.6)
   rubyzip (= 2.0)
   rufus-scheduler (= 3.5.0)

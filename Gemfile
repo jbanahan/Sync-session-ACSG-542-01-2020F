@@ -140,9 +140,9 @@ group :development, :test do
   gem 'rubyXL', '3.4.6'
   gem 'jasmine'
   gem 'brakeman'
-  gem 'rubocop', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
+  gem 'rubocop', '0.81.0', require: false
+  gem 'rubocop-rails', '2.5.1', require: false
+  gem 'rubocop-rspec', '1.38.1', require: false
 end
 
 group :development do

@@ -584,7 +584,7 @@ module OpenChain; class ActivitySummary
           to << mailing_list unless mailing_list.nil?
           OpenMailer.send_simple_html(to, subject, body, [report]).deliver_now
         ensure
-          report.close
+          report&.close
         end
       end
 
@@ -753,7 +753,7 @@ module OpenChain; class ActivitySummary
       board.insert_row 0, 0, ["#{MasterSetup.application_name} Insights"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
       board.insert_row 1, 0, ["#{iso_code} Entry Activity"], [:bold]
       board.insert_row 2, 0, ["Date", now]
-      board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? (importer.kewill_customer_number.presence? || importer.cargowise_customer_number) : importer.fenix_customer_number)] # rubocop:disable Layout/LineLength
+      board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? (importer.kewill_customer_number.presence || importer.cargowise_customer_number) : importer.fenix_customer_number)] # rubocop:disable Layout/LineLength
       board.insert_row 4, 0, ["View Summary in Real Time", {type: :hyperlink, link_text: "Link", location: activity_summary_url}]
     end
 

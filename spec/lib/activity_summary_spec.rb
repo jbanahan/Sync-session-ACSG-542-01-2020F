@@ -1016,6 +1016,53 @@ describe OpenChain::ActivitySummary do
       let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz", company: imp) }
       let(:mailing_list) { Factory(:mailing_list, user: user, company: imp, email_addresses: 'mailinglist@domain.com')}
 
+      describe "email" do
+        let!(:tempfile) do
+          tf = Tempfile.new
+          tf << "haha"
+          tf.flush
+        end
+        let(:imp) { Factory(:company) }
+
+        after { tempfile.close }
+
+        def setup(throw_exception: false)
+          generator = instance_double(described_class)
+          expect(described_class).to receive(:new).with(imp, "US").and_return generator
+          expect(subject).to receive(:update_args).with(generator, "ntufnel@stonehenge.biz", "subject", "blah blah", 1)
+                                                  .and_return(["ntufnel@stonehenge.biz", "subject", "blah blah"])
+          if !throw_exception
+            expect(generator).to receive(:run).and_return(tempfile)
+          else
+            expect(generator).to receive(:run).and_raise "ERROR!"
+          end
+        end
+
+        it "sends email to specified recipient" do
+          setup
+          subject.email(imp, "US", "ntufnel@stonehenge.biz", "subject", "blah blah", 1)
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.to).to eq ["ntufnel@stonehenge.biz"]
+          expect(mail.subject).to eq "subject"
+          expect(mail.body).to match(/blah blah/)
+          expect(mail.attachments.count).to eq 1
+        end
+
+        it "sends email to specified mailing list" do
+          setup
+          ml = Factory(:mailing_list, email_addresses: "st-hubbins@hellhole.co.uk")
+          subject.email(imp, "US", "ntufnel@stonehenge.biz", "subject", "blah blah", 1, ml)
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.to).to eq ["ntufnel@stonehenge.biz", "st-hubbins@hellhole.co.uk"]
+        end
+
+        it "catches attempt to close tempfile when there's an exception" do
+          setup(throw_exception: true)
+          expect { subject.email(imp, "US", "ntufnel@stonehenge.biz", "subject", "blah blah", 1) }.to raise_error "ERROR!"
+          expect(tempfile.closed?).to eq false
+        end
+      end
+
       describe "update_args" do
         it "supplies subject and body when both are missing" do
           Timecop.freeze(DateTime.new(2018, 3, 15, 15, 0)) do
