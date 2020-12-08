@@ -432,7 +432,7 @@ module OpenChain; class S3
 
         (list_versions ? resp.versions : resp.contents).each do |v|
           o = {last_modified: v.last_modified, key: v.key}
-          o[:version_id] if o.respond_to?(:version)
+          o[:version] = v.version_id if v.respond_to?(:version_id)
           objects << o
           break if objects.length == max_files
         end
