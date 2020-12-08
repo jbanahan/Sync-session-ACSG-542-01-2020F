@@ -181,13 +181,36 @@ describe OpenChain::CustomHandler::Target::TargetCustomsManagementProductGenerat
       expect(epa.epa_program_code).to eq "TS1"
       expect(epa.positive_certification).to eq true
     end
+
+    context "with alternate output customer number" do
+      subject { described_class.new({"output_customer_number" => "ALTERNATE"}) }
+
+      it "uses alternate customer number in product data" do
+        d = subject.build_data product
+        expect(d.customer_number).to eq "ALTERNATE"
+      end
+    end
   end
 
   describe "importer" do
-    let!(:target) { with_customs_management_id(Factory(:importer), "TARGEN") }
+    let!(:target) { with_customs_management_id(Factory(:importer), importer_number) }
 
-    it "finds target account" do
-      expect(subject.importer).to eq target
+    context "with default customer number" do
+      let (:importer_number) { "TARGEN" }
+
+      it "finds target account" do
+        expect(subject.importer).to eq target
+      end
+    end
+
+    context "with alternate importer account code" do
+      subject { described_class.new({"importer_customer_number" => "ALTERNATE"}) }
+
+      let (:importer_number) { "ALTERNATE" }
+
+      it "finds alternate account" do
+        expect(subject.importer).to eq target
+      end
     end
   end
 

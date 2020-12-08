@@ -5,14 +5,19 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsManage
   include OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGeneratorSupport
   include OpenChain::CustomHandler::Target::TargetCustomDefinitionSupport
 
-  def self.run_schedulable
-    g = self.new
+  def self.run_schedulable opts = {}
+    g = self.new opts
     g.sync_xml(g.importer)
     nil
   end
 
+  def initialize opts = {}
+    @output_customer_number = opts&.[]("output_customer_number")
+    @importer_customer_number = opts&.[]("importer_customer_number")
+  end
+
   def importer
-    Company.with_customs_management_number(customer_number).first
+    Company.with_customs_management_number(importer_customer_number).first
   end
 
   def build_data product
@@ -57,7 +62,7 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsManage
 
   def build_product_data product
     d = ProductData.new
-    d.customer_number = customer_number
+    d.customer_number = output_customer_number
     d.part_number = product.unique_identifier
     d.effective_date = effective_date
     d.expiration_date = expiration_date
@@ -245,8 +250,12 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsManage
     epa_records
   end
 
-  def customer_number
-    "TARGEN"
+  def importer_customer_number
+    @importer_customer_number.presence || "TARGEN"
+  end
+
+  def output_customer_number
+    @output_customer_number.presence || "TARGEN"
   end
 
   def cdefs
