@@ -131,8 +131,17 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
                                  :containers, :consolidated)
 
     def self.make entry, invoice, exception_code, comments
-      ctrs = containers(entry, invoice.invoice_number)
       d = CsrReportData.new
+      ctrs = containers(entry, invoice.invoice_number).presence
+
+      if ctrs
+        d.container_count = ctrs.length
+        d.containers = ctrs.map(&:container_number).join(", ")
+      else
+        # fallback for entries that pre-date EDI changes
+        d.container_count = entry.containers.length
+        d.containers = Entry.split_newline_values(entry.container_numbers).join(", ")
+      end
 
       d.importer = "TGMI"
       d.broker = "316"
@@ -144,12 +153,10 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
       d.abi_date = entry.entry_filed_date
       d.reason_code = exception_code
       d.broker_comments = comments
-      d.container_count = ctrs.length if ctrs
       d.port_of_lading = entry.lading_port_code
       d.port_of_unlading = entry.unlading_port_code
       d.vessel = entry.vessel
       d.bill_of_lading_number = invoice.invoice_number
-      d.containers = ctrs.map(&:container_number).join(", ") if ctrs
       d.consolidated = consolidated?(entry) ? "Y" : nil
 
       d

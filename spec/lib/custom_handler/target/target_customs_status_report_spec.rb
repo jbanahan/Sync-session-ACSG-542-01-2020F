@@ -180,6 +180,19 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       ent
     end
 
+    # test fallback when bill_of_lading records not present
+    let(:entry_3) do
+      ent = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-3", source_system: "Alliance",
+                            departments: "filler", po_numbers: "filler", docs_received_date: Date.new(2019, 12, 23),
+                            import_date: Date.new(2019, 12, 25), entry_filed_date: Date.new(2019, 12, 27),
+                            lading_port_code: "ZYZA", unlading_port_code: "DCBE", vessel: "Improbable",
+                            container_numbers: "J\n K")
+      2.times { ent.containers.create! }
+
+      ci = Factory(:commercial_invoice, entry: ent, invoice_number: "MBOL 4")
+      Factory(:commercial_invoice_line, commercial_invoice: ci, department: "dept 4", po_number: "PO 4")
+    end
+
     it "raises an exception if blank email param is provided" do
       expect(subject).not_to receive(:generate_report)
 
@@ -193,7 +206,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
     end
 
     it "generates and emails spreadsheet" do
-      entry_1; entry_2
+      entry_1; entry_2; entry_3
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         subject.run_customs_status_report({'email' => 'a@b.com'})
@@ -212,7 +225,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
 
       sheet = reader["Exceptions"]
       expect(sheet).not_to be_nil
-      expect(sheet.length).to eq 6
+      expect(sheet.length).to eq 7
       expect(sheet[0]).to eq ["Importer", "Broker", "File No.", "Dept", "P.O.", "Doc Rec'd Date", "ETA",
                               "ABI Date", "Reason Code", "Comments from Broker", "No of Cntrs", "Port of Lading", "Port of Unlading", "Vessel",
                               "Bill of Lading Number", "Containers", "Consolidated Entry"]
@@ -238,6 +251,11 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       expect(sheet[5]).to eq ["TGMI", "316", "entry-2", "dept 3", "PO 3", Date.new(2019, 12, 23), Date.new(2019, 12, 25),
                               Date.new(2019, 12, 27), nil, nil, 1, "AZYX", "EDCB", "Venture X-2",
                               "MBOL 3", "I", nil]
+
+      # third entry
+      expect(sheet[6]).to eq ["TGMI", "316", "entry-3", "dept 4", "PO 4", Date.new(2019, 12, 23), Date.new(2019, 12, 25),
+                              Date.new(2019, 12, 27), nil, nil, 2, "ZYZA", "DCBE", "Improbable",
+                              "MBOL 4", "J, K", nil]
     end
 
     def make_utc_date year, month, day
