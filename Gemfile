@@ -140,7 +140,7 @@ group :development, :test do
   # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
   # read them.  So we need to use a different solution for reading them in test cases.
   gem 'rubyXL', '3.4.16'
-  gem 'jasmine'
+  gem 'jasmine', '3.4.0'
   gem 'brakeman'
   gem 'rubocop', '0.81.0', require: false
   gem 'rubocop-rails', '2.5.1', require: false
