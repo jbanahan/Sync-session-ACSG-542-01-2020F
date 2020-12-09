@@ -27,9 +27,12 @@ module OpenChain
 
     # Set the newrelic license key up directly.  There appears to be a manual way to load the license key
     # but it works just as well to just set it as an environment variable.
-    if Rails.application.secrets["new_relic"]
-      ENV["NEW_RELIC_LICENSE_KEY"] = Rails.application.secrets["new_relic"]["license_key"]
-    end
+
+    # The reason I'm not using dig here is because the key semantics change in Rails 4->5->6 such that a symbol is required for the first value and then strings for
+    # the next when pulling from secrets...the following will work for all rails versions.
+    # (rails 4 -> Rails.application.secrets.dig(:new_relic, "license_key") vs Rails.application.secrets.dig("new_relic", "license_key"))
+    new_relic_key = Rails.application.secrets.try(:[], "new_relic").try(:[], "license_key")
+    ENV["NEW_RELIC_LICENSE_KEY"] = new_relic_key if new_relic_key.present?
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
@@ -73,7 +76,6 @@ module OpenChain
       end
     end
 
-    # In rails 4 use custom-configuration setting instead
     # These are meant to ONLY house settings that might be machine specific.  In essence, it should only be used
     # for things that are meant to be run in production, but out of the normal application flow and a secondary backend system
     # ...such as disabling outbound notifications when reprocessing files or disabling other functionality that would normally
@@ -83,9 +85,11 @@ module OpenChain
       config.vfitrack = Rails.application.config_for(:vfitrack_settings)
     end
 
-    if !Rails.env.test? && !run_from_console
-      raise "Postmark email settings must be configured under the 'postmark' key in config/secrets.yml." if Rails.application.secrets["postmark"].blank? || Rails.application.secrets["postmark"].try(:[], "postmark_api_key").blank?
-      config.action_mailer.postmark_settings = { api_token: Rails.application.secrets["postmark"]["postmark_api_key"] }
+    if !Rails.env.test?
+      # See newrelic note above about why try is used here rather than dig
+      postmark_api_key = Rails.application.secrets.try(:[], "postmark").try(:[], "postmark_api_key")
+      raise "Postmark email settings must be configured under the 'postmark' key in config/secrets.yml." if postmark_api_key.blank? && !run_from_console
+      config.action_mailer.postmark_settings = { api_token: postmark_api_key }
     end
 
     aws = Rails.application.secrets["aws"]&.with_indifferent_access

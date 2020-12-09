@@ -21,6 +21,20 @@ describe OpenChain::LoadEnvironment do
 
       subject.application_load
     end
+
+    it "re-raises memcache error if not running from console" do
+      expect(subject).to receive(:running_from_console?).and_return false
+      expect(subject).to receive(:setup_memcache).and_raise "Error"
+
+      expect { subject.application_load }.to raise_error "Error"
+    end
+
+    it "swallows memcache error if running from console" do
+      expect(subject).to receive(:running_from_console?).and_return true
+      expect(subject).to receive(:setup_memcache).and_raise "Error"
+
+      expect { subject.application_load }.not_to raise_error
+    end
   end
 
   describe "download_config_files" do

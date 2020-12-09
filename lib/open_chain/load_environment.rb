@@ -16,7 +16,14 @@ module OpenChain; class LoadEnvironment
     # tag thus it will not load any initializers, etc.
 
     # At the time this method is called, MasterSetup doesn't exist, so we use ENV directly, rather than MasterSetup.env
-    setup_memcache unless ENV["WITHOUT_CONFIG_FILES"].to_s.downcase == "true"
+    begin
+      setup_memcache unless ENV["WITHOUT_CONFIG_FILES"].to_s.downcase == "true"
+    rescue StandardError => e
+      # Don't raise this error if we're running from the console or via rake...this allows us to not need memcache setup
+      # for tasks that don't require the rails environment to load.
+      raise e unless running_from_console?
+    end
+
     nil
   end
 
