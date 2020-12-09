@@ -133,6 +133,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       subject.send_dimension "type", "id", "value"
     end
+
+    it "retries sending dimension if a retriable HTTP error is raised" do
+      http_error = OpenChain::HttpErrorWithResponse.new
+      http_error.http_status = 520
+
+      get_xml = "<xml>test</xml>"
+      control = "controlid"
+      allow(xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(subject).to receive(:post_xml).exactly(5).times.and_raise http_error
+      expect(subject).to receive(:sleep).with(1)
+      expect(subject).to receive(:sleep).with(2)
+      expect(subject).to receive(:sleep).with(3)
+      expect(subject).to receive(:sleep).with(4)
+
+      subject.send_dimension "type", "id", "value"
+    end
   end
 
   describe "send_receivable" do
@@ -175,6 +191,25 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(subject).to receive(:post_xml).with("c", true, true, xml, cid).exactly(3)
                                            .and_raise(OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError,
                                                       "Error Message")
+      expect(subject).to receive(:sleep).with(1)
+      expect(subject).to receive(:sleep).with(2)
+
+      subject.send_receivable r
+
+      expect(r).to be_persisted
+      expect(r.intacct_errors).to eq "Error Message"
+    end
+
+    it "retries sending xml 3 times if retriable http error is raised" do
+      http_error = OpenChain::HttpErrorWithResponse.new "Error Message"
+      http_error.http_status = 520
+
+      r = IntacctReceivable.new company: "c"
+      cid = "controlid"
+      xml = "<recv>receivable</recv>"
+      expect(xml_gen).to receive(:generate_receivable_xml).with(r).exactly(3).times.and_return [cid, xml]
+      expect(subject).to receive(:post_xml).with("c", true, true, xml, cid).exactly(3)
+                                           .and_raise(http_error)
       expect(subject).to receive(:sleep).with(1)
       expect(subject).to receive(:sleep).with(2)
 

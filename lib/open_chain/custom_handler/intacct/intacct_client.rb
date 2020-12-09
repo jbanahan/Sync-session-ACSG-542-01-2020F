@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient
 
       key
     rescue StandardError => e
-      if e.is_a?(IntacctRetryError) && (retry_count += 1) < 5
+      if retriable_http_error?(e) && (retry_count += 1) < 5
         sleep retry_count
         retry
       end
@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient
       send_dimension(e.dimension_type, e.value, e.value)
       retry
     rescue StandardError => e
-      if e.is_a?(IntacctRetryError) && (retry_count += 1) < 3
+      if retriable_http_error?(e) && (retry_count += 1) < 3
         sleep retry_count
         retry
       else
@@ -437,6 +437,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient
           end
         end
       end
+
+      false
+    end
+
+    def retriable_http_error? error
+      return true if error.is_a?(IntacctRetryError)
+
+      # If we get a 500 series error from intacct...it virtually always can be retried.  Their system
+      # raises all sorts of issues with their Cloudflare setup that goes away on a simple retry (because
+      # the request generally hits a totally different endpoint that's not erroring)
+      return true if error.is_a?(OpenChain::HttpErrorWithResponse) && error.http_status.to_s =~ /^5\d\d$/
 
       false
     end
