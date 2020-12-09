@@ -219,10 +219,6 @@
 #  price_inquiry_exception_opened_date             :datetime
 #  price_inquiry_exception_resolved_date           :datetime
 #  product_lines                                   :string(255)
-#  protest_completion_date                         :date
-#  protest_decision_1_date                         :date
-#  protest_decision_2_date                         :date
-#  protest_file_date                               :date
 #  recon_flags                                     :string(255)
 #  release_cert_message                            :string(255)
 #  release_date                                    :datetime

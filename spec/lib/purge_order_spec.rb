@@ -6,54 +6,72 @@ describe OpenChain::PurgeOrder do
   let(:some_product) {Factory(:product)}
 
   describe "run_schedulable" do
+
+    let (:now) { Time.zone.now }
+
     it "executes the purge function" do
-      expect(subject).to receive(:purge).once
-      subject.run_schedulable
+      start_date = now.in_time_zone("America/New_York").beginning_of_day - 3.years
+      expect(subject).to receive(:purge).with(older_than: start_date)
+
+      Timecop.freeze(now) do
+        subject.run_schedulable({})
+      end
+    end
+
+    it "uses alternate years_old value" do
+      start_date = now.in_time_zone("America/New_York").beginning_of_day - 10.years
+      expect(subject).to receive(:purge).with(older_than: start_date)
+
+      Timecop.freeze(now) do
+        subject.run_schedulable({"years_old" => 10})
+      end
     end
   end
 
   describe "purge" do
-    it "removes orders which are older than 2 years and is not booked or attached to shipment lines" do
-      order = Factory(:order, created_at: 2.years.ago)
+    it "removes orders which are older than given date and is not booked or attached to shipment lines" do
+      date = 2.years.ago
+      order = Factory(:order, created_at: (date - 1.minute))
       order_line = Factory(:order_line, order: order, product: some_product)
 
       Factory(:piece_set, order_line: order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
-      subject.purge
-      expect {order.reload}.to raise_error ActiveRecord::RecordNotFound
+      subject.purge older_than: date
+      expect { order.reload }.to raise_error ActiveRecord::RecordNotFound
     end
 
     it "removes order of a given age" do
-      young_order = Factory(:order, created_at: 1.year.ago)
+      young_order = Factory(:order, created_at: (1.year.ago - 1.minute))
       young_order_line = Factory(:order_line, order: young_order, product: some_product)
 
       Factory(:piece_set, order_line: young_order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
 
-      subject.purge 1.year.ago
-      expect {young_order.reload}.to raise_error ActiveRecord::RecordNotFound
+      subject.purge older_than: 1.year.ago
+      expect { young_order.reload }.to raise_error ActiveRecord::RecordNotFound
     end
 
     it "does not remove if order has connected shipment lines" do
       commercial_invoice_line = Factory(:commercial_invoice_line)
       some_product = Factory(:product)
 
-      order = Factory(:order, created_at: 2.years.ago)
+      order = Factory(:order, created_at: (2.years.ago - 1.minute))
       order_line = Factory(:order_line, order: order, product: some_product)
 
       shipment_line = Factory(:shipment_line, product: some_product)
       Factory(:piece_set, shipment_line: shipment_line, order_line: order_line,
                           commercial_invoice_line: commercial_invoice_line,
                           quantity: 1)
-      subject.purge
+
+      subject.purge older_than: 2.years.ago
       expect(Order.where(id: order.id)).to exist
     end
 
     it "does not remove if booked" do
-      booked_order = Factory(:order)
+      booked_order = Factory(:order, created_at: (2.years.ago - 1.minute))
       booked_order_line = Factory(:order_line, order: booked_order, product: some_product)
 
       Factory(:piece_set, order_line: booked_order_line,
@@ -62,7 +80,7 @@ describe OpenChain::PurgeOrder do
 
       Factory(:booking_line, order: booked_order)
 
-      subject.purge
+      subject.purge older_than: 2.years.ago
       expect(Order.where(id: booked_order.id)).to exist
     end
   end
