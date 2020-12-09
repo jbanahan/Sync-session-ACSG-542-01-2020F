@@ -1,3 +1,16 @@
+<style>
+  td {
+    padding: 2px;
+  }
+
+  td.notes pre {
+    padding-left: 5px;
+    padding-right: 5px;
+    white-space: pre-wrap;
+    min-width: 150px;
+  }
+</style>
+
 <%-content_for :action_bar do-%>
   <button class="btn_link" link_to="<%=new_schedulable_job_path%>">New</button>
 <%-end-%>
@@ -29,7 +42,7 @@
           <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
           <%- next_run = sj.next_run_time -%>
           <td><%=next_run.blank? ? (sj.stopped? ? "Stopped" : "Never") : next_run.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
-          <td><pre><%=sj.notes%></pre></td>
+          <td class="notes"><pre><%=sj.notes%></pre></td>
           <td><pre><%=sj.opts%></pre></td>
         </tr>
         <%-end-%>
