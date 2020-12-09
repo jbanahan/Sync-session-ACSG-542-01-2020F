@@ -55,6 +55,9 @@ Exception.class_eval do
   # logs the exception to the database and emails it to bug@vandegriftinc.com
   def log_me messages=[], attachment_paths=[], send_now=false
     return unless MasterSetup.connection.table_exists? 'error_log_entries'
+
+    # Messages is expected to be an array here, so ensure it is
+    messages = Array.wrap(messages)
     e = ErrorLogEntry.create_from_exception self, messages
     msgs = messages.blank? ? [] : messages.dup
     msgs << "Error Database ID: #{e.id}"

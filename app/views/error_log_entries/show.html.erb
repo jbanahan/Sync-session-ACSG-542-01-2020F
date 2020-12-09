@@ -3,7 +3,13 @@
 <%=field_row 'Message', @error_log_entry.error_message%>
 <%=field_row 'Time', @error_log_entry.created_at%>
 <%msgs = ""%>
-<%@error_log_entry.additional_messages&.each {|m| msgs << "#{m}<br />"}%>
+<%
+  if @error_log_entry.additional_messages.respond_to?(:each)
+     @error_log_entry.additional_messages&.each {|m| msgs << "#{m}<br />"}
+  else
+    msgs = @error_log_entry.additional_messages.to_s
+  end
+%>
 <%=field_row 'Other Messages', msgs.html_safe%>
 </table>
 <h2>Trace</h2>

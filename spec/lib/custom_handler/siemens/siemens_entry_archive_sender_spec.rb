@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensEntryArchiveSender do
       expect(sr2.sent_at).to eq now
 
       expect(ErrorLogEntry.count).to eq 1
-      expect(JSON.parse(ErrorLogEntry.first.additional_messages_json)).to eq "entry brok1"
+      expect(JSON.parse(ErrorLogEntry.first.additional_messages_json)).to eq ["entry brok1"]
     end
   end
 

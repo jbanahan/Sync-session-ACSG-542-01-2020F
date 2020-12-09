@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
     it "handles errors raised by request" do
       error = StandardError.new("Error")
       expect(subject).to receive(:request_kewill_images_for_queue_item).with(kewill_item, secrets["kewill_imaging"]).and_raise error
-      expect(error).to receive(:log_me).with("Failed to process document request for system 'KeWiLL' with identifier '12345'.")
+      expect(error).to receive(:log_me).with(["Failed to process document request for system 'KeWiLL' with identifier '12345'."])
 
       now = (Time.zone.now + 10.minutes)
       Timecop.freeze(now) { expect(subject.process_document_request_queue).to eq 0 }
@@ -86,6 +86,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
       expect(kewill_item).to exist_in_db
       kewill_item.reload
       expect(kewill_item.request_at.to_i).to eq((now + 1.minute).to_i)
+      expect(kewill_item.locked_at).to be_nil
+      expect(kewill_item.locked_by).to be_nil
     end
 
     it "handles errors raised by invalid systems being found" do

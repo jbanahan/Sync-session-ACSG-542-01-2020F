@@ -139,16 +139,15 @@ describe "log_me" do
     end
   end
 
-  describe "deep_dup" do
-    # This just verifies that hashes + arrays are deep_dup'ed correctly
-    # This was an error that we monkey-patched in Rails 3 (shouldn't be needed in Rails 4)
-    it "correctly deep_dups hashes with arrays in them" do
-      orig = {'key' => [{'inner_key' => 'inner_value'}]}
-      orig_dupe = orig.deep_dup
-      orig_dupe['key'][0]['new_key'] = 'new_value'
-      expect(orig['key'][0]['new_key']).to be_nil
-    end
+  it "handles message param that is not an array" do
+    error = StandardError.new "Error"
+    error_log_entry = ErrorLogEntry.new(id: 1)
+    expect(ErrorLogEntry).to receive(:create_from_exception).with(error, ["Additional Error"]).and_return error_log_entry
+    expect(error_log_entry).to receive(:email_me?).and_return false
+
+    error.log_me "Additional Error"
   end
+
 end
 
 describe "to_boolean" do

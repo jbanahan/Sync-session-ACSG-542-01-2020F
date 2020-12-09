@@ -45,11 +45,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftDocum
         rescue InvalidQueueSystemError => se
           se.log_me
         rescue => e
-          e.log_me "Failed to process document request for system '#{item.system}' with identifier '#{item.identifier}'."
+          e.log_me ["Failed to process document request for system '#{item.system}' with identifier '#{item.identifier}'."]
           # Set the request_at time, so that this queue item is not picked up again for another job iteration
           # Essentially, this is just introducing a sleep time into the process so that we don't constantly
           # loop over errored items
-          item.update_column(:request_at, (item.locked_at + 1.minute))
+          item.update_columns(request_at: (item.locked_at + 1.minute), locked_by: nil, locked_at: nil)
         end
       end
     end
