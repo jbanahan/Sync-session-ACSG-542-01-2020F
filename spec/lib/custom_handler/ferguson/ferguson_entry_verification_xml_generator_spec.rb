@@ -23,14 +23,14 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
 
       inv = entry.commercial_invoices.build(invoice_number: "E1I0954293", exchange_rate: BigDecimal("100.00"),
                                             invoice_date: Date.new(2020, 3, 30))
-      inv_line = inv.commercial_invoice_lines.build(customs_line_number: 1, prorated_mpf: BigDecimal("100.67"),
+      inv_line = inv.commercial_invoice_lines.build(customs_line_number: 2, prorated_mpf: BigDecimal("100.67"),
                                                     hmf: BigDecimal("53.33"), cotton_fee: BigDecimal("75.31"),
                                                     related_parties: true, unit_price: BigDecimal("8.55"),
                                                     unit_of_measure: "PCS", freight_amount: BigDecimal("2.61"),
                                                     country_origin_code: "TH", visa_number: "visa6868",
                                                     add_case_number: "add2020", add_duty_amount: BigDecimal("22.33"),
                                                     cvd_case_number: "cvd2121", cvd_duty_amount: BigDecimal("33.22"),
-                                                    mid: "383878", vendor_name: "Vendtech", currency: "CAD")
+                                                    mid: "383878", vendor_name: "Vendtech", currency: "CAD", line_number: 10)
       inv_line.commercial_invoice_tariffs.build(gross_weight: 13,
                                                 hts_code: "9506910030", spi_primary: "SP1", spi_secondary: "SP2",
                                                 duty_specific: BigDecimal("73.84"), advalorem_rate: BigDecimal("14.10"),
@@ -89,6 +89,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
       expect(line_elements.size).to eq 2
 
       elem_line_1 = line_elements[0]
+      expect(elem_line_1.text("LineNum")).to eq "2"
       expect(elem_line_1.text("SupplierName")).to eq "Vendtech"
       expect(elem_line_1.text("InvoiceNum")).to eq "E1I0954293"
       expect(elem_line_1.text("HsNum")).to eq "9506910030"
@@ -116,17 +117,18 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
       expect(elem_line_1.text("FreightCharge")).to eq "2.61"
       expect(elem_line_1.text("FreightChargeCurrencyCode")).to eq "CAD"
       expect(elem_line_1.text("InvoiceExchangeRate")).to eq "100"
-      expect(elem_line_1.text("InvoiceLineNum")).to eq "1"
+      expect(elem_line_1.text("InvoiceLineNum")).to eq "10"
       expect(elem_line_1.text("LineGrossWeight")).to eq "13"
       expect(elem_line_1.text("UnitPrice")).to eq "8.55"
       expect(elem_line_1.text("AddlDuty")).to eq "75.86"
       expect(elem_line_1.text("AddlDutyRate")).to eq "15.11"
 
       elem_line_2 = line_elements[1]
+      expect(elem_line_1.text("LineNum")).to eq "2"
       expect(elem_line_2.text("InvoiceNum")).to eq "E1I0954293"
       expect(elem_line_2.text("HsNum")).to eq "9506910031"
       expect(elem_line_2.text("ReferenceNum")).to eq "2"
-      expect(elem_line_2.text("InvoiceLineNum")).to eq "1"
+      expect(elem_line_2.text("InvoiceLineNum")).to eq "10"
     end
 
     it "includes FTZNumber value when entry type is '06'" do
@@ -277,37 +279,35 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
     subject { described_class }
 
     it "calls generate and send method for each matching entry" do
-      ferg = with_customs_management_id(Factory(:importer), "FERENT")
-
-      entry_no_sync = Factory(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_no_sync = Factory(:entry, customer_number: "FERENT", last_exported_from_source: Date.new(2020, 4, 14),
                                       release_date: Date.new(2020, 4, 15), entry_type: nil)
 
-      entry_old_sync = Factory(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_old_sync = Factory(:entry, customer_number: "HPPRO", last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
       entry_old_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 13))
 
       # This should be excluded because it has a sync record with a sent at date later than the entry's last exported from source.
-      entry_new_sync = Factory(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_new_sync = Factory(:entry, customer_number: "FERENT", last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
       entry_new_sync.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 15))
 
       # This should be excluded because it belongs to a different importer.
-      entry_not_ferg = Factory(:entry, importer_id: ferg.id - 1, last_exported_from_source: Date.new(2020, 4, 14),
+      entry_not_ferg = Factory(:entry, customer_number: "FOR RENT", last_exported_from_source: Date.new(2020, 4, 14),
                                        release_date: Date.new(2020, 4, 15), entry_type: "X")
 
       # This should be included because it is type 06 and has a first_entry_sent_date value.
-      entry_type_06_present_first_entry_sent_date = Factory(:entry, importer_id: ferg.id,
+      entry_type_06_present_first_entry_sent_date = Factory(:entry, customer_number: "FERENT",
                                                                     last_exported_from_source: Date.new(2020, 4, 14),
                                                                     release_date: Date.new(2020, 4, 15), entry_type: "06",
                                                                     first_entry_sent_date: Date.new(2020, 4, 10))
 
       # This should be excluded because it is type 06 and does not have a first_entry_sent_date value.
-      entry_type_06_missing_first_entry_sent_date = Factory(:entry, importer_id: ferg.id, last_exported_from_source:
+      entry_type_06_missing_first_entry_sent_date = Factory(:entry, customer_number: "FERENT", last_exported_from_source:
                                                             Date.new(2020, 4, 14), release_date: Date.new(2020, 4, 15),
                                                                     entry_type: "06", first_entry_sent_date: nil)
 
       # This should be excluded because it has no release date yet.
-      entry_no_release_date = Factory(:entry, importer_id: ferg.id, last_exported_from_source: Date.new(2020, 4, 14), final_statement_date: nil, entry_type: "X")
+      entry_no_release_date = Factory(:entry, customer_number: "FERENT", last_exported_from_source: Date.new(2020, 4, 14), final_statement_date: nil, entry_type: "X")
 
       expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_old_sync)
       expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_no_sync)
@@ -318,10 +318,6 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
       expect_any_instance_of(subject).not_to receive(:generate_and_send).with(entry_no_release_date)
 
       subject.run_schedulable
-    end
-
-    it "raises an error when Ferguson isn't found" do
-      expect { subject.run_schedulable }.to raise_error "Ferguson company record not found."
     end
   end
 

@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
     parser = self.new
     entries = Entry.joins("LEFT OUTER JOIN sync_records AS sr ON entries.id = sr.syncable_id AND sr.syncable_type = 'Entry' AND ",
                           ActiveRecord::Base.sanitize_sql_array(['sr.trading_partner = ?', SYNC_TRADING_PARTNER]))
-                   .where(importer_id: parser.ferguson_importer_id)
+                   .where(customer_number: ferguson_customer_numbers)
                    .where.not(release_date: nil)
                    .where("sr.sent_at IS NULL OR entries.last_exported_from_source > sr.sent_at")
                    .where("entries.entry_type IS NULL OR entries.entry_type != '06' OR entries.first_entry_sent_date IS NOT NULL")
@@ -22,10 +22,8 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
     end
   end
 
-  def ferguson_importer_id
-    @ferguson_importer_id ||= Company.with_customs_management_number("FERENT").first&.id
-    raise "Ferguson company record not found." unless @ferguson_importer_id
-    @ferguson_importer_id
+  def self.ferguson_customer_numbers
+    ["FERENT", "HPPRO"]
   end
 
   def generate_and_send entry
@@ -80,6 +78,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
 
   def make_declaration_line_element elem_dec, entry, inv, inv_line, tar, tariff_sequence_number
     elem_line = super
+    add_element elem_line, "LineNum", inv_line.customs_line_number.to_s
     add_element elem_line, "CountryOfOrigin", inv_line.country_origin_code
     add_element elem_line, "ManufacturerId", inv_line.mid
     add_element elem_line, "SPICode1", tar.spi_primary
@@ -104,7 +103,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
     add_element elem_line, "FreightCharge", format_decimal(inv_line.freight_amount)
     add_element elem_line, "FreightChargeCurrencyCode", inv_line.currency
     add_element elem_line, "InvoiceExchangeRate", format_decimal(inv.exchange_rate)
-    add_element elem_line, "InvoiceLineNum", inv_line.customs_line_number.to_s
+    add_element elem_line, "InvoiceLineNum", inv_line.line_number.to_s
     add_element elem_line, "LineGrossWeight", tar.gross_weight.to_s
     add_element elem_line, "UnitPrice", format_decimal(inv_line.unit_price)
     add_element elem_line, "AddlDuty", format_decimal(tar.duty_additional)
@@ -114,6 +113,10 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
 
   def ftp_credentials
     connect_vfitrack_net("to_ecs/ferguson_entry_verification#{MasterSetup.get.production? ? "" : "_test"}")
+  end
+
+  def self.filename_system_prefix
+    MasterSetup.get.production? ? "118011" : "1180119"
   end
 
   private
@@ -135,7 +138,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
 
       doc_type = entry.post_summary_correction? ? "PSC" : "7501"
       current_time = ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y%m%d%H%M%S")
-      filename_minus_suffix = "#{filename_system_prefix}_#{doc_type}_316_#{entry.entry_number}_#{current_time}"
+      filename_minus_suffix = "#{self.class.filename_system_prefix}_#{doc_type}_316_#{entry.entry_number}_#{current_time}"
 
       Tempfile.open([filename_minus_suffix, ".xml"]) do |file|
         Attachment.add_original_filename_method(file, "#{filename_minus_suffix}.xml")
@@ -149,11 +152,6 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
       sync_record.save!
 
       nil
-    end
-
-    def filename_system_prefix
-      @filename_system_prefix ||= MasterSetup.get.production? ? "118011" : "1180119"
-      @filename_system_prefix
     end
 
 end; end; end; end

@@ -175,6 +175,11 @@ class BusinessValidationRule < ActiveRecord::Base
                    label: 'No SPI Claimed',
                    enabled_lambda: -> { MasterSetup.get.custom_feature? "WWW" }
                  },
+                  'OpenChain::CustomHandler::Ferguson::FergusonMandatoryEntryFieldRule'.to_sym =>
+                 {
+                   label: 'Ferguson Mandatory Entry Fields',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "WWW" }
+                 },
                   ValidationRuleEntryInvoiceLinematchesProduct:
                  {
                    label: "Entry Invoice Line Matches Product",
@@ -296,3 +301,4 @@ require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_produc
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'
 require_dependency 'open_chain/custom_handler/pvh/pvh_validation_rule_entry_invoice_line_matches_shipment_line'
 require_dependency 'open_chain/custom_handler/vandegrift/spi_claim_entry_validation_rule'
+require_dependency 'open_chain/custom_handler/ferguson/ferguson_mandatory_entry_field_rule'

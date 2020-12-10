@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module Siemens
     end
 
     def make_declaration_line_element elem_dec, entry, inv, inv_line, tar, tar_idx
-      elem_line = super(elem_dec, entry, inv, inv_line, tar, tar_idx)
+      elem_line = super
       add_element elem_line, "ClientNumber", entry.customer_number
       add_element elem_line, "CCINumber", inv_line.line_number
       add_element elem_line, "LineNum", inv_line.customs_line_number
