@@ -302,9 +302,9 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryVerificationXmlGenerat
                                                                     first_entry_sent_date: Date.new(2020, 4, 10))
 
       # This should be excluded because it is type 06 and does not have a first_entry_sent_date value.
-      entry_type_06_missing_first_entry_sent_date = Factory(:entry, customer_number: "FERENT", last_exported_from_source:
-                                                            Date.new(2020, 4, 14), release_date: Date.new(2020, 4, 15),
-                                                                    entry_type: "06", first_entry_sent_date: nil)
+      entry_type_06_missing_first_entry_sent_date = Factory(:entry, customer_number: "FERENT", last_exported_from_source: Date.new(2020, 4, 14),
+                                                                    release_date: Date.new(2020, 4, 15), entry_type: "06",
+                                                                    first_entry_sent_date: nil)
 
       # This should be excluded because it has no release date yet.
       entry_no_release_date = Factory(:entry, customer_number: "FERENT", last_exported_from_source: Date.new(2020, 4, 14), final_statement_date: nil, entry_type: "X")

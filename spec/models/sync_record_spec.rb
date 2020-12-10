@@ -60,6 +60,18 @@ describe SyncRecord do
     end
   end
 
+  describe "set_context" do
+    it "sets a context value by key" do
+      subject.set_context "some_key", "ABC"
+      expect(subject.context["some_key"]).to eq "ABC"
+      subject.set_context "some_key", "DEF"
+      subject.set_context "some_other_key", "GHI"
+      # Setting 'some_other_key' blows away the value for 'some_key'.
+      expect(subject.context["some_key"]).to be_nil
+      expect(subject.context["some_other_key"]).to eq "GHI"
+    end
+  end
+
   describe "find_or_build_sync_record" do
     it "builds a new sync record" do
       entry = Entry.new
