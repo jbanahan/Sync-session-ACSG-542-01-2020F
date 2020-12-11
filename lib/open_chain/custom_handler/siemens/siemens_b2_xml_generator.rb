@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
                                    :customs_duty, :gst_rate, :excise_tax_rate, :sima_code, :sima_assessment,
                                    :value_for_duty, :vfd_code, :purchase_order_number, :oic_code, :gst,
                                    :value_for_currency_conversion, :currency_conversion_rate, :coo, :poe, :tariff_treatment,
-                                   :sub_header_row, :tariff_code, :ruling, :caevl01)
+                                   :sub_header_row, :tariff_code, :ruling, :caevl01, :caevn01)
 
   def initialize(attachable)
     @attachable = attachable
@@ -194,6 +194,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
                         end
     add_element(dec_line, "SpecialAuthority", special_authority)
     add_element(dec_line, "ClientNumber", line.importer_id)
+    add_element(dec_line, "CAEVN01", line.caevn01)
     add_element(dec_line, "CAEVL01", line.caevl01)
   end
 
@@ -296,6 +297,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
   end
 
   def generate_declaration_line(xlrow)
+    entry_number = xlrow[MAPPINGS[:entry_number]]
+    payable = total_values[entry_number][:total_payable]
+
     line = B3DeclarationLine.new
     line.importer_id = xlrow[MAPPINGS[:importer_id]]
     line.previous_txn_number = xlrow[MAPPINGS[:previous_txn_number]]
@@ -325,13 +329,23 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
     line.sub_header_row = xlrow[MAPPINGS[:sub_header_row]]
     line.tariff_code = xlrow[MAPPINGS[:tariff_code]]
     line.ruling = xlrow[MAPPINGS[:ruling]]
+    line.caevn01 = caevn01_total(payable)
     line.caevl01 = xlrow[MAPPINGS[:caevl01]]
 
     line
   end
 
+  def total_payable(value)
+    value > 0 ? value : 0.00
+  end
+
+  def caevn01_total(value)
+    value < 0 ? value.abs : 0.00
+  end
+
   def generate_declaration(xlrow)
     entry_number = xlrow[MAPPINGS[:entry_number]]
+    payable = total_values[entry_number][:total_payable]
     declaration = B3Declaration.new
     declaration.importer_name = xlrow[MAPPINGS[:importer_name]]
     declaration.bn = xlrow[MAPPINGS[:bn]]
@@ -348,7 +362,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
     declaration.total_sima_assessment = total_values[entry_number][:sima_assessment]
     declaration.total_excise_tax = total_values[entry_number][:excise_tax_rate]
     declaration.total_gst = total_values[entry_number][:gst]
-    declaration.total_payable = total_values[entry_number][:total_payable]
+    declaration.total_payable = total_payable(payable)
     declaration
   end
 

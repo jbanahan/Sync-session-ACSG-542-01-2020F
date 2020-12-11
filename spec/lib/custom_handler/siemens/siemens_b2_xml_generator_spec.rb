@@ -70,6 +70,30 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
 
   let(:cf) { instance_double(CustomFile) }
 
+  describe "#total_payable" do
+    it 'returns the value if positive' do
+      klass = described_class.new(cf)
+      expect(klass.total_payable(1000.00)).to eq(1000.00)
+    end
+
+    it 'returns 0 if negative' do
+      klass = described_class.new(cf)
+      expect(klass.total_payable(-1000.00)).to eq(0.00)
+    end
+  end
+
+  describe "#caevl01_total" do
+    it 'returns the absolute value if negative' do
+      klass = described_class.new(cf)
+      expect(klass.caevn01_total(-1000.00)).to eq(1000.00)
+    end
+
+    it 'returns 0 if positive' do
+      klass = described_class.new(cf)
+      expect(klass.caevn01_total(1000.00)).to eq(0.00)
+    end
+  end
+
   describe "#calculate_product_values" do
     it "does not mix up totals between entries" do
       row_1 = default_row({entry_num: '1234', type: 'A', value_for_duty: "1000"})
@@ -205,6 +229,44 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
       total_values = instance.calculate_product_values(product_rollup)
       allow(instance).to receive(:product_rollup).and_return(product_rollup)
       allow(instance).to receive(:total_values).and_return(total_values)
+    end
+
+    it 'puts negative total values in the declaration line' do
+      p = described_class.new(instance_double('attachable'))
+      allow(p).to receive(:total_payable).and_return(0.00)
+      allow(p).to receive(:caevn01_total).and_return(100.00)
+      r1 = default_row
+
+      generate_product_rollup(p, [r1])
+
+      doc = p.generate_xml([r1])
+      elem_root = doc.root
+      elem_dec = elem_root.elements.to_a("Declaration")[0]
+      expect(elem_dec.text("TotalPayable")).to eq "0.0"
+
+      line_elements = elem_dec.elements.to_a("DeclarationLine")
+      expect(line_elements.size).to eq 1
+      elem_line_1 = line_elements[0]
+      expect(elem_line_1.text("CAEVN01")).to eq("100.0")
+    end
+
+    it 'puts positive total values in the declaration' do
+      p = described_class.new(instance_double('attachable'))
+      allow(p).to receive(:total_payable).and_return(1000.00)
+      allow(p).to receive(:caevn01_total).and_return(0.00)
+      r1 = default_row
+
+      generate_product_rollup(p, [r1])
+
+      doc = p.generate_xml([r1])
+      elem_root = doc.root
+      elem_dec = elem_root.elements.to_a("Declaration")[0]
+      expect(elem_dec.text("TotalPayable")).to eq "1000.0"
+
+      line_elements = elem_dec.elements.to_a("DeclarationLine")
+      expect(line_elements.size).to eq 1
+      elem_line_1 = line_elements[0]
+      expect(elem_line_1.text("CAEVN01")).to eq("0.0")
     end
 
     it 'handles split rows' do
@@ -374,6 +436,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
       expect(elem_line_1.text("TariffCode")).to eq "tariff_code"
       expect(elem_line_1.text("SpecialAuthority")).to eq('oic_code')
       expect(elem_line_1.text("ClientNumber")).to eq('PUMA')
+      expect(elem_line_1.text("CAEVN01")).to eq('0.0')
       expect(elem_line_1.text("CAEVL01")).to eq('This is a reason')
     end
   end
