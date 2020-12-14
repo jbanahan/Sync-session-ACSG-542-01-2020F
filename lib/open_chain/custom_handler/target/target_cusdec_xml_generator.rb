@@ -297,7 +297,8 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
     end
 
     # Looking for the original number from the database field with any pointless zeros removed.
-    def format_decimal val
+    def format_decimal val, percentage_multiplier: BigDecimal(1)
+      val *= percentage_multiplier unless val.nil?
       number_with_precision(val, precision: 10, strip_insignificant_zeros: true)
     end
 
@@ -408,13 +409,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       if include_duty_elements
         make_item_tariff_duty_element elem_tariff, "ADD", inv_line.add_case_percent, inv_line.add_duty_amount
         make_item_tariff_duty_element elem_tariff, "CVD", inv_line.cvd_case_percent, inv_line.cvd_duty_amount
-        make_item_tariff_duty_element elem_tariff, "HMF", inv_line.hmf_rate, inv_line.hmf
-        make_item_tariff_duty_element elem_tariff, "MPF", inv_line.mpf_rate, inv_line.prorated_mpf
+        make_item_tariff_duty_element elem_tariff, "HMF", inv_line.hmf_rate, inv_line.hmf, percentage_multiplier: BigDecimal(100)
+        make_item_tariff_duty_element elem_tariff, "MPF", inv_line.mpf_rate, inv_line.prorated_mpf, percentage_multiplier: BigDecimal(100)
         make_item_tariff_duty_element elem_tariff, "COF", inv_line.cotton_fee_rate, inv_line.cotton_fee
       end
       # These duty types need to be included regardless of the inclue_duty_elements flag value.
       make_item_tariff_duty_element elem_tariff, "SPECFC", tariff.specific_rate, tariff.duty_specific
-      make_item_tariff_duty_element elem_tariff, "ADVAL", tariff.advalorem_rate, tariff.duty_advalorem
+      make_item_tariff_duty_element elem_tariff, "ADVAL", tariff.advalorem_rate, tariff.duty_advalorem, percentage_multiplier: BigDecimal(100)
       make_item_tariff_duty_element elem_tariff, "OTHER", tariff.additional_rate, tariff.duty_additional
 
       make_pga_element elem_tariff, tariff, counter
@@ -422,12 +423,12 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       elem_tariff
     end
 
-    def make_item_tariff_duty_element elem_tariff, code, percentage, amount
+    def make_item_tariff_duty_element elem_tariff, code, percentage, amount, percentage_multiplier: BigDecimal(1)
       elem_duty = nil
       if amount.to_f > 0
         elem_duty = add_element(elem_tariff, "itemTariffDutyRecord")
         add_element elem_duty, "dutyTypeCode", code
-        add_element elem_duty, "hsRatePercentage", format_decimal(percentage)
+        add_element elem_duty, "hsRatePercentage", format_decimal(percentage, percentage_multiplier: percentage_multiplier)
         add_element elem_duty, "rateAmount", format_money(amount)
       end
       elem_duty
@@ -487,14 +488,15 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
         lines = tariff_invoice_lines(tariffs)
         make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADD", inv_line.add_case_percent, sum_value(lines, :add_duty_amount)
         make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "CVD", inv_line.cvd_case_percent, sum_value(lines, :cvd_duty_amount)
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "HMF", inv_line.hmf_rate, sum_value(lines, :hmf)
-        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "MPF", inv_line.mpf_rate, sum_value(lines, :prorated_mpf)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "HMF", inv_line.hmf_rate, sum_value(lines, :hmf), percentage_multiplier: BigDecimal(100)
+        make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "MPF", inv_line.mpf_rate, sum_value(lines, :prorated_mpf), percentage_multiplier: BigDecimal(100)
         make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "COF", inv_line.cotton_fee_rate, sum_value(lines, :cotton_fee)
       end
       # These duty types need to be included regardless of the inclue_duty_elements flag value.
       legit_tariffs = tariffs.reject { |t| t.spi_secondary == "V" }
       make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "SPECFC", tariff_prime.specific_rate, sum_value(legit_tariffs, :duty_specific)
-      make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADVAL", tariff_prime.advalorem_rate, sum_value(legit_tariffs, :duty_advalorem)
+      make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "ADVAL", tariff_prime.advalorem_rate, sum_value(legit_tariffs, :duty_advalorem),
+                               percentage_multiplier: BigDecimal(100)
       make_tariff_duty_element elem_tariff, tariff_prime.hts_code, "OTHER", tariff_prime.additional_rate, sum_value(legit_tariffs, :duty_additional)
       elem_tariff
     end
@@ -509,13 +511,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       line_hash.values
     end
 
-    def make_tariff_duty_element elem_tariff, hts_code, code, percentage, amount
+    def make_tariff_duty_element elem_tariff, hts_code, code, percentage, amount, percentage_multiplier: BigDecimal(1)
       elem_duty = nil
       if amount.to_f > 0
         elem_duty = add_element(elem_tariff, "tariffDutyRecord")
         add_element elem_duty, "tariffId", hts_code&.hts_format
         add_element elem_duty, "dutyTypeCode", code
-        add_element elem_duty, "hsRatePercentage", format_decimal(percentage)
+        add_element elem_duty, "hsRatePercentage", format_decimal(percentage, percentage_multiplier: percentage_multiplier)
         add_element elem_duty, "rateAmount", format_money(amount)
       end
       elem_duty

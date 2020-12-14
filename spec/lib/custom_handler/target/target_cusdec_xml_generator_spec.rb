@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
                                                           add_case_number: "add2020", add_bond: false, add_duty_amount: BigDecimal("22.33"),
                                                           add_case_percent: BigDecimal("8.4"), cvd_case_number: "cvd2121", cvd_bond: true,
                                                           cvd_duty_amount: BigDecimal("33.22"), cvd_case_percent: BigDecimal("9.5"),
-                                                          mid: "383878", hmf_rate: BigDecimal("10.6"), mpf_rate: BigDecimal("11.7"),
+                                                          mid: "383878", hmf_rate: BigDecimal(".106"), mpf_rate: BigDecimal(".117"),
                                                           cotton_fee_rate: BigDecimal("12.8"), customs_line_number: 1, department: "20")
       expect(inv_1_line_1).to receive(:duty_plus_fees_amount).and_return(BigDecimal("42.66"))
       Factory(:product, importer_id: target.id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
                                                             classification_uom_2: "NP", classification_qty_2: BigDecimal("2579.5"),
                                                             classification_uom_3: "NQ", classification_qty_3: BigDecimal("2580.55"),
                                                             specific_rate: BigDecimal("13.9"), duty_specific: BigDecimal("73.84"),
-                                                            advalorem_rate: BigDecimal("14.10"), duty_advalorem: BigDecimal("74.85"),
+                                                            advalorem_rate: BigDecimal(".1410"), duty_advalorem: BigDecimal("74.85"),
                                                             additional_rate: BigDecimal("15.11"), duty_additional: BigDecimal("75.86"),
                                                             quota_category: 1111, entered_value: BigDecimal("5323.51"),
                                                             tariff_description: "GYM/PLAYGRND EXERC EQUIP;OTHER")
