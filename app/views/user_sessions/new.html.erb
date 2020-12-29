@@ -4,14 +4,14 @@
     <title>Maersk Customs Navigator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= app_internals(MasterSetup.get) %>
-    <%= stylesheet_link_tag "login", :media => "all" -%>
+    <%= stylesheet_pack_tag "login", :media => "all" -%>
     <%= csrf_meta_tags %>
   </head>
   <body>
     <nav class="navbar navbar-light bg-light p-0 mt-0 mb-3" style="background-color: #42b0d5 !important;">
       <ul class="navbar-nav px-0">
         <li class="nav-item px-4" style="background-color: white;">
-          <%= image_tag("logo.png", :class=>'img-fluid', :alt=>'Maersk Logo', :style=>'max-height: 3em;') %>
+          <%= image_pack_tag("logo.png", :class=>'img-fluid', :alt=>'Maersk Logo', :style=>'max-height: 3em;') %>
         </li>
       </ul>
     </nav>
@@ -36,7 +36,7 @@
         </div>
         <% else -%>
         <div class="col-md-12 text-center">
-          <%= image_tag(master_setup.logo_image, :id=>'company-logo', :alt=>'Company Logo', :class=>'img-fluid')%>
+          <%= image_pack_tag(master_setup.logo_image, :id=>'company-logo', :alt=>'Company Logo', :class=>'img-fluid')%>
         </div>
         <% end -%>
       </div>
@@ -82,7 +82,7 @@
                     <% if Rails.configuration.use_google_auth %>
                       <span> or </span>
 
-                      <%= link_to image_tag('btn_google_signin_light_normal_web.png', size: '169x42'), "/auth/google_oauth2", method: :post %>
+                      <%= link_to image_pack_tag('btn_google_signin_light_normal_web.png', size: '169x42'), "/auth/google_oauth2", method: :post %>
                     <% end %>
                     <% if Rails.configuration.use_azure_auth %>
                       <span> or </span>
@@ -93,7 +93,7 @@
 
                     <% end %>
                     <% if Rails.application.config.pepsi_sso_url %> or
-                      <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_tag "mypepsico.png"%></a>
+                      <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_pack_tag "mypepsico.png"%></a>
                     <% end %>
                   </div>
                 </div>
@@ -250,13 +250,13 @@
         <div class="col-md-1">
           <div class="sideaffix">
             <a href="https://twitter.com/VandegriftInc " target="_blank">
-              <%= image_tag('social/twitter_circle.png', :id=>'twitter-icon', :class=>'float-right', :alt=>'Twitter icon') %>
+              <%= image_pack_tag('social/twitter_circle.png', :id=>'twitter-icon', :class=>'float-right', :alt=>'Twitter icon') %>
             </a>
             <a href="https://www.linkedin.com/company/598796/" target="_blank">
-              <%= image_tag('social/linkedin_circle.png', :id=>'linkedin-logo', :class=>'float-right', :alt=>'Linkedin icon') %>
+              <%= image_pack_tag('social/linkedin_circle.png', :id=>'linkedin-logo', :class=>'float-right', :alt=>'Linkedin icon') %>
             </a>
             <a href="https://www.facebook.com/vandegriftinc/" target="_blank">
-              <%= image_tag('social/facebook_circle.png', :id=>'facebook-icon', :class=>'float-right', :alt=>'Facebook icon')%>
+              <%= image_pack_tag('social/facebook_circle.png', :id=>'facebook-icon', :class=>'float-right', :alt=>'Facebook icon')%>
             </a>
           </div>
         </div>
@@ -273,23 +273,23 @@
         <div class="col-md-2"></div>
         <div class="col py-1" id="facebookbox">
           <a href="https://www.facebook.com/vandegriftinc/" target="_blank" class="pt-2">
-            <%=image_tag('social/facebook.png', :id=>'facebook-icon', :class=>'img-fluid', :alt=>'Facebook icon')%>
+            <%=image_pack_tag('social/facebook.png', :id=>'facebook-icon', :class=>'img-fluid', :alt=>'Facebook icon')%>
           </a>
         </div>
         <div class="col py-1" id="linkedinbox">
           <a href="https://www.linkedin.com/company/598796/" target="_blank" class="pt-2">
-            <%= image_tag('social/linkedin.png', :id=>'link-logo', :class=>'img-fluid', :alt=>'Linkedin icon') %>
+            <%= image_pack_tag('social/linkedin.png', :id=>'link-logo', :class=>'img-fluid', :alt=>'Linkedin icon') %>
           </a>
         </div>
         <div class="col py-1" id="twitterbox">
           <a href="https://twitter.com/VandegriftInc" target="_blank">
-            <%= image_tag('social/twitter.png', :id=>'twitter-icon', :class=>'img-fluid', :alt=>'Twitter icon') %>
+            <%= image_pack_tag('social/twitter.png', :id=>'twitter-icon', :class=>'img-fluid', :alt=>'Twitter icon') %>
           </a>
         </div>
         <div class="col-md-2"></div>
       </div>
     </div>
-    <%= javascript_include_tag "login" -%>
-    <%= javascript_include_tag "jquery_ujs" -%>
+    <%= javascript_pack_tag "login" -%>
+    <%= javascript_pack_tag "jquery_ujs" -%>
   </body>
 </html>

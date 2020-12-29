@@ -23,4 +23,8 @@ config/*.xml
 .byebug_history
 .coverity
 .env*
-.idea
+.idea/public/packs
+/public/packs-test
+/node_modules
+yarn-debug.log*
+.yarn-integrity

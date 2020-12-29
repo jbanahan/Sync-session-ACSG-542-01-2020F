@@ -206,15 +206,15 @@ module ApplicationHelper
             "data-content" => title, "data-trigger" => "hover", "data-delay" => '{"show":"500"}' }
     link_opts = {}
     fn = att.attached_file_name
-    icon = image_tag("icon_other.png", opts)
+    icon = image_pack_tag("icon_other.png", opts)
     if att.web_preview?
       opts[:width]="75px"
       opts[:style]="border:1px solid #d7d7d7;"
       link_opts[:target]="chainio_attachment"
-      icon = image_tag(download_attachment_path(att), opts.merge(img_opts_override))
+      icon = image_pack_tag(download_attachment_path(att), opts.merge(img_opts_override))
     elsif !fn.blank?
       ext = fn.split('.').last.downcase.to_sym
-      icon = image_tag(ICONS[ext], opts.merge(img_opts_override)) unless ICONS[ext].nil?
+      icon = image_pack_tag(ICONS[ext], opts.merge(img_opts_override)) unless ICONS[ext].nil?
     end
     link_to icon, download_attachment_path(att), link_opts
   end
@@ -232,7 +232,7 @@ module ApplicationHelper
   end
 
   def help_image(file_name)
-    image_tag("help/#{file_name}", :class=>'help_pic')
+    image_pack_tag("help/#{file_name}", :class=>'help_pic')
   end
 
   def bool_txt(bool)

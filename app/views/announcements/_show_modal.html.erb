@@ -17,7 +17,7 @@
   });
 </script>
 <div id="announcement-container" class="container mb-0">
-  <%= stylesheet_link_tag "quill.css" %>
+  <%= stylesheet_pack_tag "quill.css" %>
   <% @announcements.each_with_index do |a, idx| %>
     <% unless idx.zero? %>
       <hr class="pt-2 pb-0">

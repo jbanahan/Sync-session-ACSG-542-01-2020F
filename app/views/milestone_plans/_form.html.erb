@@ -1,6 +1,6 @@
 <%content_for :javascript do %>
 $(function() {
-  OpenChainMilestonePlan.init(<%=@milestone_plan.id ? @milestone_plan.id : 0%>,<%=@available_fields.to_json.html_safe%>);    
+  OpenChainMilestonePlan.init(<%=@milestone_plan.id ? @milestone_plan.id : 0%>,<%=@available_fields.to_json.html_safe%>);
 });
 <%end%>
 
@@ -23,7 +23,7 @@ $(function() {
       <% starting_def = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build(:display_rank=>0) : @milestone_plan.starting_definition%>
       <%=f.fields_for :milestone_definitions, starting_def do |sdf|%>
         <tr id='first_milestone_row' class='definition_row'>
-          <td><a href='#' class='add_row'><%=image_tag 'green_plus_24.png', :alt=>'Add Row', :title=>'Add Row'%></a><%=sdf.hidden_field :display_rank%></td>
+          <td><a href='#' class='add_row'><%=image_pack_tag 'green_plus_24.png', :alt=>'Add Row', :title=>'Add Row'%></a><%=sdf.hidden_field :display_rank%></td>
           <td><%=sdf.hidden_field :model_field_uid, :class=>:hdn_mfuid, :id=>:starting_def_uid%><span class='mfuid_lbl' /></td></tr>
       <%end%>
       </tbody>
@@ -32,7 +32,7 @@ $(function() {
 
 <div id='mod_sla_help' style='display:none;'>
   <p>The <strong>SLA Complete</strong> flag marks the point when your plan is complete from a status standpoint.  This date is used to figure out the plan's status (red/yellow/green).  In most cases, this is the last milestone, but not always.</p>
-  <p>For example, you may consider your inbound supply chain complete when the product is delivered to the warehouse, but you might also want to track the payment to the vendor, which could happen later.  
+  <p>For example, you may consider your inbound supply chain complete when the product is delivered to the warehouse, but you might also want to track the payment to the vendor, which could happen later.
     In this case, you'd mark the &quot;Receipt Date&quot; as the SLA Complete date.  A late &quot;Paid Date&quot; would not turn the milestone plan red.</p>
 </div>
 <div id='mod_new_prompt' style='display:none;'>

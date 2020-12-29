@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maersk Navigator - Trade Lanes</title>
   <%= app_internals(MasterSetup.get) %>
-  <%= stylesheet_link_tag    "trade_lanes", :media => "all" -%>
-  <%= javascript_include_tag "trade_lanes" -%>
-  <%= javascript_include_tag "jquery_ujs" -%>
+  <%= stylesheet_pack_tag    "trade_lanes", :media => "all" -%>
+  <%= javascript_pack_tag "trade_lanes" -%>
+  <%= javascript_pack_tag "jquery_ujs" -%>
   <%= csrf_meta_tags -%>
   </head>
 <% body_tag(master_setup, current_user, run_as_user) %>

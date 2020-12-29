@@ -12,27 +12,21 @@
 //= require jquery
 // Because all the stub'ed applications below require jquery_ujs (and the fact that it comes from a gem)
 // we need to link it externally and then add it in as an asset to the header.
-//= link jquery_ujs
-//= require json3
-//= require bootstrap.bundle
-//= require jquery-ui
-//= require angular
-//= require_directory ./every_page
-//= require_directory ./domainer
-//= require_directory ./comment
-//= require_directory ./product
-//= require_directory ./shipment
-//= require_directory .
-// These directories are after "." because they require scripts loaded from root
-//= require_directory ./setup_data
-//= require_directory ./state_toggle_buttons
-//= require_directory ./official_tariff
-//= require_directory ./field_validator
-//= require_directory ./folders
-//= stub legacy
-//= stub html5shim
-//= stub vendor_portal
-//= stub trade_lanes
-//= stub chain_vendor_maint
-//= stub chain_admin
-//= stub login
+
+/* eslint no-console:0 */
+// This file is automatically compiled by Webpack, along with any other files
+// present in this directory. You're encouraged to place your actual application logic in
+// a relevant structure within app/javascript and only use these pack files to reference
+// that code so it'll be compiled.
+//
+// To reference this file, add <%= javascript_pack_tag 'application' %> to the appropriate
+// layout file, like app/views/layouts/application.html.erb
+
+console.log('Hello World from Webpacker');
+import 'angular';
+import 'jquery_ujs';
+
+import "stylesheets/application";
+
+const images = require.context('../images', true);
+const imagePath = (name) => images(name, true);

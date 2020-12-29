@@ -134,6 +134,9 @@ gem 'premailer-rails'
 
 gem 'dotenv-rails', '2.7.6'
 
+# Update whenever rails is updated
+gem 'webpacker', '~> 3.5'
+
 group :development, :test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.

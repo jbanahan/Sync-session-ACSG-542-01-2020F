@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maersk Navigator - Vendor Setup</title>
   <%= app_internals(MasterSetup.get) %>
-  <%= stylesheet_link_tag    "chain_vendor_maint", :media => "all" -%>
-  <%= javascript_include_tag "chain_vendor_maint" -%>
-  <%= javascript_include_tag "jquery_ujs" -%>
+  <%= stylesheet_pack_tag    "chain_vendor_maint", :media => "all" -%>
+  <%= javascript_pack_tag "chain_vendor_maint" -%>
+  <%= javascript_pack_tag "jquery_ujs" -%>
   <%= csrf_meta_tags -%>
   </head>
 <% body_tag(master_setup, current_user, run_as_user) %>

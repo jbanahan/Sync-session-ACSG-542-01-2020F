@@ -1,4 +1,4 @@
-<%= stylesheet_link_tag "quill.css" %>
+<%= stylesheet_pack_tag "quill.css" %>
 <p style="float: right; margin-top: 1em;"><%= @anc_time.strftime("%m-%d-%Y %l:%M%p") %></p>
 <div class="ql-editor" style="clear: both;">
   <%= @text&.html_safe %>

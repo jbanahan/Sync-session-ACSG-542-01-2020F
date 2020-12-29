@@ -2,7 +2,7 @@
   <div ng-controller='HtsCtrl'>
     <div class='row'>
       <div class='col-md-12 text-center'>
-        <%=link_to image_tag('vandegrift.png', :alt_text=>'Company Logo', :width=>'450px'), '/'%>
+        <%=link_to image_pack_tag('vandegrift.png', :alt_text=>'Company Logo', :width=>'450px'), '/'%>
         <h1>Vandegrift HTS Lookup</h1>
       </div>
     </div>
@@ -10,7 +10,7 @@
       <div class='col-md-12 jumbotron'>
         <p>
           <strong>Welcome</strong>
-        </p> 
+        </p>
         <p>
           Use this screen to browse the US and Canadian tariff listings.
         </p>
@@ -24,7 +24,7 @@
         <select class='form-control input-lg' id='sel-country' ng-model='country' ng-options='c.name for c in countries'>
         </select>
       </div>
-    </div> 
+    </div>
     <div ng-show="viewMode=='more-info'" class='row'>
       <div class='jumbotron'>
         <div>
@@ -103,6 +103,6 @@
 </div>
 <footer class='footer'>
   <div id="action_bar" class='navbar fixed-bottom justify-content-end py-0 m-0'>
-    <%= image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
+    <%= image_pack_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
   </div>
 </footer>

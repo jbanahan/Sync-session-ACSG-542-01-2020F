@@ -14,7 +14,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.tour = new Tour(
     storage: false
     orphan: true
-    onStart: () -> 
+    onStart: () ->
       unless ($('#search_setup_controls').hasClass('ng-hide'))
         $scope.toggleSetup()
     onEnd: () ->
@@ -54,19 +54,19 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       {
         title: "Selecting your Search"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Your previously saved searches will appear in this dropdown menu. 
+          <h5>Your previously saved searches will appear in this dropdown menu.
           Results from the most recently run search appear below the dropdown menu.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 2.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 2.jpg") %>
           </div></div>"
       }
       {
         title: "Setup a search"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>After selecting a saved search from the dropdown, click the 
+          <h5>After selecting a saved search from the dropdown, click the
           Gears button to create a new search or modify a previously created search.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 3.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 3.jpg") %>
           </div></div>"
       }
       {
@@ -74,7 +74,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         content: "<div class='row'><div class='col-md-3 col-12'>
           <h5>You may name your searches whatever you'd like to distinguish between them.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 4.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 4.jpg") %>
           </div></div>"
       }
       {
@@ -84,7 +84,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           In general XLSX format is preferred, however older XLS format and CSV
           (comma delimited) is available.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 5.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 5.jpg") %>
           </div></div>"
       }
       {
@@ -93,17 +93,17 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           <h5>If you decide to download your search results, this checkbox will add
           weblinks to each record in Maersk Navigator from the search results.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 6.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 6.jpg") %>
           </div></div>"
       }
       {
         title: "Hide Time"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Only want to see dates in a datetime field? Check this box to hide the 
-          time from view. 
+          <h5>Only want to see dates in a datetime field? Check this box to hide the
+          time from view.
           Downloaded results will exclude the time as well.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 7.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 7.jpg") %>
           </div></div>"
       }
       {
@@ -112,20 +112,20 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           <h5>Each Maersk Navigator module has many fields available in Advanced Search so it is recommended to use the filter box below the available fields to find the field you are looking for.
           Just start typing the field name and the Available Fields box will filter the view for you.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 8.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 8.jpg") %>
             </div></div>"
       }
       {
         title: "Adding Fields to Your Search"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Fields selected here will be added as a column to your search results. 
-          Highlight the field (or more than one field by holding down Ctrl while clicking 
-          each field name) and then click Add.<br /><br />You can also easily add a custom 
-          column with a hardcoded value. Click the Custom Column button, give your column a 
-          name, and provide an optional column value. The column value, if provided, will 
+          <h5>Fields selected here will be added as a column to your search results.
+          Highlight the field (or more than one field by holding down Ctrl while clicking
+          each field name) and then click Add.<br /><br />You can also easily add a custom
+          column with a hardcoded value. Click the Custom Column button, give your column a
+          name, and provide an optional column value. The column value, if provided, will
           be repeated on every row in the report. The column value can be left blank.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 9.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 9.jpg") %>
           </div></div>"
       }
       {
@@ -133,139 +133,139 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         content: "<div class='row'><div class='col-md-3 col-12'>
           <h5>Select the field you want to move, then click Up or Down to move it.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 10.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 10.jpg") %>
           </div></div>"
       }
       {
         title: "Remove a Column"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Select the field you want to remove, then click Remove to remove it 
+          <h5>Select the field you want to remove, then click Remove to remove it
           from your Included columns.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 11.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 11.jpg") %>
           </div></div>"
       }
       {
         title: "Sorting Data"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>The data can be sorted by nearly any field or combination of 
-          fields of data selected. Similar to the column selection you can filter 
+          <h5>The data can be sorted by nearly any field or combination of
+          fields of data selected. Similar to the column selection you can filter
           through them with the search below the Available Sorts.
           <br /><br />
-          You can sort a search by a field even if it is not included as a 
+          You can sort a search by a field even if it is not included as a
           column in the results.
           <br /><br />
-          You can switch between ascending and descending sort for each sort 
+          You can switch between ascending and descending sort for each sort
           criteria by clicking the Change Order button.
           <br /><br />
-          *Note that you have to select a parameter below before a sort can be 
+          *Note that you have to select a parameter below before a sort can be
           included.
           </h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 12.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 12.jpg") %>
           </div></div>"
       }
       {
         title: "Selecting parameters"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>To add a parameter, select one from the dropdown menu next to 'Add New'. 
-          You can type the first few characters of the field name for faster selection. 
+          <h5>To add a parameter, select one from the dropdown menu next to 'Add New'.
+          You can type the first few characters of the field name for faster selection.
           There is no limit to the number of parameters you can add.</h5></div>
           <div class='col-sm-9 col-sx-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 13.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 13.jpg") %>
           </div></div>"
       }
       {
         title: "Selecting comparator"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>After a parameter is selected choose a comparator from the dropdown 
+          <h5>After a parameter is selected choose a comparator from the dropdown
           and add a value to be compared to in the input field.
           <br /><br />
-          You can include blank values in the results for each parameter by 
+          You can include blank values in the results for each parameter by
           checking the Include Empty box.
           <br /><br />
-          *Note that report comparator definitions are available in the user 
+          *Note that report comparator definitions are available in the user
           manual section.
           </h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 14.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 14.jpg") %>
           </div></div>"
       }
       {
         title: "Scheduling Search Results"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>You can generate the results of your search on a schedule of your 
-          choosing. 
+          <h5>You can generate the results of your search on a schedule of your
+          choosing.
           The results will then be sent to email addresses that you specify.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 15.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 15.jpg") %>
           </div></div>"
       }
       {
         title: "Setting up a schedule"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Specify the email address(es) you would like to receive your search 
-          results. Multiple email addresses can be added by separating them with a 
+          <h5>Specify the email address(es) you would like to receive your search
+          results. Multiple email addresses can be added by separating them with a
           comma.
           <br /><br />
-          Check the Send if Empty box if you would like to receive the scheduled 
+          Check the Send if Empty box if you would like to receive the scheduled
           results even if there are no results from the search.
           <br /><br />
-          Select your schedule interval. You can select a specific day of the month 
+          Select your schedule interval. You can select a specific day of the month
           for a monthly report, select a day of the week for a weekly report, or select each day of the week for a daily report. Multiple schedules can be set up as needed.
           <br /><br />
           Click Done when you have finished creating your schedule.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 16.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 16.jpg") %>
           </div></div>"
       }
       {
         title: "Save Your Search"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Ensure that your changes aren't lost by clicking save! 
+          <h5>Ensure that your changes aren't lost by clicking save!
           This also runs the search and the results will display below.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 17.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 17.jpg") %>
           </div></div>"
       }
       {
         title: "Starting from scratch"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Click here to create a new search from scratch. 
+          <h5>Click here to create a new search from scratch.
           This will not save changes you've made above!</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 18.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 18.jpg") %>
           </div></div>"
       }
       {
         title: "Duplication"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>If you'd like to start a new search using similar columns and/or 
+          <h5>If you'd like to start a new search using similar columns and/or
           parameters, then click here to make a copy of an existing search.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 19.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 19.jpg") %>
           </div></div>"
       }
       {
         title: "Sharing Search Results"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>If you would like to share the search you've created then click 
-          here and select another user from the dropdown. 
-          The user will receive a copy of the search you created and their changes 
+          <h5>If you would like to share the search you've created then click
+          here and select another user from the dropdown.
+          The user will receive a copy of the search you created and their changes
           will not affect your version.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 20.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 20.jpg") %>
           </div></div>"
       }
       {
         title: "Download your Search Results"
         content: "<div class='row'><div class='col-md-3 col-12'>
-          <h5>Results are limited to 1000 lines on screen, but up to 10,000 lines 
-          can be downloaded as an XLSX, XLS, or CSV file by clicking this button. 
-          The search will run in the background and you will receive a system 
+          <h5>Results are limited to 1000 lines on screen, but up to 10,000 lines
+          can be downloaded as an XLSX, XLS, or CSV file by clicking this button.
+          The search will run in the background and you will receive a system
           message when it is ready to be downloaded.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 21.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 21.jpg") %>
           </div></div>"
       }
       {
@@ -274,7 +274,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           <h5>Search results can be emailed to any recipient, even those without
           Maersk Navigator accounts.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 22.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 22.jpg") %>
           </div></div>"
       }
       {
@@ -287,7 +287,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
           the results are ready for download. You can return to the Random Audit
           screen from any search screen to download previous results.</h5>
           </div><div class='col-sm-9 col-12'>
-            <%= ActionController::Base.helpers.escape_javascript image_tag("tour_images/advanced search tour 23.jpg") %>
+            <%= ActionController::Base.helpers.escape_javascript image_pack_tag("tour_images/advanced search tour 23.jpg") %>
           </div></div>"
       }
       {
@@ -446,7 +446,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.scheduleToEdit = null
   $scope.errors = []
   $scope.notices = []
-  
+
   #email and status panels
   $scope.sendEmail = (mailFields) ->
     successCallback = (resp) ->
@@ -454,7 +454,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       $scope.clearPanels
       $scope.setSuccessPanel "Email sent"
       window.scrollTo(0,0)
-      
+
     errorCallback = (resp) ->
       if resp.error
         $scope.setErrorPanel resp.error
@@ -492,10 +492,10 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         $scope.notices.push "Report given to " + resp.data.given_to + "."
       else
         $scope.notices.push "Report given to user."
-    
+
     errorCallback = (resp) ->
       $scope.errors.push "Error giving this report, please try again."
-    
+
     $http.post('/search_setups/'+$scope.searchSetup.id+'/give.json',{'other_user_id':targetId}).then(successCallback,errorCallback)
 
   $scope.copyReportName = null
@@ -507,7 +507,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     successCallback = (resp) ->
       $scope.notices.push "A copy of this report has been created as " + resp.data.name + "."
       $location.path '/'+resp.data.id+'/1'
-    
+
     errorCallback = (resp) ->
       $scope.copyPrompt = true
       if resp.error
@@ -520,7 +520,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.makeTemplate = (ss) ->
     successCallback = (resp) ->
       $scope.notices.push "Template created successfully."
-    
+
     errorCallback = (resp) ->
       if resp.error
         $scope.errors.push resp.error
@@ -562,11 +562,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       ss = $scope.searchSetup
       ss.locked = locked
       $scope.searchSetup = {}
-      
+
       if ss.search_criterions.length == 0
         ss.sort_criterions = []
         ss.search_schedules = []
-      
+
       ss.search_schedules = (sched for sched in ss.search_schedules when !$scope.emailTooLong(sched))
 
       successCallback = () ->
@@ -598,7 +598,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchWrapper.searchResult = {}
     mt = $scope.searchSetup.module_type
     $scope.searchSetup = {}
-    
+
     successCallback = (resp) ->
       $location.path '/'+resp.data.id+'/1'
 
@@ -615,10 +615,10 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchSetup = {}
     successCallback = (resp) ->
       $location.path '/'+resp.data.id+'/1'
-    
+
     errorCallback = (resp) ->
       $scope.errors.push "An error occurred while deleting this search. Please reload and try again."
-    
+
     $http.delete('/advanced_search/'+id+'.json').then(successCallback, errorCallback)
 
   $scope.toggleSetup = () ->
@@ -694,7 +694,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     /^_const/.test uid
 
   $scope.columnLabel = (searchColumn) ->
-    if $scope.isConstantUid searchColumn.mfid 
+    if $scope.isConstantUid searchColumn.mfid
       "*" + searchColumn.label
     else
       searchColumn.label
@@ -703,7 +703,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     if $scope.searchSetup
       columns = $scope.searchSetup.search_columns || []
       columns.some (col) ->
-        $scope.isConstantUid col.mfid 
+        $scope.isConstantUid col.mfid
 
   $scope.moveColumnsUp = () ->
     moveSelectionUp $scope.searchSetup.search_columns, $scope.columnsToRemove
