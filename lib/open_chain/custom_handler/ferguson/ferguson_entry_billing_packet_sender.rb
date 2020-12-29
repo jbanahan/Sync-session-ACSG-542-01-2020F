@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryBill
     end
 
     def file_name entry_number, sequence_number
-      "DBS_#{VERIFICATION_XML_GENERATOR.filename_system_prefix}_#{entry_number}_#{current_time.strftime("%Y%m%d%H%M%S")}_CBP_#{sequence_number}.pdf"
+      "VFI_#{VERIFICATION_XML_GENERATOR.filename_system_prefix}_#{entry_number}_#{current_time.strftime("%Y%m%d%H%M%S")}_CBP_#{sequence_number}.pdf"
     end
 
     def current_time

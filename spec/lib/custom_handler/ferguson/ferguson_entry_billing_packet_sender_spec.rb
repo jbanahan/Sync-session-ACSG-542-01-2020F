@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryBillingPacketSender do
 
         archive_packet_1 = instance_double("archive packet 1")
         expect(OpenChain::S3).to receive(:download_to_tempfile)
-          .with("the_bucket", "the_path", {original_filename: "DBS_1180119_567890_20200324020508_CBP_03.pdf"})
+          .with("the_bucket", "the_path", {original_filename: "VFI_1180119_567890_20200324020508_CBP_03.pdf"})
           .and_yield archive_packet_1
         sr_1 = nil
         expect(subject).to receive(:ftp_sync_file) do |arc, sync|
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryBillingPacketSender do
 
         archive_packet_2 = instance_double("archive packet 2")
         expect(OpenChain::S3).to receive(:download_to_tempfile)
-          .with("the_bucket", "the_path", {original_filename: "DBS_1180119_567892_20200324020508_CBP_01.pdf"})
+          .with("the_bucket", "the_path", {original_filename: "VFI_1180119_567892_20200324020508_CBP_01.pdf"})
           .and_yield archive_packet_2
         sr_2 = nil
         expect(subject).to receive(:ftp_sync_file) do |arc, sync|
@@ -126,14 +126,14 @@ describe OpenChain::CustomHandler::Ferguson::FergusonEntryBillingPacketSender do
         # Entry 1's download_to_tempfile should error out.
         err = StandardError.new("Heinous error")
         expect(OpenChain::S3).to receive(:download_to_tempfile)
-          .with("the_bucket", "the_path", {original_filename: "DBS_1180119_567890_20200324020508_CBP_01.pdf"})
+          .with("the_bucket", "the_path", {original_filename: "VFI_1180119_567890_20200324020508_CBP_01.pdf"})
           .and_raise err
         expect(err).to receive(:log_me).with("entry 6838")
 
         # Entry 2 should work fine, even though the first entry died.
         archive_packet_2 = instance_double("archive packet 2")
         expect(OpenChain::S3).to receive(:download_to_tempfile)
-          .with("the_bucket", "the_path", {original_filename: "DBS_1180119_567892_20200324020508_CBP_01.pdf"})
+          .with("the_bucket", "the_path", {original_filename: "VFI_1180119_567892_20200324020508_CBP_01.pdf"})
           .and_yield archive_packet_2
         sr_2 = nil
         expect(subject).to receive(:ftp_sync_file) do |arc, sync|
