@@ -22,11 +22,24 @@
 // To reference this file, add <%= javascript_pack_tag 'application' %> to the appropriate
 // layout file, like app/views/layouts/application.html.erb
 
-console.log('Hello World from Webpacker');
-import 'angular';
-import 'jquery_ujs';
+import moment from 'moment';
+window.moment = moment
+//import 'moment';
+//import moment from 'moment'
+//import 'moment/min/locales'
 
-import "stylesheets/application";
+import 'jquery';
+import {} from 'jquery-ujs'
+import 'angular-moment';
+import 'angular';
+import 'angucomplete-alt';
+import 'angular-local-storage';
+import 'angular-route';
+import 'angular-sanitize';
+import 'popper.js';
+import 'bootstrap';
+
+import "../stylesheets/application";
 
 const images = require.context('../images', true);
 const imagePath = (name) => images(name, true);

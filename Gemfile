@@ -2,15 +2,6 @@ source 'https://rubygems.org'
 
 # BEGIN Rails Default gems
 gem "rails", "5.0.7.2"
-# Use SCSS for stylesheets
-gem 'sass-rails', "6.0.0"
-# Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', "4.2.0"
-# Use CoffeeScript for .coffee assets and views
-gem 'coffee-rails', "4.2.2"
-# Use jquery as the JavaScript library
-gem 'jquery-rails', '4.3.3'
-# END RAILS DEFAULT GEMS
 
 # AWS gems - only utilize gems required for specific services referenced by the project
 gem 'aws-sdk-ec2', '1.212.0'
@@ -20,7 +11,6 @@ gem 'aws-sdk-sqs', '1.34.0'
 gem 'aws-sdk-s3', '1.85.0'
 gem 'aws-sdk-cloudwatch', '1.46.0'
 
-gem 'jquery-ui-rails', '6.0.1'
 gem 'mysql2', '0.5.3'
 gem 'will_paginate', '3.3.0'
 gem 'paperclip', '6.1.0'
@@ -56,12 +46,6 @@ gem 'combine_pdf', '~> 1.0.0'
 gem 'barby', '~> 0.6'
 # Required for generating Barcodes as PNG images
 gem 'chunky_png', '~> 1.3.10'
-
-# javascript environment, we will compile assets during deployment
-# so we need these on the production servers as well
-gem 'execjs', '2.7.0'
-gem 'mini_racer', '0.3.1'
-gem 'browser', '2.5.3'
 
 gem "google-api-client", "0.28.4"
 # LRU Redux provides an LRU (optionally timebased) cache...it's used to cache google drive paths
