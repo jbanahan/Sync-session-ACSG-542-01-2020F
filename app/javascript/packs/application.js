@@ -39,6 +39,14 @@ import 'angular-sanitize';
 import 'popper.js';
 import 'bootstrap';
 
+import './chain';
+import './chain_bootstrap';
+import './components';
+import './apps_every_page/chain_all_pages';
+import './apps_every_page/nav_panel';
+import './apps_every_page/notification_center';
+import './setup_data/setup_data_svc';
+
 import "../stylesheets/application";
 
 const images = require.context('../images', true);

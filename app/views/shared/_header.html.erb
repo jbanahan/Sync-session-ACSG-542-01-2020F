@@ -14,7 +14,7 @@
     <%= favicon_links -%>
 
     <%= stylesheet_pack_tag "application", :media => "all" -%>
-    <%= javascript_pack_tag "application", "components", "apps_every_page/chain_all_pages", "apps_every_page/nav_panel","apps_every_page/notification_center"-%>
+    <%= javascript_pack_tag "application" -%>
 
     <% if @include_legacy_scripts %>
       <%= javascript_pack_tag "legacy" %>
