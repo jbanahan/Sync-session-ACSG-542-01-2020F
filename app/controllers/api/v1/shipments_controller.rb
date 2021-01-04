@@ -1,5 +1,6 @@
 require 'open_chain/custom_handler/isf_xml_generator'
 require 'open_chain/registries/order_booking_registry'
+require 'open_chain/registries/shipment_registry'
 require 'open_chain/api/v1/shipment_api_json_generator'
 
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
@@ -213,6 +214,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     load_lines shp, h
     load_booking_lines shp, h
     raise StatusableError.new("You do not have permission to save this Shipment.", :forbidden) unless shp.can_edit?(current_user)
+    OpenChain::Registries::ShipmentRegistry.save_shipment_hook shp, current_user
     shp.save if shp.errors.full_messages.blank?
     shp
   end

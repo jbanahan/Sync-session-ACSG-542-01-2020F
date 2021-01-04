@@ -21,4 +21,8 @@ module OpenChain; module Registries; class ShipmentRegistry
     evaluate_all_registered(:cancel_shipment_hook, shipment, user)
   end
 
+  def self.save_shipment_hook shipment, user
+    evaluate_all_registered(:save_shipment_hook, shipment, user)
+  end
+
 end; end; end

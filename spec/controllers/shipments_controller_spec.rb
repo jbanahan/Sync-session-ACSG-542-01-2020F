@@ -4,6 +4,8 @@ describe ShipmentsController do
 
   before { sign_in_as u }
 
+  # TODO most of this controller is not tested within this spec
+
   describe "download" do
     it "allows users with edit privileges" do
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true

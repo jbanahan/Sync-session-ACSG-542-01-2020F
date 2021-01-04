@@ -14,6 +14,15 @@
       </div>
     </div>
   </div>
+  <div ng-hide='shipment.custom.valid_master_bill' class="row">
+    <div class="col-md-12">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">ISF Error</h4>
+        <hr>
+        <p>Please enter a Master Bill of Lading.  If the bill is not known, check the box for 'Master BOL Unknown'.</p>
+      </div>
+    </div>
+  </div>
   <div class="row">
     <div class="col-md-4">
       <div class="card">
@@ -369,7 +378,7 @@
                             <chain-field-value model="shipment" field="dictionary.field('shp_booking_number')"></chain-field-value>
                           </div>
                         </li>
-                        <li class="list-group-item" ng-repeat="fld in ['shp_master_bill_of_lading', 'shp_origin_cntry_id']">
+                        <li class="list-group-item" ng-repeat="fld in ['shp_master_bill_of_lading', '*shp_master_bol_unknown', 'shp_house_bill_of_lading', 'shp_origin_cntry_id']">
                           <chain-field-label field="dictionary.field(fld)"></chain-field-label>
                           <div ng-if="shipment.permissions.can_add_remove_shipment_lines">
                             <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>

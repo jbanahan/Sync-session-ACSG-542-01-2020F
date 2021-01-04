@@ -28,8 +28,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
     # There it is used so the shipment docs sent by the forwarder can be matched to the entry and automatically attached by the lumber entry pack change comparator.
     add_element(elem_root, 'PO_NBR', shipment.reference)
     add_element(elem_root, 'BOOKING_NBR', shipment.shipment_lines.first.try(:order_lines).first.try(:order).try(:order_number))
-    if shipment.master_bill_of_lading
-      add_edi_bill_lading_element elem_root, shipment.master_bill_of_lading
+    if shipment.master_bill_of_lading.present? || shipment.house_bill_of_lading.present?
+      add_edi_bill_lading_element elem_root, shipment.master_bill_of_lading, shipment.house_bill_of_lading
     end
 
     importer_address = get_company_address(shipment.importer, "ISF Importer")
@@ -55,6 +55,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
 
   class << self
     private
+
       def format_date d
         d ? d.strftime('%Y-%m-%dT%H:%M:%S') : nil
       end
@@ -68,10 +69,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
         bill_of_lading ? bill_of_lading[0, 4] : nil
       end
 
-      def add_edi_bill_lading_element elem_root, bill_of_lading
+      def add_edi_bill_lading_element elem_root, master_bill_of_lading, house_bill_of_lading
         elem_edi_bill_lading = add_element(elem_root, 'EdiBillLading')
-        add_element(elem_edi_bill_lading, 'MASTER_BILL_NBR', get_bill_of_lading_number(bill_of_lading))
-        add_element(elem_edi_bill_lading, 'MASTER_BILL_SCAC_CD', get_scac_code(bill_of_lading))
+        if master_bill_of_lading.present?
+          add_element(elem_edi_bill_lading, 'MASTER_BILL_NBR', get_bill_of_lading_number(master_bill_of_lading))
+          add_element(elem_edi_bill_lading, 'MASTER_BILL_SCAC_CD', get_scac_code(master_bill_of_lading))
+        end
+        if house_bill_of_lading.present?
+          add_element(elem_edi_bill_lading, 'HOUSE_BILL_NBR', get_bill_of_lading_number(house_bill_of_lading))
+          add_element(elem_edi_bill_lading, 'HOUSE_BILL_SCAC_CD', get_scac_code(house_bill_of_lading))
+        end
         nil
       end
 
@@ -81,18 +88,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
 
       # Returns a dummy hard-coded address used for both importer and consignee.
       def get_company_address company, address_type
+        addr = nil
         if company
-          company.addresses.where(address_type: address_type).first
-        else
-          nil
+          addr = company.addresses.where(address_type: address_type).first
         end
+        addr
       end
 
       def add_party_edi_entity_element elem_root, party_type, addr, entity_id: nil, entity_id_type_cd: "EI"
         if addr
           elem_party_info = add_element(elem_root, 'EdiEntity')
           add_element(elem_party_info, 'ENTITY_TYPE_CD', party_type)
-          if !entity_id.blank?
+          if entity_id.present?
             add_element(elem_party_info, 'ENTITY_ID', entity_id)
             add_element(elem_party_info, 'ENTITY_ID_TYPE_CD', entity_id_type_cd)
           end
@@ -120,4 +127,4 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
       end
   end
 
-end;end;end;end
+end; end; end; end

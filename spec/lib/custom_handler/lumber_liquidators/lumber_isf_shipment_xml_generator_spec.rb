@@ -15,57 +15,61 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
     end
 
     let :vendor do
-      Company.new(system_code:'VCode', name:'VName')
+      Company.new(system_code: 'VCode', name: 'VName')
     end
 
     let :importer do
       c = Company.create!(system_code: "Importer", name: "Importer")
-      c.addresses.create! address_type: "ISF Importer", system_code:'IMCode', name:'IMName', line_1:'IMA1', line_2:'IMA2', line_3:'IMA3', city:'IMC', state:'IMS', postal_code:'IMP', country:usa
-      c.addresses.create! address_type: "ISF Consignee", system_code:'COCode', name:'COName', line_1:'COA1', line_2:'COA2', line_3:'COA3', city:'COC', state:'COS', postal_code:'COP', country:usa
+      c.addresses.create! address_type: "ISF Importer", system_code: 'IMCode', name: 'IMName',
+                          line_1: 'IMA1', line_2: 'IMA2', line_3: 'IMA3', city: 'IMC', state: 'IMS',
+                          postal_code: 'IMP', country: usa
+      c.addresses.create! address_type: "ISF Consignee", system_code: 'COCode', name: 'COName',
+                          line_1: 'COA1', line_2: 'COA2', line_3: 'COA3', city: 'COC', state: 'COS',
+                          postal_code: 'COP', country: usa
       c
     end
 
     let :seller do
-      Address.new(system_code:'SECode', name:'SEName', line_1:'SEA1', line_2:'SEA2', line_3:'SEA3', city:'SEC', state:'SES', postal_code:'SEP', country:usa)
+      Address.new(system_code: 'SECode', name: 'SEName', line_1: 'SEA1', line_2: 'SEA2', line_3: 'SEA3', city: 'SEC', state: 'SES', postal_code: 'SEP', country: usa)
     end
 
     let :buyer do
-      Address.new(system_code:'BYCode', name:'BYName', line_1:'BYA1', line_2:'BYA2', city:'BYC', state:'BYS', postal_code:'BYP', country:usa)
+      Address.new(system_code: 'BYCode', name: 'BYName', line_1: 'BYA1', line_2: 'BYA2', city: 'BYC', state: 'BYS', postal_code: 'BYP', country: usa)
     end
 
     let :ship_to do
-      Address.new(system_code:'STCode', name:'STName', line_1:'STA1', line_2:'STA2', line_3:'STA3', city:'STC', state:'STS', postal_code:'STP', country:usa)
+      Address.new(system_code: 'STCode', name: 'STName', line_1: 'STA1', line_2: 'STA2', line_3: 'STA3', city: 'STC', state: 'STS', postal_code: 'STP', country: usa)
     end
 
     let :consolidator do
-      Address.new(system_code:'CSCode', name:'CSName', line_1:'CSA1', city:'CSC', state:'CSS', postal_code:'CSP', country:china)
+      Address.new(system_code: 'CSCode', name: 'CSName', line_1: 'CSA1', city: 'CSC', state: 'CSS', postal_code: 'CSP', country: china)
     end
 
     let :container_stuffing do
-      Address.new(system_code:'LGCode', name:'LGName', line_1:'LGA1', line_2:'LGA2', city:'LGC', state:'LGS', postal_code:'LGP', country:china)
+      Address.new(system_code: 'LGCode', name: 'LGName', line_1: 'LGA1', line_2: 'LGA2', city: 'LGC', state: 'LGS', postal_code: 'LGP', country: china)
     end
 
     let :ship_from do
-      Address.new(system_code:'SFCode', name:'SFName', line_1:'SFA', city:'SFC', state:'SFS', postal_code:'SFP', country:china)
+      Address.new(system_code: 'SFCode', name: 'SFName', line_1: 'SFA', city: 'SFC', state: 'SFS', postal_code: 'SFP', country: china)
     end
 
     let :product1 do
-      Product.new(unique_identifier:'0000000PROD1', name:'PNAME1')
+      Product.new(unique_identifier: '0000000PROD1', name: 'PNAME1')
     end
 
     let :product2 do
-      Product.new(unique_identifier:'PROD2', name:'PNAME2')
+      Product.new(unique_identifier: 'PROD2', name: 'PNAME2')
     end
 
     let :order1 do
       o = Order.new(
-        order_number:'ORDNUM1',
-        vendor:vendor,
-        importer:vendor
+        order_number: 'ORDNUM1',
+        vendor: vendor,
+        importer: vendor
       )
       ol = OrderLine.new(
-        line_number:1,
-        product:product1
+        line_number: 1,
+        product: product1
       )
       o.order_lines << ol
 
@@ -75,13 +79,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
 
     let :order2 do
       o = Order.new(
-        order_number:'ORDNUM2',
-        vendor:vendor,
-        importer:vendor
+        order_number: 'ORDNUM2',
+        vendor: vendor,
+        importer: vendor
       )
       ol = OrderLine.new(
-        line_number:1,
-        product:product2
+        line_number: 1,
+        product: product2
       )
       o.order_lines << ol
 
@@ -91,18 +95,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
 
     let :shipment do
       s = Shipment.new(
-        reference:'SHPREF',
-        master_bill_of_lading:'ABCD2222222',
-        est_departure_date:ActiveSupport::TimeZone['UTC'].parse('2016-08-31 09:10:11.345'),
-        booking_number:'58363688',
+        reference: 'SHPREF',
+        master_bill_of_lading: 'ABCD2222222',
+        house_bill_of_lading: 'EFGH3333333',
+        est_departure_date: ActiveSupport::TimeZone['UTC'].parse('2016-08-31 09:10:11.345'),
+        booking_number: '58363688',
         vessel: "vessel",
         voyage: "voyage",
-        seller_address:seller,
-        buyer_address:buyer,
-        ship_to_address:ship_to,
-        consolidator_address:consolidator,
-        container_stuffing_address:container_stuffing,
-        ship_from:ship_from,
+        seller_address: seller,
+        buyer_address: buyer,
+        ship_to_address: ship_to,
+        consolidator_address: consolidator,
+        container_stuffing_address: container_stuffing,
+        ship_from: ship_from,
         country_origin: china,
         consignee: importer,
         importer: importer
@@ -116,9 +121,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
       s.shipment_lines << line_1
 
       line_2 = ShipmentLine.new(
-          line_number: 2,
-          linked_order_line_id: order2.order_lines.first.id,
-          product: product2
+        line_number: 2,
+        linked_order_line_id: order2.order_lines.first.id,
+        product: product2
       )
       s.shipment_lines << line_2
 
@@ -156,9 +161,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
       expect(root.text('BOOKING_NBR')).to eq('ORDNUM1')
 
       elem_edi_bill_lading = root.elements['EdiBillLading']
-      expect(elem_edi_bill_lading).to_not be_nil
+      expect(elem_edi_bill_lading).not_to be_nil
       expect(elem_edi_bill_lading.text('MASTER_BILL_NBR')).to eq('2222222')
       expect(elem_edi_bill_lading.text('MASTER_BILL_SCAC_CD')).to eq('ABCD')
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_NBR')).to eq('3333333')
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_SCAC_CD')).to eq('EFGH')
 
       elem_edi_entity_arr = root.elements.to_a('EdiEntity')
       expect(elem_edi_entity_arr.size).to eq(8)
@@ -271,7 +278,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
     end
 
     it "handles missing address content, est load date, master bill" do
-      shipment.update_attributes!(master_bill_of_lading:nil, est_load_date:nil, seller_address:nil, buyer_address:nil, ship_to_address:nil, consolidator_address:nil, container_stuffing_address:nil, ship_from:nil, importer:nil, consignee:nil)
+      shipment.update!(master_bill_of_lading: nil, house_bill_of_lading: nil, est_load_date: nil,
+                       seller_address: nil, buyer_address: nil, ship_to_address: nil,
+                       consolidator_address: nil, container_stuffing_address: nil, ship_from: nil,
+                       importer: nil, consignee: nil)
 
       xml = described_class.generate_xml(shipment)
       root = xml.root
@@ -283,8 +293,34 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
       expect(elem_edi_entity_arr.size).to eq(0)
     end
 
+    it "still generates EdiBillLading when house bill is present but master bill is absent" do
+      shipment.update!(master_bill_of_lading: nil)
+
+      xml = described_class.generate_xml(shipment)
+      root = xml.root
+      elem_edi_bill_lading = root.elements['EdiBillLading']
+      expect(elem_edi_bill_lading).not_to be_nil
+      expect(elem_edi_bill_lading.text('MASTER_BILL_NBR')).to be_nil
+      expect(elem_edi_bill_lading.text('MASTER_BILL_SCAC_CD')).to be_nil
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_NBR')).to eq('3333333')
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_SCAC_CD')).to eq('EFGH')
+    end
+
+    it "still generates EdiBillLading when master bill is present but house bill is absent" do
+      shipment.update!(house_bill_of_lading: nil)
+
+      xml = described_class.generate_xml(shipment)
+      root = xml.root
+      elem_edi_bill_lading = root.elements['EdiBillLading']
+      expect(elem_edi_bill_lading).not_to be_nil
+      expect(elem_edi_bill_lading.text('MASTER_BILL_NBR')).to eq('2222222')
+      expect(elem_edi_bill_lading.text('MASTER_BILL_SCAC_CD')).to eq('ABCD')
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_NBR')).to be_nil
+      expect(elem_edi_bill_lading.text('HOUSE_BILL_SCAC_CD')).to be_nil
+    end
+
     it "handles missing order lines, countries" do
-      seller.update_attributes!(country:nil)
+      seller.update!(country: nil)
 
       shipment.shipment_lines.each do |shipment_line|
         shipment_line.order_lines.delete_all
@@ -292,7 +328,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
 
       xml = described_class.generate_xml(shipment)
       root = xml.root
-      elem_shipping_order = root.elements['ShippingOrder']
 
       elem_edi_line_arr = root.elements.to_a('EdiLine')
       expect(elem_edi_line_arr.size).to eq(0)
@@ -318,14 +353,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
     end
 
     it "handles short master bill" do
-      shipment.update_attributes!(master_bill_of_lading:'X')
+      shipment.update!(master_bill_of_lading: 'X')
 
       xml = described_class.generate_xml(shipment)
       root = xml.root
       expect(root.text('SCAC_CD')).to eq('X')
 
       elem_edi_bill_lading = root.elements['EdiBillLading']
-      expect(elem_edi_bill_lading).to_not be_nil
+      expect(elem_edi_bill_lading).not_to be_nil
       expect(elem_edi_bill_lading.text('MASTER_BILL_NBR')).to be_nil
       expect(elem_edi_bill_lading.text('MASTER_BILL_SCAC_CD')).to eq('X')
     end
