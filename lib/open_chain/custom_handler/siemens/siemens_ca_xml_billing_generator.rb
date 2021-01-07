@@ -37,6 +37,7 @@ module OpenChain; module CustomHandler; module Siemens
            .where(Entry.where_clause_for_need_sync(updated_at_column: :last_exported_from_source))
            .where("entry_type <> 'F'")
            .where("file_logged_date > ?", start_date)
+           .where("across_sent_date IS NOT NULL OR k84_receive_date IS NOT NULL")
            .order("entries.file_logged_date ASC")
     end
 
@@ -132,6 +133,7 @@ module OpenChain; module CustomHandler; module Siemens
       add_element elem_line, "K84AcctDate", format_date(entry.cadex_accept_date)
       add_element elem_line, "K84DueDate", format_date(entry.k84_due_date)
       add_element elem_line, "CargoControlNumber", entry.cargo_control_number
+      add_element elem_line, "CAEVD01", format_date(entry.across_sent_date)
       make_pga_line_elements(elem_line, inv_line) if inv_line.canadian_pga_lines.present?
 
       elem_line

@@ -18,8 +18,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
   let(:date4) { DateTime.new(2020, 3, 18, 9, 30)}
   let!(:sys_date) { SystemDate.create! date_type: "OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator", start_date: Date.new(2020, 1, 5)}
 
-  let(:ent1) { Factory(:entry, entry_number: "11912345678901", importer: co1, file_logged_date: now, entry_type: "A", importer_tax_id: "807150586RM0001") }
-  let(:ent2) { Factory(:entry, importer: co2, file_logged_date: now - 1.day, entry_type: "A", importer_tax_id: "807150586RM0002") }
+  let(:ent1) do
+    Factory(:entry, entry_number: "11912345678901", importer: co1, file_logged_date: now, entry_type: "A", importer_tax_id: "807150586RM0001", across_sent_date: date3)
+  end
+
+  let(:ent2) { Factory(:entry, importer: co2, file_logged_date: now - 1.day, entry_type: "A", importer_tax_id: "807150586RM0002", across_sent_date: date3) }
 
   describe "run_schedulable" do
     before { ent1; ent2 }
@@ -77,7 +80,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
                   entry_type: "ent type", entry_port_code: "ent port code", ult_consignee_name: "ult consignee name", release_date: date1,
                   entered_value: 25.50, us_exit_port_code: "exit port code", lading_port_code: "lading port code", total_duty: 36.50, customer_name: "cust name",
                   customer_number: "cust num", direct_shipment_date: date2, carrier_code: "carrier code", carrier_name: "carrier name", cargo_control_number: "cargo control",
-                  house_bills_of_lading: "ent_hbol1\n ent_hbol2")
+                  house_bills_of_lading: "ent_hbol1\n ent_hbol2", across_sent_date: date3)
       ci = Factory(:commercial_invoice, entry: ent1, currency: "currency", invoice_number: "inv num", master_bills_of_lading: "mbol1\n mbol2",
                                         house_bills_of_lading: "inv_hbol1\n inv_hbol2", mfid: "mid", net_weight: 5.25, exchange_rate: 1.25)
       cil = Factory(:commercial_invoice_line, commercial_invoice: ci, vendor_name: "vend name", po_number: "po num", line_number: 1, customs_line_number: 2,
@@ -207,6 +210,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
       expect(elem_line_1.text("K84AcctDate")).to eq "2020-03-15 09:30:00"
       expect(elem_line_1.text("K84DueDate")).to eq "2020-03-25 00:00:00" # set by Entry callback
       expect(elem_line_1.text("CargoControlNumber")).to eq "cargo control"
+      expect(elem_line_1.text("CAEVD01")).to eq "2020-03-17 09:30:00"
 
       # PGA lines
       elem_pga_agencies = REXML::XPath.match elem_dec, "DeclarationLine/CAPGAHeader/CAPGAAgency"
@@ -386,6 +390,14 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaXmlBillingGenerator do
     it "excludes entries before specified file_logged_date" do
       ent1.update! file_logged_date: Date.new(2020, 1, 4)
       expect(subject.entries).to eq [ent2]
+    end
+
+    it "excludes entries without either Across Sent Date or K84 Receive Date" do
+      ent1.update! across_sent_date: nil
+      expect(subject.entries).to eq [ent2]
+
+      ent1.update! k84_receive_date: date3
+      expect(subject.entries).to eq [ent2, ent1]
     end
   end
 
