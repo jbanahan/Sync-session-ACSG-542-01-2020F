@@ -624,7 +624,7 @@
       errors: "=",
       notices: "="
     }
-    templateUrl: '<%=asset_path("chain_messages.html")%>'
+    templateUrl: "html/chain_messages.html"
     }
 ]
 @components.directive 'chainDatePicker', [ ->
@@ -687,7 +687,7 @@
       modelFields: "=modelFields"
     }
 
-    templateUrl: '<%=asset_path("chain_search_criteria.html")%>'
+    templateUrl: "html/chain_search_criteria.html"
 
     controller: ['$scope', ($scope) ->
       $scope.operators = chainSearchOperators.ops
@@ -729,7 +729,7 @@
       crit: "=chainSearchCriterion"
       modelFields: "=modelFields"
     }
-    templateUrl: '<%=asset_path("chain_search_criterion.html")%>'
+    templateUrl: "html/chain_search_criterion.html"
     controller: ['$scope',($scope) ->
       $scope.operators = chainSearchOperators.ops
 
@@ -1035,7 +1035,7 @@
       loading: "=?"
     }
     transclude: true
-    templateUrl: '<%=asset_path("search_result.html")%>'
+    templateUrl: "html/search_result.html"
     controller: ['$scope',($scope) ->
 
       $scope.loadedSearchId = null
