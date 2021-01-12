@@ -42,7 +42,7 @@ import 'bootstrap';
 import './chain';
 import './chain_bootstrap';
 import './components';
-import './apps_every_page/chain_all_pages';
+import './every_page/chain_all_pages';
 import './every_page/nav_panel';
 import './every_page/notification_center';
 import './setup_data/setup_data_svc';

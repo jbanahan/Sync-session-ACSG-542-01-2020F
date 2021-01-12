@@ -1,3 +1,4 @@
+@import '../stylesheets/login/app/app'
 $(document).ready () ->
     appendNewsArticle = (article) ->
       publishedOn = moment(article.publishOn).format('LL')
