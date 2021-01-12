@@ -15,6 +15,7 @@ FileUtils.chdir APP_ROOT do
   puts '== Installing dependencies =='
   system! 'gem install bundler -v 1.17.3 --conservative'
   system('bundle check') || system!('bundle install')
+  system!('yarn install')
 
   puts '== Checking for config files =='
   if File.exist?('../config/secrets.yml') then

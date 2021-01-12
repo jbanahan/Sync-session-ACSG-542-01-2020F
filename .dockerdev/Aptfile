@@ -1,1 +1,5 @@
 nano
+build-essential
+net-tools
+mysql-client
+libpq-dev
