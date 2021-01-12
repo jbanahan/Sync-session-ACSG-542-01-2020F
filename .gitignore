@@ -20,6 +20,7 @@ config/*.yml
 config/*.xml
 !config/newrelic.yml
 !config/brillo.yml
+!config/webpacker.yml
 .byebug_history
 .coverity
 .env*
