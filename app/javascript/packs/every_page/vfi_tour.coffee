@@ -1,5 +1,4 @@
-root = exports ? this
-root.VfiTour = {
+window.VfiTour = {
   showTour: (callback) ->
 
     openUserMenu= () ->

@@ -1,6 +1,4 @@
-root = exports ? this
-
-root.ChainAllPages =
+window.ChainAllPages =
 
   # This method can be used to easily make an ajax request to a controller that generates a partial
   # and then render that partial back into the page.

@@ -1,5 +1,4 @@
-root = exports ? this
-root.ChainNotificationCenter = {
+window.ChainNotificationCenter = {
   getMessageCount : (url) ->
     $.getJSON @messageCountUrl, (data) ->
       if data > 0

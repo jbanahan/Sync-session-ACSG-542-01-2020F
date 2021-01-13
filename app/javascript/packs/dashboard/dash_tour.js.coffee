@@ -1,5 +1,4 @@
-root = exports ? this
-root.DashTour = {
+window.DashTour = {
   showTour: () ->
     tour = new Tour(
       storage: false

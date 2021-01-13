@@ -1,5 +1,4 @@
-root = exports ? this
-root.ChainNavPanel = {
+window.ChainNavPanel = {
   write : (userPromise,notificationCenterCallback,portalMode,userPortalMode) ->
     registerHotKeys = ->
       $(document).on 'keydown', (evt) ->
