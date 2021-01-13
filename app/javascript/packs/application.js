@@ -22,11 +22,7 @@
 // To reference this file, add <%= javascript_pack_tag 'application' %> to the appropriate
 // layout file, like app/views/layouts/application.html.erb
 
-import moment from 'moment';
-window.moment = moment
-//import 'moment';
-//import moment from 'moment'
-//import 'moment/min/locales'
+import 'moment';
 
 import 'jquery';
 import {} from 'jquery-ujs'
@@ -38,15 +34,18 @@ import 'angular-route';
 import 'angular-sanitize';
 import 'popper.js';
 import 'bootstrap';
+import 'bootstrap-tour';
 
 import './chain';
 import './chain_bootstrap';
 import './components';
-import './every_page/chain_all_pages';
-import './every_page/nav_panel';
-import './every_page/notification_center';
+require ('./every_page/chain_all_pages');
+require ('./every_page/nav_panel');
+require ('./every_page/notification_center');
+import './every_page/vfi_tour';
 import './setup_data/setup_data_svc';
 
+import 'font-awesome/scss/font-awesome.scss';
 import "../stylesheets/application";
 
 const images = require.context('../images', true);
