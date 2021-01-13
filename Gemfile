@@ -118,8 +118,8 @@ gem 'premailer-rails'
 
 gem 'dotenv-rails', '2.7.6'
 
-# Update whenever rails is updated
-gem 'webpacker', '~> 3.5'
+# Update to 5.x when rails is updated to 5.2
+gem 'webpacker', '4.3.0'
 
 group :development, :test do
   gem 'byebug'
