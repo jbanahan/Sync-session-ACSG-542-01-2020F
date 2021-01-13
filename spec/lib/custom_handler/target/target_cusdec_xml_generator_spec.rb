@@ -1086,6 +1086,72 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       expect(elem_tariff_duty_3.text("rateAmount")).to eq "75.86"
     end
 
+    it "handles DPCI shared between lines" do
+      entry = Factory(:entry, entry_number: "31679758714")
+      inv = entry.commercial_invoices.build(invoice_number: "E1I0954293")
+      Factory(:product, importer_id: target.id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
+      inv_line_1 = inv.commercial_invoice_lines.build(customs_line_number: 1, part_number: "021004200-556677",
+                                                      unit_price: BigDecimal("99.99"), prorated_mpf: BigDecimal("17.11"),
+                                                      quantity: BigDecimal("10"), freight_amount: BigDecimal("20"))
+      inv_line_1.commercial_invoice_tariffs.build(hts_code: "9506910030", gross_weight: 13, duty_amount: BigDecimal("19.13"))
+      Factory(:product, importer_id: target.id, unique_identifier: "021004200-556678", name: "Ava & Viv White 15W Shorts")
+      inv_line_2 = inv.commercial_invoice_lines.build(customs_line_number: 2, part_number: "021004200-556678",
+                                                      unit_price: BigDecimal("88.88"), prorated_mpf: BigDecimal("16.12"),
+                                                      quantity: BigDecimal("9"), freight_amount: BigDecimal("19"))
+      inv_line_2.commercial_invoice_tariffs.build(hts_code: "9506910031", gross_weight: 12, duty_amount: BigDecimal("18.12"))
+      inv_line_3 = inv.commercial_invoice_lines.build(customs_line_number: 3, part_number: "021004200-556679",
+                                                      unit_price: nil, prorated_mpf: nil, quantity: BigDecimal("8"),
+                                                      freight_amount: BigDecimal("18"))
+      inv_line_3.commercial_invoice_tariffs.build(hts_code: "9506910032", gross_weight: 11, duty_amount: nil)
+      # This line has a different DPCI from the others.
+      Factory(:product, importer_id: target.id, unique_identifier: "021004201-556677", name: "Via & Avi Red 14W Jorts")
+      inv_line_4 = inv.commercial_invoice_lines.build(customs_line_number: 4, part_number: "021004201-556677",
+                                                      unit_price: BigDecimal("88.88"), prorated_mpf: BigDecimal("15.11"),
+                                                      quantity: BigDecimal("9"), freight_amount: BigDecimal("19"))
+      inv_line_4.commercial_invoice_tariffs.build(hts_code: "9506910031", gross_weight: 12, duty_amount: BigDecimal("17.11"))
+
+      doc = subject.generate_xml entry
+
+      elem_root = doc.root
+      elem_inv = elem_root.elements.to_a("invoiceRecord")[0]
+      invoice_line_elements = elem_inv.elements.to_a("itemRecord")
+      expect(invoice_line_elements.size).to eq 2
+
+      elem_item_1 = invoice_line_elements[0]
+      # These fields should be pulled from the first line only, with the values from subsequent lines ignored.
+      expect(elem_item_1.text("departmentClassItem")).to eq "021004200"
+      expect(elem_item_1.text("itemQuantity")).to eq "10"
+      expect(elem_item_1.text("dpciItemDescription")).to eq "Ava & Viv White 14W Shorts"
+      expect(elem_item_1.text("itemFreightAmount")).to eq "20.00"
+      expect(elem_item_1.text("itemWeight")).to eq "13"
+      # These two should be summed values from all the lines sharing this DPCI.
+      expect(elem_item_1.text("itemCostAmount")).to eq "188.87"
+      expect(elem_item_1.text("itemDutyAmount")).to eq "70.48"
+
+      invoice_item_1_tariffs = elem_item_1.elements.to_a("itemTariffRecord")
+      expect(invoice_item_1_tariffs.size).to eq 3
+      elem_tariff_1 = invoice_item_1_tariffs[0]
+      expect(elem_tariff_1.text("tariffId")).to eq "9506.91.0030"
+      elem_tariff_2 = invoice_item_1_tariffs[1]
+      expect(elem_tariff_2.text("tariffId")).to eq "9506.91.0031"
+      elem_tariff_3 = invoice_item_1_tariffs[2]
+      expect(elem_tariff_3.text("tariffId")).to eq "9506.91.0032"
+
+      elem_item_2 = invoice_line_elements[1]
+      expect(elem_item_2.text("departmentClassItem")).to eq "021004201"
+      expect(elem_item_2.text("itemCostAmount")).to eq "88.88"
+      expect(elem_item_2.text("itemDutyAmount")).to eq "32.22"
+      expect(elem_item_2.text("itemQuantity")).to eq "9"
+      expect(elem_item_2.text("dpciItemDescription")).to eq "Via & Avi Red 14W Jorts"
+      expect(elem_item_2.text("itemFreightAmount")).to eq "19.00"
+      expect(elem_item_2.text("itemWeight")).to eq "12"
+
+      invoice_item_2_tariffs = elem_item_2.elements.to_a("itemTariffRecord")
+      expect(invoice_item_2_tariffs.size).to eq 1
+      elem_tariff_2 = invoice_item_2_tariffs[0]
+      expect(elem_tariff_2.text("tariffId")).to eq "9506.91.0031"
+    end
+
     describe "recon variants" do
       it "returns recon indicator of 007 when VALUE, CLASS and 9802 are part of recon flags" do
         entry = Factory(:entry, entry_number: "31679758714", recon_flags: "CLASS value 9802 SOMETHING")

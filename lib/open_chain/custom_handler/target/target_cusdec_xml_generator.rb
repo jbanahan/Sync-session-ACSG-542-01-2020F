@@ -83,34 +83,40 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       uniq_7501_tariff_hash = {}
       elem_invoice = make_invoice_element elem_root, inv, entry
       make_bol_element elem_invoice, entry, inv
-      inv.commercial_invoice_lines.each do |inv_line|
-        elem_item = make_item_element elem_invoice, inv_line
+      # Group together invoice lines by DPCI.  Each DPCI is to become its own item element rather than
+      # each invoice line element (the original way this worked).
+      lines_by_dpci = condense_lines_by_dpci inv
+      lines_by_dpci.each_key do |dpci|
+        inv_lines = lines_by_dpci[dpci]
+        elem_item = make_item_element elem_invoice, inv_lines, dpci
         counter.reset :pg01_line_number
         primary_found = false
-        inv_line.commercial_invoice_tariffs.each do |tariff|
-          # The primary tariff is the first non-supplemental tariff encountered under the commercial invoice line.
-          # Supplemental chapter 99 tariffs are typically sorted first, before the primary tariff, so we can't
-          # assume position alone is enough to guarantee the primary.  It's probably safe to assume that XVV
-          # tariffs will always have the "X" line sorted first, but this code should handle some random case
-          # where that does not happen.  The primary tariff is the only one that should include duty elements
-          # beneath it.
-          primary_tariff = !primary_found && !supplemental_tariff?(tariff.hts_code) && tariff.spi_secondary != "V"
-          if primary_tariff
-            primary_found = true
-          end
+        inv_lines.each do |inv_line|
+          inv_line.commercial_invoice_tariffs.each do |tariff|
+            # The primary tariff is the first non-supplemental tariff encountered under the commercial invoice line.
+            # Supplemental chapter 99 tariffs are typically sorted first, before the primary tariff, so we can't
+            # assume position alone is enough to guarantee the primary.  It's probably safe to assume that XVV
+            # tariffs will always have the "X" line sorted first, but this code should handle some random case
+            # where that does not happen.  The primary tariff is the only one that should include duty elements
+            # beneath it.
+            primary_tariff = !primary_found && !supplemental_tariff?(tariff.hts_code) && tariff.spi_secondary != "V"
+            if primary_tariff
+              primary_found = true
+            end
 
-          # Every tariff results in an item tariff element.
-          make_item_tariff_element elem_item, tariff, inv_line, counter, primary_tariff
+            # Every tariff results in an item tariff element.
+            make_item_tariff_element elem_item, tariff, inv_line, counter, primary_tariff
 
-          # Tariffs are lumped together by HTS code (and customs line number) for later inclusion in the tariff
-          # header summary section of the XML.
-          key = [inv_line.customs_line_number, tariff.hts_code]
-          tariff_grouping = uniq_7501_tariff_hash[key]
-          if tariff_grouping.nil?
-            tariff_grouping = CusdecTariffGrouping.new(primary_tariff)
-            uniq_7501_tariff_hash[key] = tariff_grouping
+            # Tariffs are lumped together by HTS code (and customs line number) for later inclusion in the tariff
+            # header summary section of the XML.
+            key = [inv_line.customs_line_number, tariff.hts_code]
+            tariff_grouping = uniq_7501_tariff_hash[key]
+            if tariff_grouping.nil?
+              tariff_grouping = CusdecTariffGrouping.new(primary_tariff)
+              uniq_7501_tariff_hash[key] = tariff_grouping
+            end
+            tariff_grouping.tariffs << tariff
           end
-          tariff_grouping.tariffs << tariff
         end
       end
 
@@ -331,32 +337,43 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       elem_bol
     end
 
-    def make_item_element elem_invoice, inv_line
+    def condense_lines_by_dpci inv
+      lines_by_dpci = Hash.new { |h, k| h[k] = [] }
+      inv.commercial_invoice_lines.each do |inv_line|
+        dpci = (inv_line.part_number ? split_part_number(inv_line.part_number)[0] : nil)
+        lines_by_dpci[dpci] << inv_line
+      end
+      lines_by_dpci
+    end
+
+    def make_item_element elem_invoice, inv_lines, dpci
+      inv_line_prime = inv_lines[0]
       elem_item = add_element(elem_invoice, "itemRecord")
-      add_element elem_item, "departmentClassItem", (inv_line.part_number ? split_part_number(inv_line.part_number)[0] : nil)
-      add_element elem_item, "itemCostAmount", format_money(inv_line.unit_price)
+      add_element elem_item, "departmentClassItem", dpci
+      add_element elem_item, "itemCostAmount", format_money(inv_lines.map(&:unit_price).compact.sum)
       add_element elem_item, "itemCostUom", "PE"
       # Intentionally blank.
       add_element elem_item, "itemRoyaltiesAmount", nil
       # Intentionally blank.
       add_element elem_item, "itemBuyingCommissionAmount", nil
-      add_element elem_item, "itemDutyAmount", format_money(inv_line.duty_plus_fees_amount)
+      add_element elem_item, "itemDutyAmount", format_money(inv_lines.map(&:duty_plus_fees_amount).compact.sum)
       # Intentionally blank.
       add_element elem_item, "itemForeighTradeZoneCode", nil
       # Intentionally blank.
       add_element elem_item, "itemForeignTradeZoneDate", nil
-      add_element elem_item, "itemQuantity", format_decimal(inv_line.quantity)
-      add_element elem_item, "itemQuantityUom", inv_line.unit_of_measure
-      add_element elem_item, "itemBindRuleId", (inv_line.ruling_type.to_s == 'R' ? inv_line.ruling_number : nil)
+      add_element elem_item, "itemQuantity", format_decimal(inv_line_prime.quantity)
+      add_element elem_item, "itemQuantityUom", inv_line_prime.unit_of_measure
+      add_element elem_item, "itemBindRuleId", (inv_line_prime.ruling_type.to_s == 'R' ? inv_line_prime.ruling_number : nil)
       # Mapping document and samples indicate that the botched camel-casing of this element name is, if
       # not intentional, at least expected.  As we don't really have an item-level carton quantity, we
       # are sending a zero value for now.
       add_element elem_item, "totalItemcartonQuantity", "0"
-      add_element elem_item, "dpciItemDescription", get_product_name(inv_line.part_number)
-      add_element elem_item, "itemFreightAmount", format_money(inv_line.freight_amount)
+      add_element elem_item, "dpciItemDescription", get_product_name(inv_line_prime.part_number)
+      # Per Mindy, 12/2020, this does not need to be summed, unlike itemCostAmount and itemDutyAmount.
+      add_element elem_item, "itemFreightAmount", format_money(inv_line_prime.freight_amount)
       # Our gross weight field is currently an integer for some reason.  We'll handle it as a decimal
       # here just in case that's ever corrected.
-      add_element elem_item, "itemWeight", format_decimal(inv_line.gross_weight)
+      add_element elem_item, "itemWeight", format_decimal(inv_line_prime.gross_weight)
       add_element elem_item, "itemUomCode", "K"
       elem_item
     end
