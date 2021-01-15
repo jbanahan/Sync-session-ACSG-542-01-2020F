@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
   end
 
   describe "run_if_able" do
-    it "calls the actual run method when report hasn't already run today and all entry initiations received" do
+    it "calls the actual run method when entry initiations received since the last run" do
       SystemDate.create!(date_type: described_class::LAST_REPORT_RUN, start_date: make_eastern_date(2019, 9, 29))
       InboundFile.create!(parser_name: "OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser",
                           process_start_date: (make_eastern_date(2019, 9, 30) - 32.minutes),
@@ -41,7 +41,13 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
     end
 
-    it "doesn't do anything if no entry initiations received today" do
+    it "doesn't do anything if no entry initiations received since the last run" do
+      # This file is older than the last report run date.  Its presence should be ignored: only files
+      # from after the last report run date matter.
+      InboundFile.create!(parser_name: "OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser",
+                          process_start_date: make_eastern_date(2019, 9, 28),
+                          process_end_date: make_eastern_date(2019, 9, 28))
+
       SystemDate.create!(date_type: described_class::LAST_REPORT_RUN, start_date: make_eastern_date(2019, 9, 29))
 
       expect(subject).not_to receive(:run_entry_consolidation_report)
@@ -51,16 +57,17 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
     end
 
-    it "doesn't do anything if the report already ran today" do
-      # Two hours ago, same day.
+    it "runs again if the report already ran today" do
+      # Two hours ago, same day.  This won't matter at all: a prior restriction limiting the report to
+      # one run per day was removed.
       SystemDate.create!(date_type: described_class::LAST_REPORT_RUN, start_date: (make_eastern_date(2019, 9, 30) - 2.hours))
 
-      # This being older than 30 minutes isn't enough to let the report run.
+      # This file is older than 30 minutes.  Good to go.
       InboundFile.create!(parser_name: "OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser",
                           process_start_date: (make_eastern_date(2019, 9, 30) - 32.minutes),
                           process_end_date: (make_eastern_date(2019, 9, 30) - 31.minutes))
 
-      expect(subject).not_to receive(:run_entry_consolidation_report)
+      expect(subject).to receive(:run_entry_consolidation_report)
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         subject.run_if_able
@@ -218,7 +225,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       expect(mail.subject).to eq "Target Entry Consolidation Report"
       expect(mail.body).to include "Attached is the Entry Consolidation Report."
 
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       expect(att).not_to be_nil
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
       expect(reader.length).to eq 2
@@ -287,7 +294,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -330,7 +337,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -370,7 +377,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -405,7 +412,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -436,7 +443,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -474,7 +481,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       end
 
       mail = ActionMailer::Base.deliveries.first
-      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30.xlsx"]
+      att = mail.attachments["Target_Entry_Consolidation_Report_2019-09-30-120503.xlsx"]
       reader = XlsxTestReader.new(StringIO.new(att.read)).raw_workbook_data
 
       sheet = reader["Possible Consolidations"]
@@ -526,7 +533,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
   end
 
   def make_utc_date year, month, day
-    ActiveSupport::TimeZone["UTC"].parse("#{year}-#{month}-#{day} 16:00")
+    ActiveSupport::TimeZone["UTC"].parse("#{year}-#{month}-#{day} 16:05:03")
   end
 
   def make_eastern_date year, month, day

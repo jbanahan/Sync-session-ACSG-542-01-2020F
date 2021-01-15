@@ -20,15 +20,15 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryConsolid
 
   def run_if_able
     now = ActiveSupport::TimeZone[local_time_zone].now
-    # Don't run the report if we've already run it today.
-    last_run = last_run_date
-    if last_run < now.midnight
-      # Ensure that we've received entry initiations today, and that the last initiation finished processing
-      # at least 30 minutes ago.  We typically get all of the files for the day in one burst.
-      max_proc_date = entry_initiation_inbound_files(last_run).maximum(:process_end_date)
-      if max_proc_date && max_proc_date < (now - 30.minutes)
-        run_entry_consolidation_report
-      end
+    # Ensure that we've received entry initiations today, and that the last initiation finished processing
+    # at least 30 minutes ago.  This is set up to allow for a burst of files, which was the original
+    # plan for how Target would be sending this data.  In practice, since go live, we've been getting
+    # only one or two init files per day.  When multiple files were involved, they were spaced out by
+    # more than 30 minutes, which caused problems with the original requirement that only one consolidation
+    # report run per day, forcing the removal of that code.
+    max_proc_date = entry_initiation_inbound_files(last_run_date).maximum(:process_end_date)
+    if max_proc_date && max_proc_date < (now - 30.minutes)
+      run_entry_consolidation_report
     end
   end
 
@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryConsolid
       workbook = generate_report
     end
 
-    file_name_no_suffix = "Target_Entry_Consolidation_Report_#{ActiveSupport::TimeZone[local_time_zone].now.strftime("%Y-%m-%d")}"
+    file_name_no_suffix = "Target_Entry_Consolidation_Report_#{ActiveSupport::TimeZone[local_time_zone].now.strftime("%Y-%m-%d-%H%M%S")}"
     write_builder_to_tempfile workbook, file_name_no_suffix do |temp|
       body_msg = "Attached is the Entry Consolidation Report."
       c = Company.with_customs_management_number("TARGEN").first
