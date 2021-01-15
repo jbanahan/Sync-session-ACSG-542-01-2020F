@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryConsolid
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:shp_first_sale, :tar_fda_flag, :tar_fws_flag, :tar_add_case,
-                                                   :tar_cvd_case, :prod_required_documents, :tar_spi_primary]
+                                                   :tar_cvd_case, :prod_required_documents, :tar_spi_primary, :prod_aphis]
   end
 
   private
@@ -147,10 +147,11 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryConsolid
     end
 
     # Returns false if the product has ties to CITES or FIFRA (defined as having "CITES CERTIFICATE"
-    # or "FIFRA" appear in its Required Documents).
+    # or "FIFRA" appear in its Required Documents), or APHIS (a custom flag).
     def ok_to_consolidate_product? prod
       required_docs = prod.custom_value(cdefs[:prod_required_documents]).to_s.upcase
-      !required_docs.match?(/CITES CERTIFICATE|FIFRA/)
+      !required_docs.match?(/CITES CERTIFICATE|FIFRA/) &&
+        !prod.custom_value(cdefs[:prod_aphis])
     end
 
     # Returns false tariff has ties to FDA, FWS, ADD, CVD or FTA (defined as having a value in the Primary SPI field).

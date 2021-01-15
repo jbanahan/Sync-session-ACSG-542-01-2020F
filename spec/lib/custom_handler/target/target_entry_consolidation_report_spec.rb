@@ -107,6 +107,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       tar_1.find_and_set_custom_value(cdefs[:tar_spi_primary], ' ')
       tar_1.save!
       prod_1.find_and_set_custom_value(cdefs[:prod_required_documents], "NOT CITES")
+      prod_1.find_and_set_custom_value(cdefs[:prod_aphis], false)
       prod_1.save!
       ord_1 = Factory(:order)
       ol_1 = ord_1.order_lines.create! product: prod_1, price_per_unit: BigDecimal("1000")
@@ -153,6 +154,13 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
       prod_cites.find_and_set_custom_value(cdefs[:prod_required_documents], "THING 1 CITES Certificate THING 2")
       prod_cites.save!
       shp_cites.shipment_lines.create! product: prod_cites
+
+      # APHIS shipment.  Ignored.
+      shp_aphis = make_shipment_and_identifier "MBOL-aphis", "Monitor", port_unlading_1
+      prod_aphis = Factory(:product)
+      prod_aphis.find_and_set_custom_value(cdefs[:prod_aphis], true)
+      prod_aphis.save!
+      shp_aphis.shipment_lines.create! product: prod_aphis
 
       # FIFRA shipment.  Ignored.
       shp_fifra = make_shipment_and_identifier "MBOL-fifra", "Monitor", port_unlading_1
@@ -247,19 +255,20 @@ describe OpenChain::CustomHandler::Target::TargetEntryConsolidationReport do
 
       sheet = reader["Excluded"]
       expect(sheet).not_to be_nil
-      expect(sheet.length).to eq 12
+      expect(sheet.length).to eq 13
       expect(sheet[0]).to eq ["BOL", "Vessel", "Port Unlading Code", "Port of Unlading Name", "Container Count", "Total Value"]
       expect(sheet[1]).to eq ["MBOL-air", "Monitor", "1111", "Lilliput", 0, 0]
       expect(sheet[2]).to eq ["MBOL-first-sale", "Monitor", "1111", "Lilliput", 0, 0]
       expect(sheet[3]).to eq ["MBOL-nvocc", "Monitor", "1111", "Lilliput", 0, 0]
       expect(sheet[4]).to eq ["MBOL-cites", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[5]).to eq ["MBOL-fifra", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[6]).to eq ["MBOL-fda", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[7]).to eq ["MBOL-fws", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[8]).to eq ["MBOL-add", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[9]).to eq ["MBOL-cvd", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[10]).to eq ["MBOL-fta", "Monitor", "1111", "Lilliput", 0, 0]
-      expect(sheet[11]).to eq ["MBOL8", "Merrimack", "2222", "Brobdingnag", 0, 0]
+      expect(sheet[5]).to eq ["MBOL-aphis", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[6]).to eq ["MBOL-fifra", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[7]).to eq ["MBOL-fda", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[8]).to eq ["MBOL-fws", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[9]).to eq ["MBOL-add", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[10]).to eq ["MBOL-cvd", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[11]).to eq ["MBOL-fta", "Monitor", "1111", "Lilliput", 0, 0]
+      expect(sheet[12]).to eq ["MBOL8", "Merrimack", "2222", "Brobdingnag", 0, 0]
     end
 
     it "does not split grouped shipments to two groups when total value exceeds old maximum" do
