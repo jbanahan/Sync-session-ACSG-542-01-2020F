@@ -4,50 +4,38 @@ require 'open_chain/zip_builder'
 module OpenChain; class SftpMonthlyArchiver
   include OpenChain::FtpFileSupport
 
-  attr_reader :company
-
   def self.run_schedulable(opts = {})
     self.new(opts).run
   end
 
   def initialize(settings)
-    imp_id_type = importer_id_type(settings)
+    if settings['alliance_customer_number'].blank? && settings['fenix_customer_number'].blank?
+      raise "Alliance or Fenix Customer Number Required"
+    end
 
     raise "FTP Folder Required" if settings['ftp_folder'].blank?
 
-    @company = case imp_id_type
-               when 'alliance_customer_number'
-                 Company.with_customs_management_number(settings[imp_id_type]).first
-               when 'fenix_customer_number'
-                 Company.with_fenix_number(settings[imp_id_type]).first
-               when 'cargowise_customer_number'
-                 Company.with_cargowise_number(settings[imp_id_type]).first
-               when 'system_code'
-                 Company.find_by system_code: settings[imp_id_type]
+    @company = if settings['alliance_customer_number'].present?
+                Company.with_customs_management_number(settings['alliance_customer_number']).first
+               else
+                Company.with_fenix_number(settings['fenix_customer_number']).first
                end
 
-    settings['filename_prefix'] ||= settings[imp_id_type]
     @settings = settings
-  end
-
-  def importer_id_type settings
-    key = (settings.keys & ['system_code', 'alliance_customer_number', 'fenix_customer_number', 'cargowise_customer_number']).first
-    raise "Alliance/Fenix/Cargowise Customer Number or System Code required." unless settings[key]
-    key
   end
 
   def run
     # As these archives are pretty much always going to represent data prior to this month, name this based
     # on the previous month.
     mm_yyyy = (Time.zone.now - 1.month).strftime("%Y-%m")
-    aas = company.attachment_archive_setup
-    raise "No Attachment Archive Setup exists for #{company.name_with_customer_number}." unless aas
+    aas = @company.attachment_archive_setup
+    raise "No Attachment Archive Setup exists for #{@company.kewill_customer_number}." unless aas
 
     counter = 0
     aas.broker_reference_override = @settings['broker_reference_override'] if @settings['broker_reference_override'].present?
 
     while aas.entry_attachments_available?
-      file_name = "#{@settings['filename_prefix']}-#{mm_yyyy}"
+      file_name = "#{@company.kewill_customer_number}-#{mm_yyyy}"
       file_name << " (#{counter + 1})" if counter > 0
       file_name << ".zip"
 
