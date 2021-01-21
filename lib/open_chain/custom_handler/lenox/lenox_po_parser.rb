@@ -24,9 +24,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
 
     order_lines = []
     last_order_number = []
-    data.lines.each do |ln|
+    data.lines.each_with_index do |ln, idx|
       next if ln.blank?
-      ls = parse_line ln
+      ls = parse_line ln, idx
       if ls.order_number != last_order_number
         process_order_lines order_lines, log if order_lines.present?
         order_lines = []
@@ -119,29 +119,36 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     end
   end
 
-  def parse_line line
+  def parse_line line, index
     r = LINE_STRUCT.new
-    r.transaction_type = line[0]
-    r.customer_order_number = line[18, 8]
-    r.order_date = parse_date(line[26, 8])
-    r.line_number = line[1073, 2]
-    r.part_number = line[1150, 25].strip
-    r.part_name = line[1175, 40].strip
-    r.unit_price = parse_currency(line[1215, 15])
-    r.quantity = line[1235, 15].strip
-    r.currency = line[1230, 3]
-    r.line_note = line[34, 70].strip
-    r.buyer_name = line[202, 25].strip
-    r.buyer_email = line[227, 35].strip
-    r.earliest_ship_date = parse_date(line[262, 8])
-    r.destination_code = line[395, 17].strip
-    r.coo = line[2392, 2].strip
-    r.hts = line[2396, 10].strip
-    r.mode = line[1356, 3].strip
-    r.vendor_code = line[1669, 17].strip
-    r.vendor_name = line[1686, 35].strip
-    r.factory_code = line[2021, 10].strip
-    r.line_destination_code = line[2505, 17].strip if line.length > 2505 # this field was added and won't be there for long files
+    begin
+      r.transaction_type = line[0]
+      r.customer_order_number = line[18, 8]
+      r.order_date = parse_date(line[26, 8])
+      r.line_number = line[1073, 2]
+      r.part_number = line[1150, 25].strip
+      r.part_name = line[1175, 40].strip
+      r.unit_price = parse_currency(line[1215, 15])
+      r.quantity = line[1235, 15].strip
+      r.currency = line[1230, 3]
+      r.line_note = line[34, 70].strip
+      r.buyer_name = line[202, 25].strip
+      r.buyer_email = line[227, 35].strip
+      r.earliest_ship_date = parse_date(line[262, 8])
+      r.destination_code = line[395, 17].strip
+      r.coo = line[2392, 2].strip
+      r.hts = line[2396, 10].strip
+      r.mode = line[1356, 3].strip
+      r.vendor_code = line[1669, 17].strip
+      r.vendor_name = line[1686, 35].strip
+      r.factory_code = line[2021, 10].strip
+      r.line_destination_code = line[2505, 17].strip if line.length > 2505 # this field was added and won't be there for long files
+    # An exception is most likely to be caused by an incomplete line producing a nil slice.
+    rescue StandardError => e
+      message = "Row #{index + 1} could not be processed: #{e.message}"
+      raise LoggedParserRejectionError.new, message, e.backtrace
+    end
+
     r
   end
 

@@ -129,6 +129,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2013, 1, 1)
   end
 
+  it "raises a LoggedParserRejectionError if row is incomplete" do
+    short_testdata = testdata[0..-200]
+    expect { described_class.new.process short_testdata, log }.to raise_error do |err|
+      expect(err).to be_a LoggedParserRejectionError
+      expect(err.message).to match(/Row 3 could not be processed/)
+    end
+  end
+
   describe "parse_file" do
     it "creates a PO" do
       # This method is just an integration point that call through to the process method..all we're testing is that
