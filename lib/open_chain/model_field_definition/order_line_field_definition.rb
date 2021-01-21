@@ -13,7 +13,10 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
       [7, :ordln_country_of_origin, :country_of_origin, "Country of Origin", {data_type: :string}],
       [8, :ordln_hts, :hts, "HTS Code", {data_type: :string,
         export_lambda: lambda {|obj| obj.hts.blank? ? '' : obj.hts.hts_format },
-        import_lambda: lambda { |obj, data| obj.hts = (data.blank? ? nil : data.to_s.gsub(".", "")) },
+        import_lambda: lambda do |obj, data|
+          obj.hts = (data.blank? ? nil : data.to_s.gsub(".", ""))
+          obj.hts.present? ? "HTS Code set to #{obj.hts}." : "HTS Code cleared."
+        end,
         search_value_preprocess_lambda: hts_search_value_preprocess_lambda()
       }],
       [9, :ordln_sku, :sku, 'SKU', {data_type: :string}],

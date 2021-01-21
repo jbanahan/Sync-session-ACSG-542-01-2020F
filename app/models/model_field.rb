@@ -413,11 +413,28 @@ class ModelField
       end
 
     end
-    # Force all responses returned from the import lambda to have an error? method.
-    if v && !v.respond_to?(:error?)
-      def v.error?; false; end
+    # Force all responses returned from the import lambda to have an error? method.  Also prevents a
+    # nil value from being returned by this method, which can be problematic.
+    if v.present?
+      unless v.respond_to?(:error?)
+        def v.error?
+          false
+        end
+      end
+    else
+      v = NilProcessImport.new
     end
     v
+  end
+
+  class NilProcessImport < String
+    def initialize
+      super("")
+    end
+
+    def error?
+      false
+    end
   end
 
   # get the unformatted value that can be used for SearchCriterions

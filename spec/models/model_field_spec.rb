@@ -414,6 +414,15 @@ describe ModelField do
       expect(result.error?).to be_falsey
       expect(c.reference).to eq "TESTING"
     end
+
+    it "returns NilProcessImport rather than nil when ModelField's import_lambda returns nil" do
+      mf = ModelField.new(1, :shp_ref, CoreModule::SHIPMENT, :reference, default_label: "MY LABEL", import_lambda: lambda {|_obj, _data| nil })
+      result = mf.process_import "OBJ", "DATA", User.new
+      expect(result).not_to be_nil
+      expect(result).to be_instance_of(ModelField::NilProcessImport)
+      expect(result.error?).to eq false
+      expect(result).to eq ""
+    end
   end
 
   it "should get uid for region" do
