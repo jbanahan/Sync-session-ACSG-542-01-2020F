@@ -146,7 +146,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     # An exception is most likely to be caused by an incomplete line producing a nil slice.
     rescue StandardError => e
       message = "Row #{index + 1} could not be processed: #{e.message}"
-      raise LoggedParserRejectionError.new, message, e.backtrace
+      inbound_file.reject_and_raise(message)
     end
 
     r

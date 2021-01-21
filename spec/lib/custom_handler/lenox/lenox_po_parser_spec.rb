@@ -130,6 +130,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
   end
 
   it "raises a LoggedParserRejectionError if row is incomplete" do
+    expect(described_class).to receive(:inbound_file).and_return log
+
     short_testdata = testdata[0..-200]
     expect { described_class.new.process short_testdata, log }.to raise_error do |err|
       expect(err).to be_a LoggedParserRejectionError
