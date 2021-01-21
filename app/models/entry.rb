@@ -198,6 +198,7 @@
 #  ogd_request_date                                :datetime
 #  on_hold                                         :boolean
 #  one_usg_date                                    :datetime
+#  origin_airport_code                             :string(255)
 #  origin_country_codes                            :string(255)
 #  origin_state_codes                              :string(255)
 #  other_agency_hold_date                          :datetime
@@ -327,6 +328,7 @@ class Entry < ActiveRecord::Base
   belongs_to :us_entry_port, class_name: 'Port', foreign_key: 'entry_port_code', primary_key: 'schedule_d_code' # rubocop:disable Rails/InverseOf
   belongs_to :ca_entry_port, class_name: 'Port', foreign_key: 'entry_port_code', primary_key: 'cbsa_port' # rubocop:disable Rails/InverseOf
   belongs_to :us_exit_port, class_name: 'Port', foreign_key: 'us_exit_port_code', primary_key: 'schedule_d_code' # rubocop:disable Rails/InverseOf
+  belongs_to :origin_airport, class_name: 'Port', foreign_key: 'origin_airport_code', primary_key: 'iata_code' # rubocop:disable Rails/InverseOf
   belongs_to :import_country, class_name: "Country"
   belongs_to :broker, class_name: "Company"
 

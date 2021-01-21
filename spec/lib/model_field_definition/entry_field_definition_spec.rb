@@ -536,4 +536,36 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
     end
   end
 
+  describe 'ent_origin_airport_name' do
+    let :mf do
+      ModelField.find_by_uid :ent_origin_airport_name
+    end
+
+    it "returns origin airport name" do
+      port = Factory(:port, iata_code: "INN", name: "Innsmouth")
+      ent = Factory(:entry, origin_airport: port)
+
+      ss = SearchSetup.new(module_type: 'Entry', user_id: Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid: 'ent_origin_airport_name', operator: 'eq', value: "Innsmouth")
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq "Innsmouth"
+    end
+
+    it "updates port code by name" do
+      Factory(:port, iata_code: "INN", name: "Innsmouth")
+      ent = Factory(:entry)
+
+      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Origin Airport set to Innsmouth"
+      expect(ent.origin_airport_code).to eq "INN"
+    end
+
+    it "returns error message on import when port not found" do
+      ent = Factory(:entry)
+
+      expect(mf.process_import(ent, "Innsmouth", Factory(:admin_user))).to eq "Port with name \"Innsmouth\" could not be found."
+      expect(ent.origin_airport_code).to be_nil
+    end
+  end
+
 end

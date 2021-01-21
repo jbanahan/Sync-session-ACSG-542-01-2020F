@@ -89,6 +89,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'split' => "N",
         'split_release_option' => "1",
         'bond_surety_no' => "bs_number",
+        'airport_code' => 'origin_airport',
         'dates' => [
           # Note the time ending in 60..stupid Alliance has dates w/ a minute value of 60 rather
           # than incrementing the hour.
@@ -724,6 +725,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.trucker_names).to eql("BARSAN\n CONTAINER FREIGHT\n AP EXPRESS")
       expect(entry.deliver_to_names).to eql("EMSER TILE WESTERN DC\n CAL CARTAGE")
       expect(entry.bond_surety_number).to eq "bs_number"
+      expect(entry.origin_airport_code).to eq "origin_airport"
 
       expect(entry.customs_detention_exception_opened_date).to eq tz.parse("2020-05-07 06:45:13")
       expect(entry.customs_detention_exception_resolved_date).to eq tz.parse("2020-05-08 16:55:23")

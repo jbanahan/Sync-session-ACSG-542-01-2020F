@@ -30,6 +30,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     require 'open_chain/custom_handler/amazon/amazon_linked_company_comparator'
     require 'open_chain/custom_handler/amazon/amazon_entry_billing_comparator'
     require 'open_chain/custom_handler/amazon/amazon_linked_company_security_filing_comparator'
+    require 'open_chain/custom_handler/generic/entry_billing_invoice_comparator'
 
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::BillingComparators::ProductComparator
 
@@ -54,6 +55,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Generic::EntryBillingInvoiceComparator
   end
   private_class_method :register_change_comparators
 

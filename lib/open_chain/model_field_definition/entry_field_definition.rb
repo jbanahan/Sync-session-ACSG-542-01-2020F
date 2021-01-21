@@ -741,8 +741,6 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         export_lambda: ->(obj) { obj.broker&.name },
         qualified_field_name: "(SELECT broker_name.name FROM companies broker_name WHERE broker_name.id = entries.broker_id)"
       }],
-      make_pga_flag_field(305, "AMS"),
-      make_pga_flag_field(306, "APH"),
       make_pga_flag_field(307, "ATF"),
       make_pga_flag_field(308, "DEA"),
       make_pga_flag_field(309, "EPA"),
@@ -772,6 +770,24 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
                   eex.comments IS NOT NULL AND eex.comments != ""
               )'
         }
+      ],
+      make_pga_flag_field(318, "AMS"),
+      make_pga_flag_field(319, "APH"),
+      [320, :ent_origin_airport_code, :origin_airport_code, "Origin Airport Code", data_type: :string],
+      [321, :ent_origin_airport_name, :origin_airport_name, "Origin Airport Name",
+       {
+         data_type: :string,
+         import_lambda: lambda { |ent, data|
+           port = Port.find_by name: data
+           return "Port with name \"#{data}\" could not be found." unless port
+           ent.origin_airport_code = port.iata_code
+           "Origin Airport set to #{port.name}"
+         },
+         export_lambda: lambda {|ent|
+           ent.origin_airport.blank? ? "" : ent.origin_airport.name
+         },
+         qualified_field_name: "(SELECT name FROM ports WHERE ports.iata_code = entries.origin_airport_code)"
+       }
       ],
       [322, :ent_total_freight, :total_freight, "Total Freight", {data_type: :decimal}]
     ]

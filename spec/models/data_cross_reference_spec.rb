@@ -423,12 +423,13 @@ describe DataCrossReference do
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = described_class.xref_edit_hash(Factory(:sys_admin_user))
 
-        expect(xrefs.size).to eq 4
+        expect(xrefs.size).to eq 5
         # rubocop:disable Layout/LineLength
         expect(strip_preproc(xrefs['siemens_billing_standard'])).to eq title: "Siemens Billing Standard Group", description: "Tax IDs for the standard Siemens billing report", identifier: "siemens_billing_standard", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
         expect(strip_preproc(xrefs['siemens_billing_energy'])).to eq title: "Siemens Billing Energy Group", description: "Tax IDs for the energy Siemens billing report", identifier: "siemens_billing_energy", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
         expect(strip_preproc(xrefs['part_xref'])).to eq title: "Part Cross Reference", description: "Enter the Part Number in the Part field and true or false in the active field", identifier: "part_xref", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, allow_duplicate_keys: false, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B."
         expect(strip_preproc(xrefs['spi_available_country_combination'])).to eq title: "SPI-Available Country Combinations", description: "Combinations of entry country of export and origin ISO codes that have SPI available.", identifier: "spi_available_country_combination", key_label: "Export Country ISO*~*Origin Country ISO", value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", allow_duplicate_keys: false, require_company: false, show_value_column: true
+        expect(strip_preproc(xrefs['billing_invoice_customer'])).to eq title: "Billing Invoice Customers", description: "Customer Numbers for companies that have billing invoices generated off their broker invoices.", identifier: "billing_invoice_customer", key_label: "Customer Number", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "N/A - unused", allow_duplicate_keys: false
         # rubocop:enable Layout/LineLength
       end
     end

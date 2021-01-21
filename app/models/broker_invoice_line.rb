@@ -36,4 +36,13 @@ class BrokerInvoiceLine < ActiveRecord::Base
   def hst_gst_charge_code?
     ["250", "251", "252", "253", "254", "255", "256", "257", "258", "259", "260"].include? charge_code
   end
+
+  def duty_paid_direct_charge_code?
+    charge_code == "0099"
+  end
+
+  def freight_direct_charge_code?
+    charge_code == "0600"
+  end
+
 end

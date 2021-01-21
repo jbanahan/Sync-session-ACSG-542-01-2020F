@@ -506,6 +506,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.split_shipment = e[:split].to_s.upcase == "Y"
       entry.split_release_option = e[:split_release_option].to_i if e[:split_release_option].to_i > 0
       entry.bond_surety_number = e[:bond_surety_no]
+      entry.origin_airport_code = e[:airport_code]
 
       nil
     end

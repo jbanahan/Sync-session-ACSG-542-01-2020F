@@ -9,7 +9,7 @@ module OpenChain; module ModelFieldDefinition; module ContainerFieldDefinition
       [6, :con_seal_number, :seal_number, "Seal Number", {data_type: :string}],
       [7, :con_teus, :teus, "TEUs", {data_type: :integer}],
       [8, :con_fcl_lcl, :fcl_lcl, "Full Container", {data_type: :string}],
-      [9, :con_quantity, :quantity, "AMS Qauntity", {data_type: :integer}],
+      [9, :con_quantity, :quantity, "AMS Quantity", {data_type: :integer}],
       [10, :con_uom, :uom, "AMS UOM", {data_type: :string}],
       [11, :con_shipment_line_count, :shipment_line_count, "Shipment Line Count", {data_type: :integer,
         import_lambda: lambda {|con, data| return "Shipment line count cannot be set by import."},

@@ -178,7 +178,8 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
       [162, :bi_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}],
       make_broker_invoice_entry_field(163, :bi_ent_fiscal_date, :fiscal_date, "Entry Fiscal Date", :date, lambda {|entry| entry.fiscal_date}),
       make_broker_invoice_entry_field(164, :bi_ent_fiscal_month, :fiscal_month, "Entry Fiscal Month", :integer, lambda {|entry| entry.fiscal_month}),
-      make_broker_invoice_entry_field(165, :bi_ent_fiscal_year, :fiscal_year, "Entry Fiscal Year", :integer, lambda {|entry| entry.fiscal_year})
+      make_broker_invoice_entry_field(165, :bi_ent_fiscal_year, :fiscal_year, "Entry Fiscal Year", :integer, lambda {|entry| entry.fiscal_year}),
+      make_broker_invoice_entry_field(166, :bi_ent_origin_airport_code, :origin_airport_code, "Origin Airport Code", :string, lambda {|entry| entry.origin_airport_code})
     ]
   end
 end; end; end;

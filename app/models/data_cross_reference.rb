@@ -82,12 +82,14 @@ class DataCrossReference < ActiveRecord::Base
   VFI_CALENDAR ||= "vfi_calendar".freeze
   UNIT_OF_MEASURE ||= "unit_of_measure".freeze
   ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'.freeze
-  # Combination of entry export and origin country codes that have SPI available.
   TRADELENS_ENTRY_MILESTONE_FIELDS ||= 'tradelens_entry_milestone_fields'.freeze
+  # Combination of entry export and origin country codes that have SPI available.
   SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'.freeze
   SIEMENS_BILLING_STANDARD ||= 'siemens_billing_standard'.freeze
   SIEMENS_BILLING_ENERGY ||= 'siemens_billing_energy'.freeze
   PART_XREF ||= 'part_xref'.freeze
+  # Customer numbers for companies that have billing invoices generated off their broker invoices.
+  BILLING_INVOICE_CUSTOMERS ||= 'billing_invoice_customer'.freeze
 
   scope :for_type, ->(xref_type) { where(cross_reference_type: xref_type) }
 
@@ -116,7 +118,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION]),
       xref_attributes(SIEMENS_BILLING_STANDARD, "Siemens Billing Standard Group", "Tax IDs for the standard Siemens billing report", key_label: "Tax ID", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "Value"),
       xref_attributes(SIEMENS_BILLING_ENERGY, "Siemens Billing Energy Group", "Tax IDs for the energy Siemens billing report", key_label: "Tax ID", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "Value"),
-      xref_attributes(PART_XREF, "Part Cross Reference", "Enter the Part Number in the Part field and true or false in the active field", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.")
+      xref_attributes(PART_XREF, "Part Cross Reference", "Enter the Part Number in the Part field and true or false in the active field", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B."),
+      xref_attributes(BILLING_INVOICE_CUSTOMERS, "Billing Invoice Customers", "Customer Numbers for companies that have billing invoices generated off their broker invoices.", key_label: "Customer Number", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "N/A - unused")
     ]
     # rubocop:enable Layout/LineLength
 
@@ -191,6 +194,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.sys_admin?
     when SIEMENS_BILLING_STANDARD, SIEMENS_BILLING_ENERGY
       MasterSetup.get.custom_feature?("WWW") && user.admin?
+    when BILLING_INVOICE_CUSTOMERS
+      MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
     else
       false
     end
