@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
 
       doc = nil
 
-      expect(p).to receive(:ftp_file).with(file, connect_vfitrack_net("to_ecs/siemens/B2", "1005029_CA_B2_119_11981200020462_20200315020508.xml")) do |f|
+      expect(p).to receive(:ftp_file).with(file, connect_vfitrack_net("to_ecs/siemens_hc/b2", "1005029_CA_B2_119_11981200020462_20200315020508.xml")) do |f|
         doc = REXML::Document.new(f.read)
         f.close!
       end
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator do
 
       doc = nil
 
-      expect(p).to receive(:ftp_file).with(file, connect_vfitrack_net("to_ecs/siemens/B2", "1005029_CA_B2_119_11981200020462_20200315020508.xml")) do |f|
+      expect(p).to receive(:ftp_file).with(file, connect_vfitrack_net("to_ecs/siemens_hc/b2", "1005029_CA_B2_119_11981200020462_20200315020508.xml")) do |f|
         doc = REXML::Document.new(f.read)
         f.close!
       end

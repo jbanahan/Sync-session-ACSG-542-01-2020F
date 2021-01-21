@@ -130,7 +130,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensB2XmlGenera
       Attachment.add_original_filename_method(file, "#{filename}.xml")
       write_xml(doc, file)
       file.rewind
-      ftp_file(file, connect_vfitrack_net("to_ecs/siemens/B2", filename))
+      ftp_file(file, connect_vfitrack_net("to_ecs/siemens_hc/b2", filename))
     end
 
     nil
