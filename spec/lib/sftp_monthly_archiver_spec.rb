@@ -1,11 +1,41 @@
 describe OpenChain::SftpMonthlyArchiver do
 
-  it 'throws an exception if an Alliance or Fenix customer number is not present' do
-    expect {described_class.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance or Fenix Customer Number Required')
-  end
+  describe "initialize" do
 
-  it 'throws an exception if a FTP Folder is not present' do
-    expect {described_class.new({'alliance_customer_number' => 'blah'})}.to raise_error(RuntimeError, 'FTP Folder Required')
+    it "throws an exception if customer number or system code is not present" do
+      expect {described_class.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance/Fenix/Cargowise Customer Number or System Code required.')
+    end
+
+    it "throws an exception if a FTP Folder is not present" do
+      expect {described_class.new({'alliance_customer_number' => 'blah'})}.to raise_error(RuntimeError, 'FTP Folder Required')
+    end
+
+    context "company lookup" do
+      let!(:co_with_alliance) { with_customs_management_id(Factory(:company), "alliance id") }
+      let!(:co_with_fenix) { with_fenix_id(Factory(:company), "fenix id")  }
+      let!(:co_with_cargowise) { with_cargowise_id(Factory(:company), "cargowise id") }
+      let!(:co_with_sys_code) { Factory(:company, system_code: "sys code") }
+
+      it "matches alliance_customer_number" do
+        inst = described_class.new('ftp_folder' => 'path', 'alliance_customer_number' => "alliance id")
+        expect(inst.company).to eq co_with_alliance
+      end
+
+      it "matches fenix_customer_number" do
+        inst = described_class.new('ftp_folder' => 'path', 'fenix_customer_number' => "fenix id")
+        expect(inst.company).to eq co_with_fenix
+      end
+
+      it "matches cargowise_customer_number" do
+        inst = described_class.new('ftp_folder' => 'path', 'cargowise_customer_number' => "cargowise id")
+        expect(inst.company).to eq co_with_cargowise
+      end
+
+      it "matches system_code" do
+        inst = described_class.new('ftp_folder' => 'path', 'system_code' => "sys code")
+        expect(inst.company).to eq co_with_sys_code
+      end
+    end
   end
 
   describe "run" do
@@ -21,6 +51,19 @@ describe OpenChain::SftpMonthlyArchiver do
 
     let! (:attachment) do
       entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
+    end
+
+    it "allows override of filename prefix" do
+      opts.merge!('filename_prefix' => "new_prefix")
+      now = Time.zone.parse("2016-10-05 00:00")
+      archive_setup.update! start_date: now - 2.years
+      entry.broker_invoices.first.update! invoice_date: now - 1.year
+      allow(OpenChain::S3).to receive(:get_data)
+      Timecop.freeze(now) { described_class.new(opts).run }
+
+      archive = AttachmentArchive.last
+      expect(archive).not_to be_nil
+      expect(archive.name).to eq "new_prefix-2016-09.zip"
     end
 
     context "using broker_reference_override" do
