@@ -1,0 +1,31 @@
+# The below example should work with the current docker compose development environment as-is
+test:
+  adapter: mysql2
+  database: chain_test
+  username: root
+  password: password
+  host: mysql
+  port: 3306
+  pool: 15
+  timeout: 5000
+
+development:
+  adapter: mysql2
+  database: chain_dev
+  username: root
+  password: password
+  host: mysql
+  port: 3306
+  pool: 15
+  timeout: 5000
+
+# PRODUCTION
+# development:
+#  adapter: mysql2
+#  database: chain_dev
+#  username: chain_dev_user
+#  password: password
+#  host: localhost
+#  port: 3306
+#  pool: 15
+#  timeout: 5000

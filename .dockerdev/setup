@@ -16,6 +16,45 @@ FileUtils.chdir APP_ROOT do
   system! 'gem install bundler -v 1.17.3 --conservative'
   system('bundle check') || system!('bundle install')
 
+  puts '== Checking for config files =='
+  if File.exist?('../config/secrets.yml') then
+    puts 'secrets exists'
+  else
+    puts 'secrets config is being created.'
+    puts "\e[31mYou will have to update the secrets file with credentials!\e[0m" # Red then reset
+    FileUtils.copy_file('../.dockerdev/config/secrets.example.yml', '../config/secrets.yml')
+  end
+
+  if File.exist?('../config/database.yml') then
+    puts 'database exists'
+  else
+    puts 'database config is being created.'
+    FileUtils.copy_file('../.dockerdev/config/database.example.yml', '../config/database.yml')
+  end
+
+  if File.exist?('../config/google_auth.json') then
+    puts 'google_auth exists'
+  else
+    puts 'google_auth config is being created.'
+    puts "\e[31mYou will have to update the google_auth file with credentials!\e[0m" # Red then reset
+    FileUtils.copy_file('../.dockerdev/config/google_auth.example.json', '../config/google_auth.json')
+  end
+
+  if File.exist?('../config/kewill_imaging.yml') then
+    puts 'kewill_imaging exists'
+  else
+    puts 'kewill_imaging is being created.'
+    FileUtils.copy_file('../.dockerdev/config/kewill_imaging.example.yml', '../config/kewill_imaging.yml')
+  end
+
+  if File.exist?('../config/recaptcha.yml') then
+    puts 'recaptcha exists'
+  else
+    puts 'recaptcha is being created.'
+    puts "\e[31mYou will have to update the recaptcha file with credentials!\e[0m" # Red then reset
+    FileUtils.copy_file('../.dockerdev/config/recaptcha.example.yml', '../config/recaptcha.yml')
+  end
+
   puts "\n== Creating databases =="
   system! 'bundle exec rake db:create'
   system! 'bundle exec rake db:create RAILS_ENV=test'
