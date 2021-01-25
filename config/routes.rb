@@ -699,6 +699,7 @@ OpenChain::Application.routes.draw do
 
   get "/custom_features/calendar", to: "custom_features#calendar_index"
   post "/custom_features/calendar/upload", to: "custom_features#calendar_upload"
+  get "/custom_features/calendar/:id/download", to: "custom_features#calendar_download"
 
   # H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get

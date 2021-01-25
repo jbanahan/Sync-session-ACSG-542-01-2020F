@@ -576,6 +576,10 @@ class CustomFeaturesController < ApplicationController
     end
   end
 
+  def calendar_download
+    generic_download "Calendar Download"
+  end
+
   def lumber_part_index
     generic_index OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler, LUMBER_PART_UPLOAD, "Lumber Product Upload"
   end
