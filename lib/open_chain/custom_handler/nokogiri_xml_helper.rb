@@ -14,8 +14,8 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
 
   # get element text
   # if force_blank_string then send "" instead of null
-  def et parent, element_name, force_blank_string=false
-    r  = nil
+  def et parent, element_name, force_blank_string = false
+    r = nil
     # Nokogiri's 'at' method is unreliable.  If the name of the element you're looking for is repeated within the
     # doc structure, it can grab the wrong one and return its value.  For example...
     # <a><c><b>This text could be returned</b></c><b>Even though you're looking for this text</b></a>
@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
 
   # Gets the text from the first element matching the provided xpath.  Returns nil unless force_blank_string
   # is true, in which case an empty string is returned.
-  def first_text xml, xpath_expression, force_blank_string=false
+  def first_text xml, xpath_expression, force_blank_string = false
     txt = xpath(xml, xpath_expression).first&.text
     (txt.nil? && force_blank_string) ? "" : txt
   end
@@ -37,9 +37,9 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
   def xpath element, xpath_expression, namespace_bindings: nil, variable_bindings: nil
     if block_given?
       element.xpath(xpath_expression, namespace_bindings, variable_bindings).each(&Proc.new)
-      return nil
+      nil
     else
-      return element.xpath(xpath_expression, namespace_bindings, variable_bindings).to_a
+      element.xpath(xpath_expression, namespace_bindings, variable_bindings).to_a
     end
   end
 
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
   # Uniqueness check here is case sensitive: "A" and "a" would be viewed as different values.  Although the method
   # returns an array by default, that array can be converted to CSV instead with an 'as_csv' value of true, as a
   # minor convenience.
-  def unique_values xml, xpath_expression, skip_blank_values:true, as_csv:false, csv_separator:","
+  def unique_values xml, xpath_expression, skip_blank_values: true, as_csv: false, csv_separator: ","
     s = Set.new
     xpath(xml, xpath_expression).each { |el| s << el.text if el.text.present? || !skip_blank_values }
     arr = s.to_a
@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
   end
 
   def total_value xml, xpath_expression, total_type: :to_d
-    total = BigDecimal.new(0)
+    total = BigDecimal(0)
     xpath(xml, xpath_expression) do |el|
       # to_s in here ensures we don't have a nil value, which doesn't work with to_d.
       total += el.text.to_s.try(total_type)
@@ -71,7 +71,17 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
   module ClassMethods
     # Build an XML document object from a String or IO object
     def xml_document xml_data, remove_namespaces: true
-      doc = Nokogiri::XML(xml_data)
+      doc = nil
+      begin
+        doc = Nokogiri::XML(xml_data, &:strict)
+      rescue Nokogiri::XML::SyntaxError => e
+        if self.respond_to? :inbound_file
+          inbound_file.reject_and_raise(e.message)
+        else
+          raise
+        end
+      end
+
       # By default, we eliminate namespaces from the document.  In general, most documents we receive utilize a single namespace
       # and that namespace really provides no actual purpose for the document.  Removing the namespace makes all the xpath expressions
       # utilized on a document more streamlined and easier to read.
